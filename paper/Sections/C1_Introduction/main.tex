@@ -1,0 +1,40 @@
+\section{Introduction}\label{sec:introduction}
+
+\IEEEPARstart{T}{he} transition toward inverter-dominated power systems is
+reducing grid inertia and accelerating frequency dynamics. Frequency
+deviations and Rate of Change of Frequency (RoCoF) can exceed protection
+thresholds within milliseconds~\cite{Pinheiro2025,WeakGrids2023}. Unlike
+synchronous machines, Inverter-Based Resources (IBRs) regulate power
+electronically, decoupling the primary energy source from electrical
+frequency and increasing the impact of harmonics, phase discontinuities,
+and nonstationary disturbances on protection and dynamic security
+assessment~\cite{Bernal2024,Zoghby2024,Pinheiro2025}. In IBR-dominated
+grids, phase discontinuities can induce cycle-slips in phase-locked loops,
+sustained RoCoF can exceed the tracking capacity of multi-cycle window
+methods, and converter-driven harmonic injection can cause spectral leakage
+in DFT-based estimators. These failure modes may occur simultaneously, yet
+existing benchmarks typically assess them in isolation~\cite{Ting2022},
+leaving a gap for protection-class applications.
+
+The main estimator families address the latency--robustness trade-off
+differently. SRF-PLL is widely used but susceptible to cycle-slip under
+abrupt phase discontinuities~\cite{EPRIPaper,Roscoe2019}. Window-based
+methods (IpDFT, TFT) provide strong harmonic rejection at the cost of
+structural observation latency~\cite{Belega2014,PlatasGarza2011}.
+Model-based filters (EKF, UKF) improve tracking under
+transients~\cite{Ferrero2020EKF,Chamorro2021}, while data-driven
+approaches may offer accuracy gains at higher computational
+cost~\cite{Ting2022,Zelaya2025}.
+
+This paper presents a stress-oriented benchmark of twelve estimators from
+five algorithmic families, evaluated in a local, non-time-synchronized
+relay-class configuration under five scenarios: (A)--(C) follow the
+IEC/IEEE~60255-118-1 test philosophy; (D)--(E) introduce IBR-specific
+disturbances beyond the standard scope. The main contributions are:
+(1)~a Composite Islanding scenario that exposes cycle-slip failure modes;
+(2)~scenario-wise grid-search tuning with dual-rate simulation (1\,MHz
+physics / 10\,kHz DSP); and (3)~a comparative analysis of accuracy,
+settling time, trip-risk duration, and computational cost. Within this
+benchmark, the adapted RA-EKF augments the EKF state vector with an
+explicit $\dot{\omega}$ term and adds event-gating to reduce false-trip
+duration under phase discontinuities at moderate computational cost.

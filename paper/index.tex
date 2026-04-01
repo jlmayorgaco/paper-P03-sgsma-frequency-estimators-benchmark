@@ -1,0 +1,127 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                          IEEE TRANSACTIONS TEMPLATE                              %%
+%%                      AUTHOR: JORGE LUIS MAYORGA TABORDA                         %%
+%%                      DOCUMENT: BENCHMARKING FREQUENCY ESTIMATORS (SGSMA 2026)    %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%
+%% %%%%% Import Required Packages %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%
+
+\documentclass[conference,letterpaper]{IEEEtran}
+\input{Config/packages}
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%
+%% %%%%% Configurations and Settings %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%
+
+% Graphics Configuration
+\graphicspath{{./}{Figures/Plots_And_Graphs/}{Figures/Diagrams/SVG/}}  % Defines directories for images
+\DeclareGraphicsExtensions{.pdf,.jpeg,.png}
+
+% Hyphenation settings
+\hyphenation{op-tical net-works semi-conduc-tor}
+
+\input{Config/commands}
+
+
+\usepackage{etoolbox}
+
+
+% --- OPTIMIZACIÓN DE ESPACIO EXTREMA ---
+
+% 1. Reducir espacio alrededor de figuras
+\setlength{\floatsep}{4pt plus 2pt minus 2pt}
+\setlength{\textfloatsep}{4pt plus 2pt minus 2pt}
+\setlength{\intextsep}{4pt plus 2pt minus 2pt}
+
+% 2. Reducir espacio alrededor de ecuaciones
+\setlength{\abovedisplayskip}{3pt}
+\setlength{\belowdisplayskip}{3pt}
+\setlength{\abovedisplayshortskip}{0pt}
+\setlength{\belowdisplayshortskip}{0pt}
+
+% 3. Reducir espacio alrededor de títulos de sección (requiere paquete titlesec)
+% Si no tienes el paquete, agrégalo: \usepackage[compact]{titlesec}
+\usepackage[compact]{titlesec}
+\titlespacing{\section}{0pt}{2ex}{1ex}
+\titlespacing{\subsection}{0pt}{1ex}{0ex}
+\titlespacing{\subsubsection}{0pt}{0.5ex}{0ex}
+
+% 4. Reducir espacio en listas (itemize/enumerate)
+% enumitem already loaded in Config/packages.tex
+\setlist{nosep, leftmargin=*}
+
+% 5. Apretar el caption de las figuras
+\usepackage[font=small,skip=2pt]{caption}
+
+% 6. Bibliografía compacta
+\let\oldbibliography\thebibliography
+\renewcommand{\thebibliography}[1]{%
+  \oldbibliography{#1}%
+  \setlength{\itemsep}{0pt}%
+}
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%
+%% %%%%% Begin Document %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%
+\begin{document}
+
+
+    %%%%%%%% TITLE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \input{Config/title}
+
+    %%%%%%%% AUTHOR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \input{Config/authors}
+    
+    %%%%%%% HEADER CONFIGURATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \input{Config/header}
+
+    % Make the title area
+    \maketitle
+
+    %%%%%% ABSTRACT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \input{Config/abstract}
+
+    %%%%%% KEYWORDS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \input{Config/keywords}
+
+    %%%%%% IEEE Peer Review MakeTitle %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \IEEEpeerreviewmaketitle
+
+    %%%%%% Set Length %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % \setlength{\parskip}{16pt}  % Disabled: excessive parskip breaks IEEE two-column layout
+
+
+    % ===============================
+    % SECTION 0: INTRODUCTION
+    % ===============================
+    \input{Sections/C1_Introduction/main}
+    \input{Sections/C2_Related_Work/main}
+    \input{Sections/C3_Methods/main}
+    \input{Sections/C4_Simulation_Setup/main2}
+    \input{Sections/C4_Simulation_Results/main}
+    \input{Sections/C5_Conclusions/main}
+
+      
+
+    % Can use something like this to put references on a page
+    % by themselves when using endfloat and the captionsoff option.
+    \ifCLASSOPTIONcaptionsoff
+      \newpage
+    \fi
+
+    \AtBeginEnvironment{thebibliography}{
+        \setlength{\itemsep}{0pt}
+        \setlength{\parskip}{0pt}
+        \scriptsize
+    }
+    
+    \bibliographystyle{IEEEtran}
+    
+    \scriptsize
+    \bibliography{bibtex/bib/references}
+    
+\end{document}
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%
+

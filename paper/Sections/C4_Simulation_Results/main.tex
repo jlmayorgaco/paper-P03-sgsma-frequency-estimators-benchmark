@@ -1,0 +1,176 @@
+\section{Simulation Results and Benchmarking}
+\label{sec:results}
+
+% ---------------------------------------------------------
+\subsection{Performance on Standard IEC/IEEE Scenarios}
+% ---------------------------------------------------------
+
+Table~\ref{tab:ieee_results} summarizes performance on standard scenarios (3 s.f.).
+\textbf{Steady-state:} SRF-PLL achieves RMSE\,$=1.30\!\times\!10^{-4}$\,Hz (Modulation);
+window-based methods reach RMSE\,$<3\!\times\!10^{-4}$\,Hz.
+\textbf{Ramp:} The Ramp test exposes structural limitations. SOGI-FLL fails to track (RMSE\,$=1.12$\,Hz; type-1 loop). The RA-EKF achieves RMSE\,$=\mathbf{0.00823}$\,Hz---$8.15\!\times$ lower than SRF-PLL and $1.41\!\times$ lower than EKF.
+
+\begin{table*}[t!]
+  \centering
+  \caption{Performance on Standard IEC/IEEE~60255-118-1 Scenarios
+    [RMSE / Peak Error (Hz); mean $\pm$ std, Monte Carlo $N=30$].
+    SOGI-FLL: corrected FLL adaptation law; Ramp result is outside loop bandwidth
+    (type-1 loop, no steady-state RoCoF tracking).
+    IpDFT: Hann window, Jacobsen complex spectral interpolation~\cite{Quinn1994};
+    grid search selects $N_c\!=\!2$ cycles for Ramp (33\,ms) and $N_c\!=\!10$ for Step/Mod (167\,ms).
+    TKEO, RLS, VFF-RLS, and PI-GRU excluded (divergence or off-scale error).}
+  \label{tab:ieee_results}
+  \footnotesize
+  \setlength{\tabcolsep}{3.5pt}
+  \renewcommand{\arraystretch}{1.10}
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{l cc | cc | cc}
+    \toprule
+    & \multicolumn{2}{c|}{\textbf{Step (+10\%)} ($\mu\pm\sigma$)}
+    & \multicolumn{2}{c}{\textbf{Ramp (+3\,Hz/s)} ($\mu\pm\sigma$)}
+    & \multicolumn{2}{c}{\textbf{Modulation} ($\mu\pm\sigma$)} \\
+    \textbf{Method} & \textbf{RMSE} & \textbf{Peak}
+                    & \textbf{RMSE} & \textbf{Peak}
+                    & \textbf{RMSE} & \textbf{Peak} \\
+    \midrule
+    \multicolumn{7}{l}{\textit{Window-based}} \\
+    IpDFT & $0.00160\pm0.00004$ & $0.00753\pm0.00023$ & $0.03525\pm0.00002$ & $0.08299\pm0.00138$ & $0.000260\pm0.000020$ & $0.000680\pm0.000100$ \\
+    TFT     & $0.00212\pm0.00003$ & $0.01898\pm0.00023$ & $0.03071\pm0.00002$ & $0.05566\pm0.00067$ & $0.000260\pm0.000020$ & $0.000820\pm0.000130$ \\
+    \multicolumn{7}{l}{\textit{Data-driven}} \\
+    Koopman & $0.00125\pm0.00004$ & $0.00879\pm0.00021$ & $0.02856\pm0.00002$ & $0.05466\pm0.00097$
+            & $0.00123\pm0.00002$ & $0.00220\pm0.00012$ \\
+    \midrule
+    \multicolumn{7}{l}{\textit{Loop-based}} \\
+    SRF-PLL  & \textbf{$0.000140\pm0.000000$} & \textbf{$0.000730\pm0.000000$} & $0.06709\pm0.00002$ & $0.17260\pm0.00028$
+              & \textbf{$0.000130\pm0.000000$} & \textbf{$0.000250\pm0.000000$} \\
+    SOGI-FLL
+             & $0.00899\pm0.00000$ & $0.01342\pm0.00000$
+             & $1.117\pm0.00003$  & $1.555\pm0.00003$
+             & $0.00899\pm0.00000$ & $0.01342\pm0.00000$ \\
+    \midrule
+    \multicolumn{7}{l}{\textit{Model-based}} \\
+    EKF    & $0.000240\pm0.000010$ & $0.00252\pm0.00003$ & $0.01160\pm0.00011$ & $0.04106\pm0.00308$ & $0.000150\pm0.000000$ & $0.000570\pm0.000060$ \\
+    UKF    & $0.000280\pm0.000040$ & $0.00257\pm0.00004$ & $0.01273\pm0.00016$ & $0.04524\pm0.00370$ & $0.000280\pm0.000020$ & $0.00170\pm0.00016$ \\
+    \textbf{RA-EKF}
+           & $0.00231\pm0.00002$ & $0.02988\pm0.00024$ & \textbf{$0.00823\pm0.00010$} & \textbf{$0.03178\pm0.00246$}
+           & $0.00478\pm0.00003$ & $0.01278\pm0.00041$ \\
+    \bottomrule
+  \end{tabular}}%
+\end{table*}
+
+% ---------------------------------------------------------
+\subsection{Robustness Under Severe IBR Disturbances}
+% ---------------------------------------------------------
+
+\subsubsection{Composite Islanding (Scenario D)}
+
+Window-based methods exhibit spectral leakage: IpDFT reaches RMSE\,$=0.484$\,Hz (peak $2.91$\,Hz); TFT peak $2.74$\,Hz.
+EKF/UKF, lacking phase-reset mechanisms, incur $T_{\mathrm{trip}}=0.122$\,s; SRF-PLL avoids leakage (RMSE\,$=0.0450$\,Hz, $T_{\mathrm{trip}}=0$).
+The \textbf{RA-EKF} achieves RMSE\,$=\mathbf{0.0393}$\,Hz---a $\mathbf{5.7\!\times}$ RMSE reduction vs.\ EKF---with zero threshold breaches ($T_{\mathrm{trip}}=0$; peak $0.365$\,Hz $<0.5$\,Hz, Fig.~\ref{fig:dashboard_mega}g).
+
+\subsubsection{Multi-Event Stress Test (Scenario E)}
+
+Table~\ref{tab:risk_metrics} quantifies trip-risk under the IBR Multi-Event sequence (5th/7th harmonics; THD\,$\approx$\,4.5\%, IEEE~519 compliant). SOGI-FLL incurs the highest trip-risk ($3.10$\,s); SRF-PLL accumulates $T_{\mathrm{trip}}=0.353$\,s (RMSE\,$=0.307$\,Hz). The \textbf{RA-EKF} achieves RMSE\,$=0.159$\,Hz with $T_{\mathrm{trip}}=0.081$\,s at $88.5\,\mu$s/sample---a $\mathbf{4.4\!\times}$ trip-risk reduction vs.\ SRF-PLL and $\mathbf{4.5\!\times}$ vs.\ EKF (event-gating). IpDFT: $T_{\mathrm{trip}}=0.563$\,s; Koopman: $0.068$\,s.
+
+\begin{table}[b!]
+  \centering
+  \caption{Trip-Risk Analysis: Multi-Event Scenario (E).
+    $T_{\mathrm{trip}}$: cumulative time with $|e(t)|>0.5$\,Hz;
+    CPU: mean time per sample ($\mu$s), Scenario~E run.
+    Values: mean $\pm$ std from Monte Carlo (N=30).
+    Methods not shown: TKEO (RMSE\,$\geq\!7.8$\,Hz, diverges);
+    RLS ($0.342$\,Hz, $T_{\mathrm{trip}}\!=\!0.367$\,s, CPU\,$=\!12.7\,\mu$s; similar to EKF);
+    RLS-VFF ($0.874$\,Hz, $T_{\mathrm{trip}}\!=\!2.20$\,s);
+    TFT ($T_{\mathrm{trip}}\!=\!0.349$\,s);
+    PI-GRU ($1.83$\,Hz, $T_{\mathrm{trip}}\!=\!3.76$\,s,
+    CPU\,$\approx\!1.54\!\times\!10^5\,\mu$s; Table~\ref{tab:complexity}).}
+  \label{tab:risk_metrics}
+  \footnotesize
+  \begin{tabular}{l c c c}
+    \toprule
+    \textbf{Method} & \textbf{RMSE [Hz] ($\mu\pm\sigma$)}
+                    & \textbf{$T_{\mathrm{trip}}$ [s] ($\mu\pm\sigma$)}
+                    & \textbf{CPU [$\mu$s]} \\
+    \midrule
+    \textbf{RA-EKF} & \textbf{$0.159\pm0.003$} & \textbf{$0.081\pm0.001$} & 88.5 \\
+    EKF             & $0.335\pm0.000$          & $0.364\pm0.001$ & 29.5 \\
+    Koopman         & $0.471\pm0.000$          & $0.068\pm0.000$ & 120 \\
+    UKF             & $0.337\pm0.000$          & $0.366\pm0.001$ & 215 \\
+    SRF-PLL         & $0.307\pm0.000$          & $0.353\pm0.001$ & 16.7 \\
+    IpDFT           & $0.636\pm0.000$          & $0.563\pm0.000$ & 110 \\
+    SOGI-FLL        & $0.826\pm0.000$          & $3.100\pm0.000$ & 41.7 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ---------------------------------------------------------
+\subsection{Computational Feasibility}
+% ---------------------------------------------------------
+
+Fig.~\ref{fig:dashboard_mega}e and Table~\ref{tab:complexity} show the
+cost--risk Pareto frontier. \textbf{Low cost ($\leq$30\,$\mu$s):} SRF-PLL
+($16.7\,\mu$s) and EKF ($29.5\,\mu$s) are the least expensive; SRF-PLL,
+however, incurs elevated trip-risk under the composite Multi-Event
+sequence ($T_{\mathrm{trip}}=0.353$\,s; Table~\ref{tab:risk_metrics}).
+\textbf{Moderate (30--100\,$\mu$s):} SOGI-FLL ($41.7\,\mu$s), TFT
+($45.6\,\mu$s), and RA-EKF ($88.5\,\mu$s) are plausible candidates for
+embedded DSP/FPGA relay platforms, pending C or hardware-in-the-loop
+validation. \textbf{Higher cost ($>$100\,$\mu$s):} IpDFT ($110\,\mu$s),
+Koopman ($120\,\mu$s), UKF ($215\,\mu$s), and PI-GRU
+(${\approx}154\,\text{ms/sample}$) are included for reference; PI-GRU
+is prohibitive without hardware acceleration.
+
+\begin{table}[t!]
+  \centering
+  \caption{Computational Cost per Sample (Python Baselines).
+    CPU: mean time per sample over 20 runs on an Intel Core Ultra 5 125H
+    (single-threaded Python~3.13; not C or FPGA projections).
+    Deployment class: P1 ($<$20\,$\mu$s, embedded MCU),
+    P2 (20--40\,$\mu$s, DSP), M1 ($>$40\,$\mu$s, DSP/FPGA or higher);
+    these are per-sample execution time thresholds, not estimator
+    response-latency classes.}
+  \label{tab:complexity}
+  \footnotesize
+  \begin{tabular}{l c c l}
+    \toprule
+    \textbf{Method} & \textbf{Time/Sample ($\mu$s)} & \textbf{Class}
+                    & \textbf{Target HW} \\
+    \midrule
+    SRF-PLL  & $16.7\,\mu$s  & P1 & Low-end MCU \\
+    EKF      & $29.5\,\mu$s  & P2 & DSP \\
+    SOGI-FLL & $41.7\,\mu$s  & M1 & MCU / DSP \\
+    TFT      & $45.6\,\mu$s  & M1 & DSP \\
+    \textbf{RA-EKF} & $\mathbf{88.5}\,\mu\text{s}$
+             & \textbf{M1} & \textbf{DSP / FPGA} \\
+    IpDFT    & $110\,\mu\text{s}$ & M1 & DSP / FPGA \\
+    Koopman  & $120\,\mu\text{s}$ & M1 & CPU \\
+    UKF      & $215\,\mu\text{s}$ & M1 & High-perf CPU \\
+    PI-GRU   & ${153{,}900}\,\mu\text{s}$ (${\approx}154$\,ms) & — & GPU only \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure*}[t!]
+  \centering
+  \includegraphics[width=0.999\textwidth]{%
+    Figures/Plots_And_Graphs/Fig2_Mega_Dashboard.pdf}
+\caption{Comprehensive Performance Dashboard.
+\textbf{(a)}~Phase-Jump Robustness (Scen.~D): RA-EKF event-gating
+limits trip-risk to ${\approx}0.40$\,ms vs.\ 122\,ms for standard EKF.
+\textbf{(b)}~Ramp Tracking (Scen.~B): RA-EKF achieves lowest RMSE via
+explicit $\dot{\omega}$ state; IpDFT uses 2-cycle grid-search window
+(33\,ms) and achieves RMSE\,$=0.035$\,Hz; SOGI-FLL fails (RMSE\,$=1.12$\,Hz),
+outside loop bandwidth.
+\textbf{(c--d)}~Multi-Event: stable vs.\ unstable estimators
+(TKEO excluded, RMSE\,$\geq7.8$\,Hz).
+\textbf{(e)}~Pareto frontier ($\dagger$PI-GRU excluded,
+CPU\,${\approx}154$\,ms/sample, Trip\,${\approx}3.8$\,s).
+\textbf{(f)}~Radar profile.
+\textbf{(g)}~Compliance heatmap
+[RMSE\,$<0.05$\,Hz, Peak\,$<0.5$\,Hz, Trip\,$<0.1$\,s];
+RA-EKF Islanding: peak\,$=0.365$\,Hz (below $0.5$\,Hz threshold; $T_{\mathrm{trip}}=0$).
+\textbf{(h)}~Steady-state error (log scale, Scen.~C).
+Subfigures: (a)--(d) time-domain, (e)--(f) aggregate,
+(g)--(h) compliance/steady-state.}
+  \label{fig:dashboard_mega}
+\end{figure*}

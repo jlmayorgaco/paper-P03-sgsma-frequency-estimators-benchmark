@@ -1,0 +1,29 @@
+# TABLE VI: Relay Coordination Safety Matrix
+
+Method              safe@12ms  safe@50ms safe@100ms safe@150ms safe@200ms safe@500ms
+--------------------------------------------------------------------------------
+IpDFT                      NO         NO        YES        YES        YES        YES
+PLL                       YES        YES        YES        YES        YES        YES
+EKF                        NO         NO         NO        YES        YES        YES
+EKF2                      YES        YES        YES        YES        YES        YES
+SOGI                      YES        YES        YES        YES        YES        YES
+TFT                        NO         NO        YES        YES        YES        YES
+UKF                        NO         NO         NO        YES        YES        YES
+Koopman-RKDPmu             NO         NO         NO        YES        YES        YES
+RLS                       YES        YES        YES        YES        YES        YES
+RLS-VFF                   YES        YES        YES        YES        YES        YES
+
+# TABLE VII: Stochastic Reproducibility
+
+Method      Scenario               RMSE_mean±std   CV_RMSE  CV_Ttrip  Repro_RMSE Repro_Ttrip
+----------------------------------------------------------------------------------------------------
+IpDFT       IBR_Nightmare       0.4837±0.0002     0.000     0.001        True        True
+PLL         IBR_Nightmare       0.0450±0.0000     0.000     0.000        True        True
+EKF         IBR_Nightmare       0.2249±0.0000     0.000     0.005        True        True
+EKF2        IBR_Nightmare       0.0393±0.0024     0.062     0.000       False        True
+SOGI        IBR_Nightmare       0.0084±0.0000     0.000     0.000        True        True
+TFT         IBR_Nightmare       0.4791±0.0002     0.000     0.001        True        True
+UKF         IBR_Nightmare       0.2249±0.0000     0.000     0.006        True        True
+Koopman-RKDPmuIBR_Nightmare       0.4185±0.0002     0.001     0.000        True        True
+RLS         IBR_Nightmare       0.0095±0.0004     0.043     0.000        True        True
+RLS-VFF     IBR_Nightmare       0.1678±0.0003     0.001     0.000        True        True

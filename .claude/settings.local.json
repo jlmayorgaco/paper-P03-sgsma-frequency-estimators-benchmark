@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(python3:*)",
+      "Bash(ls /c/Users/walla/Documents/Github/paper/code_sim_and_results/*.py)",
+      "Bash(xargs -I{} basename {})",
+      "Bash(ls /c/Users/walla/Documents/Github/paper/code_sim_and_results/*.pt /c/Users/walla/Documents/Github/paper/code_sim_and_results/*.pth /c/Users/walla/Documents/Github/paper/code_sim_and_results/*.h5)",
+      "Bash(ls /c/Users/walla/Documents/Github/paper/code_sim_and_results/*.json)",
+      "Bash(ls /c/Users/walla/Documents/Github/paper/*.bib)",
+      "Bash(find /c/Users/walla/Documents/Github/paper -name *.bib)",
+      "Bash(pip freeze:*)",
+      "Bash(ROOT=\"/c/Users/walla/Documents/Github/paper\" diff \"$ROOT/code_sim_and_results/main.py\" \"$ROOT/src/main.py\")",
+      "Bash(ROOT=\"/c/Users/walla/Documents/Github/paper\" diff \"$ROOT/code_sim_and_results/estimators.py\" \"$ROOT/src/estimators.py\")",
+      "Bash(find /c/Users/walla/Documents/Github/paper -name *.py -not -path */node_modules/* -not -path */__pycache__/*)",
+      "Bash(ls *.pt *.json)",
+      "Bash(ls -lt /c/Users/walla/Documents/Github/paper/*.log)",
+      "Bash(head -5 ls -lt /c/Users/walla/Documents/Github/paper/src/*.log)",
+      "Bash(head -3 find /c/Users/walla/Documents/Github/paper -name run_final*.log)",
+      "Bash(/dev/null grep:*)",
+      "Bash(grep -E \"\\\\.\\(pdf|png\\)$\")",
+      "Bash(ls \"C:/Users/walla/Documents/Github/paper/\"*.log)",
+      "Bash(ls \"C:/Users/walla/Documents/Github/paper/run_\"*.log)",
+      "Bash(ls C:/Users/walla/Documents/Github/paper/*.log)",
+      "Bash(ls C:/Users/walla/Documents/Github/paper/src/*.log)",
+      "Bash(python3 -c \":*)",
+      "Bash(xxd \"C:/Users/walla/AppData/Local/Temp/claude/C--Users-walla-Documents-Github-paper-src/0581e3da-a4e4-4b9d-b137-fe9c8e92685e/tasks/a2a9ae15fbd923875.output\")",
+      "WebSearch",
+      "Bash(cp \"/c/Users/walla/Documents/Github/paper/src/figures_estimatores_benchmark_test5/Fig1_Scenarios_Final.pdf\" \"/c/Users/walla/Documents/Github/paper/Figures/Plots_And_Graphs/Fig1_Scenarios_Final.pdf\")",
+      "Bash(cp \"/c/Users/walla/Documents/Github/paper/src/figures_estimatores_benchmark_test5/Fig2_Mega_Dashboard.pdf\" \"/c/Users/walla/Documents/Github/paper/Figures/Plots_And_Graphs/Fig2_Mega_Dashboard.pdf\")",
+      "Bash(ls -la \"/c/Users/walla/Documents/Github/paper/Figures/Plots_And_Graphs/Fig\"*.pdf)",
+      "Read(//c/Users/walla/Documents/Github/paper/**)",
+      "Bash(rm -f index.aux index.bbl index.blg index.log index.out index.toc index.fls index.fdb_latexmk index.synctex.gz)",
+      "Bash(pdflatex -interaction=nonstopmode index.tex)",
+      "Bash(bibtex index:*)"
+    ]
+  }
+}

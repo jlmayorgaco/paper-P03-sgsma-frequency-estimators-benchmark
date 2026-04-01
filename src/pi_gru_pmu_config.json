@@ -1,0 +1,13 @@
+{
+    "window_len_samples": 100,
+    "hidden_dim": 128,
+    "num_layers": 2,
+    "dropout": 0.2,
+    "target_centered": true,
+    "preprocessing": "IIR_Bandpass + FastRMS_Normalizer (aligned with inference)",
+    "training_mode": "GENERALIST (mode A \u2014 single model, frozen for all scenarios)",
+    "validation_regime": "benchmark-like held-out families, model selected by val RMSE",
+    "best_val_rmse": 1.5765756899505932,
+    "best_epoch": 100,
+    "architecture": "PIDRE_Model (Conv1D + bidirectional GRU + Attention)"
+}

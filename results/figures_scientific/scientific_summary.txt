@@ -1,0 +1,57 @@
+# SCIENTIFIC ANALYSES SUMMARY — auto-generated
+# Generated: 2026-03-30T20:15:34.681502
+# 30/36 analyses completed, 6 errors/skipped
+
+## Q1-Q12: Original Open Questions
+  Q1: CI=0.38 (0=no conflict, 2=max conflict). rho=0.619 p=0.102. Strong P/M tradeoff.
+  Q2: Mean pairwise Spearman rho=0.86 across 5 topology pairs. Ranking is topology-invariant (rho>0.8).
+  Q3: Kaplan-Meier survival curves estimate the probability of not triggering a false or missed protection event over time. Methods with S(t)→1 are robustly non-tripping; S(t)→0 rapidly indicates high false
+  Q4: RF classifier (5-fold CV): accuracy=0.92±0.01, F1=0.88. High accuracy: frequency error traces are scenario-discriminative.
+  Q5: IpDFT: THD50=0.0%; PLL: THD50=0.0%; EKF: THD50=0.0%; EKF2: THD50=35.0%; SOGI: THD50=0.0%; UKF: THD50=0.0%
+  Q6: Minimal non-redundant scenario set: ['IEEE_Mag_Step', 'IBR_Nightmare', 'IEEE_Freq_Ramp']. Greedy selection order: ['IEEE_Mag_Step', 'IBR_Nightmare', 'IEEE_Freq_Ramp', 'IEEE_Modulation']. Redundant sce
+  Q7: Best universal EKF2 hyperparameters: q=0.123, r=0.0658. Max transfer ratio across all scenarios: 3.72× (1.0=optimal, >1=degraded).
+  Q8: IpDFT: alpha=-0.00 (sub-optimal); PLL: alpha=-0.00 (sub-optimal); EKF: alpha=-0.00 (sub-optimal); EKF2: alpha=-0.01 (sub-optimal); SOGI: alpha=-0.00 (sub-optimal); UKF: alpha=0.00 (sub-optimal)
+  Q9: ERROR — The condensed distance matrix must contain only finite values.
+  Q10: ERROR — No data for Q10
+  Q11: Method with lowest expected cost: PLL. Fisher's test checks if trip probability is significantly higher in IBR scenarios than IEEE scenarios.
+  Q12: Fisher's test (global): odds=16.00, p=0.0000. Compliance is scenario-class-dependent (p<0.05). Fully compliant across all scenarios: []. Methods with adequate sensitivity+specificity: ['IpDFT', 'EKF',
+
+## Block A: IEC/Metric/RoCoF/Relay
+  A1: ok — Permutation test confirms IEC compliance scenarios have near-zero Spearman correlation with Islanding RMSE. Standard com
+  A2: ok — 3 PCs explain 90% of metric variance. Redundant with RMSE (|rho|>0.9): ['MAX_PEAK', 'ENERGY']. Independent: ['TIME_PER_S
+  A3: ok — Explicit RoCoF state methods (EKF2, UKF) vs others — Mann-Whitney p=0.426. Explicit RoCoF state does NOT significantly i
+  A4: ok — Table VI for paper: relay-safe estimators by delay setting. EKF2 is safe at any delay > 12ms (worst-case max_contiguous=
+
+## Block B: Statistical Strengthening
+  B2: ok — DETERMINISTIC=132, MODERATE=28, STOCHASTIC=0. EKF2 IBR_Nightmare Ttrip CV=0% — single-run Ttrip is DETERMINISTIC. Stocha
+  B3: ok — Bootstrap 95% CI includes 0 → pair is statistically independent. Independent scenario pairs: []
+  B4: ok — 179/180 pairwise comparisons significant after BH-FDR correction at alpha=0.05. Per scenario: {'IEEE_Mag_Step': 45, 'IEE
+
+## Block C: New Scenarios
+  C: ok — scenarios=[]
+
+## Block D: ML Analyses
+  D1: ERROR — Only 0 clean methods — need 4+
+  D2: ok — 3 cells have ≥1 anomalous MC run (|z|>3). Use z-score as field health monitoring metric.
+  D3: ERROR — Only 0 clean data points
+
+## Block E: Paper Tables
+  E: ok — tables_file=
+
+## Block G: Tuning Robustness
+  G1: ok — EKF2: robustness=0.47, worst_param=event_thresh; EKF: robustness=1.00, worst_param=Q; PLL: robustness=1.00, worst_param=
+  G2: ok — 
+  G3: ok — EKF2 wins in 0% of detuned trials in IBR_Nightmare. Winner is tuning-dependent — check detuning sensitivity.
+
+## Block H: Chamorro Real-Data Validation
+  H1: ok
+  H4: ok
+
+## Block EXT: Advanced Journal Hypotheses
+  EXT_H1: SKIPPED/ERROR — Falta escenario IBR_MultiEvent
+  EXT_H2: SKIPPED/ERROR — Faltan datos del phase_jump_sweep (NEW-2)
+  EXT_H3: ok — La inclusión del estado dinámico de RoCoF (RA-EKF) reduce significativamente el error de seguimiento cinemático frente a
+  EXT_H4: ok — La adaptabilidad extrema del EKF2 tiene un costo: su comportamiento es significativamente más sensible (estocástico) al 
+  EXT_A1: ok — Desempeño agregado (Mean RMSE) agrupado por arquitectura matemática.
+  EXT_A2: ok — Sensibilidad al ruido estocástico del sensor (Clasificación por Coef. de Variación).
+  EXT_A3: ok — Puntaje global (+3/2/1 por precisión RMSE, -2 por riesgo de disparo > 0.1s).
