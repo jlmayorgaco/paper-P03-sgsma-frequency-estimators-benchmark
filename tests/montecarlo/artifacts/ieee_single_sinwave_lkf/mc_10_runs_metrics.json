@@ -1,0 +1,25 @@
+{
+    "performance": {
+        "execution_time_seconds": 5.6294,
+        "workers_used": 22,
+        "n_runs_completed": 3
+    },
+    "estimator_accuracy": {
+        "mean_rmse_hz": 17.993879539106135,
+        "max_rmse_hz": 19.108661050261055,
+        "min_rmse_hz": 16.36294703141645,
+        "mean_mae_hz": 17.137179763220654
+    },
+    "montecarlo_variations": {
+        "duration_s_std": 0.0,
+        "duration_s_mean": 1.5,
+        "amplitude_std": 0.033091169704518704,
+        "amplitude_mean": 0.9655059325004153,
+        "freq_hz_std": 0.2032559559870898,
+        "freq_hz_mean": 59.713296291586026,
+        "phase_rad_std": 1.637737143345422,
+        "phase_rad_mean": 1.7989681947576175,
+        "noise_sigma_std": 0.0034706238451903404,
+        "noise_sigma_mean": 0.010581915120949513
+    }
+}

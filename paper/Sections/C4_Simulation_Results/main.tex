@@ -10,52 +10,38 @@ Table~\ref{tab:ieee_results} summarizes performance on standard scenarios (3 s.f
 window-based methods reach RMSE\,$<3\!\times\!10^{-4}$\,Hz.
 \textbf{Ramp:} The Ramp test exposes structural limitations. SOGI-FLL fails to track (RMSE\,$=1.12$\,Hz; type-1 loop). The RA-EKF achieves RMSE\,$=\mathbf{0.00823}$\,Hz---$8.15\!\times$ lower than SRF-PLL and $1.41\!\times$ lower than EKF.
 
+
 \begin{table*}[t!]
   \centering
-  \caption{Performance on Standard IEC/IEEE~60255-118-1 Scenarios
-    [RMSE / Peak Error (Hz); mean $\pm$ std, Monte Carlo $N=30$].
-    SOGI-FLL: corrected FLL adaptation law; Ramp result is outside loop bandwidth
-    (type-1 loop, no steady-state RoCoF tracking).
-    IpDFT: Hann window, Jacobsen complex spectral interpolation~\cite{Quinn1994};
-    grid search selects $N_c\!=\!2$ cycles for Ramp (33\,ms) and $N_c\!=\!10$ for Step/Mod (167\,ms).
-    TKEO, RLS, VFF-RLS, and PI-GRU excluded (divergence or off-scale error).}
-  \label{tab:ieee_results}
-  \footnotesize
+  \caption{Unified Benchmark Results: Standard vs. IBR-Specific Stress Scenarios [Errors in \textbf{mHz}, $T_{\mathrm{trip}}$ in \textbf{s}; mean $\pm$ std, $N=30$].}
+  \label{tab:unified_results}
+  \scriptsize
   \setlength{\tabcolsep}{3.5pt}
-  \renewcommand{\arraystretch}{1.10}
-  \resizebox{\textwidth}{!}{%
-  \begin{tabular}{l cc | cc | cc}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabular}{l cc | cc | cc | cc}
     \toprule
-    & \multicolumn{2}{c|}{\textbf{Step (+10\%)} ($\mu\pm\sigma$)}
-    & \multicolumn{2}{c}{\textbf{Ramp (+3\,Hz/s)} ($\mu\pm\sigma$)}
-    & \multicolumn{2}{c}{\textbf{Modulation} ($\mu\pm\sigma$)} \\
-    \textbf{Method} & \textbf{RMSE} & \textbf{Peak}
-                    & \textbf{RMSE} & \textbf{Peak}
-                    & \textbf{RMSE} & \textbf{Peak} \\
+    & \multicolumn{6}{c|}{\textbf{IEC/IEEE 60255-118-1 (Standard Scenarios)}} & \multicolumn{2}{c}{\textbf{Composite Islanding (Scenario D)}} \\
+    & \multicolumn{2}{c|}{\textbf{Step (+10\%)}} & \multicolumn{2}{c|}{\textbf{Ramp (+3\,Hz/s)}} & \multicolumn{2}{c|}{\textbf{Modulation (2\,Hz)}} & \multicolumn{2}{c}{\textbf{Phase Jump (+60$^\circ$)}} \\
+    \textbf{Method} & \textbf{RMSE} & \textbf{Peak} & \textbf{RMSE} & \textbf{Peak} & \textbf{RMSE} & \textbf{Peak} & \textbf{RMSE [mHz]} & \textbf{$T_{\mathrm{trip}}$ [s]} \\
     \midrule
-    \multicolumn{7}{l}{\textit{Window-based}} \\
-    IpDFT & $0.00160\pm0.00004$ & $0.00753\pm0.00023$ & $0.03525\pm0.00002$ & $0.08299\pm0.00138$ & $0.000260\pm0.000020$ & $0.000680\pm0.000100$ \\
-    TFT     & $0.00212\pm0.00003$ & $0.01898\pm0.00023$ & $0.03071\pm0.00002$ & $0.05566\pm0.00067$ & $0.000260\pm0.000020$ & $0.000820\pm0.000130$ \\
-    \multicolumn{7}{l}{\textit{Data-driven}} \\
-    Koopman & $0.00125\pm0.00004$ & $0.00879\pm0.00021$ & $0.02856\pm0.00002$ & $0.05466\pm0.00097$
-            & $0.00123\pm0.00002$ & $0.00220\pm0.00012$ \\
+    \textit{Window-based} & & & & & & & & \\
+    IpDFT & $1.60 \pm 0.04$ & $7.53 \pm 0.23$ & $35.3 \pm 0.02$ & $83.0 \pm 1.38$ & $0.260 \pm 0.02$ & $0.680 \pm 0.10$ & $484 \pm 0.00$ & $0.086$ \\
+    TFT   & $2.12 \pm 0.03$ & $19.0 \pm 0.23$ & $30.7 \pm 0.02$ & $55.7 \pm 0.67$ & $0.260 \pm 0.02$ & $0.820 \pm 0.13$ & $479 \pm 0.00$ & $0.087$ \\
     \midrule
-    \multicolumn{7}{l}{\textit{Loop-based}} \\
-    SRF-PLL  & \textbf{$0.000140\pm0.000000$} & \textbf{$0.000730\pm0.000000$} & $0.06709\pm0.00002$ & $0.17260\pm0.00028$
-              & \textbf{$0.000130\pm0.000000$} & \textbf{$0.000250\pm0.000000$} \\
-    SOGI-FLL
-             & $0.00899\pm0.00000$ & $0.01342\pm0.00000$
-             & $1.117\pm0.00003$  & $1.555\pm0.00003$
-             & $0.00899\pm0.00000$ & $0.01342\pm0.00000$ \\
+    \textit{Data-driven} & & & & & & & & \\
+    Koopman & $1.25 \pm 0.04$ & $8.79 \pm 0.21$ & $28.6 \pm 0.02$ & $54.7 \pm 0.97$ & $1.23 \pm 0.02$ & $2.20 \pm 0.12$ & $419 \pm 0.00$ & $0.148$ \\
     \midrule
-    \multicolumn{7}{l}{\textit{Model-based}} \\
-    EKF    & $0.000240\pm0.000010$ & $0.00252\pm0.00003$ & $0.01160\pm0.00011$ & $0.04106\pm0.00308$ & $0.000150\pm0.000000$ & $0.000570\pm0.000060$ \\
-    UKF    & $0.000280\pm0.000040$ & $0.00257\pm0.00004$ & $0.01273\pm0.00016$ & $0.04524\pm0.00370$ & $0.000280\pm0.000020$ & $0.00170\pm0.00016$ \\
-    \textbf{RA-EKF}
-           & $0.00231\pm0.00002$ & $0.02988\pm0.00024$ & \textbf{$0.00823\pm0.00010$} & \textbf{$0.03178\pm0.00246$}
-           & $0.00478\pm0.00003$ & $0.01278\pm0.00041$ \\
+    \textit{Loop-based} & & & & & & & & \\
+    SRF-PLL & \textbf{0.140} & \textbf{0.730} & $67.1 \pm 0.02$ & $173 \pm 0.28$ & \textbf{0.130} & \textbf{0.250} & $45.0 \pm 0.00$ & \textbf{0.000} \\
+    SOGI-FLL & $8.99 \pm 0.00$ & $13.4 \pm 0.00$ & $1120^\dagger$ & $1560 \pm 0.03$ & $8.99 \pm 0.00$ & $13.4 \pm 0.00$ & \textbf{8.36} & \textbf{0.000} \\
+    \midrule
+    \textit{Model-based} & & & & & & & & \\
+    EKF   & $0.240 \pm 0.01$ & $2.52 \pm 0.03$ & $11.6 \pm 0.11$ & $41.1 \pm 3.08$ & $0.150 \pm 0.00$ & $0.570 \pm 0.06$ & $225 \pm 0.00$ & $0.120$ \\
+    UKF   & $0.280 \pm 0.04$ & $2.57 \pm 0.04$ & $12.7 \pm 0.16$ & $45.2 \pm 3.70$ & $0.280 \pm 0.02$ & $1.70 \pm 0.16$ & $225 \pm 0.00$ & $0.120$ \\
+    \textbf{RA-EKF} & $2.31 \pm 0.02$ & $29.9 \pm 0.24$ & \textbf{8.23} & \textbf{31.8} & $4.78 \pm 0.03$ & $12.8 \pm 0.41$ & $39.3 \pm 2.40$ & \textbf{0.000} \\
     \bottomrule
-  \end{tabular}}%
+    \multicolumn{9}{l}{\scriptsize $^\dagger$SOGI-FLL fails to track sustained RoCoF due to its type-1 frequency loop. All errors reported in mHz. Bold: Best in category.}
+  \end{tabular}
 \end{table*}
 
 % ---------------------------------------------------------
