@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.16)  31 MAR 2026 22:30
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.16)  1 APR 2026 14:05
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1106,47 +1106,59 @@ r-Based Re-
 
 ) (Sections/C1_Introduction/main.tex
 ** WARNING: \IEEEPARstart is locked out when in conference mode (line 3).
-) (Sections/C2_Related_Work/main.tex [1{C:/Users/walla/AppData/Local/MiKTeX/fon
-ts/map/pdftex/pdftex.map}{C:/Program Files/MiKTeX/fonts/enc/dvips/base/8r.enc}
+) (Sections/C2_Related_Work/main.tex
+Underfull \hbox (badness 4726) in paragraph at lines 4--17
+\OT1/ptm/m/n/10 these are in-de-pen-dent met-rics. Window-based meth-ods
+ []
+
+[1{C:/Users/walla/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Program 
+Files/MiKTeX/fonts/enc/dvips/base/8r.enc}
 
 
 ]) (Sections/C3_Methods/main.tex
-Underfull \hbox (badness 7397) in paragraph at lines 132--132
-[]\OT1/ptm/m/n/9 TABLE II: |Tun-ing Pa-ram-e-ter Search Space. $\OML/cmm/m/it/9
- K[]$ \OT1/ptm/m/n/9 [pu/rad],
+[2]
+Underfull \hbox (badness 1502) in paragraph at lines 129--133
+[]\OT1/ptm/b/n/10 Primary Fre-quency Re-sponse \OT1/ptm/m/n/10 (\OT1/ptm/m/it/1
+0 planned ex-ten-sion\OT1/ptm/m/n/10 ): a
  []
 
-<Figures/Plots_And_Graphs/Fig1_Scenarios_Final.pdf, id=130, 621.12802pt x 568.5
+
+Underfull \vbox (badness 4556) has occurred while \output is active []
+
+<Figures/Plots_And_Graphs/Fig1_Scenarios_Final.pdf, id=159, 621.12802pt x 568.5
 712pt>
 File: Figures/Plots_And_Graphs/Fig1_Scenarios_Final.pdf Graphic file (type pdf)
 
 <use Figures/Plots_And_Graphs/Fig1_Scenarios_Final.pdf>
 Package pdftex.def Info: Figures/Plots_And_Graphs/Fig1_Scenarios_Final.pdf  use
-d on input line 163.
+d on input line 216.
 (pdftex.def)             Requested size: 510.84283pt x 467.61084pt.
-) (Sections/C4_Simulation_Setup/main2.tex)
-(Sections/C4_Simulation_Results/main.tex [2]
-Underfull \hbox (badness 2401) in paragraph at lines 67--70
-\OT1/cmr/m/n/10 0\OML/cmm/m/it/10 :\OT1/cmr/m/n/10 122$\OT1/ptm/m/n/10 s; SRF-P
-LL avoids leak-age (RMSE$\OT1/cmr/m/n/10 = 0\OML/cmm/m/it/10 :\OT1/cmr/m/n/10 0
-450$\OT1/ptm/m/n/10 Hz,
+)
+(Sections/C4_Simulation_Results/main.tex
+Underfull \hbox (badness 2941) in paragraph at lines 10--14
+\OT1/ptm/m/n/10 ios (3 s.f.). \OT1/ptm/b/n/10 Steady-state: \OT1/ptm/m/n/10 SRF
+-PLL achieves RMSE$\OT1/cmr/m/n/10 =
  []
 
 
-Underfull \hbox (badness 1642) in paragraph at lines 110--122
-\OT1/ptm/m/n/10 Ta-ble []IV[]). \OT1/ptm/b/n/10 Mod-er-ate (30--100$\OML/cmm/m/
-it/10 ^^V$\OT1/ptm/b/n/10 s): \OT1/ptm/m/n/10 SOGI-FLL ($\OT1/cmr/m/n/10 41\OML
-/cmm/m/it/10 :\OT1/cmr/m/n/10 7 \OML/cmm/m/it/10 ^^V$\OT1/ptm/m/n/10 s),
+Underfull \hbox (badness 6708) in paragraph at lines 10--14
+\OT1/cmr/m/n/10 0\OML/cmm/m/it/10 :\OT1/cmr/m/n/10 130$\OT1/ptm/m/n/10 mHz (Mod
+-u-la-tion); window-based meth-ods reach
  []
 
-<Figures/Plots_And_Graphs/Fig2_Mega_Dashboard.pdf, id=158, 570.26424pt x 522.39
+[3]
+Underfull \vbox (badness 3579) has occurred while \output is active []
+
+ [4 <./Figures/Plots_And_Graphs/Fig1_Scenarios_Final.pdf>]
+<Figures/Plots_And_Graphs/Fig2_Mega_Dashboard.pdf, id=302, 570.26424pt x 522.39
 073pt>
 File: Figures/Plots_And_Graphs/Fig2_Mega_Dashboard.pdf Graphic file (type pdf)
 <use Figures/Plots_And_Graphs/Fig2_Mega_Dashboard.pdf>
 Package pdftex.def Info: Figures/Plots_And_Graphs/Fig2_Mega_Dashboard.pdf  used
- on input line 156.
+ on input line 167.
 (pdftex.def)             Requested size: 515.48035pt x 472.2118pt.
-) (Sections/C5_Conclusions/main.tex
+)
+(Sections/C5_Conclusions/main.tex
 Underfull \hbox (badness 10000) in paragraph at lines 4--10
 []\OT1/ptm/m/n/10 The sim-u-la-tion re-sults in-di-cate that stan-dard
  []
@@ -1167,18 +1179,18 @@ Underfull \hbox (badness 3128) in paragraph at lines 4--10
 \OT1/ptm/m/n/10 single-disturbance tests do not re-veal. This bench-mark
  []
 
-[3]
+[5]
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
 
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
- [4 <./Figures/Plots_And_Graphs/Fig1_Scenarios_Final.pdf>]) (index.bbl
+ [6 <./Figures/Plots_And_Graphs/Fig2_Mega_Dashboard.pdf>]) (index.bbl
 Underfull \hbox (badness 4217) in paragraph at lines 78--82
 []\OT1/ptm/m/n/8 H. R. Chamorro, A.-J. Guel-Cortez, Y. Africano, F. Jimenez,
  []
 
-[5])
+)
 
 ** Conference Paper **
 Before submitting the final camera ready copy, remember to:
@@ -1190,47 +1202,45 @@ Before submitting the final camera ready copy, remember to:
  uses only Type 1 fonts and that every step in the generation
  process uses the appropriate paper size.
 
-[6
-
- <./Figures/Plots_And_Graphs/Fig2_Mega_Dashboard.pdf>] (index.aux)
+[7] (index.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2025-12-24>
  ***********
 Package rerunfilecheck Info: File `index.out' has not changed.
-(rerunfilecheck)             Checksum: 1D491BB4608C5B952355C015A70EEFFC;3092.
+(rerunfilecheck)             Checksum: A16F296A23C8F960E28409880F11E701;3364.
  ) 
 Here is how much of TeX's memory you used:
- 36889 strings out of 467871
- 853573 string characters out of 5428443
- 1430841 words of memory out of 5000000
- 65049 multiletter control sequences out of 15000+600000
- 675824 words of font info for 131 fonts, out of 8000000 for 9000
+ 36891 strings out of 467871
+ 854526 string characters out of 5428443
+ 1421581 words of memory out of 5000000
+ 65050 multiletter control sequences out of 15000+600000
+ 676960 words of font info for 132 fonts, out of 8000000 for 9000
  1144 hyphenation exceptions out of 8191
- 99i,15n,97p,1675b,609s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 99i,15n,97p,1961b,626s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx10.pfb><C:/Progra
-m Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx8.pfb><C:/Program Files/MiKTe
-X/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Program Files/MiKTeX/fonts/type
-1/public/amsfonts/cm/cmmi5.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsf
-onts/cm/cmmi6.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi7
-.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Prog
-ram Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi9.pfb><C:/Program Files/MiK
-TeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Program Files/MiKTeX/fonts/typ
-e1/public/amsfonts/cm/cmr5.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsf
-onts/cm/cmr6.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmr7.p
-fb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Program
- Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmr9.pfb><C:/Program Files/MiKTeX/
-fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Program Files/MiKTeX/fonts/type1/
-public/amsfonts/cm/cmsy5.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfon
-ts/cm/cmsy6.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy7.p
-fb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Progra
-m Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy9.pfb><C:/Program Files/MiKTe
-X/fonts/type1/urw/times/utmb8a.pfb><C:/Program Files/MiKTeX/fonts/type1/urw/tim
-es/utmbi8a.pfb><C:/Program Files/MiKTeX/fonts/type1/urw/times/utmr8a.pfb><C:/Pr
-ogram Files/MiKTeX/fonts/type1/urw/times/utmri8a.pfb>
-Output written on index.pdf (6 pages, 624351 bytes).
+m Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Program Files/MiKT
+eX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Program Files/MiKTeX/fonts/typ
+e1/public/amsfonts/cm/cmmi5.pfb><C:/Program Files/MiKTeX/fonts/type1/public/ams
+fonts/cm/cmmi6.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi
+7.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Pro
+gram Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi9.pfb><C:/Program Files/Mi
+KTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Program Files/MiKTeX/fonts/ty
+pe1/public/amsfonts/cm/cmr5.pfb><C:/Program Files/MiKTeX/fonts/type1/public/ams
+fonts/cm/cmr6.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmr7.
+pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Progra
+m Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmr9.pfb><C:/Program Files/MiKTeX
+/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Program Files/MiKTeX/fonts/type1
+/public/amsfonts/cm/cmsy5.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfo
+nts/cm/cmsy6.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy7.
+pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Progr
+am Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy9.pfb><C:/Program Files/MiKT
+eX/fonts/type1/urw/times/utmb8a.pfb><C:/Program Files/MiKTeX/fonts/type1/urw/ti
+mes/utmbi8a.pfb><C:/Program Files/MiKTeX/fonts/type1/urw/times/utmr8a.pfb><C:/P
+rogram Files/MiKTeX/fonts/type1/urw/times/utmri8a.pfb>
+Output written on index.pdf (7 pages, 637004 bytes).
 PDF statistics:
- 570 PDF objects out of 1000 (max. 8388607)
- 45 named destinations out of 1000 (max. 500000)
- 143 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 594 PDF objects out of 1000 (max. 8388607)
+ 50 named destinations out of 1000 (max. 500000)
+ 151 words of extra memory for PDF output out of 10000 (max. 10000000)
 
