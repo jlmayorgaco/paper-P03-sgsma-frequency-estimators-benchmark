@@ -83,13 +83,18 @@ H.~R. Chamorro, A.-J. Guel-Cortez, Y.~Africano, F.~Jimenez, R.~Tonkoski, and
 \bibitem{Zelaya2025}
 F.~Zelaya-Arrazabal, S.~Martinez-Lizana, and H.~Pulgar-Painemal, ``Modal-based
   prediction of power system frequency response and frequency nadir,'' arXiv
-  preprint arXiv:2502.02735v2, 2025, revised July 2025; no peer-reviewed venue
+  preprint arXiv:2502.02735v2, 2025, under review; no peer-reviewed venue
   confirmed as of submission date.
 
 \bibitem{Golestan2015}
 S.~Golestan, J.~M. Guerrero, and J.~C. Vasquez, ``Three-phase {PLL}s: A review
   of recent advances,'' \emph{IEEE Transactions on Power Electronics}, vol.~30,
   no.~9, pp. 5219--5230, 2015.
+
+\bibitem{IEEE_C37_118}
+{IEEE Power and Energy Society}, ``{IEEE} standard for synchrophasor
+  measurements for power systems ({C37.118.1-2011}, amendment
+  {C37.118.1a-2014}),'' IEEE Std C37.118.1, 2011.
 
 \bibitem{Quinn1994}
 B.~G. Quinn, ``Estimating frequency by interpolation using {Fourier}
