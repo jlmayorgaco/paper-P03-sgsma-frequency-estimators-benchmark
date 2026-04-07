@@ -1,0 +1,56 @@
+{
+    "metadata": {
+        "timestamp": "2026-04-02 05:40:32",
+        "python_version": "3.13.12",
+        "os_system": "Windows 11",
+        "cpu_architecture": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",
+        "total_system_cores": 22,
+        "estimator_name": "IPDFT",
+        "scenario_name": "IEEE_Mag_Step"
+    },
+    "performance": {
+        "execution_time_seconds": 22.9359,
+        "workers_used": 22,
+        "n_runs_completed": 30,
+        "avg_time_per_run_seconds": 0.7645
+    },
+    "precision_baseline": {
+        "m1_rmse_hz_mean": 0.015953166666666668,
+        "m1_rmse_hz_std": 0.005857839221980636,
+        "m1_rmse_hz_p95": 0.0252234,
+        "m2_mae_hz_mean": 0.006250633333333335,
+        "m3_max_peak_hz_mean": 0.1808999666666667
+    },
+    "protection_risk": {
+        "m5_trip_risk_s_mean": 0.0,
+        "m5_trip_risk_s_max": 0.0,
+        "m7_pcb_hz_mean": 0.04994356666666667,
+        "m8_settling_time_s_mean": 19.297
+    },
+    "rocof_and_ibr": {
+        "m9_rfe_max_hz_s_mean": 25.41435333333333,
+        "m11_rnaf_db_mean": 49.83387666666667,
+        "m12_isi_pu_mean": 1.3333333333333334e-07
+    },
+    "hardware_and_paper": {
+        "m13_cpu_time_us_mean": 0.48223333333333335,
+        "m16_heatmap_pass_rate": 1.0,
+        "hw_class_assigned": "P1"
+    },
+    "montecarlo_variations": {
+        "duration_s_std": 0.0,
+        "duration_s_mean": 1.5,
+        "freq_hz_std": 0.0,
+        "freq_hz_mean": 60.0,
+        "phase_rad_std": 1.8510397110042145,
+        "phase_rad_mean": 2.8745740871820677,
+        "amp_pre_pu_std": 0.0,
+        "amp_pre_pu_mean": 1.0,
+        "amp_post_pu_std": 0.029748454566979835,
+        "amp_post_pu_mean": 1.1003333799003705,
+        "t_step_s_std": 0.04960375518826921,
+        "t_step_s_mean": 0.4956433973420917,
+        "noise_sigma_std": 0.0004405177080353814,
+        "noise_sigma_mean": 0.0012939549012165393
+    }
+}

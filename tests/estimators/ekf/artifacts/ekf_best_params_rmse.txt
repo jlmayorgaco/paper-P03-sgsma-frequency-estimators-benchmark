@@ -1,0 +1,10 @@
+Best EKF parameters by RMSE
+q_dc=1e-06
+q_alpha=1e-06
+q_beta=1e-06
+q_omega=100.0
+r_meas=0.1
+output_smoothing=0.0
+rmse_full=0.186559
+rmse_post=0.218881
+mae_full=0.081089

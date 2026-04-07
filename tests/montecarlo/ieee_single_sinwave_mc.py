@@ -12,8 +12,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
+import platform
+from datetime import datetime
+
 # ==========================================
-# Configuración de Rutas (Igual a tu código)
+# Configuración de Rutas 
 # ==========================================
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "src"
@@ -22,7 +25,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from scenarios.ieee_single_sinwave import IEEESingleSinWaveScenario
-from estimators.lkf import LKF_Estimator
+from estimators.ipdft import IPDFT_Estimator
 
 from analysis.monte_carlo_engine import MonteCarloEngine 
 
@@ -37,20 +40,20 @@ def test_a_b_classes_and_engine_loading():
     """
     # Verificamos que las clases importadas están definidas
     assert IEEESingleSinWaveScenario is not None, "La clase del escenario no se cargó."
-    assert LKF_Estimator is not None, "La clase del estimador no se cargó."
+    assert IPDFT_Estimator is not None, "La clase del estimador no se cargó."
     assert MonteCarloEngine is not None, "La clase MonteCarloEngine no se cargó."
 
     # Probamos instanciar el engine con las clases
     engine = MonteCarloEngine(
         scenario_cls=IEEESingleSinWaveScenario,
-        estimator_cls=LKF_Estimator,
+        estimator_cls=IPDFT_Estimator,
         n_runs=5,
         base_seed=42
     )
 
     # Validamos que los atributos se asignaron bien
     assert engine.scenario_cls == IEEESingleSinWaveScenario
-    assert engine.estimator_cls == LKF_Estimator
+    assert engine.estimator_cls == IPDFT_Estimator
     assert engine.n_runs == 5
     assert engine.base_seed == 42
 
@@ -65,7 +68,7 @@ def test_c_single_run_success():
     """
     engine = MonteCarloEngine(
         scenario_cls=IEEESingleSinWaveScenario,
-        estimator_cls=LKF_Estimator,
+        estimator_cls=IPDFT_Estimator,
         n_runs=1,
         base_seed=100
     )
@@ -81,28 +84,28 @@ def test_c_single_run_success():
     assert len(result.summary_df) == 1, "Debería haber exactamente 1 fila en summary_df"
     assert len(result.signals_df) > 0, "signals_df no debería estar vacío"
     
-    # Validamos que el estimador corrió y calculó errores
-    assert "f_rmse_hz" in result.summary_df.columns
+    # Validamos que el estimador corrió y calculó la nueva arquitectura de errores
+    assert "m1_rmse_hz" in result.summary_df.columns, "La nueva arquitectura de métricas no se ejecutó"
     assert "f_hat_hz" in result.signals_df.columns
-    assert not result.summary_df["f_rmse_hz"].isna().any(), "RMSE no debería ser NaN"
+    assert not result.summary_df["m1_rmse_hz"].isna().any(), "RMSE no debería ser NaN"
 
 
 # ==========================================
-# D: Prueba de 10 Corridas con Artefactos
+# D: Prueba de Corridas con Artefactos y JSON de Métricas
 # ==========================================
 def test_d_ten_runs_artifacts_and_metrics():
     """
-    Test D: Corre 10 veces, guarda los resultados en CSV,
-    genera un plot, y un JSON con métricas de performance, 
-    workers, RMSE y variaciones de Monte Carlo.
+    Test D: Corre N veces, guarda los resultados en CSV,
+    genera un plot, y un JSON con las métricas avanzadas (M1 a M17)
+    promediadas del Monte Carlo.
     """
-    N_RUNS = 3
-    out_dir = ROOT / "tests" / "montecarlo" / "artifacts" / "ieee_single_sinwave_lkf"
+    N_RUNS = 30  # Usamos 30 para evaluar Monte Carlo estocástico
+    out_dir = ROOT / "tests" / "montecarlo" / "artifacts" / "ieee_single_sinwave_ipdft"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     engine = MonteCarloEngine(
         scenario_cls=IEEESingleSinWaveScenario,
-        estimator_cls=LKF_Estimator,
+        estimator_cls=IPDFT_Estimator,
         n_runs=N_RUNS,
         base_seed=24
     )
@@ -129,14 +132,9 @@ def test_d_ten_runs_artifacts_and_metrics():
 
     fig, axes = plt.subplots(2, 1, figsize=(7, 5), sharex=True)
     
-    # Ploteamos cada run en la gráfica
     for run_idx in range(N_RUNS):
         run_data = result.signals_df[result.signals_df["run_idx"] == run_idx]
-        
-        # Subplot 1: Voltaje
         axes[0].plot(run_data["t_s"], run_data["v_pu"], alpha=0.5, linewidth=0.5)
-        
-        # Subplot 2: Frecuencia (Real vs Estimada)
         axes[1].plot(run_data["t_s"], run_data["f_true_hz"], color="black", alpha=0.3, linewidth=1.5, label="True Freq" if run_idx==0 else "")
         if "f_hat_hz" in run_data.columns:
             axes[1].plot(run_data["t_s"], run_data["f_hat_hz"], alpha=0.6, linewidth=0.8, linestyle="--")
@@ -147,48 +145,76 @@ def test_d_ten_runs_artifacts_and_metrics():
     axes[1].set_ylabel("Frequency [Hz]")
     axes[1].legend(loc="upper right")
 
-    plot_path = out_dir / "mc_10_runs_plot.png"
+    plot_path = out_dir / f"mc_{N_RUNS}_runs_plot.png"
     fig.savefig(plot_path)
     plt.close(fig)
     assert plot_path.exists()
 
-    # 3. Generar JSON con Métricas
+    # 3. Generar JSON con Métricas IBR-Centric y Estadísticas de Monte Carlo
     summary_df = result.summary_df
     
-    # Extraer variables que variaron en el Monte Carlo (buscamos varianza > 0)
-    # Excluimos columnas propias del resultado como run_idx, f_rmse_hz, etc.
-    exclude_cols = ["run_idx", "scenario_name", "n_samples", "seed", "v_mean", "v_std", "v_rms", "v_max", "v_min", "f_true_mean", "f_true_std", "f_mae_hz", "f_rmse_hz", "f_max_abs_err_hz", "f_hat_mean_hz", "f_hat_std_hz"]
-    param_cols = [col for col in summary_df.columns if col not in exclude_cols]
+    # Excluimos las columnas fijas o de métricas al calcular variaciones de entrada
+    exclude_cols = ["run_idx", "scenario_name", "n_samples", "seed", "v_mean", "v_std", "v_rms", "v_max", "v_min", "f_true_mean", "f_true_std"]
+    metric_cols = [col for col in summary_df.columns if col.startswith("m")] # m1, m2, etc.
+    param_cols = [col for col in summary_df.columns if col not in exclude_cols and col not in metric_cols]
     
+    # Estadísticas de perturbación de entrada
     variations = {}
     for col in param_cols:
         try:
             variations[f"{col}_std"] = float(summary_df[col].std())
             variations[f"{col}_mean"] = float(summary_df[col].mean())
         except TypeError:
-            pass # Ignoramos columnas que no sean numéricas
+            pass 
 
+    # Diccionario final consolidado (Directo al Paper)
     metrics = {
+        "metadata": {
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "python_version": platform.python_version(),
+            "os_system": f"{platform.system()} {platform.release()}",
+            "cpu_architecture": platform.processor(),
+            "total_system_cores": multiprocessing.cpu_count(),
+            "estimator_name": result.estimator_name,
+            "scenario_name": result.scenario_name
+        },
         "performance": {
             "execution_time_seconds": round(execution_time, 4),
-            "workers_used": multiprocessing.cpu_count(),
-            "n_runs_completed": N_RUNS
+            "workers_used": min(multiprocessing.cpu_count(), N_RUNS),
+            "n_runs_completed": N_RUNS,
+            "avg_time_per_run_seconds": round(execution_time / max(N_RUNS, 1), 4)
         },
-        "estimator_accuracy": {
-            "mean_rmse_hz": float(summary_df["f_rmse_hz"].mean()),
-            "max_rmse_hz": float(summary_df["f_rmse_hz"].max()),
-            "min_rmse_hz": float(summary_df["f_rmse_hz"].min()),
-            "mean_mae_hz": float(summary_df["f_mae_hz"].mean())
+        "precision_baseline": {
+            "m1_rmse_hz_mean": float(summary_df["m1_rmse_hz"].mean()),
+            "m1_rmse_hz_std": float(summary_df["m1_rmse_hz"].std()),
+            "m1_rmse_hz_p95": float(summary_df["m1_rmse_hz"].quantile(0.95)),
+            "m2_mae_hz_mean": float(summary_df["m2_mae_hz"].mean()),
+            "m3_max_peak_hz_mean": float(summary_df["m3_max_peak_hz"].mean()),
+        },
+        "protection_risk": {
+            "m5_trip_risk_s_mean": float(summary_df["m5_trip_risk_s"].mean()),
+            "m5_trip_risk_s_max": float(summary_df["m5_trip_risk_s"].max()),
+            "m7_pcb_hz_mean": float(summary_df["m7_pcb_hz"].mean()),
+            "m8_settling_time_s_mean": float(summary_df["m8_settling_time_s"].mean()),
+        },
+        "rocof_and_ibr": {
+            "m9_rfe_max_hz_s_mean": float(summary_df["m9_rfe_max_hz_s"].mean()),
+            "m11_rnaf_db_mean": float(summary_df["m11_rnaf_db"].mean()),
+            "m12_isi_pu_mean": float(summary_df["m12_isi_pu"].mean()),
+        },
+        "hardware_and_paper": {
+            "m13_cpu_time_us_mean": float(summary_df["m13_cpu_time_us"].mean()),
+            "m16_heatmap_pass_rate": float(summary_df["m16_heatmap_pass"].mean()), # % de corridas que pasan
+            "hw_class_assigned": summary_df["m17_hw_class"].iloc[0] 
         },
         "montecarlo_variations": variations
     }
 
-    json_path = out_dir / "mc_10_runs_metrics.json"
+    json_path = out_dir / f"mc_{N_RUNS}_runs_metrics.json"
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(metrics, f, indent=4)
 
     assert json_path.exists()
     
-    # Pequeña validación de que el estimador es medianamente razonable 
-    # (Ajusta este umbral según lo que esperes de tu LKF)
-    assert metrics["estimator_accuracy"]["mean_rmse_hz"] < 25.0, "El RMSE promedio es excesivamente alto"
+    # Validación del límite de error usando la nueva métrica
+    assert metrics["precision_baseline"]["m1_rmse_hz_mean"] < 1.0, "El RMSE promedio es excesivamente alto"

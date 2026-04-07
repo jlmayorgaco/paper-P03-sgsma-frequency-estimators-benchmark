@@ -1,7 +1,20 @@
-
 from __future__ import annotations
 
+import os
+# =====================================================================
+# OPTIMIZACIÓN CRÍTICA: Prevenir Deadlocks de NumPy en CPUs Multi-Core.
+# Obliga a las librerías matemáticas en C a usar 1 hilo por proceso
+# para que el ProcessPoolExecutor de Python escale perfectamente.
+# Debe ir ANTES de importar numpy.
+# =====================================================================
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
+
 import multiprocessing
+import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -9,7 +22,10 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from tqdm import tqdm  # <-- Importamos tqdm para la barra de progreso
+from tqdm import tqdm
+
+# Importamos la nueva arquitectura de métricas IBR-Centric
+from analysis.metrics import calculate_all_metrics
 
 
 @dataclass
@@ -55,7 +71,7 @@ class MonteCarloEngine:
         params["seed"] = self.base_seed + run_idx
         return params
 
-    def _run_estimator(self, v: np.ndarray, run_idx: int = 0) -> dict[str, np.ndarray]:
+    def _run_estimator(self, v: np.ndarray, run_idx: int = 0) -> dict[str, Any]:
         if self.estimator_cls is None:
             return {}
 
@@ -65,11 +81,15 @@ class MonteCarloEngine:
         if hasattr(est, "reset"):
             est.reset()
 
+        # Extraemos la latencia estructural aquí para evitar doble instanciación
+        struct_samples = 0
+        if hasattr(est, "structural_latency_samples"):
+            struct_samples = est.structural_latency_samples()
+
         # =========================================================
         # 1. RUTA RÁPIDA (Fast Path): Soporte para Numba/Vectorizado
         # =========================================================
         if hasattr(est, "step_vectorized"):
-            # Pasamos todo el bloque. El estimador iterará internamente en C/C++
             f_hat = est.step_vectorized(v)
 
         # =========================================================
@@ -77,24 +97,23 @@ class MonteCarloEngine:
         # =========================================================
         else:
             f_hat = np.empty(len(v), dtype=float)
-            
-            # Cache the method lookup (prevents Python from searching for .step 1.5M times)
             step_func = est.step 
-            
-            # Iterate directly over the numpy array
             for k in range(len(v)):
                 f_hat[k] = float(step_func(float(v[k])))
 
-        return {"f_hat": np.asarray(f_hat, dtype=float)}
+        return {
+            "f_hat": np.asarray(f_hat, dtype=float),
+            "struct_samples": struct_samples
+        }
     
     def run_once(self, run_idx: int) -> tuple[dict[str, Any], pd.DataFrame]:
-        """
-        Este método es el que se ejecutará en paralelo.
-        """
         params = self.sample_params(run_idx)
         sc = self.scenario_cls.run(**params)
 
+        # Medición del tiempo de CPU (perf_counter es el reloj de más alta resolución)
+        start_time = time.perf_counter()
         est_out = self._run_estimator(sc.v)
+        exec_time_s = time.perf_counter() - start_time
 
         row = {
             "run_idx": run_idx,
@@ -110,56 +129,62 @@ class MonteCarloEngine:
             "f_true_std": float(np.std(sc.f_true)),
         }
 
-        signal_df = pd.DataFrame(
-            {
-                "run_idx": run_idx,
-                "t_s": sc.t,
-                "v_pu": sc.v,
-                "f_true_hz": sc.f_true,
-            }
-        )
+        # Construimos el diccionario completo en memoria antes de pasarlo a Pandas
+        # para evitar fragmentación de memoria (altamente eficiente)
+        n_len = len(sc.t)
+        signal_dict = {
+            "run_idx": np.full(n_len, run_idx, dtype=int),
+            "t_s": sc.t,
+            "v_pu": sc.v,
+            "f_true_hz": sc.f_true,
+        }
+        
+        # Añadimos parámetros del Monte Carlo a cada muestra de la señal
+        for key, value in params.items():
+            signal_dict[key] = np.full(n_len, value)
 
         if "f_hat" in est_out:
-            f_hat = np.asarray(est_out["f_hat"], dtype=float)
-            signal_df["f_hat_hz"] = f_hat
+            f_hat = est_out["f_hat"]
+            signal_dict["f_hat_hz"] = f_hat
 
-            err = f_hat - np.asarray(sc.f_true, dtype=float)
-            abs_err = np.abs(err)
+            struct_samples = est_out.get("struct_samples", 0)
+            noise_sigma = params.get("noise_sigma", 0.0)
 
-            row["f_mae_hz"] = float(np.mean(abs_err))
-            row["f_rmse_hz"] = float(np.sqrt(np.mean(err ** 2)))
-            row["f_max_abs_err_hz"] = float(np.max(abs_err))
-            row["f_hat_mean_hz"] = float(np.mean(f_hat))
-            row["f_hat_std_hz"] = float(np.std(f_hat))
+            # -------------------------------------------------------------
+            # NUEVA ARQUITECTURA DE MÉTRICAS (Integración con metrics.py)
+            # -------------------------------------------------------------
+            advanced_metrics = calculate_all_metrics(
+                f_hat=f_hat,
+                f_true=np.asarray(sc.f_true, dtype=float),
+                fs_dsp=10000.0, # FS_DSP asumido a 10 kHz (estándar de tu benchmark)
+                exec_time_s=exec_time_s,
+                structural_samples=struct_samples,
+                noise_sigma=noise_sigma,
+                interharmonic_hz=32.5
+            )
+            
+            # Agregamos M1 a M17 a la fila de resultados
+            row.update(advanced_metrics)
 
-        for key, value in params.items():
-            signal_df[key] = value
+        # Instanciamos el DataFrame de una sola vez
+        signal_df = pd.DataFrame(signal_dict)
 
         return row, signal_df
 
     def run(self) -> MonteCarloResult:
-        """
-        Ejecuta la simulación usando múltiples cores del CPU con barra de progreso.
-        """
         num_workers = multiprocessing.cpu_count()
-        
         print(f"Lanzando {self.n_runs} iteraciones en {num_workers} procesos...")
 
         summary_rows = []
         signal_dfs = []
 
         with ProcessPoolExecutor(max_workers=num_workers) as executor:
-            # Enviamos todos los trabajos al pool y guardamos las "promesas" (Futures)
             futures = [executor.submit(self.run_once, i) for i in range(self.n_runs)]
-            
-            # Usamos tqdm para iterar sobre as_completed
-            # Esto actualiza la barra cada vez que una tarea finaliza, sin importar el orden
             for future in tqdm(as_completed(futures), total=self.n_runs, desc="Monte Carlo Progress"):
-                row, signal_df = future.result()  # future.result() bloquea hasta que ese worker termine
+                row, signal_df = future.result() 
                 summary_rows.append(row)
                 signal_dfs.append(signal_df)
 
-        # Ordenamos los resultados porque as_completed los devuelve a medida que terminan (desordenados)
         summary_df = pd.DataFrame(summary_rows).sort_values(by="run_idx").reset_index(drop=True)
         signals_df = pd.concat(signal_dfs, ignore_index=True).sort_values(by=["run_idx", "t_s"]).reset_index(drop=True)
 
@@ -193,6 +218,3 @@ class MonteCarloEngine:
         result.signals_df.to_csv(signals_path, index=False)
 
         return summary_path, signals_path
-
-if __name__ == "__main__":
-    pass

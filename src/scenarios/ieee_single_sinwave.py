@@ -39,8 +39,8 @@ class IEEESingleSinWaveScenario(Scenario):
         },
         "freq_hz": {
             "kind": "uniform",
-            "low": 59.5,
-            "high": 60.5,
+            "low": 59.85,
+            "high": 60.15,
         },
         "phase_rad": {
             "kind": "uniform",
@@ -50,7 +50,7 @@ class IEEESingleSinWaveScenario(Scenario):
         "noise_sigma": {
             "kind": "uniform",
             "low": 0.0,
-            "high": 0.02,
+            "high": 0.000000000001,
         },
     }
 
