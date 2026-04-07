@@ -1,0 +1,51 @@
+
+# Project root
+**/venv/
+**/.venv/
+
+# IDE & Editor caches
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS-specific cache directories
+.DS_Store
+Thumbs.db
+
+# Python-specific
+__pycache__/
+*.py[cod]
+*$py.class
+*/**/*.nbc
+*.nbc
+*.csv
+
+# LaTeX files (exclude from version control)
+\latex/
+*.log
+*.aux
+*.toc
+*.out
+*.bak
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.gbl
+*.glg
+
+# CSV files (if you want to ignore them)
+data/*.csv  # Adjust path as needed
+
+# Cached downloads & temporary files
+.DS_Store
+Downloads/
+temp/*
+
+# Environment variables
+.env
+.env.local
+
+# IDE-specific caches
+.vscode/settings.json
+.idea/workspace.xml
