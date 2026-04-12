@@ -286,7 +286,23 @@ Commit: df6aedc "T-102: Replace np.random in Numba cores with deterministic dith
 - `grep -rn "nominal_f.*=.*50" src/estimators/` returns zero hits.
 - Smoke test ZCD mean error on 60 Hz sine < 0.05 Hz.
 
-**Evidence field:** *(grep output)*
+**Evidence field:**
+
+```
+CLOSED: All nominal_f=50.0 defaults fixed to 60.0 (2026-04-12)
+
+grep -rn "nominal_f.*=.*50" src/estimators/ | grep -v __pycache__:
+  (no output -- zero hits)
+
+Files fixed: zcd.py (3 locations), ukf.py (3), epll.py (3), lkf.py (3), lkf2.py (3)
+ZCD was the ticket target; UKF (canonical set) also affected.
+
+ZCD accuracy on 60 Hz sine (smoke test criterion):
+  ZCD default nominal_f: 60.0 Hz
+  mean_err (last half): 0.000000 Hz  PASS (< 0.05 Hz)
+
+Commit: acb2cff "T-103: Fix nominal_f defaults from 50 Hz to 60 Hz"
+```
 
 ---
 
