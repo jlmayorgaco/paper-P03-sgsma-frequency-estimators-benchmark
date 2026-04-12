@@ -191,7 +191,41 @@ Commit: 86906bd "T-100: Decimate in Scenario.run() (Option C)"
 - Unit test passes for all estimators in the canonical 11-method set.
 - CLAUDE.md §11 adds: "Never allow `step` and `step_vectorized` to implement different algorithms."
 
-**Evidence field:** *(pytest output)*
+**Evidence field:**
+
+```
+CLOSED: ALL 11 estimators PASS (2026-04-12, atol=1e-6 Hz)
+
+Bugs found and fixed:
+1. TFT: NameError 'W' not defined in _compute_tft_weights (tft.py:117).
+   Fix: added W = np.diag(self.W_vec) before WLS computation.
+
+2. Koopman: step() computed every sample; step_vectorized() computed every 10.
+   Fix: shared self._step_counter across both paths. Counter checked BEFORE
+   increment so i=0,10,20,... aligns with loop i%10==0 in batch mode.
+
+3. IpDFT: buf_idx/buf_count/last_f were Numba-local (reset on every call).
+   step() always had i=0, so DFT ran on every single-sample call (too frequent);
+   batch call ran DFT at i=0,10,20,... (correct).
+   Fix: persisted _buf_idx/_buf_count/_last_f on Python class; changed
+   i%10 -> buf_count%10 for consistent decimation across call sizes.
+
+Unit test output (src/tests/test_scalar_vs_vector.py):
+  Signal: 3000 samples at 10 kHz, 60 Hz sine | Tolerance: 1e-06 Hz
+  EKF     PASS  0
+  EKF2    PASS  0
+  UKF     PASS  0
+  PLL     PASS  0
+  SOGI    PASS  0
+  IpDFT   PASS  0
+  TFT     PASS  0
+  RLS     PASS  0
+  RLS-VFF PASS  0
+  Teager  PASS  0
+  Koopman PASS  4.2e-08 Hz
+
+Commit: b03e384 "T-101: Fix step() vs step_vectorized() divergence"
+```
 
 ---
 
