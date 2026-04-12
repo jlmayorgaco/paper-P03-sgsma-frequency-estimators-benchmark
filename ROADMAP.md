@@ -246,7 +246,28 @@ Commit: b03e384 "T-101: Fix step() vs step_vectorized() divergence"
 - `prony.py::_prony_core` contains no `np.random.*` calls.
 - Reproducibility test: running the MC for Prony twice with the same `base_seed` produces bit-identical `summary_df`.
 
-**Evidence field:** *(output of `df1.equals(df2)`)*
+**Evidence field:**
+
+```
+CLOSED: Both Prony and Koopman fixed (2026-04-12)
+
+grep for np.random.* in Numba cores:
+  prony.py:17 -- only in comment (replaced)
+  koopman.py:17 -- only in comment (replaced)
+  Result: zero active np.random.* calls in @njit functions
+
+Deterministic dither: 1e-9 * (np.arange(N)/N - 0.5) -- linear ramp,
+provides numerical well-posedness, no variance across runs.
+
+Koopman reproducibility test:
+  run1 == run2 (bit-identical non-NaN): True
+  max diff: 0.0
+
+Also fixed T-101 step/step_vectorized decimation parity in Prony
+(same i%10 issue as Koopman, applied _step_counter fix).
+
+Commit: df6aedc "T-102: Replace np.random in Numba cores with deterministic dither"
+```
 
 ---
 
