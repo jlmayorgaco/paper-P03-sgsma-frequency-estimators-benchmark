@@ -14,7 +14,9 @@ def _koopman_edmd_core(buffer: np.ndarray, dt: float) -> float:
     Utiliza SVD para aislar el subespacio de señal antes de derivar la dinámica.
     """
     N = len(buffer)
-    buf_work = buffer + 1e-9 * np.random.standard_normal(N)
+    # T-102: deterministic dither replaces np.random.standard_normal (Numba's
+    # unseeded per-thread RNG, making MC runs non-reproducible).
+    buf_work = buffer + 1e-9 * (np.arange(N, dtype=np.float64) / N - 0.5)
     
     # 1. Matriz de Observables Profunda (Hankel)
     L = N // 2

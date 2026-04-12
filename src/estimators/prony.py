@@ -14,8 +14,10 @@ def _prony_core(buffer: np.ndarray, dt: float, p: int) -> float:
     Utiliza predicción lineal (AR) y autovalores de la matriz compañera.
     """
     N = len(buffer)
-    # Dither para evitar singularidad exacta en señales puras
-    buf_work = buffer + 1e-9 * np.random.standard_normal(N)
+    # T-102: deterministic dither replaces np.random.standard_normal (which used
+    # Numba's unseeded per-thread RNG, making MC runs non-reproducible).
+    # Linear ramp gives numerical well-posedness without statistical properties.
+    buf_work = buffer + 1e-9 * (np.arange(N, dtype=np.float64) / N - 0.5)
     
     # 1. Ecuaciones de Predicción Lineal (LP): X * a = -x
     L = N - p
@@ -44,9 +46,8 @@ def _prony_core(buffer: np.ndarray, dt: float, p: int) -> float:
     roots = np.linalg.eigvals(C_complex)
     
     # 5. Selección del polo de interés
-    # Buscamos la raíz más cercana al círculo unitario (menor amortiguamiento)
-    # que tenga una frecuencia física lógica.
-    best_f = 0.0
+    # FIX: Inicializamos en NaN para exponer fallos silenciosos
+    best_f = np.nan 
     min_dist = 1e6
     two_pi_dt = 2.0 * math.pi * dt
     
@@ -87,45 +88,68 @@ class Prony_Estimator(BaseFrequencyEstimator):
 
     def reset(self) -> None:
         self.buffer = np.zeros(self.N, dtype=np.float64)
-        self.f_out = self.nominal_f
+        # FIX: Evitar "aprobar" el test regalando la frecuencia nominal
+        self.f_out = np.nan
+
+        # Métricas de diagnóstico
+        self._valid_updates = 0
+        self._total_calls = 0
+        # T-101: shared decimation counter for step() / step_vectorized() parity
+        self._step_counter = 0
+
+    @classmethod
+    def default_params(cls) -> dict[str, float]:
+        return {"nominal_f": 60.0}
+
+    @staticmethod
+    def describe_params(params: dict[str, float]) -> str:
+        return f"Prony f_nom={params.get('nominal_f', 60.0)}Hz"
 
     def structural_latency_samples(self) -> int:
         return self.N // 2
 
     def step(self, z: float) -> float:
+        # T-101: mirrors step_vectorized() decimation via shared _step_counter
         self.buffer[:-1] = self.buffer[1:]
         self.buffer[-1] = z
-        
-        if np.abs(z) > 1e-4:
+
+        if self._step_counter % 10 == 0 and np.abs(z) > 1e-4:
+            self._total_calls += 1
             try:
                 val = _prony_core(self.buffer, self.dt, self.p)
-                if val > 0.0: # Si encontró una raíz válida
+                if not np.isnan(val) and val > 0.0:
                     self.f_out = val
+                    self._valid_updates += 1
             except:
                 pass
+        self._step_counter += 1
         return self.f_out
 
     def step_vectorized(self, v_array: np.ndarray) -> np.ndarray:
+        # T-101: uses self._step_counter for decimation (same as step())
         n = len(v_array)
         f_est = np.empty(n, dtype=np.float64)
-        
+
         for i in range(n):
             z = v_array[i]
             self.buffer[:-1] = self.buffer[1:]
             self.buffer[-1] = z
-            
-            # Decimación: procesar cada 10 muestras para ahorrar CPU (1ms latencia)
-            if i % 10 == 0 and np.abs(z) > 1e-4:
+
+            if self._step_counter % 10 == 0 and np.abs(z) > 1e-4:
+                self._total_calls += 1
                 try:
                     val = _prony_core(self.buffer, self.dt, self.p)
-                    if val > 0.0:
+                    if not np.isnan(val) and val > 0.0:
                         self.f_out = val
+                        self._valid_updates += 1
                 except:
                     pass
+            self._step_counter += 1
             f_est[i] = self.f_out
-            
+
         return f_est
 
     def estimate(self, t: np.ndarray, v: np.ndarray) -> np.ndarray:
+        self.dt = float(t[1] - t[0])
         self.reset()
         return self.step_vectorized(v)
