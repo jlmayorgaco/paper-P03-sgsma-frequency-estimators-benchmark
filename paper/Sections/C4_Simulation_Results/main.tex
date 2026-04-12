@@ -141,9 +141,15 @@ protection without GPU acceleration.
     IpDFT    & $110\,\mu\text{s}$ & M1 & DSP / FPGA \\
     Koopman  & $120\,\mu\text{s}$ & M1 & CPU \\
     UKF      & $215\,\mu\text{s}$ & M1 & High-perf CPU \\
-    PI-GRU   & ${153{,}900}\,\mu\text{s}$ (${\approx}154$\,ms) & — & GPU only \\
+    PI-GRU$^\ddagger$ & ${153{,}900}\,\mu\text{s}$ (${\approx}154$\,ms) & — & GPU only \\
     \bottomrule
   \end{tabular}
+  \par\smallskip
+  {\scriptsize $^\ddagger$PI-GRU inference uses unoptimized PyTorch eager mode
+    without batching. Production deployments with TorchScript/ONNX and batched
+    windowing would reduce per-sample cost by $\geq\!100\times$; however, this
+    remains outside the scope of embedded relay protection without dedicated
+    hardware acceleration.}
 \end{table}
 
 % ---------------------------------------------------------
