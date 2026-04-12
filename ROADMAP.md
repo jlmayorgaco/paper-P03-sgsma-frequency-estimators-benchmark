@@ -147,7 +147,31 @@ Commit: dba74dd "T-001: Add minimal smoke test"
 - If Option C chosen: `sc.v` length after `run()` equals `duration_s * 10000`.
 - A line is added to `CLAUDE.md` §4 stating the chosen resolution.
 
-**Evidence field:** *(smoke test output after fix)*
+**Evidence field:**
+
+```
+CLOSED: Option C implemented (2026-04-12)
+
+Decision: Option C — decimate in Scenario.run()
+  generate() stays at FS_PHYSICS=1 MHz for physics fidelity.
+  run() decimates t/v/f_true via [::RATIO] (RATIO=100) -> 10 kHz output.
+
+Verification:
+  run() 1.5s: N=15000, dt=1.00e-04, fs=10000 -- PASS
+  Expected N=15000, match: True
+  Assertion dt_actual == DT_DSP: PASS
+
+Smoke test after fix (same estimators as T-001, signals unchanged since
+smoke_test_minimal.py generates its own signal already at 10 kHz):
+  IpDFT mean_err=0.0041 Hz -- PASS (< 0.01 Hz criterion)
+  SOGI  mean_err=0.0036 Hz -- PASS (< 0.01 Hz criterion)
+  TFT   FAIL (NameError 'W' -- pre-existing bug, fixed in T-101)
+
+CLAUDE.md section 4 updated with T-100 Option C documentation.
+MonteCarloEngine.run_once() now asserts dt_actual==1e-4 after each scenario.run().
+
+Commit: 86906bd "T-100: Decimate in Scenario.run() (Option C)"
+```
 
 ---
 
