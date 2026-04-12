@@ -362,7 +362,25 @@ Commit: 53977b6 "T-104: Fix PLL and SOGI-PLL structural_latency_samples()"
 - Running the D scenario on a perfect oracle (f_hat = f_true shifted by a 1-sample step) returns RFE_max ≤ 0.1 Hz/s instead of 1e4 Hz/s.
 - Paper table values for RFE_max change at most 5% on scenarios A/B/C (no events) and may change significantly on D/E (by design).
 
-**Evidence field:** *(before/after values on a synthetic test)*
+**Evidence field:**
+
+```
+CLOSED: percentile(99.5) approach implemented (2026-04-12)
+
+Choice: Option 2 -- np.max -> np.percentile(99.5). Simpler than event_mask,
+no scenario metadata changes needed. Documents the choice in m9_m10 docstring.
+
+Synthetic tests:
+  Perfect oracle (f_hat = f_true shifted 1 sample, 1 Hz step at t=0.5s):
+    np.max:           5.00e+03 Hz/s
+    percentile(99.5): 0.00e+00 Hz/s  PASS (criterion <= 0.1 Hz/s)
+  
+  Smooth ramp (no events, Scenario A/B/C proxy):
+    np.max:           0.1257 Hz/s
+    percentile(99.5): 0.1257 Hz/s  (change: 0.00%  PASS <= 5%)
+
+Commit: c372ced "T-200: Guard RFE_max against phase-jump gradient artifacts"
+```
 
 ---
 
