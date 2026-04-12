@@ -1,5 +1,45 @@
 from __future__ import annotations
 
+# =====================================================================
+# T-000 SAMPLE-RATE AUDIT (2026-04-12)
+# =====================================================================
+# FINDING: sc.v reaches step_vectorized() at FS_PHYSICS = 1,000,000 Hz.
+#
+# Evidence (diagnostic run):
+#   generate(): N=100001, dt=1.00e-06, fs=1,000,000
+#   run()     : N=100001, dt=1.00e-06, fs=1,000,000
+#
+# Signal flow:
+#   Scenario.generate() → 1 MHz  (t step = 1e-6 s)
+#   Scenario.run()      → 1 MHz  (no decimation — just calls generate())
+#   _run_estimator(sc.v)→ 1 MHz  (no decimation here either)
+#   est.step_vectorized(v) receives 1 MHz samples
+#
+# Estimator internal time base:
+#   All estimators import DT_DSP = 1/FS_DSP = 1e-4 s (10 kHz)
+#   and use it as self.dt in state-transition matrices.
+#
+# MISMATCH CONFIRMED:
+#   Estimators receive 1 MHz samples but compute with a 10 kHz dt.
+#   This causes a factor-100 error in the time base used for physics
+#   (frequency extraction from phase, Kalman prediction steps, etc.).
+#
+# Additional finding:
+#   calculate_all_metrics() is called with hardcoded fs_dsp=10000.0
+#   (line ~159) even though the actual signal length corresponds to 1 MHz.
+#   Metric windows (e.g. 150 ms = 1500 samples at 10 kHz) are therefore
+#   computed on 150,000 samples instead — the evaluation window is correct
+#   in time but the sample count is 100× larger than intended.
+#
+# Exception — smoke tests DO correctly decimate:
+#   test_dedicated_smoke_no_mc_test.py:127-138 checks dt_real < 1e-5
+#   and decimates by factor 100 before calling step_vectorized().
+#   Smoke-test results are therefore valid; MonteCarloEngine is NOT.
+#
+# Fix responsibility: T-100 will implement Option C (decimate in
+# Scenario.run()) so that run() always returns 10 kHz output.
+# =====================================================================
+
 import os
 # =====================================================================
 # OPTIMIZACIÓN CRÍTICA: Prevenir Deadlocks de NumPy en CPUs Multi-Core.
