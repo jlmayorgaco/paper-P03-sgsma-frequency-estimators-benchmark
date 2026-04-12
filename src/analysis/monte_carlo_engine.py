@@ -166,6 +166,26 @@ class MonteCarloEngine:
                 f"(expected 1e-4 s = 10 kHz). Scenario.run() decimation may be broken."
             )
 
+        # T-202 WARMUP: Trigger Numba JIT compilation BEFORE the timed window.
+        # Without this, the first MC run includes compilation time (up to several
+        # seconds for Numba kernels), inflating TIME_PER_SAMPLE_US for whichever
+        # estimator happens to run first. The warmup creates a throwaway instance,
+        # runs it on the first 100 samples to trigger @njit compilation, then
+        # discards it. The real timed run below uses a fresh instance on sc.v.
+        if self.estimator_cls is not None:
+            _params_warmup = dict(self.estimator_params or {})
+            _est_warmup = self.estimator_cls(**_params_warmup)
+            _warmup_v = sc.v[:min(100, len(sc.v))]
+            try:
+                if hasattr(_est_warmup, "step_vectorized"):
+                    _est_warmup.step_vectorized(_warmup_v)
+                elif hasattr(_est_warmup, "step"):
+                    for _z in _warmup_v:
+                        _est_warmup.step(float(_z))
+            except Exception:
+                pass  # warmup failure is non-fatal — timing may be slightly inflated
+            del _est_warmup, _warmup_v, _params_warmup
+
         # Medición del tiempo de CPU (perf_counter es el reloj de más alta resolución)
         start_time = time.perf_counter()
         est_out = self._run_estimator(sc.v)
