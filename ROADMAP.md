@@ -87,7 +87,36 @@ Commit: e11e3db "T-000: Document sample-rate mismatch in monte_carlo_engine.py"
 - Output table identifies exactly which estimators pass and which fail.
 - Any estimator failing is flagged with a non-zero exit code.
 
-**Evidence field:** *(paste table output)*
+**Evidence field:**
+
+```
+CLOSED: 9 PASS  2 WARN  1 FAIL (2026-04-12, 28.4 s elapsed)
+
+[1] Sample-rate constants: OK (FS_PHYSICS=1e6, FS_DSP=1e4, RATIO=100, DT_DSP=1e-4)
+[2] Signal: 60 Hz sine, 1.5 s, 15000 samples at 10 kHz (decimated from 1 MHz)
+[3] Metrics sanity: OK — all accuracy metrics = 0 for perfect oracle
+
+Estimator    MC       mean_err    max_err    step==vec  has_nan    time_ms  note
+OK EKF       YES        0.0000     0.0000         True    False      164.3
+OK EKF2      YES        0.0000     0.0000         True    False       18.0
+OK UKF       YES        0.0002     0.0003         True    False       32.7
+OK PLL       YES        0.0726     0.1162         True    False       13.8
+OK SOGI      YES        0.0036     0.0036         True    False       11.1
+OK IpDFT     YES        0.0041     0.0066         True    False       14.0
+XX TFT       YES           n/a        n/a        False    False        n/a  step_vectorized raised: name 'W' is not defined
+OK RLS       YES        0.0000     0.0000         True    False       12.3
+OK RLS-VFF   YES        0.0000     0.0000         True    False        0.8
+ ! Teager    YES      984.4760  1076.3811         True    False       13.6  mean_err=984.4760Hz>0.1Hz
+ ! Koopman   YES        0.0000     0.0000        False    False     2847.8  NaN warm-up only (struct_lat=125); step/vec diff=7.4839Hz
+OK PI-GRU    NO         0.0176     0.0492         True    False     7691.8
+
+Bugs identified:
+- TFT FAIL: NameError 'W' not defined in _compute_tft_weights() (tft.py:117) -> T-101
+- Teager WARN: 984 Hz mean error (severe accuracy issue; paper notes RMSE 17-21 Hz) -> T-100
+- Koopman WARN: step/vec 7.5 Hz disagreement -> T-101
+
+Commit: dba74dd "T-001: Add minimal smoke test"
+```
 
 ---
 
