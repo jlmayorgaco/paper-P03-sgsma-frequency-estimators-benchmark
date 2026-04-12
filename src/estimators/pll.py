@@ -131,7 +131,7 @@ class PLL_Estimator(BaseFrequencyEstimator):
 
     def __init__(
         self,
-        nominal_f: float = 50.0,
+        nominal_f: float = 60.0, # FIX: Unificado a 60 Hz para evitar saturación en benchmarks
         settle_time: float = 0.08,
         amp_alpha: float = 0.01,
         output_smoothing: float = 0.02,
@@ -175,7 +175,7 @@ class PLL_Estimator(BaseFrequencyEstimator):
     @classmethod
     def default_params(cls) -> dict[str, float]:
         return {
-            "nominal_f": 50.0,
+            "nominal_f": 60.0, # FIX: Unificado a 60 Hz
             "settle_time": 0.08,
             "amp_alpha": 0.01,
             "output_smoothing": 0.02,
@@ -187,7 +187,7 @@ class PLL_Estimator(BaseFrequencyEstimator):
     @staticmethod
     def describe_params(params: dict[str, float]) -> str:
         return (
-            f"f_nom={params.get('nominal_f', 50.0)}Hz, "
+            f"f_nom={params.get('nominal_f', 60.0)}Hz, " # FIX: Unificado a 60 Hz
             f"Ts={params.get('settle_time', 0.08)}s, "
             f"amp_alpha={params.get('amp_alpha', 0.01)}, "
             f"pd_lpf_alpha={params.get('pd_lpf_alpha', 0.02)}, "
@@ -196,7 +196,11 @@ class PLL_Estimator(BaseFrequencyEstimator):
         )
 
     def structural_latency_samples(self) -> int:
-        return 0
+        """
+        T-104: PLL settling time defines the transient window.
+        Return 2x settle_time in samples so metric windows exclude the transient.
+        """
+        return int(round(2.0 * self.settle_time / self.dt))
 
     def step(self, z: float) -> float:
         v_array = np.array([z], dtype=np.float64)

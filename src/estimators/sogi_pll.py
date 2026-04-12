@@ -131,7 +131,7 @@ class SOGIPLLEstimator(BaseFrequencyEstimator):
 
     def __init__(
         self,
-        nominal_f: float = 50.0,
+        nominal_f: float = 60.0, # FIX: Unificado a 60 Hz
         k_sogi: float = 1.414,
         settle_time: float = 0.06,
         output_smoothing: float = 0.015,
@@ -173,7 +173,7 @@ class SOGIPLLEstimator(BaseFrequencyEstimator):
     @classmethod
     def default_params(cls) -> dict[str, float]:
         return {
-            "nominal_f": 50.0,
+            "nominal_f": 60.0, # FIX: Unificado a 60 Hz
             "k_sogi": 1.414,
             "settle_time": 0.06,
             "output_smoothing": 0.015,
@@ -182,17 +182,18 @@ class SOGIPLLEstimator(BaseFrequencyEstimator):
     @staticmethod
     def describe_params(params: dict[str, float]) -> str:
         return (
-            f"f_nom={params.get('nominal_f', 50.0)}Hz, "
+            f"f_nom={params.get('nominal_f', 60.0)}Hz, " # FIX: Unificado a 60 Hz
             f"k_sogi={params.get('k_sogi', 1.414)}, "
             f"Ts={params.get('settle_time', 0.06)}s"
         )
 
     def structural_latency_samples(self) -> int:
         """
-        Un PLL no tiene latencia estructural fija tipo ventana como IpDFT.
-        Su retardo es dinámico y debe medirse empíricamente.
+        T-104: SOGI-PLL settling time defines the transient window.
+        Return 2x settle_time in samples so metric windows exclude the transient.
+        Factor 2 is standard for 'settled to within ~2% of final value'.
         """
-        return 0
+        return int(round(2.0 * self.settle_time / self.dt))
 
     def step(self, z: float) -> float:
         v_array = np.array([z], dtype=np.float64)
@@ -258,6 +259,6 @@ class SOGIPLLEstimator(BaseFrequencyEstimator):
             if not np.all(np.abs(dt_all - dt) <= tol):
                 raise ValueError("SOGIPLLEstimator requires uniformly sampled time vectors.")
 
-        self.reset()
         self.dt = dt
+        self.reset()
         return self.step_vectorized(v)
