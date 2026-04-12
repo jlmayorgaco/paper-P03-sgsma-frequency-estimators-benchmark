@@ -162,6 +162,7 @@ All file paths are relative to `paper/Sections/`. JSON source paths are `benchma
 6. **Every number traces to a JSON key.** If you cannot state the exact `benchmark_results.json` path for a manuscript number, it cannot go in the paper.
 7. **Use `IBR_MultiEvent_Classic` everywhere.** The alias `IBR_MultiEvent` does not exist as a JSON key and will silently fail all lookups.
 8. **Canonical results only.** `results/benchmark_results.json` at the repo root is a stale artifact. Only `src/figures_estimatores_benchmark_test5/benchmark_results.json` is canonical.
+9. **Never allow `step` and `step_vectorized` to implement different algorithms.** Both paths must use identical decimation policy, state updates, and computation triggers. Any divergence is a bug — enforce with `test_scalar_vs_vector.py`.
 
 ---
 

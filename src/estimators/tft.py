@@ -74,8 +74,17 @@ class TFT_Estimator(BaseFrequencyEstimator):
         self.nominal_f = float(nominal_f)
         self.n_cycles = float(n_cycles)
         self.dt = float(dt)
-        self.w_nom = 2.0 * math.pi * self.nominal_f
+        
+        # FIX: Centralizamos la inicialización para garantizar coherencia
+        self._update_internals()
 
+    def _update_internals(self) -> None:
+        """
+        Recalcula las bases del TFT y el tamaño del buffer 
+        siempre que se modifique dt o la frecuencia nominal.
+        """
+        self.w_nom = 2.0 * math.pi * self.nominal_f
+        
         samples_per_cycle = (1.0 / self.nominal_f) / self.dt
         self.N = int(self.n_cycles * samples_per_cycle)
         if self.N % 2 == 0:
@@ -87,7 +96,7 @@ class TFT_Estimator(BaseFrequencyEstimator):
     def _compute_tft_weights(self) -> None:
         M = self.N // 2
         t_m = np.arange(-M, M + 1) * self.dt
-        W = np.diag(np.hanning(self.N))
+        self.W_vec = np.hanning(self.N)
 
         # Frecuencia fundamental positiva y negativa
         ph = self.w_nom * t_m
@@ -104,7 +113,8 @@ class TFT_Estimator(BaseFrequencyEstimator):
             (t_m**2 / 2.0) * E_neg
         ])
 
-        # H = (B^H W B)^-1 B^H W
+        # H = (B^H W B)^-1 B^H W  (W is the diagonal weight matrix from Hann window)
+        W = np.diag(self.W_vec)
         BtWB = B.conj().T @ W @ B
         H_wls = np.linalg.inv(BtWB) @ B.conj().T @ W
 
@@ -160,7 +170,12 @@ class TFT_Estimator(BaseFrequencyEstimator):
         return f_est
 
     def estimate(self, t: np.ndarray, v: np.ndarray) -> np.ndarray:
-        dt = float(t[1] - t[0])
-        self.dt = dt
-        self.reset()
+        dt_new = float(t[1] - t[0])
+        # FIX: Si el dt cambia drásticamente, debemos recalcular las bases matemáticas
+        if abs(self.dt - dt_new) > 1e-10:
+            self.dt = dt_new
+            self._update_internals()
+        else:
+            self.reset()
+            
         return self.step_vectorized(v)
