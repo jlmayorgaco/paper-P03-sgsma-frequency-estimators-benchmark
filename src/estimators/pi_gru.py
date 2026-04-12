@@ -1,9 +1,19 @@
+import os
+# --- CORRECCIÓN MULTIPROCESSING EXTREMA ---
+# Estas variables deben establecerse ANTES de importar torch
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+from tqdm import tqdm
+
 import math
 import numpy as np
 import scipy.signal
 import torch
 import torch.nn as nn
 from pathlib import Path
+
+torch.set_num_threads(1)
 
 from .base import BaseFrequencyEstimator
 from .common import DT_DSP
@@ -75,9 +85,6 @@ class PIDRE_Model(nn.Module):
         out, _ = self.gru(feat) 
         context, _ = self.attn(out) 
         delta_freq = self.fc_freq(context).squeeze(-1) 
-        
-        # Corrección: El modelo puro siempre devuelve el delta de frecuencia.
-        # Ya no hay + 60.0 hardcodeado.
         return delta_freq
 
 class PI_GRU_Estimator(BaseFrequencyEstimator):
@@ -88,31 +95,29 @@ class PI_GRU_Estimator(BaseFrequencyEstimator):
         self.dt = float(dt)
         self.window_len = 100 
         
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = PIDRE_Model(input_dim=1, hidden_dim=128, num_layers=2).to(self.device)
-        self.model.eval() 
-        
-        self._load_trained_weights()
-        self.reset()
+        self.device = torch.device("cpu")
+        self.model = None # Lazy initialization
 
-    def _load_trained_weights(self) -> None:
-        base_dir = Path(__file__).parent
-        weights_path = base_dir / "pi_gru_weights.pt"
-        
-        # Fallback por si borraste el archivo viejo y solo tienes el nuevo
-        if not weights_path.exists():
-            weights_path = base_dir / "pi_gru_weights.pt"
-            if not weights_path.exists():
-                print(f"[{self.name}] ERROR FATAL: No se encontraron pesos.")
-                return
+    def _init_model_if_needed(self):
+        # Solo instancia la red si no existe. Esto salva el multiprocesamiento.
+        if self.model is None:
+            self.model = PIDRE_Model(input_dim=1, hidden_dim=128, num_layers=2).to(self.device)
+            self.model.eval() 
             
-        try:
-            self.model.load_state_dict(torch.load(weights_path, map_location=self.device, weights_only=True), strict=False)
-            print(f"[{self.name}] Pesos de red neuronal cargados.")
-        except Exception as e:
-            print(f"[{self.name}] Fallo al cargar pesos: {e}")
+            base_dir = Path(__file__).parent
+            weights_path = base_dir / "pi_gru_weights.pt"
+            
+            if weights_path.exists():
+                try:
+                    self.model.load_state_dict(torch.load(weights_path, map_location=self.device, weights_only=True), strict=False)
+                    # Print silenciado para no ensuciar la terminal
+                except Exception:
+                    pass
 
     def reset(self) -> None:
+        # Aseguramos que la red cargue de forma segura
+        self._init_model_if_needed()
+        
         self.buffer = np.zeros(self.window_len, dtype=np.float32)
         self.f_out = self.nominal_f
         self.step_count = 0
@@ -120,7 +125,6 @@ class PI_GRU_Estimator(BaseFrequencyEstimator):
         self.bp = IIR_Bandpass(fs=1.0/self.dt, lowcut=self.nominal_f-20, highcut=self.nominal_f+20)
         self.agc = FastRMS_Normalizer(window_size=int(round(1.0 / self.nominal_f / self.dt)))
         
-        # Filtro Suavizador: Promedio de 1 ciclo (167 muestras) para aniquilar el rizado
         self.ma_len = int(round(1.0 / self.nominal_f / self.dt))
         self.out_buffer = np.ones(self.ma_len, dtype=np.float64) * self.nominal_f
 
@@ -135,12 +139,10 @@ class PI_GRU_Estimator(BaseFrequencyEstimator):
         self.buffer[-1] = z_norm
         self.step_count += 1
         
-        # Esperamos a que los filtros se estabilicen
         wait_samples = int(3.0 / self.nominal_f / self.dt) 
         if self.step_count > wait_samples:
             with torch.no_grad():
                 x_t = torch.tensor(self.buffer, dtype=torch.float32, device=self.device).view(1, -1, 1)
-                # Corrección: Sumamos la frecuencia nominal dinámicamente en la etapa de inferencia
                 f_pred = self.model(x_t).item() + self.nominal_f
                 
             self.out_buffer[:-1] = self.out_buffer[1:]
@@ -152,8 +154,11 @@ class PI_GRU_Estimator(BaseFrequencyEstimator):
     def step_vectorized(self, v_array: np.ndarray) -> np.ndarray:
         n = len(v_array)
         f_est = np.empty(n, dtype=np.float64)
-        for i in range(n):
+        
+        # ¡Aquí está la magia! Una barra de progreso para cada simulación
+        for i in tqdm(range(n), desc=f"PI-GRU (Inferencia Muestra a Muestra)", leave=False):
             f_est[i] = self.step(v_array[i])
+            
         return f_est
 
     def estimate(self, t: np.ndarray, v: np.ndarray) -> np.ndarray:

@@ -77,7 +77,7 @@ class SOGI_FLL_Estimator(BaseFrequencyEstimator):
 
     def __init__(
         self,
-        nominal_f: float = 50.0,
+        nominal_f: float = 60.0, # FIX: Unificado a 60 Hz para evitar fallos de saturación
         k_sogi: float = 1.414,  # Ganancia típica de amortiguamiento SOGI (sqrt(2))
         gamma: float = 50.0,    # Ganancia adaptativa del FLL
         dt: float = DT_DSP,
@@ -101,7 +101,7 @@ class SOGI_FLL_Estimator(BaseFrequencyEstimator):
     @classmethod
     def default_params(cls) -> dict[str, float]:
         return {
-            "nominal_f": 50.0,
+            "nominal_f": 60.0, # FIX: Unificado a 60 Hz
             "k_sogi": 1.414,
             "gamma": 50.0,
         }
@@ -109,7 +109,7 @@ class SOGI_FLL_Estimator(BaseFrequencyEstimator):
     @staticmethod
     def describe_params(params: dict[str, float]) -> str:
         return (
-            f"f_nom={params.get('nominal_f', 50.0)}Hz, "
+            f"f_nom={params.get('nominal_f', 60.0)}Hz, " # FIX: Unificado a 60 Hz
             f"k={params.get('k_sogi', 1.414)}, "
             f"gamma={params.get('gamma', 50.0)}"
         )
@@ -147,5 +147,12 @@ class SOGI_FLL_Estimator(BaseFrequencyEstimator):
     def estimate(self, t: np.ndarray, v: np.ndarray) -> np.ndarray:
         dt = float(t[1] - t[0])
         self.dt = dt
+        
+        # FIX: Actualizar los límites de frecuencia y w_nom si cambia el dt
+        # (Asegura consistencia interna)
+        self.w_nom = 2.0 * math.pi * self.nominal_f
+        self.f_min = self.nominal_f - 10.0
+        self.f_max = self.nominal_f + 10.0
+        
         self.reset()
         return self.step_vectorized(v)

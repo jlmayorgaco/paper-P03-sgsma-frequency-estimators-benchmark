@@ -196,11 +196,11 @@ class EKF_Estimator(BaseFrequencyEstimator):
 
     def __init__(
         self,
-        nominal_f: float = 50.0,
+        nominal_f: float = 60.0, # FIX: Unificado a 60 Hz para evitar fallos de inicialización
         q_dc: float = 1e-6,
         q_alpha: float = 1e-4,
         q_beta: float = 1e-4,
-        q_omega: float = 5e-2,
+        q_omega: float = 1e-4,   # FIX: Default conservador (era 5e-2) para señal limpia
         r_meas: float = 1e-3,
         output_smoothing: float = 0.02,
         dt: float = DT_DSP,
@@ -235,11 +235,11 @@ class EKF_Estimator(BaseFrequencyEstimator):
     @classmethod
     def default_params(cls) -> dict[str, float]:
         return {
-            "nominal_f": 50.0,
+            "nominal_f": 60.0, # FIX: Unificado a 60 Hz
             "q_dc": 1e-6,
             "q_alpha": 1e-4,
             "q_beta": 1e-4,
-            "q_omega": 5e-2,
+            "q_omega": 1e-4,   # FIX: Conservador
             "r_meas": 1e-3,
             "output_smoothing": 0.02,
         }
@@ -247,8 +247,8 @@ class EKF_Estimator(BaseFrequencyEstimator):
     @staticmethod
     def describe_params(params: dict[str, float]) -> str:
         return (
-            f"f_nom={params.get('nominal_f', 50.0)}Hz, "
-            f"qω={params.get('q_omega', 5e-2):.1e}, "
+            f"f_nom={params.get('nominal_f', 60.0)}Hz, "
+            f"qω={params.get('q_omega', 1e-4):.1e}, "
             f"R={params.get('r_meas', 1e-3):.1e}"
         )
 

@@ -229,7 +229,7 @@ class RLS_Estimator(BaseFrequencyEstimator):
         output_smoothing: float = 0.03,
         pole_radius_min: float = 0.95,
         pole_radius_max: float = 1.0,
-        p0: float = 25.0,
+        p0: float = 0.01,
         dt: float = DT_DSP,
     ) -> None:
         self.nominal_f = float(nominal_f)
@@ -315,7 +315,7 @@ class RLS_Estimator(BaseFrequencyEstimator):
             "output_smoothing": 0.03,
             "pole_radius_min": 0.95,
             "pole_radius_max": 1.0,
-            "p0": 25.0,
+            "p0": 0.01, # FIX: Default conservador sincronizado
         }
 
     @staticmethod

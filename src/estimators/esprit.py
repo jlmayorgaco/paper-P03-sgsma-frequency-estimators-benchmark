@@ -51,6 +51,10 @@ def _esprit_core(buffer: np.ndarray, dt: float) -> float:
         if w > max_w:
             max_w = w
             
+    # FIX: Exponer fallo si no encuentra componente real en lugar de devolver 0.0
+    if max_w == 0.0:
+        return np.nan
+            
     return max_w / (2.0 * math.pi * dt)
 
 class ESPRIT_Estimator(BaseFrequencyEstimator):
@@ -69,7 +73,20 @@ class ESPRIT_Estimator(BaseFrequencyEstimator):
 
     def reset(self) -> None:
         self.buffer = np.zeros(self.N, dtype=np.float64)
-        self.f_out = self.nominal_f
+        # FIX: Evitar "aprobar" el test regalando la frecuencia nominal
+        self.f_out = np.nan
+        
+        # Métricas de diagnóstico
+        self._valid_updates = 0
+        self._total_calls = 0
+
+    @classmethod
+    def default_params(cls) -> dict[str, float]:
+        return {"nominal_f": 60.0}
+
+    @staticmethod
+    def describe_params(params: dict[str, float]) -> str:
+        return f"ESPRIT f_nom={params.get('nominal_f', 60.0)}Hz"
 
     def structural_latency_samples(self) -> int:
         return self.N // 2
@@ -81,11 +98,13 @@ class ESPRIT_Estimator(BaseFrequencyEstimator):
         
         # Evitar cálculos en silencio absoluto para prevenir singularidades
         if np.abs(z) > 1e-4:
+            self._total_calls += 1
             try:
                 val = _esprit_core(self.buffer, self.dt)
                 # Filtro de cordura para evitar picos por inestabilidad numérica
-                if 40.0 < val < 80.0:
+                if not np.isnan(val) and 40.0 < val < 80.0:
                     self.f_out = val
+                    self._valid_updates += 1
             except:
                 pass
         return self.f_out
@@ -106,10 +125,12 @@ class ESPRIT_Estimator(BaseFrequencyEstimator):
             
             # 2. Decimación del cálculo (ejecutar SVD cada 10 pasos / 1ms a 10kHz)
             if i % 10 == 0 and np.abs(z) > 1e-4:
+                self._total_calls += 1
                 try:
                     val = _esprit_core(self.buffer, self.dt)
-                    if 40.0 < val < 80.0:
+                    if not np.isnan(val) and 40.0 < val < 80.0:
                         self.f_out = val
+                        self._valid_updates += 1
                 except:
                     # Si falla (NaN o error de dominio), mantenemos la f_out previa
                     pass
@@ -119,5 +140,6 @@ class ESPRIT_Estimator(BaseFrequencyEstimator):
         return f_est
 
     def estimate(self, t: np.ndarray, v: np.ndarray) -> np.ndarray:
+        self.dt = float(t[1] - t[0])
         self.reset()
         return self.step_vectorized(v)
