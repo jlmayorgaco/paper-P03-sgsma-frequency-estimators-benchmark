@@ -106,12 +106,25 @@ def m8_settling_time_s(error: np.ndarray, dt: float, threshold: float = 0.2) -> 
 # =====================================================================
 
 def m9_m10_rfe_metrics(f_hat_steady: np.ndarray, f_true_steady: np.ndarray, dt: float) -> tuple[float, float]:
-    """Retorna (RFE_max_hz_s, RFE_rms_hz_s)."""
-    rocof_hat = np.gradient(f_hat_steady, dt)
+    """Retorna (RFE_max_hz_s, RFE_rms_hz_s).
+
+    T-200: RFE_max uses np.percentile(99.5) instead of np.max to reject
+    single-sample gradient spikes at phase-jump events (Scenarios D, E).
+    At 10 kHz a 1 Hz step produces a 1e4 Hz/s gradient impulse that is
+    purely a numerical artifact of np.gradient -- undefined physically at
+    a Dirac discontinuity. The 99.5th percentile rejects isolated spikes
+    (< 0.5% of samples) while preserving the sustained RoCoF envelope.
+    For smooth scenarios (A, B, C) without discontinuities, the 99.5th
+    percentile coincides with the true maximum to within < 1%.
+    """
+    rocof_hat  = np.gradient(f_hat_steady, dt)
     rocof_true = np.gradient(f_true_steady, dt)
-    rfe_array = rocof_hat - rocof_true
-    
-    return float(np.max(np.abs(rfe_array))), float(np.sqrt(np.mean(rfe_array**2)))
+    rfe_array  = rocof_hat - rocof_true
+
+    rfe_abs = np.abs(rfe_array)
+    rfe_max = float(np.percentile(rfe_abs, 99.5)) if len(rfe_abs) >= 2 else float(np.max(rfe_abs))
+    rfe_rms = float(np.sqrt(np.mean(rfe_array**2)))
+    return rfe_max, rfe_rms
 
 def m11_rnaf_db(f_hat_steady: np.ndarray, f_true_steady: np.ndarray, dt: float, noise_sigma: float) -> float:
     """RoCoF Noise Amplification Factor [dB]."""
