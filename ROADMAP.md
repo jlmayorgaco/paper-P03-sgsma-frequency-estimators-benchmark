@@ -39,7 +39,30 @@
 
 **Acceptance criteria.** A comment-block at the top of `monte_carlo_engine.py` explicitly states which sample rate reaches each estimator and whether this matches each estimator's internal `self.dt`. No code changes yet — just documented truth.
 
-**Evidence field:** *(to be filled)*
+**Evidence field:**
+
+```
+CLOSED: MISMATCH CONFIRMED (2026-04-12)
+
+Diagnostic output:
+  generate(): N=100001, dt=1.00e-06, fs=1,000,000
+  run()     : N=100001, dt=1.00e-06, fs=1,000,000
+
+Findings:
+1. Scenario.run() calls generate() with no decimation — signals remain at 1 MHz.
+2. MonteCarloEngine._run_estimator() passes sc.v (1 MHz) directly to
+   est.step_vectorized(v) with NO decimation.
+3. All estimators use DT_DSP = 1e-4 s (10 kHz) as self.dt internally —
+   a factor-100 time-base mismatch.
+4. calculate_all_metrics() called with hardcoded fs_dsp=10000.0 even though
+   signal is at 1 MHz — evaluation window sample counts are 100× larger than intended.
+5. Smoke tests (test_dedicated_smoke_no_mc_test.py:127-138) DO correctly
+   decimate (if dt_real < 1e-5 → decimate by 100) — smoke results are valid.
+6. MonteCarloEngine does NOT decimate — this is the bug addressed by T-100.
+
+Comment block added to src/analysis/monte_carlo_engine.py documenting all findings.
+Commit: e11e3db "T-000: Document sample-rate mismatch in monte_carlo_engine.py"
+```
 
 ---
 
