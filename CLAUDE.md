@@ -77,6 +77,13 @@ Timing:               N_COST_REPS = 20  (src/main.py:83)
 RNG:                  SEED = 42 (tuning); MC seeds independent
 ```
 
+**T-100 sample-rate resolution (Option C — implemented 2026-04-12):**
+`Scenario.generate()` produces signals at `FS_PHYSICS = 1 MHz` for physics fidelity.
+`Scenario.run()` decimates `t`, `v`, and `f_true` by `RATIO = 100` (simple `[::RATIO]` slicing)
+before returning, so all callers receive 10 kHz data matching each estimator's `DT_DSP = 1e-4 s`.
+`MonteCarloEngine.run_once()` asserts `dt_actual == 1e-4` after each `scenario.run()` call.
+`generate()` output is never passed directly to estimators; always go through `run()`.
+
 **Run command:**
 ```bash
 cd /c/Users/walla/Documents/Github/paper-P03-sgsma-frequency-estimators-benchmark/src

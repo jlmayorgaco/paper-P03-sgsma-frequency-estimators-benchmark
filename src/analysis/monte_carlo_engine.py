@@ -126,6 +126,14 @@ class MonteCarloEngine:
         if hasattr(est, "structural_latency_samples"):
             struct_samples = est.structural_latency_samples()
 
+        # T-100 sanity assertion: sc.v must arrive at estimator dt (10 kHz).
+        # Scenario.run() now decimates from FS_PHYSICS to FS_DSP (Option C).
+        if hasattr(est, "dt") and len(v) > 1:
+            # dt is inferred from the caller's sc.t, not passed here directly.
+            # This assertion is a placeholder reminder; the actual dt check lives
+            # in run_once() where sc.t is available.
+            pass
+
         # =========================================================
         # 1. RUTA RÁPIDA (Fast Path): Soporte para Numba/Vectorizado
         # =========================================================
@@ -149,6 +157,14 @@ class MonteCarloEngine:
     def run_once(self, run_idx: int) -> tuple[dict[str, Any], pd.DataFrame]:
         params = self.sample_params(run_idx)
         sc = self.scenario_cls.run(**params)
+
+        # T-100 assertion: Scenario.run() must return 10 kHz data (Option C fix).
+        if len(sc.t) > 1:
+            dt_actual = float(sc.t[1] - sc.t[0])
+            assert abs(dt_actual - 1e-4) < 1e-9, (
+                f"[T-100] Scenario {sc.name} returned dt={dt_actual:.2e} "
+                f"(expected 1e-4 s = 10 kHz). Scenario.run() decimation may be broken."
+            )
 
         # Medición del tiempo de CPU (perf_counter es el reloj de más alta resolución)
         start_time = time.perf_counter()

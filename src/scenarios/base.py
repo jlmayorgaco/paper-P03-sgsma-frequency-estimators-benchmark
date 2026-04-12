@@ -6,7 +6,7 @@ from typing import Any, ClassVar
 
 import numpy as np
 
-from estimators.common import F_NOM
+from estimators.common import F_NOM, FS_PHYSICS, FS_DSP, RATIO
 
 
 @dataclass
@@ -128,14 +128,34 @@ class Scenario(ABC):
         High-level helper used by runners:
         - merge defaults
         - validate params
-        - generate scenario
+        - generate scenario at FS_PHYSICS (1 MHz)
+        - decimate to FS_DSP (10 kHz) via RATIO=100 slicing  [T-100 Option C]
         - validate output
+
+        The decimation step resolves the mismatch documented in T-000:
+        generate() returns 1 MHz signals, but all estimators use
+        DT_DSP = 1e-4 s (10 kHz) internally. run() bridges the gap.
+        f_true is decimated by simple slicing (no filter) because it is a
+        frequency profile, not an aliasable voltage signal. v is likewise
+        sliced (all signal energy is <= ~500 Hz, well below the 5 kHz
+        Nyquist of FS_DSP).
         """
         params = cls.build_params(**overrides)
         data = cls.generate(**params)
 
         if data.name != cls.SCENARIO_NAME:
             data.name = cls.SCENARIO_NAME
+
+        # --- T-100 Option C: decimate from FS_PHYSICS to FS_DSP ---
+        dt_gen = float(data.t[1] - data.t[0]) if len(data.t) > 1 else 1.0 / FS_PHYSICS
+        if abs(dt_gen - 1.0 / FS_PHYSICS) < 1e-10 and RATIO > 1:
+            data = ScenarioData(
+                name=data.name,
+                t=data.t[::RATIO],
+                v=data.v[::RATIO],
+                f_true=data.f_true[::RATIO],
+                meta=data.meta,
+            )
 
         data.validate()
         return data
