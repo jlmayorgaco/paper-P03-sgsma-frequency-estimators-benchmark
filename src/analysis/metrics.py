@@ -233,6 +233,9 @@ def calculate_all_metrics(
         "m4_std_error_hz":      round(std_error, 6),
         
         "m5_trip_risk_s":       round(trip_risk, 6),
+        # T-201: quantization resolution of m5 (dt = 0.1 ms at 10 kHz).
+        # Differences below ~1 ms should be interpreted as within measurement resolution.
+        "m5_trip_risk_resolution_s": round(dt, 6),
         "m6_max_contig_trip_s": round(max_contig, 6),
         "m7_pcb_hz":            round(pcb, 6),
         "m8_settling_time_s":   round(settling, 6),
