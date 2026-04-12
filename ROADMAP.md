@@ -321,7 +321,26 @@ Commit: acb2cff "T-103: Fix nominal_f defaults from 50 Hz to 60 Hz"
 - SOGI-PLL RMSE on the Ramp scenario improves or stays the same (should not worsen — we're trimming more transient, not less).
 - No other test regresses.
 
-**Evidence field:** *(before/after RMSE on Ramp, reported from smoke test)*
+**Evidence field:**
+
+```
+CLOSED: Both PLL and SOGI-PLL fixed (2026-04-12)
+
+Before: structural_latency_samples() returned 0 (comment: "no fixed latency")
+After:  return int(round(2.0 * self.settle_time / self.dt))
+
+PLL default: settle_time=0.08s -> structural_latency=1600 samples (160 ms)
+
+Before/after RMSE on IEEE_Freq_Ramp (noise_sigma=0, seed=42):
+  PLL RMSE (lat=0):    0.1012 Hz
+  PLL RMSE (lat=1600): 0.1013 Hz   <-- no degradation (PASS)
+
+Note: difference is negligible for default settle_time. Fix matters most
+when Optuna tunes settle_time to large values (e.g., 250 ms) -- those
+500 ms of transient would previously bleed into evaluation window.
+
+Commit: 53977b6 "T-104: Fix PLL and SOGI-PLL structural_latency_samples()"
+```
 
 ---
 
