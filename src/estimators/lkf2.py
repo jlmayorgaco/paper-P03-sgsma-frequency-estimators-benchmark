@@ -232,7 +232,7 @@ class LKF2_Estimator(BaseFrequencyEstimator):
 
     def __init__(
         self,
-        nominal_f: float = 50.0,
+        nominal_f: float = 60.0,
         q_dc: float = 0.005,
         q_vc: float = 0.05,
         q_vs: float = 0.05,
@@ -281,7 +281,7 @@ class LKF2_Estimator(BaseFrequencyEstimator):
     @classmethod
     def default_params(cls) -> dict[str, float]:
         return {
-            "nominal_f": 50.0,
+            "nominal_f": 60.0,
             "q_dc": 0.005,
             "q_vc": 0.05,
             "q_vs": 0.05,

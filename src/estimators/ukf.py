@@ -278,7 +278,7 @@ class UKF_Estimator(BaseFrequencyEstimator):
 
     def __init__(
         self,
-        nominal_f: float = 50.0,
+        nominal_f: float = 60.0,
         q_dc: float = 1e-6,
         q_alpha: float = 1e-4,
         q_beta: float = 1e-4,
@@ -342,7 +342,7 @@ class UKF_Estimator(BaseFrequencyEstimator):
     @classmethod
     def default_params(cls) -> dict[str, float]:
         return {
-            "nominal_f": 50.0,
+            "nominal_f": 60.0,
             "q_dc": 1e-6,
             "q_alpha": 1e-4,
             "q_beta": 1e-4,

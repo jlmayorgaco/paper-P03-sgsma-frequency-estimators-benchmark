@@ -89,7 +89,7 @@ class ZCDEstimator(BaseFrequencyEstimator):
     """
     name = "ZCD"
 
-    def __init__(self, nominal_f: float = 50.0, dt: float = DT_DSP) -> None:
+    def __init__(self, nominal_f: float = 60.0, dt: float = DT_DSP) -> None:
         self.nominal_f = float(nominal_f)
         self.dt = float(dt)
         self.reset()
@@ -103,11 +103,11 @@ class ZCDEstimator(BaseFrequencyEstimator):
 
     @classmethod
     def default_params(cls) -> dict[str, float]:
-        return {"nominal_f": 50.0}
+        return {"nominal_f": 60.0}
 
     @staticmethod
     def describe_params(params: dict[str, float]) -> str:
-        return f"f_nom={params.get('nominal_f', 50.0)}Hz"
+        return f"f_nom={params.get('nominal_f', 60.0)}Hz"
 
     def structural_latency_samples(self) -> int:
         """

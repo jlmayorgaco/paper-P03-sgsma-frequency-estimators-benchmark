@@ -90,7 +90,7 @@ class EPLL_Estimator(BaseFrequencyEstimator):
 
     def __init__(
         self,
-        nominal_f: float = 50.0,
+        nominal_f: float = 60.0,
         kp: float = 120.0,      # Ganancia proporcional (Fase)
         ki: float = 4000.0,     # Ganancia integral (Frecuencia)
         ka: float = 100.0,      # Ganancia de Amplitud
@@ -116,7 +116,7 @@ class EPLL_Estimator(BaseFrequencyEstimator):
     @classmethod
     def default_params(cls) -> dict[str, float]:
         return {
-            "nominal_f": 50.0,
+            "nominal_f": 60.0,
             "kp": 120.0,
             "ki": 4000.0,
             "ka": 100.0,
