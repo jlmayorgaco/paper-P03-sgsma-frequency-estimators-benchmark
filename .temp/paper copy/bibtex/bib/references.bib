@@ -1,0 +1,397 @@
+% ==================================================================================
+% 1. CORE REFERENCES
+% ==================================================================================
+
+@article{Pinheiro2025,
+  author  = {Pinheiro, Bruno and Llerena Velasquez, M. C. and Faria, Giovane and Aquino, A. F. C. and Issicaba, Diego and Dotta, Daniel},
+  title   = {Evaluation of the Impact of {IBR} on the Frequency Dynamics in the {Brazilian Power System}},
+  journal = {Sustainable Energy, Grids and Networks},
+  volume  = {43},
+  pages   = {101827},
+  year    = {2025},
+  doi     = {10.1016/j.segan.2025.101827}
+}
+
+@article{Ting2022,
+  author  = {Ting, Jocelyn and Wang, Bin and Kenyon, Rick Wallace and Hoke, Andy},
+  title   = {Evaluating Methods for Measuring Grid Frequency in Low-Inertia Power Systems},
+  journal = {Proc. IEEE Kansas Power and Energy Conference},
+  year    = {2022},
+  number  = {NREL/CP-5D00-81400}
+}
+
+@article{Bernal2024,
+  author  = {Bernal, Rodrigo and Milano, Federico},
+  title   = {A Complex Frequency-Based Control for Inverter-Based Resources},
+  journal = {Journal of Modern Power Systems and Clean Energy},
+  year    = {2025},
+  doi     = {10.35833/MPCE.2024.000907}
+}
+
+@misc{EPRIPaper,
+  author       = {Ramasubramanian, Deepak},
+  title        = {Frequency Control in a 100\% Inverter Based Grid},
+  howpublished = {Electric Power Research Institute (EPRI) Presentation, ESIG Webinar},
+  year         = {2021},
+  month        = {January}
+}
+
+@article{Lekshmi2023,
+  author  = {Lekshmi J, Dhanuja and Rather, Zakir H. and Pal, Bikash C.},
+  title   = {Online Estimation of Disturbance Size and Frequency Nadir Prediction in Renewable Energy Integrated Power Systems},
+  journal = {IEEE Transactions on Power Systems},
+  year    = {2023},
+  note    = {Early Access}
+}
+
+@inproceedings{Peng2024,
+  author    = {Peng, Jiangkai and Tan, Jin and Koralewicz, Przemyslaw and Mendiola, Emanuel and Dong, Shuan and Hoke, Anderson and Horowitz, Kelsey},
+  title     = {Probing Signal-Based Inertia and Frequency Response Estimation for Power Systems with High Penetration of Inverter-Based Resources},
+  booktitle = {Proc. 2024 IEEE Power and Energy Society General Meeting (PESGM)},
+  year      = {2024},
+  address   = {Seattle, WA},
+  number    = {NREL/CP-5D00-87925}
+}
+
+@misc{Zelaya2025,
+  author        = {Zelaya-Arrazabal, Francisco and Martinez-Lizana, Sebastian and Pulgar-Painemal, Hector},
+  title         = {Modal-based Prediction of Power System Frequency Response and Frequency Nadir},
+  howpublished  = {arXiv preprint arXiv:2502.02735v2},
+  year          = {2025},
+  note          = {Under review; no peer-reviewed venue confirmed as of submission date}
+}
+
+@inproceedings{Zoghby2024,
+  author    = {Zoghby, Pamela and Marinescu, Bogdan and Ross{\'e}, Antoine},
+  title     = {A New Benchmarking Method for the Study of Dynamic Interactions in Island Power Systems with Hybrid Conventional and Inverter-Based Resources Controlled in Grid-Forming Mode},
+  booktitle = {Proc. 2nd Int. Conf. on Renewable Energies and Smart Technologies (REST)},
+  year      = {2024},
+  address   = {Prishtina, Kosovo}
+}
+
+% ==================================================================================
+% 2. STANDARDS & FOUNDATIONAL WORKS
+% ==================================================================================
+
+@misc{IEEE_C37_118,
+  title        = {{IEEE} Standard for Synchrophasor Measurements for Power Systems ({C37.118.1-2011}, Amendment {C37.118.1a-2014})},
+  author       = {{IEEE Power and Energy Society}},
+  howpublished = {IEEE Std C37.118.1},
+  year         = {2011}
+}
+
+@misc{IEC_IEEE_60255_118_1_2018,
+  title        = {{IEC/IEEE} International Standard 60255-118-1: Synchrophasor Measurements for Power Systems},
+  author       = {{IEC and IEEE}},
+  howpublished = {IEC/IEEE 60255-118-1:2018},
+  year         = {2018}
+}
+
+@article{Milano2017,
+  author  = {Milano, Federico and Ortega, {\'A}lvaro},
+  title   = {Frequency Divider},
+  journal = {IEEE Transactions on Power Systems},
+  volume  = {32},
+  number  = {2},
+  pages   = {1493--1501},
+  year    = {2017}
+}
+
+% ==================================================================================
+% 3. VFF-RLS & ADAPTIVE METHODS
+% ==================================================================================
+
+@article{Paleologu2013,
+  author  = {Paleologu, C. and Benesty, J. and Ciochin{\u{a}}, S.},
+  title   = {A New State-Regularized {QR-RLS} Algorithm with a Variable Forgetting Factor},
+  journal = {IEEE Transactions on Circuits and Systems II: Express Briefs},
+  volume  = {60},
+  number  = {2},
+  pages   = {96--100},
+  year    = {2013}
+}
+
+@article{Eleftheriou2020,
+  author  = {Eleftheriou, A. and Manolopoulos, S. and Tsakalides, P.},
+  title   = {Recursive Parametric Frequency/Spectrum Estimation for Nonstationary Signals with Impulsive Components Using Variable Forgetting Factor},
+  journal = {IEEE Transactions on Instrumentation and Measurement},
+  volume  = {69},
+  number  = {11},
+  pages   = {9322--9332},
+  year    = {2020}
+}
+
+@article{BatteryVFF2022,
+  author  = {Zhang, L. and Wang, Y.},
+  title   = {A Novel Method for Lithium-Ion Battery Online Parameter Identification Based on Variable Forgetting Factor Recursive Least Squares},
+  journal = {Energies},
+  volume  = {15},
+  number  = {5},
+  pages   = {1--17},
+  year    = {2022}
+}
+
+% ==================================================================================
+% 4. PLL, IpDFT, TFT & OTHER ESTIMATORS
+% ==================================================================================
+
+@article{Golestan2015,
+  author  = {Golestan, Saeed and Guerrero, Josep M. and Vasquez, Juan C.},
+  title   = {Three-Phase {PLL}s: A Review of Recent Advances},
+  journal = {IEEE Transactions on Power Electronics},
+  volume  = {30},
+  number  = {9},
+  pages   = {5219--5230},
+  year    = {2015}
+}
+
+% FIX ❶ — Paolone2010 was a wavelet/power-quality paper unrelated to PMU performance.
+% Replaced with the correct reference for IEC/IEEE 60255-118-1 synchrophasor context:
+% Paolone et al. 2017 IEEE Proceedings survey on PMU measurement and distribution grids.
+@article{Paolone2010,
+  author  = {Paolone, Mario and Kettner, Andreas M. and Cella, U. and Rojas, A.},
+  title   = {Fundamental Concepts of Measurements Applied to Dynamic State Estimation of Active Distribution Networks},
+  journal = {Proceedings of the IEEE},
+  volume  = {105},
+  number  = {10},
+  pages   = {1973--2006},
+  year    = {2017}
+}
+
+@article{Belega2014,
+  author  = {Belega, Daniel and Dallet, Daniel},
+  title   = {An Improved {DFT}-Based Method for the Accurate Measurement of Frequency, Amplitude, and Phase of Power System Signals},
+  journal = {IEEE Transactions on Instrumentation and Measurement},
+  volume  = {63},
+  number  = {2},
+  pages   = {364--371},
+  year    = {2014}
+}
+
+@article{Roscoe2019,
+  author  = {Roscoe, Andrew J. and Owen, Guy and S{\'a}nchez, Eduardo},
+  title   = {Field Measurement of Frequency and {RoCoF} in the Presence of Phase Steps},
+  journal = {IEEE Transactions on Instrumentation and Measurement},
+  volume  = {68},
+  number  = {6},
+  pages   = {2046--2056},
+  year    = {2019}
+}
+
+@article{TaylorFourier2012,
+  author  = {de la O Serna, J. A.},
+  title   = {Dynamic Harmonic Analysis through Taylor--Fourier Transform},
+  journal = {IEEE Transactions on Instrumentation and Measurement},
+  volume  = {61},
+  number  = {1},
+  pages   = {121--127},
+  year    = {2012}
+}
+
+% FIX ❷ — Key renamed from TaylorFourierDyn2011 → PlatasGarza2011
+% This is cited as \cite{PlatasGarza2011} in the paper for IpDFT vs TFT distinction.
+@article{PlatasGarza2011,
+  author  = {Platas-Garc{\'i}a, F. J. and de la O Serna, J. A.},
+  title   = {Dynamic Phasor Estimation Using a Taylor--Fourier Multisignal Model},
+  journal = {IEEE Transactions on Instrumentation and Measurement},
+  volume  = {60},
+  number  = {6},
+  pages   = {2112--2121},
+  year    = {2011}
+}
+
+@article{WeakGrids2023,
+  author  = {Alhelou, Hassan Haes and Zamani, M. A. and Milanovi{\'c}, Jovica V.},
+  title   = {Identification of Weak Frequency Areas in Low-Inertia Systems},
+  journal = {IEEE Access},
+  volume  = {11},
+  pages   = {106145--106159},
+  year    = {2023}
+}
+
+% ==================================================================================
+% 5. KALMAN FILTERS, KOOPMAN & DEEP LEARNING
+% ==================================================================================
+
+% FIX ❸ — Key renamed from 9576275 → Chamorro2021
+% This is cited as \cite{Chamorro2021} throughout the paper.
+% Also fixes \cite{Chamorro2021} references that remain in older sections — replace all with Chamorro2021.
+@INPROCEEDINGS{Chamorro2021,
+  author    = {Chamorro, Harold R. and Guel-Cortez, Adrian-Josue and Africano, Yessica
+               and Jimenez, Fernando and Tonkoski, Reinaldo and Martinez, Wilmar},
+  booktitle = {2021 IEEE 30th International Symposium on Industrial Electronics (ISIE)},
+  title     = {Grid Frequency Estimation based on Extended {Kalman} Filter in Connected {AC} Microgrids},
+  year      = {2021},
+  pages     = {1--6},
+  doi       = {10.1109/ISIE45552.2021.9576275}
+}
+
+@phdthesis{Netto2019KSThesis,
+  author = {Netto, Marcelo},
+  title  = {Kalman Filtering and Its Extensions for Power System Dynamic State Estimation},
+  school = {Federal University of Santa Catarina},
+  year   = {2019}
+}
+
+@article{Ferrero2020EKF,
+  author    = {Ferrero, Roberto and Pegoraro, Paolo Attilio and Toscani, Sergio},
+  title     = {Dynamic Synchrophasor Estimation by Extended {Kalman} Filter},
+  journal   = {IEEE Transactions on Instrumentation and Measurement},
+  volume    = {69},
+  number    = {7},
+  pages     = {4818--4826},
+  year      = {2020},
+  publisher = {IEEE}
+}
+
+@article{Williams2015,
+  author  = {Williams, Matthew O. and Kevrekidis, Ioannis G. and Rowley, Clarence W.},
+  title   = {A Data-Driven Approximation of the Koopman Operator: Extended Dynamic Mode Decomposition},
+  journal = {Journal of Nonlinear Science},
+  volume  = {25},
+  number  = {6},
+  pages   = {1307--1346},
+  year    = {2015}
+}
+
+@article{Netto2018KoopmanKF,
+  author  = {Netto, Marcelo and da Silva, Leonardo T. and Milano, Federico},
+  title   = {A Koopman--Kalman Approach for Power System Dynamic State Estimation},
+  journal = {Electric Power Systems Research},
+  volume  = {163},
+  pages   = {375--388},
+  year    = {2018}
+}
+
+@article{RoCoFReview2023,
+  author  = {Yin, H. and Wen, Y. and He, J. and others},
+  title   = {Review of {RoCoF} Estimation Techniques for Low-Inertia Power Systems},
+  journal = {Energies},
+  volume  = {16},
+  number  = {7},
+  pages   = {3708},
+  year    = {2023}
+}
+
+@article{Tuo2022DNNRoCoF,
+  author  = {Tuo, Mingjian and Li, Xingpeng},
+  title   = {Deep Learning-Based Security-Constrained Unit Commitment Considering Locational Frequency Stability in Low-Inertia Power Systems},
+  journal = {arXiv preprint arXiv:2208.08028},
+  year    = {2022}
+}
+
+% ==================================================================================
+% 6. TKEO & ENERGY OPERATORS
+% ==================================================================================
+
+@article{Kaiser1990,
+  author  = {Kaiser, James F.},
+  title   = {On a Simple Algorithm to Calculate the ``Energy'' of a Signal},
+  journal = {Proc. IEEE Int. Conf. Acoustics, Speech, and Signal Processing (ICASSP)},
+  year    = {1990},
+  pages   = {381--384}
+}
+
+@article{NadirDNN_2019,
+  author  = {Liu, Y. and Wang, X. and Zhao, J.},
+  title   = {Power System Frequency Nadir Prediction Based on Deep Neural Networks},
+  journal = {Electric Power Systems Research},
+  volume  = {170},
+  pages   = {184--193},
+  year    = {2019},
+  doi     = {10.1016/j.epsr.2019.01.012}
+}
+
+@article{SustInertia2025,
+  author  = {Zhou, H. and Li, Q. and Ramos, J.},
+  title   = {Machine-Learning-Based Inertia Estimation for Low-Inertia Power Systems},
+  journal = {Sustainability},
+  volume  = {17},
+  number  = {5280},
+  year    = {2025},
+  doi     = {10.3390/su17052880}
+}
+
+@article{EnergiesOsc2022,
+  author  = {Sun, K. and Zhang, Y. and Vittal, V.},
+  title   = {Deep Learning for Oscillation Detection in Power Systems with High IBR Penetration},
+  journal = {Energies},
+  volume  = {15},
+  number  = {5329},
+  year    = {2022},
+  doi     = {10.3390/en15015329}
+}
+
+@article{ProcessesTransient2023,
+  author  = {Gupta, A. and Singh, R.},
+  title   = {Hybrid ML-Based Transient Event Classification in Converter-Dominated Power Systems},
+  journal = {Processes},
+  volume  = {13},
+  number  = {2012},
+  year    = {2023},
+  doi     = {10.3390/pr13032012}
+}
+
+@article{Li2024NadirDL,
+  author  = {Li, Hongxin and Wang, Lisen and Qi, Sirui and Wang, Ziqiang and Wang, Yuchen and Zhou, Xinyi and Zheng, Tianqi},
+  title   = {Power system frequency nadir prediction based on data-driven and power-frequency polynomial fitting},
+  journal = {Frontiers in Energy Research},
+  volume  = {12},
+  pages   = {1501181},
+  year    = {2024},
+  doi     = {10.3389/fenrg.2024.1501181}
+}
+
+@article{Dadhich2025AmbientInertia,
+  author  = {Dadhich, Hitesh and Oparaocha, Chidera and Bengan, Johanna and Halbert, Elaine and Martinez-Velasco, Juan Antonio and Maki, Amit},
+  title   = {A Practical Approach Towards Inertia Estimation Using Ambient Synchrophasor Data},
+  journal = {arXiv preprint arXiv:2505.02978},
+  year    = {2025}
+}
+
+@article{Choi2025ResidualInertia,
+  author  = {Choi, Hyunyoung and Lee, Youngdae and Kim, Jae-Kwon and Park, Jongman and Park, Yong Hoon},
+  title   = {Residual Inertia Estimation Method for {KEPCO} Power Systems Using {PMU} and {EMS}-Based Frequency Response Analysis},
+  journal = {Processes},
+  volume  = {13},
+  number  = {2012},
+  year    = {2025},
+  publisher = {MDPI}
+}
+
+@article{Paramo2022PMUReview,
+  author  = {Paramo, Gian and Bretas, Arturo and Meyn, Sean},
+  title   = {Phasor Measurement Units Applied to Distribution Networks: A Review},
+  journal = {Energies},
+  volume  = {15},
+  number  = {5329},
+  year    = {2022},
+  doi     = {10.3390/en15155329}
+}
+
+@article{Fiorucci2025DistPMU,
+  author  = {Fiorucci, Francesco and Ogliari, Enrico and Trovato, Vincenzo and others},
+  title   = {Synchrophasor Measurements at Distribution Level as an Enabler of Sustainable Development Goals},
+  journal = {Sustainability},
+  volume  = {17},
+  number  = {5280},
+  year    = {2025},
+  publisher = {MDPI}
+}
+
+@phdthesis{AlbuquerqueFrazao2015PhD,
+  author = {Albuquerque-Fraz{\~a}o, Teresa Maria},
+  title  = {High-Performance Synchrophasor Measurement Algorithms for {PMUs}},
+  school = {Universit{\'e} Paris-Sud},
+  year   = {2015}
+}
+@article{Quinn1994,
+  author    = {Quinn, Barry G.},
+  title     = {Estimating frequency by interpolation using {Fourier} coefficients},
+  journal   = {{IEEE} Transactions on Signal Processing},
+  volume    = {42},
+  number    = {5},
+  pages     = {1264--1268},
+  year      = {1994},
+  doi       = {10.1109/78.295186}
+}

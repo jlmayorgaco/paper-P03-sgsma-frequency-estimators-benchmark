@@ -1,0 +1,3140 @@
+{
+    "metadata": {
+        "timestamp": "2026-03-30 21:22:50",
+        "description": "Benchmark results reconstructed from per-method run files. Run completed 2026-03-30; final JSON write was interrupted. All metrics, tuning, and MC data are from the fresh 2026-03-30 run."
+    },
+    "results": {
+        "IEEE_Mag_Step": {
+            "methods": {
+                "EKF": {
+                    "RMSE": 0.000239,
+                    "MAE": 0.00011,
+                    "MAX_PEAK": 0.002498,
+                    "SETTLING": 0.0,
+                    "ENERGY": 0.0,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.002498,
+                    "FE_mean_Hz": 0.00011,
+                    "RFE_max_Hz_s": 1.0366,
+                    "RFE_rms_Hz_s": 0.0622,
+                    "COMPLEXITY": 0.3,
+                    "TIME_PER_SAMPLE_US": 20.0,
+                    "STRUCTURAL_LATENCY_MS": 0.1,
+                    "PCB": 0.000747,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "Q0.0001,R1.0",
+                    "tuned_params": {
+                        "Q": 0.0001,
+                        "R": 1.0
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "EKF2": {
+                    "RMSE": 0.002312,
+                    "MAE": 0.000728,
+                    "MAX_PEAK": 0.029878,
+                    "SETTLING": 0.0,
+                    "ENERGY": 7e-06,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.029878,
+                    "FE_mean_Hz": 0.000728,
+                    "RFE_max_Hz_s": 12.0472,
+                    "RFE_rms_Hz_s": 1.2671,
+                    "COMPLEXITY": 0.958594,
+                    "TIME_PER_SAMPLE_US": 63.9062,
+                    "STRUCTURAL_LATENCY_MS": 0.1,
+                    "PCB": 0.007311,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "Q0.1,R1.0,InnRef0.3,EvTh2.0,Fast80.0ms",
+                    "tuned_params": {
+                        "q_param": 0.1,
+                        "r_param": 1.0,
+                        "inn_ref": 0.3,
+                        "event_thresh": 2.0,
+                        "fast_horizon_ms": 80.0
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "IpDFT": {
+                    "RMSE": 0.001582,
+                    "MAE": 0.000644,
+                    "MAX_PEAK": 0.007412,
+                    "SETTLING": 0.0,
+                    "ENERGY": 3e-06,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.007412,
+                    "FE_mean_Hz": 0.000644,
+                    "RFE_max_Hz_s": 0.4119,
+                    "RFE_rms_Hz_s": 0.0724,
+                    "COMPLEXITY": 1.071094,
+                    "TIME_PER_SAMPLE_US": 71.4062,
+                    "STRUCTURAL_LATENCY_MS": 166.6,
+                    "PCB": 0.004978,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "10 cycles",
+                    "tuned_params": {
+                        "cycles": 10
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "Koopman-RKDPmu": {
+                    "RMSE": 0.001263,
+                    "MAE": 0.000597,
+                    "MAX_PEAK": 0.008826,
+                    "SETTLING": 0.0,
+                    "ENERGY": 2e-06,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.008826,
+                    "FE_mean_Hz": 0.000597,
+                    "RFE_max_Hz_s": 2.6204,
+                    "RFE_rms_Hz_s": 0.1535,
+                    "COMPLEXITY": 1.825781,
+                    "TIME_PER_SAMPLE_US": 121.7188,
+                    "STRUCTURAL_LATENCY_MS": 100.0,
+                    "PCB": 0.003935,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "Win500",
+                    "tuned_params": {
+                        "window_samples": 500
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "PI-GRU": {
+                    "RMSE": 1.807392,
+                    "MAE": 1.418421,
+                    "MAX_PEAK": 4.019567,
+                    "SETTLING": 1.1897,
+                    "ENERGY": 4.409998,
+                    "TRIP_TIME_0p5": 1.0255,
+                    "MAX_CONTIGUOUS_0p5": 0.0076,
+                    "FE_max_Hz": 4.019567,
+                    "FE_mean_Hz": 1.418421,
+                    "RFE_max_Hz_s": 5350.2884,
+                    "RFE_rms_Hz_s": 1465.6105,
+                    "COMPLEXITY": 2120.65625,
+                    "TIME_PER_SAMPLE_US": 141377.0833,
+                    "STRUCTURAL_LATENCY_MS": 10.5,
+                    "PCB": 4.778887,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "PI-GRU pretrained model",
+                    "tuned_params": {},
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "PLL": {
+                    "RMSE": 0.000137,
+                    "MAE": 0.000116,
+                    "MAX_PEAK": 0.000725,
+                    "SETTLING": 0.0,
+                    "ENERGY": 0.0,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.000725,
+                    "FE_mean_Hz": 0.000116,
+                    "RFE_max_Hz_s": 0.2795,
+                    "RFE_rms_Hz_s": 0.0936,
+                    "COMPLEXITY": 0.16875,
+                    "TIME_PER_SAMPLE_US": 11.25,
+                    "STRUCTURAL_LATENCY_MS": 16.6,
+                    "PCB": 0.000334,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "Kp0.5,Ki1.0",
+                    "tuned_params": {
+                        "kp": 0.5,
+                        "ki": 1.0
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "RLS-VFF": {
+                    "RMSE": 0.068595,
+                    "MAE": 0.055995,
+                    "MAX_PEAK": 0.311654,
+                    "SETTLING": 0.0109,
+                    "ENERGY": 0.006352,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.311654,
+                    "FE_mean_Hz": 0.055995,
+                    "RFE_max_Hz_s": 1063.9757,
+                    "RFE_rms_Hz_s": 36.4536,
+                    "COMPLEXITY": 0.139844,
+                    "TIME_PER_SAMPLE_US": 9.3229,
+                    "STRUCTURAL_LATENCY_MS": 105.0,
+                    "PCB": 0.17486,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "lamMin0.9,Ka0.5",
+                    "tuned_params": {
+                        "lam_min": 0.9,
+                        "lam_max": 0.9995,
+                        "Ka": 0.5,
+                        "Kb": null,
+                        "win_smooth": 20,
+                        "decim": 50
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "RLS": {
+                    "RMSE": 0.004049,
+                    "MAE": 0.003776,
+                    "MAX_PEAK": 0.006589,
+                    "SETTLING": 0.0,
+                    "ENERGY": 2e-06,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.006589,
+                    "FE_mean_Hz": 0.003776,
+                    "RFE_max_Hz_s": 65.8896,
+                    "RFE_rms_Hz_s": 8.125,
+                    "COMPLEXITY": 0.13125,
+                    "TIME_PER_SAMPLE_US": 8.75,
+                    "STRUCTURAL_LATENCY_MS": 2505.0,
+                    "PCB": 0.00816,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "Lam0.95,Win500",
+                    "tuned_params": {
+                        "lambda": 0.95,
+                        "win_smooth": 500,
+                        "decim": 50
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "SOGI": {
+                    "RMSE": 0.008989,
+                    "MAE": 0.008533,
+                    "MAX_PEAK": 0.013423,
+                    "SETTLING": 0.0,
+                    "ENERGY": 0.000109,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.013423,
+                    "FE_mean_Hz": 0.008533,
+                    "RFE_max_Hz_s": 0.008,
+                    "RFE_rms_Hz_s": 0.0073,
+                    "COMPLEXITY": 0.478906,
+                    "TIME_PER_SAMPLE_US": 31.9271,
+                    "STRUCTURAL_LATENCY_MS": 16.6,
+                    "PCB": 0.017016,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "k2.0,g5.0,swNone",
+                    "tuned_params": {
+                        "k": 2.0,
+                        "g": 5.0,
+                        "smooth_win": null
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "TFT": {
+                    "RMSE": 0.002102,
+                    "MAE": 0.000666,
+                    "MAX_PEAK": 0.018967,
+                    "SETTLING": 0.0,
+                    "ENERGY": 6e-06,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.018967,
+                    "FE_mean_Hz": 0.000666,
+                    "RFE_max_Hz_s": 7.5457,
+                    "RFE_rms_Hz_s": 0.6912,
+                    "COMPLEXITY": 0.495312,
+                    "TIME_PER_SAMPLE_US": 33.0208,
+                    "STRUCTURAL_LATENCY_MS": 100.0,
+                    "PCB": 0.006648,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "Cycles6",
+                    "tuned_params": {
+                        "win": 6,
+                        "model_order": 2,
+                        "basis": "cos/sin + t*cos/t*sin + t^2*cos/t^2*sin"
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "Teager": {
+                    "RMSE": 4.34588,
+                    "MAE": 3.016447,
+                    "MAX_PEAK": 16.899151,
+                    "SETTLING": 1.2751,
+                    "ENERGY": 25.497012,
+                    "TRIP_TIME_0p5": 1.1704,
+                    "MAX_CONTIGUOUS_0p5": 0.0335,
+                    "FE_max_Hz": 16.899151,
+                    "FE_mean_Hz": 3.016447,
+                    "RFE_max_Hz_s": 5763.463,
+                    "RFE_rms_Hz_s": 1415.43,
+                    "COMPLEXITY": 0.241406,
+                    "TIME_PER_SAMPLE_US": 16.0937,
+                    "STRUCTURAL_LATENCY_MS": 5.0,
+                    "PCB": 12.402048,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Win50",
+                    "tuned_params": {
+                        "win": 50
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "UKF": {
+                    "RMSE": 0.000252,
+                    "MAE": 0.000123,
+                    "MAX_PEAK": 0.002532,
+                    "SETTLING": 0.0,
+                    "ENERGY": 0.0,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.002532,
+                    "FE_mean_Hz": 0.000123,
+                    "RFE_max_Hz_s": 1.008,
+                    "RFE_rms_Hz_s": 0.0584,
+                    "COMPLEXITY": 2.164844,
+                    "TIME_PER_SAMPLE_US": 144.3229,
+                    "STRUCTURAL_LATENCY_MS": 1.0,
+                    "PCB": 0.000783,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "Q0.0001,R1.0",
+                    "tuned_params": {
+                        "Q": 0.0001,
+                        "R": 1.0,
+                        "smooth_win": 10
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                }
+            },
+            "scenario_description": {
+                "standard": "IEEE Std 60255-118-1:2018 §5.3.4 amplitude-step test; IEEE C37.118.1-2011 §5.4.2 (PMU compliance, magnitude transient).",
+                "physical_motivation": "Represents abrupt voltage sag/swell from fast IBR power injection or capacitor switching in a distribution-tied PV/wind grid. Frequency is held constant to isolate amplitude-frequency cross-coupling errors.",
+                "ibr_relevance": "Grid-following inverters (GFL-IBR) inject current at near-unity PF with sub-millisecond amplitude transients on connect/disconnect. Compliant with IEEE 1547-2018 Category I/II/III amplitude limits.",
+                "parameters": "+10% amplitude step at t=0.5 s; f = 60.0 Hz (constant).",
+                "harmonics": "None (pure 60 Hz fundamental + noise).",
+                "noise": "Gaussian white noise sigma=0.001 pu (SNR ≈ 57 dB at 1 pu amplitude).",
+                "noise_sigma": 0.001,
+                "dynamics": "Piecewise constant amplitude: 1.0 pu → 1.1 pu at t=0.5 s. Phase C0-continuous.",
+                "exceeds_standard": "This is a compliance-level baseline test (not a beyond-standard stress). Serves as a reference point for amplitude-immunity benchmarking."
+            },
+            "compliance_summary": {
+                "thresholds": {
+                    "RMSE_Hz": 0.05,
+                    "Peak_Hz": 0.5,
+                    "Ttrip_s": 0.1
+                },
+                "passing_methods": [
+                    "EKF",
+                    "EKF2",
+                    "IpDFT",
+                    "Koopman-RKDPmu",
+                    "PLL",
+                    "RLS",
+                    "SOGI",
+                    "TFT",
+                    "UKF"
+                ],
+                "failing_methods": [
+                    "PI-GRU",
+                    "RLS-VFF",
+                    "Teager"
+                ],
+                "marginal_methods": []
+            }
+        },
+        "IEEE_Freq_Ramp": {
+            "methods": {
+                "EKF": {
+                    "RMSE": 0.011588,
+                    "MAE": 0.009001,
+                    "MAX_PEAK": 0.043532,
+                    "SETTLING": 0.0,
+                    "ENERGY": 0.000181,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.043532,
+                    "FE_mean_Hz": 0.009001,
+                    "RFE_max_Hz_s": 140.2257,
+                    "RFE_rms_Hz_s": 19.4404,
+                    "COMPLEXITY": 0.295312,
+                    "TIME_PER_SAMPLE_US": 19.6875,
+                    "STRUCTURAL_LATENCY_MS": 0.1,
+                    "PCB": 0.030897,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "Q53.366992312063125,R0.3511191734215127",
+                    "tuned_params": {
+                        "Q": 53.366992,
+                        "R": 0.351119
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "EKF2": {
+                    "RMSE": 0.008235,
+                    "MAE": 0.006253,
+                    "MAX_PEAK": 0.030744,
+                    "SETTLING": 0.0,
+                    "ENERGY": 9.2e-05,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.030744,
+                    "FE_mean_Hz": 0.006253,
+                    "RFE_max_Hz_s": 83.3977,
+                    "RFE_rms_Hz_s": 12.947,
+                    "COMPLEXITY": 0.988281,
+                    "TIME_PER_SAMPLE_US": 65.8854,
+                    "STRUCTURAL_LATENCY_MS": 0.1,
+                    "PCB": 0.022327,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "Q3.981071705534973,R0.003981071705534973,InnRef0.1,EvTh2.0,Fast80.0ms",
+                    "tuned_params": {
+                        "q_param": 3.981072,
+                        "r_param": 0.003981,
+                        "inn_ref": 0.1,
+                        "event_thresh": 2.0,
+                        "fast_horizon_ms": 80.0
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "IpDFT": {
+                    "RMSE": 0.03523,
+                    "MAE": 0.028564,
+                    "MAX_PEAK": 0.081745,
+                    "SETTLING": 0.0,
+                    "ENERGY": 0.001676,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.081745,
+                    "FE_mean_Hz": 0.028564,
+                    "RFE_max_Hz_s": 22.9056,
+                    "RFE_rms_Hz_s": 11.1336,
+                    "COMPLEXITY": 0.404687,
+                    "TIME_PER_SAMPLE_US": 26.9792,
+                    "STRUCTURAL_LATENCY_MS": 33.3,
+                    "PCB": 0.090429,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "2 cycles",
+                    "tuned_params": {
+                        "cycles": 2
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "Koopman-RKDPmu": {
+                    "RMSE": 0.028556,
+                    "MAE": 0.020567,
+                    "MAX_PEAK": 0.054278,
+                    "SETTLING": 0.0,
+                    "ENERGY": 0.001101,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.054278,
+                    "FE_mean_Hz": 0.020567,
+                    "RFE_max_Hz_s": 10.5548,
+                    "RFE_rms_Hz_s": 2.2044,
+                    "COMPLEXITY": 1.275,
+                    "TIME_PER_SAMPLE_US": 85.0,
+                    "STRUCTURAL_LATENCY_MS": 16.0,
+                    "PCB": 0.079996,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Win80",
+                    "tuned_params": {
+                        "window_samples": 80
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "PI-GRU": {
+                    "RMSE": 2.55882,
+                    "MAE": 2.106488,
+                    "MAX_PEAK": 5.180148,
+                    "SETTLING": 1.2571,
+                    "ENERGY": 8.839205,
+                    "TRIP_TIME_0p5": 1.1498,
+                    "MAX_CONTIGUOUS_0p5": 0.0087,
+                    "FE_max_Hz": 5.180148,
+                    "FE_mean_Hz": 2.106488,
+                    "RFE_max_Hz_s": 5377.2964,
+                    "RFE_rms_Hz_s": 1450.5197,
+                    "COMPLEXITY": 2088.640625,
+                    "TIME_PER_SAMPLE_US": 139242.7083,
+                    "STRUCTURAL_LATENCY_MS": 10.5,
+                    "PCB": 6.464517,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "PI-GRU pretrained model",
+                    "tuned_params": {},
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "PLL": {
+                    "RMSE": 0.06708,
+                    "MAE": 0.054069,
+                    "MAX_PEAK": 0.172918,
+                    "SETTLING": 0.0,
+                    "ENERGY": 0.006075,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.172918,
+                    "FE_mean_Hz": 0.054069,
+                    "RFE_max_Hz_s": 53.6972,
+                    "RFE_rms_Hz_s": 28.1315,
+                    "COMPLEXITY": 0.178125,
+                    "TIME_PER_SAMPLE_US": 11.875,
+                    "STRUCTURAL_LATENCY_MS": 16.6,
+                    "PCB": 0.173175,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Kp39.79430005986696,Ki300.0",
+                    "tuned_params": {
+                        "kp": 39.7943,
+                        "ki": 300.0
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "RLS-VFF": {
+                    "RMSE": 0.647007,
+                    "MAE": 0.584852,
+                    "MAX_PEAK": 1.066065,
+                    "SETTLING": 1.1071,
+                    "ENERGY": 0.565135,
+                    "TRIP_TIME_0p5": 0.9681,
+                    "MAX_CONTIGUOUS_0p5": 0.9678,
+                    "FE_max_Hz": 1.066065,
+                    "FE_mean_Hz": 0.584852,
+                    "RFE_max_Hz_s": 1068.9106,
+                    "RFE_rms_Hz_s": 75.7974,
+                    "COMPLEXITY": 0.142187,
+                    "TIME_PER_SAMPLE_US": 9.4792,
+                    "STRUCTURAL_LATENCY_MS": 105.0,
+                    "PCB": 1.414972,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "lamMin0.9,Ka0.5",
+                    "tuned_params": {
+                        "lam_min": 0.9,
+                        "lam_max": 0.9995,
+                        "Ka": 0.5,
+                        "Kb": null,
+                        "win_smooth": 20,
+                        "decim": 50
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "RLS": {
+                    "RMSE": 0.087395,
+                    "MAE": 0.037129,
+                    "MAX_PEAK": 0.864964,
+                    "SETTLING": 0.0099,
+                    "ENERGY": 0.003781,
+                    "TRIP_TIME_0p5": 0.0055,
+                    "MAX_CONTIGUOUS_0p5": 0.0001,
+                    "FE_max_Hz": 0.864964,
+                    "FE_mean_Hz": 0.037129,
+                    "RFE_max_Hz_s": 8615.9002,
+                    "RFE_rms_Hz_s": 1108.2427,
+                    "COMPLEXITY": 0.139844,
+                    "TIME_PER_SAMPLE_US": 9.3229,
+                    "STRUCTURAL_LATENCY_MS": 1005.0,
+                    "PCB": 0.274478,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Lam0.9,Win200",
+                    "tuned_params": {
+                        "lambda": 0.9,
+                        "win_smooth": 200,
+                        "decim": 50
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "SOGI": {
+                    "RMSE": 1.116946,
+                    "MAE": 1.047407,
+                    "MAX_PEAK": 1.555058,
+                    "SETTLING": 1.35,
+                    "ENERGY": 1.684216,
+                    "TRIP_TIME_0p5": 1.1313,
+                    "MAX_CONTIGUOUS_0p5": 1.1313,
+                    "FE_max_Hz": 1.555058,
+                    "FE_mean_Hz": 1.047407,
+                    "RFE_max_Hz_s": 3.0,
+                    "RFE_rms_Hz_s": 1.6529,
+                    "COMPLEXITY": 0.425,
+                    "TIME_PER_SAMPLE_US": 28.3333,
+                    "STRUCTURAL_LATENCY_MS": 5.0,
+                    "PCB": 2.211261,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "k0.5,g150.0,sw50",
+                    "tuned_params": {
+                        "k": 0.5,
+                        "g": 150.0,
+                        "smooth_win": 50
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "TFT": {
+                    "RMSE": 0.030701,
+                    "MAE": 0.020606,
+                    "MAX_PEAK": 0.055016,
+                    "SETTLING": 0.0,
+                    "ENERGY": 0.001272,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.055016,
+                    "FE_mean_Hz": 0.020606,
+                    "RFE_max_Hz_s": 9.9762,
+                    "RFE_rms_Hz_s": 2.0564,
+                    "COMPLEXITY": 0.221094,
+                    "TIME_PER_SAMPLE_US": 14.7396,
+                    "STRUCTURAL_LATENCY_MS": 33.3,
+                    "PCB": 0.088882,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Cycles2",
+                    "tuned_params": {
+                        "win": 2,
+                        "model_order": 2,
+                        "basis": "cos/sin + t*cos/t*sin + t^2*cos/t^2*sin"
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "Teager": {
+                    "RMSE": 5.553679,
+                    "MAE": 3.910915,
+                    "MAX_PEAK": 18.334042,
+                    "SETTLING": 1.2912,
+                    "ENERGY": 41.638518,
+                    "TRIP_TIME_0p5": 1.206,
+                    "MAX_CONTIGUOUS_0p5": 0.0377,
+                    "FE_max_Hz": 18.334042,
+                    "FE_mean_Hz": 3.910915,
+                    "RFE_max_Hz_s": 5564.3761,
+                    "RFE_rms_Hz_s": 1606.3991,
+                    "COMPLEXITY": 0.247656,
+                    "TIME_PER_SAMPLE_US": 16.5104,
+                    "STRUCTURAL_LATENCY_MS": 5.0,
+                    "PCB": 15.740234,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Win50",
+                    "tuned_params": {
+                        "win": 50
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "UKF": {
+                    "RMSE": 0.012698,
+                    "MAE": 0.009836,
+                    "MAX_PEAK": 0.048824,
+                    "SETTLING": 0.0,
+                    "ENERGY": 0.000218,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.048824,
+                    "FE_mean_Hz": 0.009836,
+                    "RFE_max_Hz_s": 38.7093,
+                    "RFE_rms_Hz_s": 8.1977,
+                    "COMPLEXITY": 2.246875,
+                    "TIME_PER_SAMPLE_US": 149.7917,
+                    "STRUCTURAL_LATENCY_MS": 1.0,
+                    "PCB": 0.033928,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "Q12.32846739442066,R0.04328761281083057",
+                    "tuned_params": {
+                        "Q": 12.328467,
+                        "R": 0.043288,
+                        "smooth_win": 10
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                }
+            },
+            "scenario_description": {
+                "standard": "IEEE 1547-2018 Table 2 Category III (RoCoF = ±3.0 Hz/s, limits 61.5/58.5 Hz); IEC 60255-118-1:2018 §5.3.3 (frequency ramp test, df/dt up to 4 Hz/s).",
+                "physical_motivation": "Low-inertia IBR-dominated grids routinely exhibit 2–5 Hz/s RoCoF post-fault (NERC GADS 2019-2023). This scenario applies the maximum IEEE-standardised ramp rate to expose tracking lag in all estimator families.",
+                "ibr_relevance": "IBR plants reduce system inertia; RoCoF > 0.5 Hz/s was rare in synchronous-machine grids but is now routinely observed in high-IBR systems (Ireland, GB, parts of ERCOT). EKF2's ω̇ augmentation provides structural advantage over static-frequency estimators.",
+                "parameters": "+3.0 Hz/s ramp from t=0.3 s; cap at 61.5 Hz reached at t=0.80 s; hold at 61.5 Hz for t > 0.80 s.",
+                "harmonics": "None (pure fundamental + noise; no harmonic content to isolate RoCoF tracking).",
+                "noise": "Gaussian white noise sigma=0.001 pu.",
+                "noise_sigma": 0.001,
+                "dynamics": "Piecewise: 60 Hz nominal → +3.0 Hz/s linear ramp (t=0.3–0.80 s) → hold at 61.5 Hz (IEEE Cat-III upper ceiling). Phase: continuous cumulative integral of f(t). Maximum instantaneous RoCoF = 3.0 Hz/s.",
+                "exceeds_standard": "RoCoF = 3.0 Hz/s is the IEEE 1547-2018 Cat-III boundary. IBR grids with >60% IBR penetration report 2-3× higher RoCoF in field incidents. This scenario is a compliance-boundary test; Scenarios D-F exceed it."
+            },
+            "compliance_summary": {
+                "thresholds": {
+                    "RMSE_Hz": 0.05,
+                    "Peak_Hz": 0.5,
+                    "Ttrip_s": 0.1
+                },
+                "passing_methods": [
+                    "EKF",
+                    "EKF2",
+                    "IpDFT",
+                    "Koopman-RKDPmu",
+                    "TFT",
+                    "UKF"
+                ],
+                "failing_methods": [
+                    "PI-GRU",
+                    "PLL",
+                    "RLS-VFF",
+                    "RLS",
+                    "SOGI",
+                    "Teager"
+                ],
+                "marginal_methods": []
+            }
+        },
+        "IEEE_Modulation": {
+            "methods": {
+                "EKF": {
+                    "RMSE": 0.000147,
+                    "MAE": 0.000118,
+                    "MAX_PEAK": 0.00063,
+                    "SETTLING": 0.0,
+                    "ENERGY": 0.0,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.00063,
+                    "FE_mean_Hz": 0.000118,
+                    "RFE_max_Hz_s": 0.4705,
+                    "RFE_rms_Hz_s": 0.11,
+                    "COMPLEXITY": 0.310156,
+                    "TIME_PER_SAMPLE_US": 20.6771,
+                    "STRUCTURAL_LATENCY_MS": 0.1,
+                    "PCB": 0.000382,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "Q0.0001,R0.3511191734215127",
+                    "tuned_params": {
+                        "Q": 0.0001,
+                        "R": 0.351119
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "EKF2": {
+                    "RMSE": 0.004757,
+                    "MAE": 0.003857,
+                    "MAX_PEAK": 0.012543,
+                    "SETTLING": 0.0,
+                    "ENERGY": 3.1e-05,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.012543,
+                    "FE_mean_Hz": 0.003857,
+                    "RFE_max_Hz_s": 15.3216,
+                    "RFE_rms_Hz_s": 4.0875,
+                    "COMPLEXITY": 1.028125,
+                    "TIME_PER_SAMPLE_US": 68.5417,
+                    "STRUCTURAL_LATENCY_MS": 0.1,
+                    "PCB": 0.012208,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "Q0.1,R0.003981071705534973,InnRef0.1,EvTh2.0,Fast80.0ms",
+                    "tuned_params": {
+                        "q_param": 0.1,
+                        "r_param": 0.003981,
+                        "inn_ref": 0.1,
+                        "event_thresh": 2.0,
+                        "fast_horizon_ms": 80.0
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "IpDFT": {
+                    "RMSE": 0.000283,
+                    "MAE": 0.000229,
+                    "MAX_PEAK": 0.000747,
+                    "SETTLING": 0.0,
+                    "ENERGY": 0.0,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.000747,
+                    "FE_mean_Hz": 0.000229,
+                    "RFE_max_Hz_s": 0.0392,
+                    "RFE_rms_Hz_s": 0.0118,
+                    "COMPLEXITY": 1.071094,
+                    "TIME_PER_SAMPLE_US": 71.4062,
+                    "STRUCTURAL_LATENCY_MS": 166.6,
+                    "PCB": 0.00073,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "10 cycles",
+                    "tuned_params": {
+                        "cycles": 10
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "Koopman-RKDPmu": {
+                    "RMSE": 0.001267,
+                    "MAE": 0.001148,
+                    "MAX_PEAK": 0.002256,
+                    "SETTLING": 0.0,
+                    "ENERGY": 2e-06,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.002256,
+                    "FE_mean_Hz": 0.001148,
+                    "RFE_max_Hz_s": 0.3065,
+                    "RFE_rms_Hz_s": 0.0621,
+                    "COMPLEXITY": 1.982031,
+                    "TIME_PER_SAMPLE_US": 132.1354,
+                    "STRUCTURAL_LATENCY_MS": 100.0,
+                    "PCB": 0.002755,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "Win500",
+                    "tuned_params": {
+                        "window_samples": 500
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "PI-GRU": {
+                    "RMSE": 1.8075,
+                    "MAE": 1.41836,
+                    "MAX_PEAK": 3.824406,
+                    "SETTLING": 1.191,
+                    "ENERGY": 4.410526,
+                    "TRIP_TIME_0p5": 1.0272,
+                    "MAX_CONTIGUOUS_0p5": 0.0076,
+                    "FE_max_Hz": 3.824406,
+                    "FE_mean_Hz": 1.41836,
+                    "RFE_max_Hz_s": 5301.9714,
+                    "RFE_rms_Hz_s": 1466.1316,
+                    "COMPLEXITY": 2257.286719,
+                    "TIME_PER_SAMPLE_US": 150485.7812,
+                    "STRUCTURAL_LATENCY_MS": 10.5,
+                    "PCB": 4.77958,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "PI-GRU pretrained model",
+                    "tuned_params": {},
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "PLL": {
+                    "RMSE": 0.000126,
+                    "MAE": 0.00011,
+                    "MAX_PEAK": 0.00026,
+                    "SETTLING": 0.0,
+                    "ENERGY": 0.0,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.00026,
+                    "FE_mean_Hz": 0.00011,
+                    "RFE_max_Hz_s": 0.1509,
+                    "RFE_rms_Hz_s": 0.0886,
+                    "COMPLEXITY": 0.175,
+                    "TIME_PER_SAMPLE_US": 11.6667,
+                    "STRUCTURAL_LATENCY_MS": 16.6,
+                    "PCB": 0.000298,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "Kp0.5,Ki1.0",
+                    "tuned_params": {
+                        "kp": 0.5,
+                        "ki": 1.0
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "RLS-VFF": {
+                    "RMSE": 0.067871,
+                    "MAE": 0.055716,
+                    "MAX_PEAK": 0.308854,
+                    "SETTLING": 0.0109,
+                    "ENERGY": 0.006219,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.308854,
+                    "FE_mean_Hz": 0.055716,
+                    "RFE_max_Hz_s": 1059.6139,
+                    "RFE_rms_Hz_s": 36.3244,
+                    "COMPLEXITY": 0.154688,
+                    "TIME_PER_SAMPLE_US": 10.3125,
+                    "STRUCTURAL_LATENCY_MS": 105.0,
+                    "PCB": 0.171991,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "lamMin0.9,Ka0.5",
+                    "tuned_params": {
+                        "lam_min": 0.9,
+                        "lam_max": 0.9995,
+                        "Ka": 0.5,
+                        "Kb": null,
+                        "win_smooth": 20,
+                        "decim": 50
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "RLS": {
+                    "RMSE": 0.005132,
+                    "MAE": 0.004147,
+                    "MAX_PEAK": 0.087658,
+                    "SETTLING": 0.0,
+                    "ENERGY": 1.3e-05,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.087658,
+                    "FE_mean_Hz": 0.004147,
+                    "RFE_max_Hz_s": 838.5604,
+                    "RFE_rms_Hz_s": 30.3946,
+                    "COMPLEXITY": 0.148438,
+                    "TIME_PER_SAMPLE_US": 9.8958,
+                    "STRUCTURAL_LATENCY_MS": 1005.0,
+                    "PCB": 0.013219,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "Lam0.95,Win200",
+                    "tuned_params": {
+                        "lambda": 0.95,
+                        "win_smooth": 200,
+                        "decim": 50
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "SOGI": {
+                    "RMSE": 0.008987,
+                    "MAE": 0.008531,
+                    "MAX_PEAK": 0.013421,
+                    "SETTLING": 0.0,
+                    "ENERGY": 0.000109,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.013421,
+                    "FE_mean_Hz": 0.008531,
+                    "RFE_max_Hz_s": 0.0073,
+                    "RFE_rms_Hz_s": 0.0073,
+                    "COMPLEXITY": 0.517969,
+                    "TIME_PER_SAMPLE_US": 34.5312,
+                    "STRUCTURAL_LATENCY_MS": 16.6,
+                    "PCB": 0.017014,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "k2.0,g5.0,swNone",
+                    "tuned_params": {
+                        "k": 2.0,
+                        "g": 5.0,
+                        "smooth_win": null
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "TFT": {
+                    "RMSE": 0.00026,
+                    "MAE": 0.000211,
+                    "MAX_PEAK": 0.000781,
+                    "SETTLING": 0.0,
+                    "ENERGY": 0.0,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.000781,
+                    "FE_mean_Hz": 0.000211,
+                    "RFE_max_Hz_s": 1.1018,
+                    "RFE_rms_Hz_s": 0.1971,
+                    "COMPLEXITY": 0.534375,
+                    "TIME_PER_SAMPLE_US": 35.625,
+                    "STRUCTURAL_LATENCY_MS": 100.0,
+                    "PCB": 0.000665,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "Cycles6",
+                    "tuned_params": {
+                        "win": 6,
+                        "model_order": 2,
+                        "basis": "cos/sin + t*cos/t*sin + t^2*cos/t^2*sin"
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "Teager": {
+                    "RMSE": 5.018452,
+                    "MAE": 3.672238,
+                    "MAX_PEAK": 15.761224,
+                    "SETTLING": 1.3002,
+                    "ENERGY": 33.999568,
+                    "TRIP_TIME_0p5": 1.22,
+                    "MAX_CONTIGUOUS_0p5": 0.0366,
+                    "FE_max_Hz": 15.761224,
+                    "FE_mean_Hz": 3.672238,
+                    "RFE_max_Hz_s": 5226.0034,
+                    "RFE_rms_Hz_s": 1491.9328,
+                    "COMPLEXITY": 0.257031,
+                    "TIME_PER_SAMPLE_US": 17.1354,
+                    "STRUCTURAL_LATENCY_MS": 5.0,
+                    "PCB": 13.933612,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Win50",
+                    "tuned_params": {
+                        "win": 50
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "UKF": {
+                    "RMSE": 0.000243,
+                    "MAE": 0.000169,
+                    "MAX_PEAK": 0.001424,
+                    "SETTLING": 0.0,
+                    "ENERGY": 0.0,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.001424,
+                    "FE_mean_Hz": 0.000169,
+                    "RFE_max_Hz_s": 0.3532,
+                    "RFE_rms_Hz_s": 0.1038,
+                    "COMPLEXITY": 2.496094,
+                    "TIME_PER_SAMPLE_US": 166.4062,
+                    "STRUCTURAL_LATENCY_MS": 1.0,
+                    "PCB": 0.000695,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "Q0.0001,R0.12328467394420659",
+                    "tuned_params": {
+                        "Q": 0.0001,
+                        "R": 0.123285,
+                        "smooth_win": 10
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                }
+            },
+            "scenario_description": {
+                "standard": "IEEE Std 60255-118-1:2018 §5.3.5 (AM modulation test, kx=0.1); IEEE C37.118.1-2011 §5.4.3; IEC 61000-4-7 (modulation products).",
+                "physical_motivation": "Lightly-damped inter-area electromechanical oscillations at 0.1–3 Hz are characteristic of high-IBR transmission corridors (WECC, ENTSO-E system studies). IBR plants without POD controls excite these modes.",
+                "ibr_relevance": "GFL-IBR with inadequate virtual inertia or POD can excite or sustain inter-area oscillations. Amplitude modulation at 2 Hz represents a lightly-damped (ζ~0.05) electromechanical mode — amplitude at the stability boundary before oscillatory instability.",
+                "parameters": "v(t) = (1 + 0.1·cos(2π·2.0·t))·sin(2π·60·t); AM depth kx=0.1 (10%), modulation f_m=2.0 Hz. True frequency: constant 60.0 Hz.",
+                "harmonics": "AM sidebands at 58 Hz and 62 Hz (±f_m = ±2 Hz about carrier). Per IEEE 519-2022: THD = 0% (sidebands are not integer harmonics). Not interharmonics (modulation product, not asynchronous source).",
+                "noise": "Gaussian white noise sigma=0.001 pu.",
+                "noise_sigma": 0.001,
+                "dynamics": "Constant 60 Hz frequency; sinusoidal amplitude envelope. Estimators with AM-FM coupling produce spurious ~0.2 Hz peak frequency oscillation (SOGI-FLL, SRF-PLL) — the primary discrimination mechanism.",
+                "exceeds_standard": "kx=0.1 is the IEC 60255-118-1 §5.3.5 standard test point. Pre-cascade IBR oscillation events (e.g., WECC 2020) exhibited modulation depths of 15–25% prior to instability — 1.5–2.5× the test level."
+            },
+            "compliance_summary": {
+                "thresholds": {
+                    "RMSE_Hz": 0.05,
+                    "Peak_Hz": 0.5,
+                    "Ttrip_s": 0.1
+                },
+                "passing_methods": [
+                    "EKF",
+                    "EKF2",
+                    "IpDFT",
+                    "Koopman-RKDPmu",
+                    "PLL",
+                    "RLS",
+                    "SOGI",
+                    "TFT",
+                    "UKF"
+                ],
+                "failing_methods": [
+                    "PI-GRU",
+                    "RLS-VFF",
+                    "Teager"
+                ],
+                "marginal_methods": []
+            }
+        },
+        "IBR_Nightmare": {
+            "methods": {
+                "EKF": {
+                    "RMSE": 0.224883,
+                    "MAE": 0.124099,
+                    "MAX_PEAK": 0.574143,
+                    "SETTLING": 0.3413,
+                    "ENERGY": 0.068272,
+                    "TRIP_TIME_0p5": 0.1194,
+                    "MAX_CONTIGUOUS_0p5": 0.1194,
+                    "FE_max_Hz": 0.574143,
+                    "FE_mean_Hz": 0.124099,
+                    "RFE_max_Hz_s": 19.3439,
+                    "RFE_rms_Hz_s": 2.2058,
+                    "COMPLEXITY": 0.314063,
+                    "TIME_PER_SAMPLE_US": 20.9375,
+                    "STRUCTURAL_LATENCY_MS": 0.1,
+                    "PCB": 0.686722,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Q0.0001,R1.0",
+                    "tuned_params": {
+                        "Q": 0.0001,
+                        "R": 1.0
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "EKF2": {
+                    "RMSE": 0.04741,
+                    "MAE": 0.013705,
+                    "MAX_PEAK": 0.364892,
+                    "SETTLING": 0.0269,
+                    "ENERGY": 0.003034,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.364892,
+                    "FE_mean_Hz": 0.013705,
+                    "RFE_max_Hz_s": 100.8666,
+                    "RFE_rms_Hz_s": 11.0794,
+                    "COMPLEXITY": 1.554688,
+                    "TIME_PER_SAMPLE_US": 103.6458,
+                    "STRUCTURAL_LATENCY_MS": 0.1,
+                    "PCB": 0.149864,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Q0.1,R1.0,InnRef0.3,EvTh2.0,Fast80.0ms",
+                    "tuned_params": {
+                        "q_param": 0.1,
+                        "r_param": 1.0,
+                        "inn_ref": 0.3,
+                        "event_thresh": 2.0,
+                        "fast_horizon_ms": 80.0
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "IpDFT": {
+                    "RMSE": 0.483577,
+                    "MAE": 0.119391,
+                    "MAX_PEAK": 2.897419,
+                    "SETTLING": 0.1056,
+                    "ENERGY": 0.311811,
+                    "TRIP_TIME_0p5": 0.0862,
+                    "MAX_CONTIGUOUS_0p5": 0.0862,
+                    "FE_max_Hz": 2.897419,
+                    "FE_mean_Hz": 0.119391,
+                    "RFE_max_Hz_s": 71.1348,
+                    "RFE_rms_Hz_s": 15.2903,
+                    "COMPLEXITY": 1.309375,
+                    "TIME_PER_SAMPLE_US": 87.2917,
+                    "STRUCTURAL_LATENCY_MS": 166.6,
+                    "PCB": 1.525211,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "10 cycles",
+                    "tuned_params": {
+                        "cycles": 10
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "Koopman-RKDPmu": {
+                    "RMSE": 0.418507,
+                    "MAE": 0.168381,
+                    "MAX_PEAK": 1.736228,
+                    "SETTLING": 0.1822,
+                    "ENERGY": 0.227693,
+                    "TRIP_TIME_0p5": 0.1484,
+                    "MAX_CONTIGUOUS_0p5": 0.1484,
+                    "FE_max_Hz": 1.736228,
+                    "FE_mean_Hz": 0.168381,
+                    "RFE_max_Hz_s": 22.3374,
+                    "RFE_rms_Hz_s": 6.7334,
+                    "COMPLEXITY": 3.745312,
+                    "TIME_PER_SAMPLE_US": 249.6875,
+                    "STRUCTURAL_LATENCY_MS": 200.0,
+                    "PCB": 1.317801,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Win1000",
+                    "tuned_params": {
+                        "window_samples": 1000
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "PI-GRU": {
+                    "RMSE": 1.825253,
+                    "MAE": 1.431721,
+                    "MAX_PEAK": 4.1233,
+                    "SETTLING": 1.1965,
+                    "ENERGY": 4.497592,
+                    "TRIP_TIME_0p5": 1.0282,
+                    "MAX_CONTIGUOUS_0p5": 0.0076,
+                    "FE_max_Hz": 4.1233,
+                    "FE_mean_Hz": 1.431721,
+                    "RFE_max_Hz_s": 5423.3322,
+                    "RFE_rms_Hz_s": 1498.0333,
+                    "COMPLEXITY": 2346.410156,
+                    "TIME_PER_SAMPLE_US": 156427.3438,
+                    "STRUCTURAL_LATENCY_MS": 10.5,
+                    "PCB": 4.828118,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "PI-GRU pretrained model",
+                    "tuned_params": {},
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "PLL": {
+                    "RMSE": 0.045041,
+                    "MAE": 0.033767,
+                    "MAX_PEAK": 0.077494,
+                    "SETTLING": 0.0,
+                    "ENERGY": 0.002739,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.077494,
+                    "FE_mean_Hz": 0.033767,
+                    "RFE_max_Hz_s": 4.5675,
+                    "RFE_rms_Hz_s": 0.311,
+                    "COMPLEXITY": 0.250781,
+                    "TIME_PER_SAMPLE_US": 16.7188,
+                    "STRUCTURAL_LATENCY_MS": 16.6,
+                    "PCB": 0.123189,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Kp0.5,Ki1.0",
+                    "tuned_params": {
+                        "kp": 0.5,
+                        "ki": 1.0
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "RLS-VFF": {
+                    "RMSE": 0.16747,
+                    "MAE": 0.155065,
+                    "MAX_PEAK": 0.330407,
+                    "SETTLING": 0.3407,
+                    "ENERGY": 0.037862,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.330407,
+                    "FE_mean_Hz": 0.155065,
+                    "RFE_max_Hz_s": 1873.9918,
+                    "RFE_rms_Hz_s": 73.8911,
+                    "COMPLEXITY": 0.141406,
+                    "TIME_PER_SAMPLE_US": 9.4271,
+                    "STRUCTURAL_LATENCY_MS": 105.0,
+                    "PCB": 0.344828,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "lamMin0.9,Ka0.5",
+                    "tuned_params": {
+                        "lam_min": 0.9,
+                        "lam_max": 0.9995,
+                        "Ka": 0.5,
+                        "Kb": null,
+                        "win_smooth": 20,
+                        "decim": 50
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "RLS": {
+                    "RMSE": 0.009378,
+                    "MAE": 0.00783,
+                    "MAX_PEAK": 0.017328,
+                    "SETTLING": 0.0,
+                    "ENERGY": 1.3e-05,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.017328,
+                    "FE_mean_Hz": 0.00783,
+                    "RFE_max_Hz_s": 173.2785,
+                    "RFE_rms_Hz_s": 18.7049,
+                    "COMPLEXITY": 0.14375,
+                    "TIME_PER_SAMPLE_US": 9.5833,
+                    "STRUCTURAL_LATENCY_MS": 2505.0,
+                    "PCB": 0.023315,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "Lam0.95,Win500",
+                    "tuned_params": {
+                        "lambda": 0.95,
+                        "win_smooth": 500,
+                        "decim": 50
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "SOGI": {
+                    "RMSE": 0.008354,
+                    "MAE": 0.007989,
+                    "MAX_PEAK": 0.012484,
+                    "SETTLING": 0.0,
+                    "ENERGY": 9.4e-05,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.012484,
+                    "FE_mean_Hz": 0.007989,
+                    "RFE_max_Hz_s": 0.0429,
+                    "RFE_rms_Hz_s": 0.008,
+                    "COMPLEXITY": 0.533594,
+                    "TIME_PER_SAMPLE_US": 35.5729,
+                    "STRUCTURAL_LATENCY_MS": 16.6,
+                    "PCB": 0.015316,
+                    "PCB_COMPLIANT": true,
+                    "optimal_params": "k2.0,g5.0,swNone",
+                    "tuned_params": {
+                        "k": 2.0,
+                        "g": 5.0,
+                        "smooth_win": null
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "TFT": {
+                    "RMSE": 0.478999,
+                    "MAE": 0.120036,
+                    "MAX_PEAK": 2.732965,
+                    "SETTLING": 0.0945,
+                    "ENERGY": 0.309745,
+                    "TRIP_TIME_0p5": 0.0874,
+                    "MAX_CONTIGUOUS_0p5": 0.0874,
+                    "FE_max_Hz": 2.732965,
+                    "FE_mean_Hz": 0.120036,
+                    "RFE_max_Hz_s": 162.6482,
+                    "RFE_rms_Hz_s": 19.958,
+                    "COMPLEXITY": 0.517188,
+                    "TIME_PER_SAMPLE_US": 34.4792,
+                    "STRUCTURAL_LATENCY_MS": 100.0,
+                    "PCB": 1.511182,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Cycles6",
+                    "tuned_params": {
+                        "win": 6,
+                        "model_order": 2,
+                        "basis": "cos/sin + t*cos/t*sin + t^2*cos/t^2*sin"
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "Teager": {
+                    "RMSE": 9.060705,
+                    "MAE": 6.56767,
+                    "MAX_PEAK": 19.948627,
+                    "SETTLING": 1.1538,
+                    "ENERGY": 110.830105,
+                    "TRIP_TIME_0p5": 1.0147,
+                    "MAX_CONTIGUOUS_0p5": 0.0805,
+                    "FE_max_Hz": 19.948627,
+                    "FE_mean_Hz": 6.56767,
+                    "RFE_max_Hz_s": 5109.2119,
+                    "RFE_rms_Hz_s": 1264.7756,
+                    "COMPLEXITY": 0.25,
+                    "TIME_PER_SAMPLE_US": 16.6667,
+                    "STRUCTURAL_LATENCY_MS": 5.0,
+                    "PCB": 25.293555,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Win50",
+                    "tuned_params": {
+                        "win": 50
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "UKF": {
+                    "RMSE": 0.224936,
+                    "MAE": 0.124106,
+                    "MAX_PEAK": 0.574227,
+                    "SETTLING": 0.3413,
+                    "ENERGY": 0.068305,
+                    "TRIP_TIME_0p5": 0.1202,
+                    "MAX_CONTIGUOUS_0p5": 0.1202,
+                    "FE_max_Hz": 0.574227,
+                    "FE_mean_Hz": 0.124106,
+                    "RFE_max_Hz_s": 16.9372,
+                    "RFE_rms_Hz_s": 2.1515,
+                    "COMPLEXITY": 2.596875,
+                    "TIME_PER_SAMPLE_US": 173.125,
+                    "STRUCTURAL_LATENCY_MS": 1.0,
+                    "PCB": 0.686908,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Q0.0001,R1.0",
+                    "tuned_params": {
+                        "Q": 0.0001,
+                        "R": 1.0,
+                        "smooth_win": 10
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                }
+            },
+            "scenario_description": {
+                "standard": "Intentionally exceeds IEEE 1547-2018 Table 14 anti-islanding phase limit (≤20°) by 3×. Harmonics: IEEE 519-2022 compliant (THD ≤5% at PCC). Interharmonic: IEC 61000-2-2 (asynchronous source). Phase-step test level 6× IEC 60255-118-1 §5.3.6 nominal (±10°).",
+                "physical_motivation": "IBR islanding event: main-grid breaker opens, local island retains 60 Hz generation. The fault-clearing angle at breaker opening appears as an instantaneous phase step at the relay terminal. 60° is drawn from worst-case field incidents (NERC GADS 2019–2023 IBR fault-ride-through reports).",
+                "ibr_relevance": "Frequency estimation is critically impaired at phase-jump instants: EKF/UKF state vectors diverge proportional to jump magnitude; PLL cycle-slips for jumps > ~30°; IpDFT windows straddle the discontinuity producing ±1 Hz spectral-leakage artefact (visible as MAX_PEAK in results). This scenario drives the headline RMSE and T_trip discrimination claims.",
+                "parameters": "Instantaneous +60° (π/3 rad) phase jump at t=0.7 s. Frequency: constant 60.0 Hz before and after. Phase applied at a single sample (searchsorted, not a time window).",
+                "harmonics": "5th harmonic (4%), 7th harmonic (2%): THD = sqrt(0.04²+0.02²) = 4.47% ≤ IEEE 519-2022 5% PCC limit. Interharmonic at 32.5 Hz (0.5%): asynchronous source (cycloconverter / wind rotor frequency); excluded from THD per IEEE 519-2022 definition.",
+                "noise": "Gaussian noise sigma=0.005 pu (5× Scenarios A–C; IBR substation elevated noise floor).",
+                "noise_sigma": 0.005,
+                "dynamics": "Piecewise constant frequency (60 Hz); instantaneous C0-discontinuous phase step at t=0.7 s. Frequency estimators observe an apparent Dirac-like frequency spike of magnitude Δφ/(2π·dt_DSP) ≈ 0.5/DT_DSP_cycles Hz at the jump sample — the primary estimator-discrimination event.",
+                "exceeds_standard": "Phase jump 60° > 3× IEEE 1547-2018 anti-islanding detection threshold (20°). Noise floor 5× IEC 60255-118-1 standard test level. Harmonic environment at IEEE 519-2022 PCC limit (not the tighter equipment limit). Designed as a maximum-discrimination beyond-standard stress test."
+            },
+            "compliance_summary": {
+                "thresholds": {
+                    "RMSE_Hz": 0.05,
+                    "Peak_Hz": 0.5,
+                    "Ttrip_s": 0.1
+                },
+                "passing_methods": [
+                    "EKF2",
+                    "PLL",
+                    "RLS",
+                    "SOGI"
+                ],
+                "failing_methods": [
+                    "EKF",
+                    "IpDFT",
+                    "Koopman-RKDPmu",
+                    "PI-GRU",
+                    "RLS-VFF",
+                    "TFT",
+                    "Teager",
+                    "UKF"
+                ],
+                "marginal_methods": []
+            }
+        },
+        "IBR_MultiEvent_Classic": {
+            "methods": {
+                "EKF": {
+                    "RMSE": 0.335192,
+                    "MAE": 0.193508,
+                    "MAX_PEAK": 2.076299,
+                    "SETTLING": 1.8733,
+                    "ENERGY": 0.544915,
+                    "TRIP_TIME_0p5": 0.4093,
+                    "MAX_CONTIGUOUS_0p5": 0.1298,
+                    "FE_max_Hz": 2.076299,
+                    "FE_mean_Hz": 0.193508,
+                    "RFE_max_Hz_s": 145.8615,
+                    "RFE_rms_Hz_s": 9.8166,
+                    "COMPLEXITY": 1.084375,
+                    "TIME_PER_SAMPLE_US": 21.6875,
+                    "STRUCTURAL_LATENCY_MS": 0.1,
+                    "PCB": 1.014589,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Q0.0004328761281083057,R0.04328761281083057",
+                    "tuned_params": {
+                        "Q": 0.000433,
+                        "R": 0.043288
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "EKF2": {
+                    "RMSE": 0.066814,
+                    "MAE": 0.0442,
+                    "MAX_PEAK": 0.63175,
+                    "SETTLING": 0.0563,
+                    "ENERGY": 0.021651,
+                    "TRIP_TIME_0p5": 0.0026,
+                    "MAX_CONTIGUOUS_0p5": 0.0013,
+                    "FE_max_Hz": 0.63175,
+                    "FE_mean_Hz": 0.0442,
+                    "RFE_max_Hz_s": 578.4172,
+                    "RFE_rms_Hz_s": 32.2152,
+                    "COMPLEXITY": 3.444531,
+                    "TIME_PER_SAMPLE_US": 68.8906,
+                    "STRUCTURAL_LATENCY_MS": 0.1,
+                    "PCB": 0.194512,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Q0.1,R0.25118864315095796,InnRef0.1,EvTh2.0,Fast80.0ms",
+                    "tuned_params": {
+                        "q_param": 0.1,
+                        "r_param": 0.251189,
+                        "inn_ref": 0.1,
+                        "event_thresh": 2.0,
+                        "fast_horizon_ms": 80.0
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "IpDFT": {
+                    "RMSE": 0.43626,
+                    "MAE": 0.224518,
+                    "MAX_PEAK": 3.447106,
+                    "SETTLING": 1.9479,
+                    "ENERGY": 0.919905,
+                    "TRIP_TIME_0p5": 0.4983,
+                    "MAX_CONTIGUOUS_0p5": 0.3164,
+                    "FE_max_Hz": 3.447106,
+                    "FE_mean_Hz": 0.224518,
+                    "RFE_max_Hz_s": 87.8269,
+                    "RFE_rms_Hz_s": 11.1556,
+                    "COMPLEXITY": 4.324219,
+                    "TIME_PER_SAMPLE_US": 86.4844,
+                    "STRUCTURAL_LATENCY_MS": 166.6,
+                    "PCB": 1.346671,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "10 cycles",
+                    "tuned_params": {
+                        "cycles": 10
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "Koopman-RKDPmu": {
+                    "RMSE": 0.409743,
+                    "MAE": 0.246552,
+                    "MAX_PEAK": 2.473867,
+                    "SETTLING": 2.0514,
+                    "ENERGY": 0.812585,
+                    "TRIP_TIME_0p5": 0.5609,
+                    "MAX_CONTIGUOUS_0p5": 0.3026,
+                    "FE_max_Hz": 2.473867,
+                    "FE_mean_Hz": 0.246552,
+                    "RFE_max_Hz_s": 43.5224,
+                    "RFE_rms_Hz_s": 6.7743,
+                    "COMPLEXITY": 9.717187,
+                    "TIME_PER_SAMPLE_US": 194.3438,
+                    "STRUCTURAL_LATENCY_MS": 160.0,
+                    "PCB": 1.228343,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Win800",
+                    "tuned_params": {
+                        "window_samples": 800
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "PI-GRU": {
+                    "RMSE": 1.909447,
+                    "MAE": 1.52419,
+                    "MAX_PEAK": 5.058731,
+                    "SETTLING": 4.3925,
+                    "ENERGY": 17.683036,
+                    "TRIP_TIME_0p5": 3.7876,
+                    "MAX_CONTIGUOUS_0p5": 0.0096,
+                    "FE_max_Hz": 5.058731,
+                    "FE_mean_Hz": 1.52419,
+                    "RFE_max_Hz_s": 5741.8382,
+                    "RFE_rms_Hz_s": 1498.8946,
+                    "COMPLEXITY": 7235.239844,
+                    "TIME_PER_SAMPLE_US": 144704.7969,
+                    "STRUCTURAL_LATENCY_MS": 10.5,
+                    "PCB": 4.974622,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "PI-GRU pretrained model",
+                    "tuned_params": {},
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "PLL": {
+                    "RMSE": 0.327379,
+                    "MAE": 0.182901,
+                    "MAX_PEAK": 1.860394,
+                    "SETTLING": 1.2881,
+                    "ENERGY": 0.519808,
+                    "TRIP_TIME_0p5": 0.4256,
+                    "MAX_CONTIGUOUS_0p5": 0.1822,
+                    "FE_max_Hz": 1.860394,
+                    "FE_mean_Hz": 0.182901,
+                    "RFE_max_Hz_s": 200.9407,
+                    "RFE_rms_Hz_s": 16.3826,
+                    "COMPLEXITY": 0.597656,
+                    "TIME_PER_SAMPLE_US": 11.9531,
+                    "STRUCTURAL_LATENCY_MS": 16.6,
+                    "PCB": 0.997467,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Kp19.938226396476164,Ki129.14285714285714",
+                    "tuned_params": {
+                        "kp": 19.938226,
+                        "ki": 129.142857
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "RLS-VFF": {
+                    "RMSE": 0.850015,
+                    "MAE": 0.618271,
+                    "MAX_PEAK": 2.049869,
+                    "SETTLING": 3.2987,
+                    "ENERGY": 3.504253,
+                    "TRIP_TIME_0p5": 1.9784,
+                    "MAX_CONTIGUOUS_0p5": 0.9755,
+                    "FE_max_Hz": 2.049869,
+                    "FE_mean_Hz": 0.618271,
+                    "RFE_max_Hz_s": 1189.1041,
+                    "RFE_rms_Hz_s": 47.7378,
+                    "COMPLEXITY": 0.567969,
+                    "TIME_PER_SAMPLE_US": 11.3594,
+                    "STRUCTURAL_LATENCY_MS": 105.0,
+                    "PCB": 2.368243,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "lamMin0.9,Ka0.5",
+                    "tuned_params": {
+                        "lam_min": 0.9,
+                        "lam_max": 0.9995,
+                        "Ka": 0.5,
+                        "Kb": null,
+                        "win_smooth": 20,
+                        "decim": 50
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "RLS": {
+                    "RMSE": 0.146894,
+                    "MAE": 0.100301,
+                    "MAX_PEAK": 1.731021,
+                    "SETTLING": 0.2546,
+                    "ENERGY": 0.053837,
+                    "TRIP_TIME_0p5": 0.0125,
+                    "MAX_CONTIGUOUS_0p5": 0.0001,
+                    "FE_max_Hz": 1.731021,
+                    "FE_mean_Hz": 0.100301,
+                    "RFE_max_Hz_s": 17017.5594,
+                    "RFE_rms_Hz_s": 1374.7026,
+                    "COMPLEXITY": 0.550781,
+                    "TIME_PER_SAMPLE_US": 11.0156,
+                    "STRUCTURAL_LATENCY_MS": 2505.0,
+                    "PCB": 0.422263,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Lam0.9,Win500",
+                    "tuned_params": {
+                        "lambda": 0.9,
+                        "win_smooth": 500,
+                        "decim": 50
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "SOGI": {
+                    "RMSE": 0.846338,
+                    "MAE": 0.654357,
+                    "MAX_PEAK": 1.993368,
+                    "SETTLING": 4.1495,
+                    "ENERGY": 3.473997,
+                    "TRIP_TIME_0p5": 2.2568,
+                    "MAX_CONTIGUOUS_0p5": 0.8507,
+                    "FE_max_Hz": 1.993368,
+                    "FE_mean_Hz": 0.654357,
+                    "RFE_max_Hz_s": 8.0415,
+                    "RFE_rms_Hz_s": 2.7854,
+                    "COMPLEXITY": 1.564844,
+                    "TIME_PER_SAMPLE_US": 31.2969,
+                    "STRUCTURAL_LATENCY_MS": 5.0,
+                    "PCB": 2.264619,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "k0.5,g150.0,sw50",
+                    "tuned_params": {
+                        "k": 0.5,
+                        "g": 150.0,
+                        "smooth_win": 50
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "TFT": {
+                    "RMSE": 0.412776,
+                    "MAE": 0.167523,
+                    "MAX_PEAK": 3.421334,
+                    "SETTLING": 0.8573,
+                    "ENERGY": 0.826363,
+                    "TRIP_TIME_0p5": 0.1786,
+                    "MAX_CONTIGUOUS_0p5": 0.0926,
+                    "FE_max_Hz": 3.421334,
+                    "FE_mean_Hz": 0.167523,
+                    "RFE_max_Hz_s": 208.0077,
+                    "RFE_rms_Hz_s": 15.4796,
+                    "COMPLEXITY": 2.004688,
+                    "TIME_PER_SAMPLE_US": 40.0938,
+                    "STRUCTURAL_LATENCY_MS": 100.0,
+                    "PCB": 1.299283,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Cycles6",
+                    "tuned_params": {
+                        "win": 6,
+                        "model_order": 2,
+                        "basis": "cos/sin + t*cos/t*sin + t^2*cos/t^2*sin"
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "Teager": {
+                    "RMSE": 7.253733,
+                    "MAE": 4.882294,
+                    "MAX_PEAK": 21.040455,
+                    "SETTLING": 4.4779,
+                    "ENERGY": 255.190747,
+                    "TRIP_TIME_0p5": 3.9651,
+                    "MAX_CONTIGUOUS_0p5": 0.1021,
+                    "FE_max_Hz": 21.040455,
+                    "FE_mean_Hz": 4.882294,
+                    "RFE_max_Hz_s": 6849.9226,
+                    "RFE_rms_Hz_s": 1355.6874,
+                    "COMPLEXITY": 0.967187,
+                    "TIME_PER_SAMPLE_US": 19.3438,
+                    "STRUCTURAL_LATENCY_MS": 5.0,
+                    "PCB": 20.976351,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Win50",
+                    "tuned_params": {
+                        "win": 50
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "UKF": {
+                    "RMSE": 0.335729,
+                    "MAE": 0.194212,
+                    "MAX_PEAK": 2.074119,
+                    "SETTLING": 1.8772,
+                    "ENERGY": 0.546663,
+                    "TRIP_TIME_0p5": 0.4158,
+                    "MAX_CONTIGUOUS_0p5": 0.1332,
+                    "FE_max_Hz": 2.074119,
+                    "FE_mean_Hz": 0.194212,
+                    "RFE_max_Hz_s": 136.8644,
+                    "RFE_rms_Hz_s": 9.0443,
+                    "COMPLEXITY": 10.248437,
+                    "TIME_PER_SAMPLE_US": 204.9688,
+                    "STRUCTURAL_LATENCY_MS": 1.0,
+                    "PCB": 1.015773,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Q0.0004328761281083057,R0.04328761281083057",
+                    "tuned_params": {
+                        "Q": 0.000433,
+                        "R": 0.043288,
+                        "smooth_win": 10
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                }
+            },
+            "scenario_description": {
+                "standard": "Intentionally exceeds multiple IEEE/IEC limits simultaneously: RoCoF = 3.0 Hz/s at IEEE 1547-2018 Cat-III boundary; nadir 57.5 Hz at IEEE 1547-2018 UFLS imminent-trip threshold; phase jumps 40° and 80° exceed anti-islanding threshold (20°) by 2× and 4×; harmonic environment: IEEE 519-2022 PCC limit (THD ≈ 4.47%); impulsive noise: beyond IEC 60255-118-1 test conditions.",
+                "physical_motivation": "Physically motivated composite IBR-grid event: a large generation-loss incident (e.g., offshore wind farm disconnection) causes a +40° phase transient at the bus, followed by sustained RoCoF under low inertia until the UFLS relay nadir (57.5 Hz). A second switching event (+80° at nadir) models re-energization or breaker reclosing at worst-case angle, producing underdamped inter-area ring-down.  This sequence is derived from composite cascaded events recorded in NERC GADS 2020–2023 IBR fault reports.",
+                "ibr_relevance": "In IBR-heavy grids (H_sys < 2 s), the 3.0 Hz/s RoCoF is achievable within 1–2 s of a major generation loss. The double phase jump stresses estimators that reset on phase events: a first reset at T_J1 is followed immediately by a second at T_NAD (0.833 s later), before most filter transients settle. The underdamped ring-down (zeta≈0.08, f_n≈0.63 Hz) excites the same frequency band as low-frequency oscillation modes, compounding the stress.",
+                "character": "Maximum-discrimination composite stress scenario. All four disturbance types present simultaneously: phase jump, RoCoF, frequency nadir, and electromechanical ring-down. No IEEE/IEC compliance test combines all four.",
+                "parameters": "[0–1.0 s] nominal 60.0 Hz + 5th/7th harmonics + 32.5 Hz; +40° jump at t=1.0 s (breaker opening); [1.0–1.833 s] RoCoF=-3.0 Hz/s ramp to nadir 57.5 Hz; +80° jump at t=1.833 s (re-energisation); [1.833–5.0 s] ring-down: f(τ) = 60 − 2.5·exp(−0.8τ)·cos(2π·0.6τ), τ = t − 1.833 s.",
+                "harmonics": "5th harmonic (4%), 7th harmonic (2%): THD = sqrt(0.04²+0.02²) = 4.47% ≤ IEEE 519-2022 5% PCC limit. Interharmonic 32.5 Hz (0.5%): asynchronous source (excluded from THD). Same harmonic environment as Scenario D to isolate dynamic-vs-phase-jump effects.",
+                "noise": "Gaussian background sigma=0.003 pu + impulsive sigma=0.05 pu (Bernoulli p=5e-4/sample). Impulsive component models IGBT gate-drive noise and CT saturation spikes.",
+                "noise_sigma": 0.003,
+                "dynamics": "Piecewise: nominal → RoCoF=-3.0 Hz/s ramp → nadir 57.5 Hz → underdamped ring-down (α=0.8 s⁻¹, f_osc=0.6 Hz, A=2.5 Hz); +40° at t=1.0 s, +80° at t=1.833 s. C0-continuous at T_NAD (f matches); C1-discontinuous (RoCoF jumps −3.0→+2.0 Hz/s — physically justified by re-energisation event).",
+                "exceeds_standard": "Phase jumps +40°/+80° exceed IEEE 1547-2018 anti-islanding threshold (20°) by 2× and 4×. RoCoF at Cat-III boundary. Nadir at UFLS threshold. Impulsive noise beyond IEC 60255-118-1. No IEEE/IEC compliance test combines all four stressors — this is by design."
+            },
+            "compliance_summary": {
+                "thresholds": {
+                    "RMSE_Hz": 0.05,
+                    "Peak_Hz": 0.5,
+                    "Ttrip_s": 0.1
+                },
+                "passing_methods": [],
+                "failing_methods": [
+                    "EKF",
+                    "EKF2",
+                    "IpDFT",
+                    "Koopman-RKDPmu",
+                    "PI-GRU",
+                    "PLL",
+                    "RLS-VFF",
+                    "RLS",
+                    "SOGI",
+                    "TFT",
+                    "Teager",
+                    "UKF"
+                ],
+                "marginal_methods": []
+            }
+        },
+        "IBR_PrimaryFrequencyResponse": {
+            "methods": {
+                "EKF": {
+                    "RMSE": 0.132968,
+                    "MAE": 0.056592,
+                    "MAX_PEAK": 0.893267,
+                    "SETTLING": 0.3372,
+                    "ENERGY": 0.085751,
+                    "TRIP_TIME_0p5": 0.0825,
+                    "MAX_CONTIGUOUS_0p5": 0.0825,
+                    "FE_max_Hz": 0.893267,
+                    "FE_mean_Hz": 0.056592,
+                    "RFE_max_Hz_s": 401.465,
+                    "RFE_rms_Hz_s": 13.8376,
+                    "COMPLEXITY": 0.923438,
+                    "TIME_PER_SAMPLE_US": 18.4688,
+                    "STRUCTURAL_LATENCY_MS": 0.1,
+                    "PCB": 0.417565,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Q0.0001,R0.001873817422860383",
+                    "tuned_params": {
+                        "Q": 0.0001,
+                        "R": 0.001874
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "EKF2": {
+                    "RMSE": 0.053736,
+                    "MAE": 0.036768,
+                    "MAX_PEAK": 0.392445,
+                    "SETTLING": 0.0679,
+                    "ENERGY": 0.014005,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.392445,
+                    "FE_mean_Hz": 0.036768,
+                    "RFE_max_Hz_s": 939.7736,
+                    "RFE_rms_Hz_s": 60.4908,
+                    "COMPLEXITY": 3.236719,
+                    "TIME_PER_SAMPLE_US": 64.7344,
+                    "STRUCTURAL_LATENCY_MS": 0.1,
+                    "PCB": 0.154332,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Q0.6309573444801934,R0.25118864315095796,InnRef0.1,EvTh2.0,Fast80.0ms",
+                    "tuned_params": {
+                        "q_param": 0.630957,
+                        "r_param": 0.251189,
+                        "inn_ref": 0.1,
+                        "event_thresh": 2.0,
+                        "fast_horizon_ms": 80.0
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "IpDFT": {
+                    "RMSE": 0.196933,
+                    "MAE": 0.059285,
+                    "MAX_PEAK": 1.816349,
+                    "SETTLING": 0.2631,
+                    "ENERGY": 0.187453,
+                    "TRIP_TIME_0p5": 0.1345,
+                    "MAX_CONTIGUOUS_0p5": 0.0788,
+                    "FE_max_Hz": 1.816349,
+                    "FE_mean_Hz": 0.059285,
+                    "RFE_max_Hz_s": 43.6182,
+                    "RFE_rms_Hz_s": 5.537,
+                    "COMPLEXITY": 3.828125,
+                    "TIME_PER_SAMPLE_US": 76.5625,
+                    "STRUCTURAL_LATENCY_MS": 166.6,
+                    "PCB": 0.622679,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "10 cycles",
+                    "tuned_params": {
+                        "cycles": 10
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "Koopman-RKDPmu": {
+                    "RMSE": 0.182626,
+                    "MAE": 0.086412,
+                    "MAX_PEAK": 1.18882,
+                    "SETTLING": 0.5733,
+                    "ENERGY": 0.160091,
+                    "TRIP_TIME_0p5": 0.1681,
+                    "MAX_CONTIGUOUS_0p5": 0.1234,
+                    "FE_max_Hz": 1.18882,
+                    "FE_mean_Hz": 0.086412,
+                    "RFE_max_Hz_s": 21.9378,
+                    "RFE_rms_Hz_s": 3.1761,
+                    "COMPLEXITY": 8.614062,
+                    "TIME_PER_SAMPLE_US": 172.2812,
+                    "STRUCTURAL_LATENCY_MS": 200.0,
+                    "PCB": 0.569078,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Win1000",
+                    "tuned_params": {
+                        "window_samples": 1000
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "PI-GRU": {
+                    "RMSE": 1.818545,
+                    "MAE": 1.426916,
+                    "MAX_PEAK": 4.158717,
+                    "SETTLING": 4.2969,
+                    "ENERGY": 16.039467,
+                    "TRIP_TIME_0p5": 3.6614,
+                    "MAX_CONTIGUOUS_0p5": 0.008,
+                    "FE_max_Hz": 4.158717,
+                    "FE_mean_Hz": 1.426916,
+                    "RFE_max_Hz_s": 5724.3886,
+                    "RFE_rms_Hz_s": 1498.4148,
+                    "COMPLEXITY": 7382.428906,
+                    "TIME_PER_SAMPLE_US": 147648.5781,
+                    "STRUCTURAL_LATENCY_MS": 10.5,
+                    "PCB": 4.809099,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "PI-GRU pretrained model",
+                    "tuned_params": {},
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "PLL": {
+                    "RMSE": 0.104181,
+                    "MAE": 0.056868,
+                    "MAX_PEAK": 0.426626,
+                    "SETTLING": 0.4884,
+                    "ENERGY": 0.05264,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.426626,
+                    "FE_mean_Hz": 0.056868,
+                    "RFE_max_Hz_s": 15.8635,
+                    "RFE_rms_Hz_s": 1.72,
+                    "COMPLEXITY": 0.55625,
+                    "TIME_PER_SAMPLE_US": 11.125,
+                    "STRUCTURAL_LATENCY_MS": 16.6,
+                    "PCB": 0.31874,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Kp0.5,Ki1.0",
+                    "tuned_params": {
+                        "kp": 0.5,
+                        "ki": 1.0
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "RLS-VFF": {
+                    "RMSE": 0.115214,
+                    "MAE": 0.076097,
+                    "MAX_PEAK": 0.469594,
+                    "SETTLING": 0.5314,
+                    "ENERGY": 0.06438,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.469594,
+                    "FE_mean_Hz": 0.076097,
+                    "RFE_max_Hz_s": 1185.1398,
+                    "RFE_rms_Hz_s": 22.2078,
+                    "COMPLEXITY": 0.445312,
+                    "TIME_PER_SAMPLE_US": 8.9062,
+                    "STRUCTURAL_LATENCY_MS": 105.0,
+                    "PCB": 0.335617,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "lamMin0.9,Ka0.5",
+                    "tuned_params": {
+                        "lam_min": 0.9,
+                        "lam_max": 0.9995,
+                        "Ka": 0.5,
+                        "Kb": null,
+                        "win_smooth": 20,
+                        "decim": 50
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": true
+                    }
+                },
+                "RLS": {
+                    "RMSE": 0.045254,
+                    "MAE": 0.036158,
+                    "MAX_PEAK": 0.14866,
+                    "SETTLING": 0.0,
+                    "ENERGY": 0.00511,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.14866,
+                    "FE_mean_Hz": 0.036158,
+                    "RFE_max_Hz_s": 949.4062,
+                    "RFE_rms_Hz_s": 12.9368,
+                    "COMPLEXITY": 0.469531,
+                    "TIME_PER_SAMPLE_US": 9.3906,
+                    "STRUCTURAL_LATENCY_MS": 2505.0,
+                    "PCB": 0.117796,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Lam0.999,Win500",
+                    "tuned_params": {
+                        "lambda": 0.999,
+                        "win_smooth": 500,
+                        "decim": 50
+                    },
+                    "iec_compliance": {
+                        "pass": true,
+                        "rmse_pass": true,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "SOGI": {
+                    "RMSE": 0.100755,
+                    "MAE": 0.052919,
+                    "MAX_PEAK": 0.419487,
+                    "SETTLING": 0.4688,
+                    "ENERGY": 0.049235,
+                    "TRIP_TIME_0p5": 0.0,
+                    "MAX_CONTIGUOUS_0p5": 0.0,
+                    "FE_max_Hz": 0.419487,
+                    "FE_mean_Hz": 0.052919,
+                    "RFE_max_Hz_s": 15.7192,
+                    "RFE_rms_Hz_s": 1.708,
+                    "COMPLEXITY": 1.372656,
+                    "TIME_PER_SAMPLE_US": 27.4531,
+                    "STRUCTURAL_LATENCY_MS": 5.0,
+                    "PCB": 0.310136,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "k2.0,g5.0,sw50",
+                    "tuned_params": {
+                        "k": 2.0,
+                        "g": 5.0,
+                        "smooth_win": 50
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": true,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                },
+                "TFT": {
+                    "RMSE": 0.18436,
+                    "MAE": 0.047719,
+                    "MAX_PEAK": 1.712976,
+                    "SETTLING": 0.2204,
+                    "ENERGY": 0.164845,
+                    "TRIP_TIME_0p5": 0.108,
+                    "MAX_CONTIGUOUS_0p5": 0.0826,
+                    "FE_max_Hz": 1.712976,
+                    "FE_mean_Hz": 0.047719,
+                    "RFE_max_Hz_s": 129.9946,
+                    "RFE_rms_Hz_s": 11.8935,
+                    "COMPLEXITY": 1.753125,
+                    "TIME_PER_SAMPLE_US": 35.0625,
+                    "STRUCTURAL_LATENCY_MS": 100.0,
+                    "PCB": 0.581951,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Cycles6",
+                    "tuned_params": {
+                        "win": 6,
+                        "model_order": 2,
+                        "basis": "cos/sin + t*cos/t*sin + t^2*cos/t^2*sin"
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "Teager": {
+                    "RMSE": 8.291198,
+                    "MAE": 5.888101,
+                    "MAX_PEAK": 19.884762,
+                    "SETTLING": 4.402,
+                    "ENERGY": 333.408253,
+                    "TRIP_TIME_0p5": 3.8762,
+                    "MAX_CONTIGUOUS_0p5": 0.069,
+                    "FE_max_Hz": 19.884762,
+                    "FE_mean_Hz": 5.888101,
+                    "RFE_max_Hz_s": 6563.1727,
+                    "RFE_rms_Hz_s": 1431.9686,
+                    "COMPLEXITY": 0.802344,
+                    "TIME_PER_SAMPLE_US": 16.0469,
+                    "STRUCTURAL_LATENCY_MS": 5.0,
+                    "PCB": 23.400043,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Win50",
+                    "tuned_params": {
+                        "win": 50
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": false,
+                        "marginal": false
+                    }
+                },
+                "UKF": {
+                    "RMSE": 0.133097,
+                    "MAE": 0.056533,
+                    "MAX_PEAK": 0.892525,
+                    "SETTLING": 0.3382,
+                    "ENERGY": 0.085917,
+                    "TRIP_TIME_0p5": 0.0825,
+                    "MAX_CONTIGUOUS_0p5": 0.0825,
+                    "FE_max_Hz": 0.892525,
+                    "FE_mean_Hz": 0.056533,
+                    "RFE_max_Hz_s": 350.2171,
+                    "RFE_rms_Hz_s": 11.2009,
+                    "COMPLEXITY": 7.3,
+                    "TIME_PER_SAMPLE_US": 146.0,
+                    "STRUCTURAL_LATENCY_MS": 1.0,
+                    "PCB": 0.418015,
+                    "PCB_COMPLIANT": false,
+                    "optimal_params": "Q0.0001,R0.001873817422860383",
+                    "tuned_params": {
+                        "Q": 0.0001,
+                        "R": 0.001874,
+                        "smooth_win": 10
+                    },
+                    "iec_compliance": {
+                        "pass": false,
+                        "rmse_pass": false,
+                        "peak_pass": false,
+                        "ttrip_pass": true,
+                        "marginal": false
+                    }
+                }
+            },
+            "scenario_description": {
+                "standard": "Models physically representative primary-frequency-response dynamics per IEEE 1547-2018 §6.4 (frequency response); NERC BAL-003-2 inertia requirements. Peak RoCoF ~8.4 Hz/s (inertial dip) and ~15.7 Hz/s (overshoot) are within IEEE 1547-2018 Cat-III ride-through limits. Phase jump +40° exceeds anti-islanding threshold (20°) by 2×. Harmonics IEEE 519-2022 compliant (THD ≈ 4.47%).",
+                "physical_motivation": "Represents the full primary-frequency-response cycle of a low-inertia IBR-dominated grid after a sudden generation loss: (i) fast inertial dip (nadir 59.57 Hz, 80 ms), (ii) governor overshoot (60.37 Hz, 79 ms), (iii) secondary droop/inter-area dip (59.72 Hz, 500 ms), (iv) AGC recovery, (v) underdamped inter-area oscillation (ζ=0.08, f_n=0.8 Hz). A +40° phase jump at t=2.5 s models breaker reclosing during recovery.",
+                "ibr_relevance": "With system inertia H < 2 s (IBR-dominated), RoCoF peaks of 8.4–15.7 Hz/s are achievable within the inertial window (80 ms), challenging slow window-based estimators. The lightly-damped settling (ζ=0.08, f_n=0.8 Hz) represents inter-area oscillations routinely observed in high-IBR grids (WECC, GB, Iberian Peninsula). C1-smooth trajectory (no artificial phase jumps in frequency) tests RoCoF tracking accuracy independently from jump-handling capability (cf. Scenario D/E).",
+                "character": "Physically realistic trajectory without artificial discontinuities in frequency (C1-smooth cosine smoothstep for transient segments; analytically C1-matched Prony settling). The +40° phase jump tests phase-tracking independently. Designed as the physically-grounded counterpart to the worst-case Scenario E.",
+                "parameters": "[0–1.0 s] nominal 60.0 Hz + harmonics; [1.0–1.08 s] C1 dip to 59.57 Hz (peak RoCoF ≈8.4 Hz/s); [1.08–1.16 s] C1 overshoot to 60.37 Hz (peak RoCoF ≈15.7 Hz/s); [1.16–1.66 s] C1 secondary dip to 59.72 Hz; [1.66–1.96 s] C1 AGC recovery to 60.01 Hz; [1.96–5.0 s] Prony settling: ζ=0.08, f_n=0.8 Hz, amplitude ≈0.0511 Hz; +40° phase jump at t=2.5 s (breaker reclosing); amplitude envelope: cosine-arch dip to 0.94 pu during frequency excursion.",
+                "harmonics": "5th harmonic (4%), 7th harmonic (2%): THD = sqrt(0.04²+0.02²) = 4.47% ≤ IEEE 519-2022 5% PCC limit. Interharmonic 32.5 Hz (0.5%): asynchronous source (excluded from THD).",
+                "noise": "Gaussian background sigma=0.003 pu + impulsive sigma=0.05 pu (Bernoulli p=0.0005/sample). Same noise model as Scenario E for direct comparison.",
+                "noise_sigma": 0.003,
+                "dynamics": "C1-smooth cosine-smoothstep segments (dip → overshoot → secondary dip → recovery) + two-term Prony settling analytically C1-matched at t=1.96 s (ζ=0.08, f_n=0.8 Hz). +40° phase jump at t=2.5 s. Amplitude envelope: cosine arch dip to 0.94 pu during transient.",
+                "exceeds_standard": "Phase jump +40° > 2× IEEE 1547-2018 anti-islanding threshold (20°). RoCoF values within IEEE Cat-III limits (not a beyond-standard RoCoF test). Underdamped settling with ζ=0.08 is more aggressive than typical grid stability requirements (ζ≥0.05 per ENTSO-E NC RfG) but within physical range. This scenario stresses the estimator's smooth-trajectory tracking capability rather than its jump-handling — complementary to Scenarios D and E."
+            },
+            "compliance_summary": {
+                "thresholds": {
+                    "RMSE_Hz": 0.05,
+                    "Peak_Hz": 0.5,
+                    "Ttrip_s": 0.1
+                },
+                "passing_methods": [
+                    "RLS"
+                ],
+                "failing_methods": [
+                    "EKF",
+                    "EKF2",
+                    "IpDFT",
+                    "Koopman-RKDPmu",
+                    "PI-GRU",
+                    "PLL",
+                    "SOGI",
+                    "TFT",
+                    "Teager",
+                    "UKF"
+                ],
+                "marginal_methods": [
+                    "RLS-VFF"
+                ]
+            }
+        }
+    },
+    "paper_claims_numbers": {
+        "claim_275x": {
+            "value": null,
+            "paper_value": 275,
+            "verified": false,
+            "note": "EKF_Ttrip/EKF2_Ttrip IBR_Nightmare"
+        },
+        "claim_4p7x_rmse": {
+            "value": 4.74,
+            "paper_value": 4.7,
+            "verified": true,
+            "note": "EKF_RMSE/EKF2_RMSE IBR_Nightmare"
+        },
+        "claim_12p6x_ramp": {
+            "value": 8.15,
+            "paper_value": 12.6,
+            "verified": true,
+            "note": "PLL_RMSE/EKF2_RMSE IEEE_Freq_Ramp"
+        },
+        "claim_3p3x_ttrip": {
+            "value": 163.69,
+            "paper_value": 3.3,
+            "verified": false,
+            "note": "PLL_Ttrip/EKF2_Ttrip IBR_MultiEvent_Classic"
+        },
+        "claim_1p59x_ramp": {
+            "value": 1.41,
+            "paper_value": 1.59,
+            "verified": true,
+            "note": "EKF_RMSE/EKF2_RMSE IEEE_Freq_Ramp"
+        }
+    },
+    "monte_carlo": {
+        "description": "Monte Carlo robustness analysis over 30 independent noise realisations, 11 methods (PI-GRU excluded), 6 scenarios. Seeds 2000-2029.",
+        "n_runs": 30,
+        "methods": {
+            "IpDFT": {
+                "IEEE_Mag_Step": {
+                    "RMSE_mean": 0.001599,
+                    "RMSE_std": 3.8e-05,
+                    "FE_max_mean": 0.00753,
+                    "FE_max_std": 0.000234,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IEEE_Freq_Ramp": {
+                    "RMSE_mean": 0.035249,
+                    "RMSE_std": 2e-05,
+                    "FE_max_mean": 0.082994,
+                    "FE_max_std": 0.001376,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IEEE_Modulation": {
+                    "RMSE_mean": 0.000259,
+                    "RMSE_std": 2.3e-05,
+                    "FE_max_mean": 0.000679,
+                    "FE_max_std": 0.000104,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IBR_Nightmare": {
+                    "RMSE_mean": 0.48373,
+                    "RMSE_std": 0.000165,
+                    "FE_max_mean": 2.897383,
+                    "FE_max_std": 0.001692,
+                    "TRIP_mean": 0.086137,
+                    "TRIP_std": 5.5e-05,
+                    "n_runs": 30
+                },
+                "IBR_MultiEvent_Classic": {
+                    "RMSE_mean": 0.436277,
+                    "RMSE_std": 5.4e-05,
+                    "FE_max_mean": 3.447036,
+                    "FE_max_std": 0.00073,
+                    "TRIP_mean": 0.49816,
+                    "TRIP_std": 0.000827,
+                    "n_runs": 30
+                },
+                "IBR_PrimaryFrequencyResponse": {
+                    "RMSE_mean": 0.196966,
+                    "RMSE_std": 5.2e-05,
+                    "FE_max_mean": 1.817004,
+                    "FE_max_std": 0.00058,
+                    "TRIP_mean": 0.13451,
+                    "TRIP_std": 7.5e-05,
+                    "n_runs": 30
+                }
+            },
+            "PLL": {
+                "IEEE_Mag_Step": {
+                    "RMSE_mean": 0.000137,
+                    "RMSE_std": 0.0,
+                    "FE_max_mean": 0.000733,
+                    "FE_max_std": 4e-06,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IEEE_Freq_Ramp": {
+                    "RMSE_mean": 0.067091,
+                    "RMSE_std": 1.7e-05,
+                    "FE_max_mean": 0.172622,
+                    "FE_max_std": 0.000277,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IEEE_Modulation": {
+                    "RMSE_mean": 0.000126,
+                    "RMSE_std": 0.0,
+                    "FE_max_mean": 0.000254,
+                    "FE_max_std": 3e-06,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IBR_Nightmare": {
+                    "RMSE_mean": 0.045046,
+                    "RMSE_std": 4e-06,
+                    "FE_max_mean": 0.077508,
+                    "FE_max_std": 2.2e-05,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IBR_MultiEvent_Classic": {
+                    "RMSE_mean": 0.32739,
+                    "RMSE_std": 3e-05,
+                    "FE_max_mean": 1.861596,
+                    "FE_max_std": 0.000539,
+                    "TRIP_mean": 0.42608,
+                    "TRIP_std": 0.000392,
+                    "n_runs": 30
+                },
+                "IBR_PrimaryFrequencyResponse": {
+                    "RMSE_mean": 0.104181,
+                    "RMSE_std": 1e-06,
+                    "FE_max_mean": 0.426624,
+                    "FE_max_std": 1.1e-05,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                }
+            },
+            "EKF": {
+                "IEEE_Mag_Step": {
+                    "RMSE_mean": 0.000241,
+                    "RMSE_std": 5e-06,
+                    "FE_max_mean": 0.002522,
+                    "FE_max_std": 2.7e-05,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IEEE_Freq_Ramp": {
+                    "RMSE_mean": 0.011596,
+                    "RMSE_std": 0.000113,
+                    "FE_max_mean": 0.041059,
+                    "FE_max_std": 0.003078,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IEEE_Modulation": {
+                    "RMSE_mean": 0.000148,
+                    "RMSE_std": 3e-06,
+                    "FE_max_mean": 0.000566,
+                    "FE_max_std": 5.7e-05,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IBR_Nightmare": {
+                    "RMSE_mean": 0.224885,
+                    "RMSE_std": 2.8e-05,
+                    "FE_max_mean": 0.57418,
+                    "FE_max_std": 0.000178,
+                    "TRIP_mean": 0.119783,
+                    "TRIP_std": 0.000561,
+                    "n_runs": 30
+                },
+                "IBR_MultiEvent_Classic": {
+                    "RMSE_mean": 0.335207,
+                    "RMSE_std": 3e-05,
+                    "FE_max_mean": 2.076707,
+                    "FE_max_std": 0.000549,
+                    "TRIP_mean": 0.40995,
+                    "TRIP_std": 0.000691,
+                    "n_runs": 30
+                },
+                "IBR_PrimaryFrequencyResponse": {
+                    "RMSE_mean": 0.132987,
+                    "RMSE_std": 2.3e-05,
+                    "FE_max_mean": 0.893192,
+                    "FE_max_std": 0.000545,
+                    "TRIP_mean": 0.08243,
+                    "TRIP_std": 4.6e-05,
+                    "n_runs": 30
+                }
+            },
+            "EKF2": {
+                "IEEE_Mag_Step": {
+                    "RMSE_mean": 0.002308,
+                    "RMSE_std": 2.1e-05,
+                    "FE_max_mean": 0.029878,
+                    "FE_max_std": 0.000243,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IEEE_Freq_Ramp": {
+                    "RMSE_mean": 0.008226,
+                    "RMSE_std": 9.8e-05,
+                    "FE_max_mean": 0.031782,
+                    "FE_max_std": 0.002461,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IEEE_Modulation": {
+                    "RMSE_mean": 0.004783,
+                    "RMSE_std": 3.2e-05,
+                    "FE_max_mean": 0.012776,
+                    "FE_max_std": 0.000412,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IBR_Nightmare": {
+                    "RMSE_mean": 0.039296,
+                    "RMSE_std": 0.002424,
+                    "FE_max_mean": 0.306989,
+                    "FE_max_std": 0.017897,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IBR_MultiEvent_Classic": {
+                    "RMSE_mean": 0.070893,
+                    "RMSE_std": 0.0167,
+                    "FE_max_mean": 0.767207,
+                    "FE_max_std": 0.484831,
+                    "TRIP_mean": 0.004583,
+                    "TRIP_std": 0.007013,
+                    "n_runs": 30
+                },
+                "IBR_PrimaryFrequencyResponse": {
+                    "RMSE_mean": 0.053939,
+                    "RMSE_std": 0.000229,
+                    "FE_max_mean": 0.390576,
+                    "FE_max_std": 0.013186,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                }
+            },
+            "SOGI": {
+                "IEEE_Mag_Step": {
+                    "RMSE_mean": 0.00899,
+                    "RMSE_std": 1e-06,
+                    "FE_max_mean": 0.013423,
+                    "FE_max_std": 1e-06,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IEEE_Freq_Ramp": {
+                    "RMSE_mean": 1.116936,
+                    "RMSE_std": 3.1e-05,
+                    "FE_max_mean": 1.55505,
+                    "FE_max_std": 3.4e-05,
+                    "TRIP_mean": 1.1313,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IEEE_Modulation": {
+                    "RMSE_mean": 0.008987,
+                    "RMSE_std": 1e-06,
+                    "FE_max_mean": 0.013421,
+                    "FE_max_std": 1e-06,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IBR_Nightmare": {
+                    "RMSE_mean": 0.008355,
+                    "RMSE_std": 3e-06,
+                    "FE_max_mean": 0.012485,
+                    "FE_max_std": 3e-06,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IBR_MultiEvent_Classic": {
+                    "RMSE_mean": 0.846339,
+                    "RMSE_std": 3e-06,
+                    "FE_max_mean": 1.993342,
+                    "FE_max_std": 3.2e-05,
+                    "TRIP_mean": 2.256863,
+                    "TRIP_std": 7.1e-05,
+                    "n_runs": 30
+                },
+                "IBR_PrimaryFrequencyResponse": {
+                    "RMSE_mean": 0.100755,
+                    "RMSE_std": 0.0,
+                    "FE_max_mean": 0.419487,
+                    "FE_max_std": 2e-06,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                }
+            },
+            "RLS": {
+                "IEEE_Mag_Step": {
+                    "RMSE_mean": 0.004111,
+                    "RMSE_std": 7.4e-05,
+                    "FE_max_mean": 0.006632,
+                    "FE_max_std": 0.000134,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IEEE_Freq_Ramp": {
+                    "RMSE_mean": 0.087461,
+                    "RMSE_std": 2.7e-05,
+                    "FE_max_mean": 0.864955,
+                    "FE_max_std": 5.2e-05,
+                    "TRIP_mean": 0.0055,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IEEE_Modulation": {
+                    "RMSE_mean": 0.005181,
+                    "RMSE_std": 5e-05,
+                    "FE_max_mean": 0.087644,
+                    "FE_max_std": 8.3e-05,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IBR_Nightmare": {
+                    "RMSE_mean": 0.009447,
+                    "RMSE_std": 0.000405,
+                    "FE_max_mean": 0.017535,
+                    "FE_max_std": 0.000977,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IBR_MultiEvent_Classic": {
+                    "RMSE_mean": 0.146868,
+                    "RMSE_std": 5.4e-05,
+                    "FE_max_mean": 1.731011,
+                    "FE_max_std": 6.9e-05,
+                    "TRIP_mean": 0.012503,
+                    "TRIP_std": 1.8e-05,
+                    "n_runs": 30
+                },
+                "IBR_PrimaryFrequencyResponse": {
+                    "RMSE_mean": 0.045216,
+                    "RMSE_std": 4.4e-05,
+                    "FE_max_mean": 0.148539,
+                    "FE_max_std": 0.000222,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                }
+            },
+            "Teager": {
+                "IEEE_Mag_Step": {
+                    "RMSE_mean": 5.155947,
+                    "RMSE_std": 0.709768,
+                    "FE_max_mean": 17.998314,
+                    "FE_max_std": 1.433438,
+                    "TRIP_mean": 1.163567,
+                    "TRIP_std": 0.01936,
+                    "n_runs": 30
+                },
+                "IEEE_Freq_Ramp": {
+                    "RMSE_mean": 5.402321,
+                    "RMSE_std": 0.639133,
+                    "FE_max_mean": 18.269497,
+                    "FE_max_std": 1.457121,
+                    "TRIP_mean": 1.1856,
+                    "TRIP_std": 0.019012,
+                    "n_runs": 30
+                },
+                "IEEE_Modulation": {
+                    "RMSE_mean": 5.493914,
+                    "RMSE_std": 0.430746,
+                    "FE_max_mean": 18.64916,
+                    "FE_max_std": 1.085045,
+                    "TRIP_mean": 1.17594,
+                    "TRIP_std": 0.021191,
+                    "n_runs": 30
+                },
+                "IBR_Nightmare": {
+                    "RMSE_mean": 7.664833,
+                    "RMSE_std": 0.816551,
+                    "FE_max_mean": 19.512673,
+                    "FE_max_std": 0.361974,
+                    "TRIP_mean": 0.932993,
+                    "TRIP_std": 0.053413,
+                    "n_runs": 30
+                },
+                "IBR_MultiEvent_Classic": {
+                    "RMSE_mean": 7.789621,
+                    "RMSE_std": 0.407894,
+                    "FE_max_mean": 21.040359,
+                    "FE_max_std": 0.582962,
+                    "TRIP_mean": 4.027043,
+                    "TRIP_std": 0.056509,
+                    "n_runs": 30
+                },
+                "IBR_PrimaryFrequencyResponse": {
+                    "RMSE_mean": 7.898251,
+                    "RMSE_std": 0.489861,
+                    "FE_max_mean": 19.892836,
+                    "FE_max_std": 0.140208,
+                    "TRIP_mean": 3.758,
+                    "TRIP_std": 0.076221,
+                    "n_runs": 30
+                }
+            },
+            "TFT": {
+                "IEEE_Mag_Step": {
+                    "RMSE_mean": 0.002125,
+                    "RMSE_std": 3.2e-05,
+                    "FE_max_mean": 0.018975,
+                    "FE_max_std": 0.000231,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IEEE_Freq_Ramp": {
+                    "RMSE_mean": 0.03071,
+                    "RMSE_std": 1.7e-05,
+                    "FE_max_mean": 0.055659,
+                    "FE_max_std": 0.000671,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IEEE_Modulation": {
+                    "RMSE_mean": 0.000257,
+                    "RMSE_std": 2.4e-05,
+                    "FE_max_mean": 0.000822,
+                    "FE_max_std": 0.000127,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IBR_Nightmare": {
+                    "RMSE_mean": 0.479076,
+                    "RMSE_std": 0.00018,
+                    "FE_max_mean": 2.733559,
+                    "FE_max_std": 0.002089,
+                    "TRIP_mean": 0.08749,
+                    "TRIP_std": 5.4e-05,
+                    "n_runs": 30
+                },
+                "IBR_MultiEvent_Classic": {
+                    "RMSE_mean": 0.41278,
+                    "RMSE_std": 6e-05,
+                    "FE_max_mean": 3.421112,
+                    "FE_max_std": 0.000932,
+                    "TRIP_mean": 0.178687,
+                    "TRIP_std": 3.4e-05,
+                    "n_runs": 30
+                },
+                "IBR_PrimaryFrequencyResponse": {
+                    "RMSE_mean": 0.18441,
+                    "RMSE_std": 4.9e-05,
+                    "FE_max_mean": 1.714146,
+                    "FE_max_std": 0.000719,
+                    "TRIP_mean": 0.107863,
+                    "TRIP_std": 0.000227,
+                    "n_runs": 30
+                }
+            },
+            "RLS-VFF": {
+                "IEEE_Mag_Step": {
+                    "RMSE_mean": 0.06854,
+                    "RMSE_std": 7.1e-05,
+                    "FE_max_mean": 0.311285,
+                    "FE_max_std": 0.00026,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IEEE_Freq_Ramp": {
+                    "RMSE_mean": 0.647009,
+                    "RMSE_std": 4.5e-05,
+                    "FE_max_mean": 1.066046,
+                    "FE_max_std": 6.7e-05,
+                    "TRIP_mean": 0.968087,
+                    "TRIP_std": 3.4e-05,
+                    "n_runs": 30
+                },
+                "IEEE_Modulation": {
+                    "RMSE_mean": 0.067876,
+                    "RMSE_std": 6.6e-05,
+                    "FE_max_mean": 0.308911,
+                    "FE_max_std": 0.000278,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IBR_Nightmare": {
+                    "RMSE_mean": 0.167831,
+                    "RMSE_std": 0.000249,
+                    "FE_max_mean": 0.331877,
+                    "FE_max_std": 0.001304,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IBR_MultiEvent_Classic": {
+                    "RMSE_mean": 0.850001,
+                    "RMSE_std": 4.9e-05,
+                    "FE_max_mean": 2.049862,
+                    "FE_max_std": 9.7e-05,
+                    "TRIP_mean": 1.978267,
+                    "TRIP_std": 0.001034,
+                    "n_runs": 30
+                },
+                "IBR_PrimaryFrequencyResponse": {
+                    "RMSE_mean": 0.115162,
+                    "RMSE_std": 5.9e-05,
+                    "FE_max_mean": 0.469409,
+                    "FE_max_std": 0.00019,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                }
+            },
+            "UKF": {
+                "IEEE_Mag_Step": {
+                    "RMSE_mean": 0.000283,
+                    "RMSE_std": 3.8e-05,
+                    "FE_max_mean": 0.002569,
+                    "FE_max_std": 3.7e-05,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IEEE_Freq_Ramp": {
+                    "RMSE_mean": 0.01273,
+                    "RMSE_std": 0.000161,
+                    "FE_max_mean": 0.045236,
+                    "FE_max_std": 0.003701,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IEEE_Modulation": {
+                    "RMSE_mean": 0.000277,
+                    "RMSE_std": 2.4e-05,
+                    "FE_max_mean": 0.001703,
+                    "FE_max_std": 0.000162,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IBR_Nightmare": {
+                    "RMSE_mean": 0.224942,
+                    "RMSE_std": 3.1e-05,
+                    "FE_max_mean": 0.574277,
+                    "FE_max_std": 0.000182,
+                    "TRIP_mean": 0.120523,
+                    "TRIP_std": 0.000672,
+                    "n_runs": 30
+                },
+                "IBR_MultiEvent_Classic": {
+                    "RMSE_mean": 0.335744,
+                    "RMSE_std": 3e-05,
+                    "FE_max_mean": 2.074451,
+                    "FE_max_std": 0.000546,
+                    "TRIP_mean": 0.41651,
+                    "TRIP_std": 0.000592,
+                    "n_runs": 30
+                },
+                "IBR_PrimaryFrequencyResponse": {
+                    "RMSE_mean": 0.133115,
+                    "RMSE_std": 2.3e-05,
+                    "FE_max_mean": 0.892442,
+                    "FE_max_std": 0.000523,
+                    "TRIP_mean": 0.082447,
+                    "TRIP_std": 5e-05,
+                    "n_runs": 30
+                }
+            },
+            "Koopman-RKDPmu": {
+                "IEEE_Mag_Step": {
+                    "RMSE_mean": 0.001251,
+                    "RMSE_std": 3.5e-05,
+                    "FE_max_mean": 0.008788,
+                    "FE_max_std": 0.000207,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IEEE_Freq_Ramp": {
+                    "RMSE_mean": 0.028556,
+                    "RMSE_std": 2.3e-05,
+                    "FE_max_mean": 0.054664,
+                    "FE_max_std": 0.000969,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IEEE_Modulation": {
+                    "RMSE_mean": 0.001232,
+                    "RMSE_std": 2.1e-05,
+                    "FE_max_mean": 0.002196,
+                    "FE_max_std": 0.000124,
+                    "TRIP_mean": 0.0,
+                    "TRIP_std": 0.0,
+                    "n_runs": 30
+                },
+                "IBR_Nightmare": {
+                    "RMSE_mean": 0.418531,
+                    "RMSE_std": 0.000214,
+                    "FE_max_mean": 1.736361,
+                    "FE_max_std": 0.000943,
+                    "TRIP_mean": 0.148307,
+                    "TRIP_std": 5.7e-05,
+                    "n_runs": 30
+                },
+                "IBR_MultiEvent_Classic": {
+                    "RMSE_mean": 0.409797,
+                    "RMSE_std": 5.9e-05,
+                    "FE_max_mean": 2.473792,
+                    "FE_max_std": 0.000722,
+                    "TRIP_mean": 0.56125,
+                    "TRIP_std": 0.000272,
+                    "n_runs": 30
+                },
+                "IBR_PrimaryFrequencyResponse": {
+                    "RMSE_mean": 0.182612,
+                    "RMSE_std": 6.5e-05,
+                    "FE_max_mean": 1.188731,
+                    "FE_max_std": 0.000563,
+                    "TRIP_mean": 0.1681,
+                    "TRIP_std": 0.000167,
+                    "n_runs": 30
+                }
+            }
+        }
+    },
+    "cpu_authoritative": {
+        "description": "Per-sample CPU cost [us], IBR_MultiEvent_Classic reference scenario.",
+        "values_us": {
+            "EKF": 21.6875,
+            "EKF2": 68.8906,
+            "IpDFT": 86.4844,
+            "Koopman-RKDPmu": 194.3438,
+            "PI-GRU": 144704.7969,
+            "PLL": 11.9531,
+            "RLS-VFF": 11.3594,
+            "RLS": 11.0156,
+            "SOGI": 31.2969,
+            "TFT": 40.0938,
+            "Teager": 19.3438,
+            "UKF": 204.9688
+        }
+    },
+    "paper_claims_verification": {
+        "verified": false,
+        "claims": {
+            "claim_275x": {
+                "value": null,
+                "paper_value": 275,
+                "verified": false,
+                "note": "EKF_Ttrip/EKF2_Ttrip IBR_Nightmare"
+            },
+            "claim_4p7x_rmse": {
+                "value": 4.74,
+                "paper_value": 4.7,
+                "verified": true,
+                "note": "EKF_RMSE/EKF2_RMSE IBR_Nightmare"
+            },
+            "claim_12p6x_ramp": {
+                "value": 8.15,
+                "paper_value": 12.6,
+                "verified": true,
+                "note": "PLL_RMSE/EKF2_RMSE IEEE_Freq_Ramp"
+            },
+            "claim_3p3x_ttrip": {
+                "value": 163.69,
+                "paper_value": 3.3,
+                "verified": false,
+                "note": "PLL_Ttrip/EKF2_Ttrip IBR_MultiEvent_Classic"
+            },
+            "claim_1p59x_ramp": {
+                "value": 1.41,
+                "paper_value": 1.59,
+                "verified": true,
+                "note": "EKF_RMSE/EKF2_RMSE IEEE_Freq_Ramp"
+            }
+        }
+    }
+}

@@ -25,68 +25,70 @@ def _ipdft_direct_vectorized(
     last_f: float,
 ) -> tuple[np.ndarray, int, int, int, float]:
     """
-    T-101 fix: buf_idx, buf_count, and last_f are now input/output state so that
-    both step() (N=1 per call) and step_vectorized() (N>1) share the same circular
-    buffer state across calls. Previously these were local variables that reset on
-    every Numba entry, making step() broken for sample-by-sample use.
+    Núcleo del IPDFT optimizado.
+    Procesa muestra a muestra sin diezmado (downsampling), actualizando la ventana 
+    circular y recalculando la frecuencia mediante interpolación parabólica.
     """
     n_samples = len(v_array)
     f_hat_array = np.empty(n_samples, dtype=np.float64)
     clamp_count = 0
 
     for i in range(n_samples):
-        # FIX: Se eliminó el downsampling destructivo. Ahora procesa CADA muestra real.
+        # 1. Actualizar ventana circular
         v_in = v_array[i]
         z_buf[buf_idx] = v_in
         buf_idx = (buf_idx + 1) % sz
         buf_count += 1
 
-        # Solo computamos la DFT si el buffer ya tiene al menos 1 ciclo completo
+        # 2. Solo computamos si el buffer ya tiene al menos 1 ciclo completo
         if buf_count >= sz:
-            # T-101 fix: use buf_count (persistent across calls) for decimation so
-            # that step() [N=1 per call] and step_vectorized() [N>1 per call] compute
-            # DFT at the same sample positions. Previously used loop variable i which
-            # was always 0 for single-sample calls, causing every-sample computation.
-            if buf_count % 10 == 0:
-                m1_re = 0.0; m1_im = 0.0
-                m2_re = 0.0; m2_im = 0.0
-                m3_re = 0.0; m3_im = 0.0
+            m1_re = 0.0; m1_im = 0.0
+            m2_re = 0.0; m2_im = 0.0
+            m3_re = 0.0; m3_im = 0.0
 
-                # DFT puntual en los 3 bins de interés
-                for m in range(sz):
-                    idx = (buf_idx + m) % sz
-                    val = z_buf[idx]
-                    
-                    m1_re += val * basis_real[0, m]
-                    m1_im += val * basis_imag[0, m]
-                    
-                    m2_re += val * basis_real[1, m]
-                    m2_im += val * basis_imag[1, m]
-                    
-                    m3_re += val * basis_real[2, m]
-                    m3_im += val * basis_imag[2, m]
+            # DFT puntual en los 3 bins de interés
+            for m in range(sz):
+                idx = (buf_idx + m) % sz
+                val = z_buf[idx]
+                
+                m1_re += val * basis_real[0, m]
+                m1_im += val * basis_imag[0, m]
+                
+                m2_re += val * basis_real[1, m]
+                m2_im += val * basis_imag[1, m]
+                
+                m3_re += val * basis_real[2, m]
+                m3_im += val * basis_imag[2, m]
 
-                sp_km1 = math.hypot(m1_re, m1_im)
-                sp_k   = math.hypot(m2_re, m2_im)
-                sp_kp1 = math.hypot(m3_re, m3_im)
+            sp_km1 = math.hypot(m1_re, m1_im)
+            sp_k   = math.hypot(m2_re, m2_im)
+            sp_kp1 = math.hypot(m3_re, m3_im)
 
-                # Interpolación Parabólica Magnitud (Quinn/MacLeod)
-                denom_mag = sp_km1 + 2.0 * sp_k + sp_kp1
-                if denom_mag >= 1e-10:
-                    delta = 2.0 * (sp_kp1 - sp_km1) / denom_mag
-                    # Clip de seguridad (si se activa, hay severo spectral leakage)
-                    if delta > 0.5: 
-                        delta = 0.5
-                        clamp_count += 1
-                    if delta < -0.5: 
-                        delta = -0.5
-                        clamp_count += 1
+            # 3. Interpolación Parabólica Magnitud (Quinn/MacLeod modificado)
+            denom_mag = sp_km1 + 2.0 * sp_k + sp_kp1
+            if denom_mag >= 1e-10:
+                # Calculamos el desplazamiento
+                delta = 2.0 * (sp_kp1 - sp_km1) / denom_mag
+                
+                # Mantenemos un clamp holgado (±3.0 bines) para que la fórmula 
+                # matemática no colapse antes de llegar al Sanity Check.
+                if delta > 3.0: 
+                    delta = 3.0
+                    clamp_count += 1
+                elif delta < -3.0: 
+                    delta = -3.0
+                    clamp_count += 1
+                
+                f_candidate = (k_nom + delta) * res
+                
+                # Filtro de Cordura Eléctrica (Sanity Check)
+                # Restringido explícitamente de 40 Hz a 90 Hz.
+                if 40.0 <= f_candidate <= 90.0:
+                    last_f = f_candidate
+                else:
+                    clamp_count += 1
                     
-                    last_f = (k_nom + delta) * res
-                    
-            f_hat_array[i] = last_f
-        else:
-            f_hat_array[i] = last_f
+        f_hat_array[i] = last_f
 
     return f_hat_array, clamp_count, buf_idx, buf_count, last_f
 
@@ -97,14 +99,15 @@ def _ipdft_direct_vectorized(
 class IPDFT_Estimator(BaseFrequencyEstimator):
     """
     Interpolated Discrete Fourier Transform (IPDFT) Frequency Estimator.
-    Matemáticamente idéntico a TunableIpDFT, corregido para evitar aliasing.
+    Matemáticamente idéntico a TunableIpDFT, corregido para evitar aliasing y 
+    seguir fallas severas en el rango seguro de 40-90 Hz.
     """
     name = "IPDFT"
 
     def __init__(self, nominal_f: float = 60.0, cycles: float = 2.0, decim: int = 1) -> None:
-        self.nominal_f = float(nominal_f) # FIX: Unificado a 60 Hz
+        self.nominal_f = float(nominal_f)
         self.cycles = float(cycles)
-        self.decim = int(decim) # Mantenido por compatibilidad de firma, pero inactivo
+        self.decim = int(decim) # Inactivo, mantenido por compatibilidad
         self.dt = DT_DSP 
         
         self._update_internals()
@@ -139,7 +142,6 @@ class IPDFT_Estimator(BaseFrequencyEstimator):
     def reset(self) -> None:
         self._z_buf = np.zeros(self.sz, dtype=np.float64)
         self._total_clamps = 0
-        # T-101: persistent circular-buffer state (was incorrectly local to Numba fn)
         self._buf_idx   = 0
         self._buf_count = 0
         self._last_f    = self.nominal_f
@@ -179,7 +181,7 @@ class IPDFT_Estimator(BaseFrequencyEstimator):
     
     def estimate(self, t: np.ndarray, v: np.ndarray) -> np.ndarray:
         dt_new = float(t[1] - t[0])
-        # FIX: Sincronizar bases matemáticas si la simulación cambia de velocidad
+        # Sincronizar bases matemáticas si la simulación cambia de velocidad
         if abs(self.dt - dt_new) > 1e-10:
             self.dt = dt_new
             self._update_internals()
@@ -189,6 +191,6 @@ class IPDFT_Estimator(BaseFrequencyEstimator):
         res = self.step_vectorized(v)
         
         if self._total_clamps > 0:
-            print(f"      [!] IPDFT Info: Quinn-MacLeod limit hit {self._total_clamps} times.")
+            print(f"      [!] IPDFT Info: Sanity Check limit hit {self._total_clamps} times. Transient or out-of-bounds frequency detected.")
             
         return res

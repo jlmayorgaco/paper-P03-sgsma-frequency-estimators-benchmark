@@ -18,54 +18,80 @@ def _tkeo_vectorized_core(
     dt: float,
     f_out: float,
     smooth_alpha: float,
-    buffer: np.ndarray,
-) -> tuple[np.ndarray, float, np.ndarray]:
+    buffer_x: np.ndarray,
+    buffer_y: np.ndarray,
+) -> tuple[np.ndarray, float, np.ndarray, np.ndarray]:
     """
-    Núcleo del estimador TKEO.
+    Núcleo del estimador TKEO utilizando un algoritmo DES más robusto.
+    Requiere evaluar la energía tanto de la señal (x) como de su derivada aproximada (y).
     """
     n = len(v_array)
     f_est = np.empty(n, dtype=np.float64)
     two_pi = 2.0 * math.pi
 
     for i in range(n):
-        # Desplazar buffer circular
-        buffer[0] = buffer[1]
-        buffer[1] = buffer[2]
-        buffer[2] = v_array[i]
+        # 1. Update signal buffer
+        buffer_x[0] = buffer_x[1]
+        buffer_x[1] = buffer_x[2]
+        buffer_x[2] = buffer_x[3]
+        buffer_x[3] = v_array[i]
 
-        x_n = buffer[2]
-        x_nm1 = buffer[1]
-        x_nm2 = buffer[0]
-
-        # Necesitamos 3 muestras para Psi(x). 
-        # Nota: Para una implementación DES completa se requieren 4, 
-        # pero esta aproximación es la estándar de latencia mínima.
-        psi_x = _psi(x_nm1, x_nm2, x_n)
+        # Calculate derivative approximation: y[n] = x[n] - x[n-1]
+        y_n = buffer_x[3] - buffer_x[2]
         
-        if abs(psi_x) > 1e-9:
-            # Algoritmo DES-1 simplificado:
-            # f = (1/2pi*dt) * arccos(1 - (Psi(x[n]-x[n-1])) / (2*Psi(x[n])))
-            # Aproximación de diferencia finita para el numerador:
-            diff_psi = (x_n - x_nm1)**2
-            arg = 1.0 - (diff_psi / (2.0 * psi_x + 1e-12))
+        # Update derivative buffer
+        buffer_y[0] = buffer_y[1]
+        buffer_y[1] = buffer_y[2]
+        buffer_y[2] = y_n
+
+        # We need sufficient history to calculate energy operators safely
+        # Ensure we don't calculate on initial zeros to avoid division by zero
+        if i < 3:
+             f_est[i] = f_out
+             continue
+
+        # Energy of the signal at n-1 (center of our available window for symmetry)
+        psi_x = _psi(buffer_x[2], buffer_x[1], buffer_x[3])
+        
+        # Energy of the derivative at n-1
+        psi_y = _psi(buffer_y[1], buffer_y[0], buffer_y[2])
+
+        # Security check: avoid division by zero or extremely small numbers
+        if abs(psi_x) > 1e-10 and psi_y >= 0:
+            # The classic DES ratio:
+            # sin^2(w * dt / 2) = Psi(y_n) / (4 * Psi(x_n))
+            # However, a more direct and stable formulation often used is:
+            # cos(w * dt) = 1 - [Psi(x_n - x_{n-1}) + Psi(x_{n+1} - x_n)] / (4 * Psi(x_n))
+            # Or using the ratio directly: cos(w * dt) = 1 - (Psi(y_n) / (2 * Psi(x_n)))
             
-            if arg > 1.0: arg = 1.0
-            elif arg < -1.0: arg = -1.0
+            ratio = psi_y / (2.0 * psi_x)
+            arg = 1.0 - ratio
+            
+            # Clamp to domain of arccos
+            if arg > 1.0: 
+                arg = 1.0
+            elif arg < -1.0: 
+                arg = -1.0
             
             f_raw = math.acos(arg) / (two_pi * dt)
+            
+            # Sanity check: prevent absurd jumps if noise causes strange energy ratios
+            if math.isnan(f_raw) or f_raw > 120.0 or f_raw < 10.0:
+                 f_raw = f_out
         else:
             f_raw = f_out
 
-        # Filtrado de salida (crucial por la amplificación de ruido del TKEO)
+        # Output filtering (crucial because TKEO acts like a high-pass filter for noise)
         f_out = (1.0 - smooth_alpha) * f_out + smooth_alpha * f_raw
         f_est[i] = f_out
 
-    return f_est, f_out, buffer
+    return f_est, f_out, buffer_x, buffer_y
 
 class TKEO_Estimator(BaseFrequencyEstimator):
     """
     Teager-Kaiser Energy Operator (TKEO).
-    Estimador de latencia sub-ciclo (P3) y costo O(1).
+    Estimador de latencia sub-ciclo y costo O(1).
+    Actualizado para usar un algoritmo de separación de energía (DES) más estable.
     """
     name = "TKEO"
 
@@ -81,7 +107,10 @@ class TKEO_Estimator(BaseFrequencyEstimator):
         self.reset()
 
     def reset(self) -> None:
-        self.buffer = np.zeros(3, dtype=np.float64)
+        # Require a buffer of 4 for the signal to compute symmetrical energies
+        self.buffer_x = np.zeros(4, dtype=np.float64)
+        # Require a buffer of 3 for the derivative
+        self.buffer_y = np.zeros(3, dtype=np.float64)
         self.f_out = self.nominal_f
 
     @classmethod
@@ -89,11 +118,9 @@ class TKEO_Estimator(BaseFrequencyEstimator):
         return {"nominal_f": 60.0, "output_smoothing": 0.01}
 
     def structural_latency_samples(self) -> int:
-        return 1
+        return 3 # Latency increased slightly due to deeper buffering required for stability
 
-    # --- MÉTODO FALTANTE AÑADIDO AQUÍ ---
     def step(self, z: float) -> float:
-        """Procesa una muestra individual."""
         v_array = np.array([z], dtype=np.float64)
         return float(self.step_vectorized(v_array)[0])
 
@@ -102,12 +129,13 @@ class TKEO_Estimator(BaseFrequencyEstimator):
         if len(v_array) == 0:
             return np.empty(0, dtype=np.float64)
 
-        f_est, self.f_out, self.buffer = _tkeo_vectorized_core(
+        f_est, self.f_out, self.buffer_x, self.buffer_y = _tkeo_vectorized_core(
             v_array=v_array,
             dt=self.dt,
             f_out=self.f_out,
             smooth_alpha=self.output_smoothing,
-            buffer=self.buffer
+            buffer_x=self.buffer_x,
+            buffer_y=self.buffer_y
         )
         return f_est
 

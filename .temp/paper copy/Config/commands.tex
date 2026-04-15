@@ -1,0 +1,69 @@
+% Guide header (invisible in output)
+\newcommand{\guide}[1]{}
+
+% Optional: invisible body text but visible as PDF bookmark
+\newcommand{\ssubsection}[1]{%
+  \ifdefined\pdfbookmark
+    \pdfbookmark[2]{#1}{}
+  \fi
+}
+
+% =========================================
+% Revision / camera-ready toggle
+% =========================================
+\usepackage{xcolor}
+\usepackage[normalem]{ulem} % for \sout
+
+% -------- Switch --------
+\newif\ifshowchanges
+% \showchangestrue    % <- REVIEW MODE
+\showchangesfalse     % <- CAMERA-READY MODE
+
+% -------- Colors --------
+\definecolor{revblue}{RGB}{0,92,175}
+\definecolor{revgreen}{RGB}{0,120,60}
+\definecolor{revorange}{RGB}{180,90,0}
+\definecolor{revpurple}{RGB}{120,0,140}
+\definecolor{revred}{RGB}{170,0,0}
+\definecolor{revgray}{RGB}{90,90,90}
+
+\ifshowchanges
+
+    % ---------- Generic revision macros ----------
+    \newcommand{\rev}[1]{\textcolor{revblue}{#1}}
+    \newcommand{\revadd}[1]{\textcolor{revblue}{#1}}
+    \newcommand{\revdel}[1]{\textcolor{revred}{\sout{#1}}}
+    \newcommand{\repl}[2]{\revdel{#1}\revadd{#2}}
+    \newcommand{\revnote}[1]{\textcolor{revpurple}{[\textbf{NOTE:} #1]}}
+    \newcommand{\todoa}[1]{\textcolor{revorange}{[\textbf{TODO:} #1]}}
+
+    % ---------- Reviewer/person-specific macros ----------
+    % Use these if you want to distinguish who made the change
+    \newcommand{\revJ}[1]{\textcolor{revblue}{#1}}   % Jorge
+    \newcommand{\revC}[1]{\textcolor{revgreen}{#1}}  % ChatGPT / co-reviewer
+
+    \newcommand{\noteJ}[1]{\textcolor{revblue}{[\textbf{JLMT:} #1]}}
+    \newcommand{\noteC}[1]{\textcolor{revgreen}{[\textbf{AI:} #1]}}
+
+    % ---------- Optional emphasis ----------
+    % Use only for VERY short fragments, not long paragraphs
+    \newcommand{\revhl}[1]{\colorbox{yellow!35}{#1}}
+
+\else
+
+    % ---------- Camera-ready output ----------
+    \newcommand{\rev}[1]{#1}
+    \newcommand{\revadd}[1]{#1}
+    \newcommand{\revdel}[1]{}
+    \newcommand{\repl}[2]{#2}
+    \newcommand{\revnote}[1]{}
+    \newcommand{\todoa}[1]{}
+
+    \newcommand{\revJ}[1]{#1}
+    \newcommand{\revC}[1]{#1}
+    \newcommand{\noteJ}[1]{}
+    \newcommand{\noteC}[1]{}
+
+    \newcommand{\revhl}[1]{#1}
+
+\fi

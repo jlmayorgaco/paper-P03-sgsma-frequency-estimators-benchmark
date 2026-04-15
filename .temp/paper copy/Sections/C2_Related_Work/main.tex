@@ -1,0 +1,83 @@
+\subsection{Algorithmic Landscape and Prior Art}
+\label{sec:related}
+
+Frequency estimation involves a latency--robustness trade-off~\cite{Ting2022}.
+\emph{Structural observation latency} ($N_c/f_0$ for window-based methods) is
+signal-independent; \emph{stochastic estimation lag} depends on disturbance type
+and estimator parameters---these are independent metrics.
+Window-based methods (IpDFT, TFT) provide harmonic rejection but impose structural
+latency~\cite{PlatasGarza2011,Belega2014}. Loop-based methods (SRF-PLL, SOGI-FLL)
+are computationally efficient but susceptible to cycle-slip under phase
+discontinuities~\cite{Golestan2015}. Adaptive recursive estimators (RLS, VFF-RLS)
+may diverge under severe transients. Model-based filters (EKF, UKF, RA-EKF)
+offer improved tracking~\cite{Ferrero2020EKF,Chamorro2021}. Data-driven approaches
+(Koopman, PI-GRU) show competitive accuracy at higher cost~\cite{Ting2022,Zelaya2025}.
+Prior studies evaluate disturbances in isolation; composite scenarios are not assessed
+simultaneously. Table~\ref{tab:unified_2024_big} compares all twelve evaluated estimators.
+
+% ======================================================================
+% TABLE I: UNIFIED QUALITATIVE BENCHMARK
+% ======================================================================
+\begin{table*}[t!]
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{2.2pt}
+  \renewcommand{\arraystretch}{1.15}
+  \caption{Unified Qualitative Benchmark of Frequency Estimators
+    (relay-class, non-synchronized context).
+    Scores ($0$=Fail, $1$=Poor, $2$=Fair, $3$=Excellent) are qualitative
+    assessments derived from observed benchmark performance (this work;
+    see Tables~II--III for quantitative evidence) and published
+    literature~\cite{Ferrero2020EKF,Golestan2015,PlatasGarza2011};
+    they are intended for algorithmic comparison and are not certification
+    ratings.
+    $h_{\mathrm{HU}}$: Harmonic/Unbalance Immunity;
+    $r_{32.5}$: rejection of 32.5\,Hz sub-synchronous interharmonic
+    (representative of IBR converter control interactions~\cite{Bernal2024};
+    used in Scenarios~D--E, Section~\ref{sec:scenarios});
+    $n_{\mathrm{sens}}$: noise floor sensitivity;
+    $n_{\mathrm{NG}}$: Non-Gaussian noise robustness;
+    Latency class: P1\,$<$\,20\,ms, P2: 20--40\,ms, M1\,$>$\,40\,ms,
+    P3: sub-cycle ($<$1\,ms);
+    $v_{\mathrm{RT}}$: real-time viability (3=embedded, 0=GPU only);
+    RoCoF Out.: S\,=\,explicit state output, D\,=\,implicit differentiation;
+    \emph{Phase Resp.}: phase-jump response type ---
+    S\,=\,settles without cycle-slip, D\,=\,cycle-slip susceptible;
+    $^\dagger$IpDFT latency is structural: $N_c/f_0 = 33$\,ms at $N_c\!=\!2$
+    to 167\,ms at $N_c\!=\!10$ (observation delay, not stochastic lag).}
+  \begin{tabular}{lcccccccccc}
+    \toprule
+    \textbf{Method} &
+    \makecell{Phase\\Resp.} &
+    \makecell{RoCoF\\Out.} &
+    $h_{\mathrm{HU}}$ &
+    $r_{32.5}$ &
+    $n_{\mathrm{sens}}$ &
+    $n_{\mathrm{NG}}$ &
+    \makecell{Latency\\Class} &
+    $v_{\mathrm{RT}}$ &
+    \makecell{Comp.\\Order} &
+    \makecell{Dominant\\Failure Mode} \\
+    \midrule
+    \multicolumn{11}{l}{\textit{\textbf{I. SOTA Methods (Post-2020)}}} \\
+    VFF-RLS        & S & D & 2 & 3 & 3 & 2 & P2 & 3 & $O(p^2)$         & VFF blow-up \\
+    UKF            & S & S & 2 & 2 & 2 & 2 & P1 & 1 & $O(n^3)$         & Sigma-pt collapse \\
+    Koopman (DPMU) & S & S & 2 & 2 & 2 & 1 & M1 & 1 & $O(n^2)$         & Model mismatch \\
+    PI-GRU (DL)    & S & S & 1 & 1 & 2 & 1 & P1 & 0 & $O(\mathrm{Conv})$ & Dataset shift \\
+    \midrule
+    \multicolumn{11}{l}{\textit{\textbf{II. Industrial / Advanced Digital}}} \\
+    RA-EKF         & S & S & 2 & 2 & 3 & 2 & P1 & 1 & $O(n^3)$ & Jacobian divergence \\
+    EKF            & S & S & 2 & 2 & 2 & 1 & P1 & 3 & $O(n^3)$ & Phase-jump divergence \\
+    TFT            & S & S & 2 & 2 & 2 & 1 & P1 & 1 & $O(N^2)$         & Runge overshoot \\
+    SRF-PLL        & D & D & 1 & 1 & 1 & 0 & P2 & 3 & $O(1)$           & Cycle slip / Lag \\
+    SOGI-FLL       & D & D & 2 & 1 & 2 & 1 & P2 & 3 & $O(1)$           & Tuning trade-off \\
+    IpDFT$^\dagger$ & S & D & 3 & 1 & 3 & 0 & M1 & 2 & $O(N\log N)$  & Leakage / Latency \\
+    \midrule
+    \multicolumn{11}{l}{\textit{\textbf{III. Legacy Baselines}}} \\
+    RLS (fixed $\lambda$)
+                   & S & D & 1 & 1 & 1 & 0 & P2 & 3 & $O(p^2)$         & Covariance blow-up \\
+    TKEO           & S & D & 0 & 0 & 0 & 0 & P3 & 3 & $O(1)$           & Noise amplification \\
+    \bottomrule
+  \end{tabular}
+  \label{tab:unified_2024_big}
+\end{table*}

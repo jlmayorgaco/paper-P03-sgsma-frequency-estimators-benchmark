@@ -1,0 +1,53 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+Standard IEC/IEEE~60255-118-1 tests do not fully characterize frequency
+estimator behavior in converter-dominated grids, where simultaneous phase
+discontinuities, high RoCoF, and harmonic distortion expose failure modes
+that isolated single-disturbance tests miss. A benchmark of twelve estimators
+across five algorithmic families and five stress scenarios yields three
+principal observations.
+
+\begin{enumerate}
+
+\item \textbf{Latency--Robustness Trade-off:}
+Window-based methods achieve strong steady-state accuracy, but their
+behavior differs across scenario types. IpDFT is better suited to
+metering-oriented operation, whereas TFT reduces observation delay at
+the cost of higher noise sensitivity under composite disturbances.
+Loop-based estimators (SRF-PLL, SOGI-FLL) are computationally efficient
+and handle isolated phase jumps well, but exhibit elevated trip-risk
+under the composite Multi-Event sequence
+($T_{\mathrm{trip}}\!=\!0.353$\,s for SRF-PLL; Table~\ref{tab:risk_metrics}).
+
+\item \textbf{Model-Based Filters:}
+Within the model-based family, the RA-EKF (augmented with an explicit
+$\dot{\omega}$ state, Innovation-Driven Covariance Scaling, and Event Gating)
+achieves $T_{\mathrm{trip}}\!=\!0$ under Composite Islanding vs.\
+$T_{\mathrm{trip}}\!=\!0.120$\,s for the standard EKF ($N\!=\!30$ Monte Carlo),
+at $88.5\,\mu$s/sample (Python baseline; C/HIL validation remains future work).
+The standard EKF and UKF offer lower cost but higher trip-risk under composite
+disturbances; all three model-based filters require careful tuning for
+IBR-specific disturbance types.
+
+\item \textbf{Limits of Standard Compliance Tests:}
+Several estimators passing IEC/IEEE~60255-118-1 step and ramp tests
+exhibited degraded performance under composite multi-disturbance
+scenarios, suggesting that standard compliance tests may not fully
+capture estimator resilience in IBR-dominated conditions.
+
+\end{enumerate}
+
+Data-driven approaches show variable cost: PI-GRU requires
+${\approx}154$\,ms/sample (Python/PyTorch CPU baseline), prohibitive for
+embedded protection without GPU acceleration, and did not outperform
+scenario-optimized classical methods in any of the five evaluated scenarios.
+This benchmark is simulation-based; hardware-in-the-loop validation remains
+a next step.
+The results suggest that IEC/IEEE~60255-118-1 compliance tests do not
+fully characterize estimator resilience in IBR-dominated grids; a
+\emph{Composite Phase-Step with Harmonic Distortion} scenario---analogous
+to Scenarios~D--E---with probabilistic compliance bounds
+($\mathrm{PCB} = \mu_{|e|} + 3\sigma_{|e|}$) may better assess relay
+security. Simulation code and hyperparameter grids are available from
+the authors for reproducibility.
