@@ -102,7 +102,7 @@ def test_eigenvalues_unit_circle(signal_setup):
 
 def test_frequency_estimation_accuracy(signal_setup):
     """¿La función core devuelve la frecuencia exacta esperada?"""
-    f_calc = _esprit_core(signal_setup["v"], signal_setup["dt"])
+    f_calc = _esprit_core(signal_setup["v"], signal_setup["H"].copy(), signal_setup["dt"])
     assert math.isclose(f_calc, signal_setup["f"], abs_tol=0.01)
 
 def test_estimator_buffer_rolling():
@@ -123,3 +123,17 @@ def test_sanity_filter_logic():
     # Pero el step debería mantener el 60.0 por el filtro de cordura
     absurd_val = est.step(0.0) 
     assert 40.0 <= absurd_val <= 80.0
+
+def test_esprit_step_vs_vectorized():
+    fs = 10000.0
+    dt = 1.0 / fs
+    t = np.arange(0.0, 0.1, dt)
+    v = np.sin(2.0 * np.pi * 60.0 * t)
+
+    est_vec = ESPRIT_Estimator(nominal_f=60.0, n_cycles=1.0, dt=dt, execution_stride=10)
+    f_vec = est_vec.estimate(t, v)
+
+    est_step = ESPRIT_Estimator(nominal_f=60.0, n_cycles=1.0, dt=dt, execution_stride=10)
+    f_step = np.array([est_step.step(sample) for sample in v], dtype=float)
+
+    np.testing.assert_allclose(f_vec, f_step, atol=1e-6, equal_nan=True)

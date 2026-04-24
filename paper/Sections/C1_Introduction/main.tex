@@ -1,41 +1,42 @@
 \section{Introduction}\label{sec:introduction}
 
-\IEEEPARstart{T}{he} transition toward inverter-dominated power systems is
-reducing grid inertia and accelerating frequency dynamics. Frequency
-deviations and Rate of Change of Frequency (RoCoF) can exceed protection
-thresholds within milliseconds~\cite{Pinheiro2025,WeakGrids2023}. Unlike
-synchronous machines, Inverter-Based Resources (IBRs) regulate power
-electronically, decoupling the primary energy source from electrical
-frequency and increasing the impact of harmonics, phase discontinuities,
-and nonstationary disturbances on protection and dynamic security
-assessment~\cite{Bernal2024,Zoghby2024,Pinheiro2025}. In IBR-dominated
-grids, phase discontinuities can induce cycle-slips in phase-locked loops,
-sustained RoCoF can exceed the tracking capacity of multi-cycle window
-methods, and converter-driven harmonic injection can cause spectral leakage
-in DFT-based estimators. These failure modes may occur simultaneously, yet
-existing benchmarks typically assess them in isolation~\cite{Ting2022},
-leaving a gap for protection-class applications.
+Frequency estimation sits on the critical path of relaying, under-frequency
+load shedding, disturbance monitoring, and converter supervision in
+low-inertia grids. In inverter-based resource (IBR) systems, the problem is
+not limited to slow electromechanical drift. Harmonics, abrupt phase jumps,
+out-of-band components, and short ringdown segments can arrive on the same
+timescale as the protection decision itself~\cite{Milano2018LowInertia,
+Pinheiro2025,Ponce2025}. Recent IBR-focused studies also show that converter
+control interactions and mixed disturbances can reshape the observable
+frequency response itself~\cite{Bernal2025,Zoghby2024}. An estimator that
+performs well in a textbook sinusoidal test can still generate large transient
+error or non-negligible trip-risk when these effects overlap.
 
-Each estimator family balances latency and robustness differently.
-SRF-PLL is widely deployed but susceptible to cycle-slip under abrupt
-phase discontinuities~\cite{EPRIPaper,Roscoe2019}. Window-based methods
-(IpDFT, TFT) provide harmonic rejection at the cost of structural
-observation latency~\cite{Belega2014,PlatasGarza2011}. Model-based filters
-(EKF, UKF) improve transient tracking~\cite{Ferrero2020EKF,Chamorro2021},
-while data-driven approaches offer potential accuracy gains at higher
-computational cost~\cite{Ting2022,Zelaya2025}.
+The estimator families used in practice already reveal a tension between
+accuracy, latency, and disturbance tolerance. Windowed spectral methods reject
+steady harmonic content but pay observation delay~\cite{Belega2014,
+PlatasGarza2011}. PLL variants are light enough for embedded deployment but can
+slip under abrupt phase discontinuities~\cite{Golestan2017,Wright2019}.
+Kalman-filter variants can track fast transients when the state model remains
+valid~\cite{Ferrero2020EKF,Chamorro2021}. Reduced-order and data-driven methods
+offer another point on the cost-accuracy curve, but their behavior under
+relay-oriented composite stress is even less standardized~\cite{Netto2018KoopmanKF,
+Ting2022}. What remains unclear is how these families reorder once the
+benchmark moves beyond isolated standard tests.
 
-This paper presents a stress-oriented benchmark of twelve estimators from
-five algorithmic families, evaluated in a local, non-time-synchronized
-relay-class configuration under five scenarios: (A)--(C) follow the
-IEC/IEEE~60255-118-1 test philosophy; (D)--(E) introduce IBR-specific
-composite disturbances beyond the standard scope. The main contributions are:
-(1)~a benchmark of twelve estimators from five algorithmic families under
-five stress scenarios, including two composite IBR-specific scenarios
-(D--E) not covered by IEC/IEEE~60255-118-1;
-(2)~scenario-wise grid-search tuning with dual-rate simulation
-(1\,MHz / 10\,kHz), establishing the performance ceiling per
-estimator--scenario pair; and
-(3)~a comparative analysis of RMSE, peak error, trip-risk, and
-computational cost, providing selection guidance for relay-class
-deployment in low-inertia grids.
+This paper treats that question as the main result. Rather than forcing a
+single winner across all conditions, we ask three practical questions: which
+estimators lead the standard disturbance families, which IBR stress cases
+reorder the ranking, and which methods remain attractive once CPU cost and
+trip-risk are considered alongside RMSE.
+
+The benchmark analyzed here covers 16 estimators and a broad scenario set
+that mixes IEEE- and NERC-style disturbances with IBR-specific harmonics,
+ringdown, and multi-event stress. The main finding is as follows. The dominant
+estimator changes with the disturbance family: the second-order
+generalized-integrator PLL (SOGI-PLL) leads ramps, the extended Kalman filter
+(EKF) leads magnitude steps and out-of-band interference, the robust adaptive
+EKF (RA-EKF) leads modulation, and the IBR multi-event case splits RMSE and
+trip-risk leadership between the phase-locked loop (PLL) and interpolated DFT
+(IpDFT). That scenario dependence, rather than any single ranking, is the
+main message of the paper.

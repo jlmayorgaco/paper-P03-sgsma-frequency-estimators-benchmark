@@ -1,86 +1,35 @@
 \relax 
-\providecommand{\transparent@use}[1]{}
 \providecommand\hyper@newdestlabel[2]{}
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
-\citation{Pinheiro2025,WeakGrids2023}
-\citation{Bernal2024,Zoghby2024,Pinheiro2025}
-\citation{Ting2022}
-\citation{EPRIPaper,Roscoe2019}
+\citation{Milano2018LowInertia,Pinheiro2025,Ponce2025}
+\citation{Bernal2025,Zoghby2024}
 \citation{Belega2014,PlatasGarza2011}
+\citation{Golestan2017,Wright2019}
 \citation{Ferrero2020EKF,Chamorro2021}
-\citation{Ting2022,Zelaya2025}
+\citation{Netto2018KoopmanKF,Ting2022}
+\citation{IEEE_C37_118,IEC_IEEE_60255_118_1_2018}
 \citation{Ting2022}
-\citation{PlatasGarza2011,Belega2014}
-\citation{Golestan2015}
-\citation{Ferrero2020EKF,Chamorro2021}
-\citation{Ting2022,Zelaya2025}
+\citation{Wright2019}
 \@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{section.1}\protected@file@percent }
 \newlabel{sec:introduction}{{I}{1}{Introduction}{section.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {I-A}}Algorithmic Landscape and Prior Art}{1}{subsection.1.1}\protected@file@percent }
-\newlabel{sec:related}{{\mbox  {I-A}}{1}{Algorithmic Landscape and Prior Art}{subsection.1.1}{}}
-\citation{Ferrero2020EKF,Golestan2015,PlatasGarza2011}
-\citation{Bernal2024}
-\citation{Ferrero2020EKF,Golestan2015,PlatasGarza2011}
-\citation{Bernal2024}
-\citation{Golestan2015}
-\citation{Golestan2015}
-\citation{Quinn1994}
-\citation{PlatasGarza2011}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {I-A}}Related Work}{1}{subsection.2}\protected@file@percent }
+\newlabel{sec:related}{{\mbox  {I-A}}{1}{Related Work}{subsection.2}{}}
+\citation{Milano2018LowInertia,Pinheiro2025,Ponce2025}
+\citation{Bernal2025,Zoghby2024}
+\citation{Belega2014,PlatasGarza2011}
+\citation{Golestan2017,Wright2019}
 \citation{Ferrero2020EKF,Chamorro2021}
-\citation{Roscoe2019}
-\citation{Bernal2024,Zoghby2024}
-\citation{Chamorro2021}
-\@writefile{toc}{\contentsline {section}{\numberline {II}Methodology and Test Framework}{2}{section.2}\protected@file@percent }
-\newlabel{sec:methodology}{{II}{2}{Methodology and Test Framework}{section.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-A}}Evaluated Estimators}{2}{subsection.2.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {II-A}1}Implemented RA-EKF Estimator}{2}{subsubsection.2.1.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-B}}Test Scenarios and Noise Model}{2}{subsection.2.2}\protected@file@percent }
-\newlabel{sec:scenarios}{{\mbox  {II-B}}{2}{Test Scenarios and Noise Model}{subsection.2.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Unified Qualitative Benchmark of Frequency Estimators (relay-class, non-synchronized context). Scores ($0$=Fail, $1$=Poor, $2$=Fair, $3$=Excellent) are qualitative assessments derived from observed benchmark performance (this work; see Tables~II--III for quantitative evidence) and published literature~\cite  {Ferrero2020EKF,Golestan2015,PlatasGarza2011}; they are intended for algorithmic comparison and are not certification ratings. $h_{\mathrm  {HU}}$: Harmonic/Unbalance Immunity; $r_{32.5}$: rejection of 32.5\,Hz sub-synchronous interharmonic (representative of IBR converter control interactions~\cite  {Bernal2024}; used in Scenarios~D--E, Section~\ref {sec:scenarios}); $n_{\mathrm  {sens}}$: noise floor sensitivity; $n_{\mathrm  {NG}}$: Non-Gaussian noise robustness; Latency class: P1\,$<$\,20\,ms, P2: 20--40\,ms, M1\,$>$\,40\,ms, P3: sub-cycle ($<$1\,ms); $v_{\mathrm  {RT}}$: real-time viability (3=embedded, 0=GPU only); RoCoF Out.: S\,=\,explicit state output, D\,=\,implicit differentiation; \emph  {Phase Resp.}: phase-jump response type --- S\,=\,settles without cycle-slip, D\,=\,cycle-slip susceptible; $^\dagger $IpDFT latency is structural: $N_c/f_0 = 33$\,ms at $N_c\!=\!2$ to 167\,ms at $N_c\!=\!10$ (observation delay, not stochastic lag).}}{3}{table.caption.1}\protected@file@percent }
-\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{tab:unified_2024_big}{{I}{3}{Unified Qualitative Benchmark of Frequency Estimators (relay-class, non-synchronized context). Scores ($0$=Fail, $1$=Poor, $2$=Fair, $3$=Excellent) are qualitative assessments derived from observed benchmark performance (this work; see Tables~II--III for quantitative evidence) and published literature~\cite {Ferrero2020EKF,Golestan2015,PlatasGarza2011}; they are intended for algorithmic comparison and are not certification ratings. $h_{\mathrm {HU}}$: Harmonic/Unbalance Immunity; $r_{32.5}$: rejection of 32.5\,Hz sub-synchronous interharmonic (representative of IBR converter control interactions~\cite {Bernal2024}; used in Scenarios~D--E, Section~\ref {sec:scenarios}); $n_{\mathrm {sens}}$: noise floor sensitivity; $n_{\mathrm {NG}}$: Non-Gaussian noise robustness; Latency class: P1\,$<$\,20\,ms, P2: 20--40\,ms, M1\,$>$\,40\,ms, P3: sub-cycle ($<$1\,ms); $v_{\mathrm {RT}}$: real-time viability (3=embedded, 0=GPU only); RoCoF Out.: S\,=\,explicit state output, D\,=\,implicit differentiation; \emph {Phase Resp.}: phase-jump response type --- S\,=\,settles without cycle-slip, D\,=\,cycle-slip susceptible; $^\dagger $IpDFT latency is structural: $N_c/f_0 = 33$\,ms at $N_c\!=\!2$ to 167\,ms at $N_c\!=\!10$ (observation delay, not stochastic lag)}{table.caption.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-C}}Performance Metrics and Optimization Protocol}{3}{subsection.2.3}\protected@file@percent }
-\newlabel{sec:metrics}{{\mbox  {II-C}}{3}{Performance Metrics and Optimization Protocol}{subsection.2.3}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {III}Simulation Results and Benchmarking}{3}{section.3}\protected@file@percent }
-\newlabel{sec:results}{{III}{3}{Simulation Results and Benchmarking}{section.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Performance on Standard IEC/IEEE Scenarios}{3}{subsection.3.1}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Tuning Parameter Search Space (${\approx }5{,}000$ total runs). \emph  {log}: 12 log-spaced pts/decade; \emph  {linear}: 10 pts; $\{\cdot \}$: discrete set. Units: $K_p$~[pu/rad], $K_i$~[pu/(rad$\cdot $s)], $R$~[pu$^2$], $N_c$~[cycles], $N_{\mathrm  {smooth}}$~[samples].}}{3}{table.caption.2}\protected@file@percent }
-\newlabel{tab:hyperparams}{{II}{3}{Tuning Parameter Search Space (${\approx }5{,}000$ total runs). \emph {log}: 12 log-spaced pts/decade; \emph {linear}: 10 pts; $\{\cdot \}$: discrete set. Units: $K_p$~[pu/rad], $K_i$~[pu/(rad$\cdot $s)], $R$~[pu$^2$], $N_c$~[cycles], $N_{\mathrm {smooth}}$~[samples]}{table.caption.2}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Complete Stress-Test Scenario Suite. (A–C) Dynamic performance profiles following the test philosophy of IEC/IEEE~60255-118-1 (step, ramp, modulation). (D) Composite Islanding featuring an instantaneous $+60^\circ $ phase jump with harmonics and elevated noise ($\sigma = 0.005$\,pu; Section~\ref {sec:scenarios}). (E) IBR Multi-Event: scenario-dependent noise ($\sigma _\text  {base}=0.003$\,pu plus sparse impulsive spikes $\leq 0.05$\,pu); frequency profile shows the full 5\,s composite sequence.}}{4}{figure.caption.3}\protected@file@percent }
-\newlabel{fig:scenarios}{{1}{4}{Complete Stress-Test Scenario Suite. (A–C) Dynamic performance profiles following the test philosophy of IEC/IEEE~60255-118-1 (step, ramp, modulation). (D) Composite Islanding featuring an instantaneous $+60^\circ $ phase jump with harmonics and elevated noise ($\sigma = 0.005$\,pu; Section~\ref {sec:scenarios}). (E) IBR Multi-Event: scenario-dependent noise ($\sigma _\text {base}=0.003$\,pu plus sparse impulsive spikes $\leq 0.05$\,pu); frequency profile shows the full 5\,s composite sequence}{figure.caption.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Robustness Under Severe IBR Disturbances}{4}{subsection.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-B}1}Composite Islanding (Scenario D)}{4}{subsubsection.3.2.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-B}2}Multi-Event Stress Test (Scenario E)}{4}{subsubsection.3.2.2}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Unified Benchmark Results: Standard vs. IBR-Specific Stress Scenarios [Errors in \textbf  {mHz}, $T_{\mathrm  {trip}}$ in \textbf  {s}; mean $\pm $ std, $N=30$].}}{5}{table.caption.4}\protected@file@percent }
-\newlabel{tab:unified_results}{{III}{5}{Unified Benchmark Results: Standard vs. IBR-Specific Stress Scenarios [Errors in \textbf {mHz}, $T_{\mathrm {trip}}$ in \textbf {s}; mean $\pm $ std, $N=30$]}{table.caption.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Computational Feasibility}{5}{subsection.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-D}}Failure Mode Summary by Estimator Family}{5}{subsection.3.4}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Trip-Risk Analysis: Multi-Event Scenario (E). $T_{\mathrm  {trip}}$: total cumulative time summed over all non-contiguous intervals where $|e(t)|>0.5$\,Hz (0.5\,Hz threshold from IEC/IEEE~60255-118-1 Class~0 RMSE accuracy class, used here as a protection-relevant trip proxy for visualisation only; no formal IEC compliance is claimed). Note: multiple short excursions may be more harmful than a single long one in a relay-protection context; $T_{\mathrm  {trip}}$ does not capture excursion count or inter-excursion timing. CPU: mean time per sample ($\mu $s), Scenario~E run (Python baseline; not a real-time deployment projection). Values: mean $\pm $ std from Monte Carlo (N=30). Methods not shown: TKEO (RMSE\,$\geq \!7800$\,mHz, diverges); RLS ($342$\,mHz, $T_{\mathrm  {trip}}\!=\!0.367$\,s, CPU\,$=\!12.7\,\mu $s; similar to EKF); RLS-VFF ($874$\,mHz, $T_{\mathrm  {trip}}\!=\!2.20$\,s); TFT ($T_{\mathrm  {trip}}\!=\!0.349$\,s); PI-GRU ($1830$\,mHz, $T_{\mathrm  {trip}}\!=\!3.76$\,s, CPU\,$\approx \!1.54\!\times \!10^5\,\mu $s; Table~\ref {tab:complexity}).}}{5}{table.caption.5}\protected@file@percent }
-\newlabel{tab:risk_metrics}{{IV}{5}{Trip-Risk Analysis: Multi-Event Scenario (E). $T_{\mathrm {trip}}$: total cumulative time summed over all non-contiguous intervals where $|e(t)|>0.5$\,Hz (0.5\,Hz threshold from IEC/IEEE~60255-118-1 Class~0 RMSE accuracy class, used here as a protection-relevant trip proxy for visualisation only; no formal IEC compliance is claimed). Note: multiple short excursions may be more harmful than a single long one in a relay-protection context; $T_{\mathrm {trip}}$ does not capture excursion count or inter-excursion timing. CPU: mean time per sample ($\mu $s), Scenario~E run (Python baseline; not a real-time deployment projection). Values: mean $\pm $ std from Monte Carlo (N=30). Methods not shown: TKEO (RMSE\,$\geq \!7800$\,mHz, diverges); RLS ($342$\,mHz, $T_{\mathrm {trip}}\!=\!0.367$\,s, CPU\,$=\!12.7\,\mu $s; similar to EKF); RLS-VFF ($874$\,mHz, $T_{\mathrm {trip}}\!=\!2.20$\,s); TFT ($T_{\mathrm {trip}}\!=\!0.349$\,s); PI-GRU ($1830$\,mHz, $T_{\mathrm {trip}}\!=\!3.76$\,s, CPU\,$\approx \!1.54\!\times \!10^5\,\mu $s; Table~\ref {tab:complexity})}{table.caption.5}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces Computational Cost per Sample (Python Baselines). CPU: mean time per sample over 20 runs on an Intel Core Ultra 5 125H (single-threaded Python~3.13; not C or FPGA projections). Deployment class: P1 ($<$20\,$\mu $s, embedded MCU), P2 (20--40\,$\mu $s, DSP), M1 ($>$40\,$\mu $s, DSP/FPGA or higher); these are per-sample execution time thresholds, not estimator response-latency classes.}}{5}{table.caption.6}\protected@file@percent }
-\newlabel{tab:complexity}{{V}{5}{Computational Cost per Sample (Python Baselines). CPU: mean time per sample over 20 runs on an Intel Core Ultra 5 125H (single-threaded Python~3.13; not C or FPGA projections). Deployment class: P1 ($<$20\,$\mu $s, embedded MCU), P2 (20--40\,$\mu $s, DSP), M1 ($>$40\,$\mu $s, DSP/FPGA or higher); these are per-sample execution time thresholds, not estimator response-latency classes}{table.caption.6}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {IV}Conclusion}{5}{section.4}\protected@file@percent }
-\newlabel{sec:conclusion}{{IV}{5}{Conclusion}{section.4}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Comprehensive Performance Dashboard (all errors in mHz; $N=30$ MC). \textbf  {(a)}~Time-domain frequency error, Scenario~D (Composite Islanding): event-gating in RA-EKF limits $T_{\mathrm  {trip}}$ to ${\approx }0.40$\,ms vs.\ 122\,ms for standard EKF. \textbf  {(b)}~Time-domain frequency error, Scenario~B (Ramp): RA-EKF lowest RMSE among evaluated estimators ($8.23$\,mHz) via explicit $\dot  {\omega }$ state; IpDFT at 2-cycle window has 33\,ms structural latency (observation delay, not stochastic lag) and achieves RMSE\,$=35$\,mHz; SOGI-FLL fails ($1120$\,mHz) due to type-1 loop. \textbf  {(c)}~Time-domain, Scenario~E: stable estimators. \textbf  {(d)}~Time-domain, Scenario~E: unstable estimators (TKEO excluded, RMSE\,$\geq 7800$\,mHz). \textbf  {(e)}~Pareto frontier: CPU time/sample vs.\ $T_{\mathrm  {trip}}$, Scenario~E; 2D projection only---RMSE is a third independent dimension not shown here. $\dagger $PI-GRU excluded (CPU\,${\approx }154$\,ms/sample, $T_{\mathrm  {trip}}\!\approx \!3.8$\,s). All CPU values are Python baselines; embedded speedups of 10--100$\times $ expected with C/FPGA implementations. \textbf  {(f)}~Radar chart: normalised multi-metric profile per estimator (lower area = better overall balance across all metrics). \textbf  {(g)}~Non-normative compliance heatmap, all scenarios. Pass thresholds: RMSE\,$<0.05$\,Hz, Peak\,$<0.5$\,Hz, $T_{\mathrm  {trip}}<0.1$\,s (from IEC/IEEE~60255-118-1 accuracy classes; visualisation only, no certification claim). \textbf  {F*}\,=\,marginal failure: RMSE overshoot $<1.5\%$ or sub-cycle peak breach only, compliant in all other metrics. RA-EKF, Scenario~D: peak\,$=365$\,mHz, $T_{\mathrm  {trip}}\!=\!0$. \textbf  {(h)}~Steady-state RMSE, log scale, Scenario~C (Modulation); all values $<1$\,mHz for top-performing estimators.}}{6}{figure.caption.7}\protected@file@percent }
-\newlabel{fig:dashboard_mega}{{2}{6}{Comprehensive Performance Dashboard (all errors in mHz; $N=30$ MC). \textbf {(a)}~Time-domain frequency error, Scenario~D (Composite Islanding): event-gating in RA-EKF limits $T_{\mathrm {trip}}$ to ${\approx }0.40$\,ms vs.\ 122\,ms for standard EKF. \textbf {(b)}~Time-domain frequency error, Scenario~B (Ramp): RA-EKF lowest RMSE among evaluated estimators ($8.23$\,mHz) via explicit $\dot {\omega }$ state; IpDFT at 2-cycle window has 33\,ms structural latency (observation delay, not stochastic lag) and achieves RMSE\,$=35$\,mHz; SOGI-FLL fails ($1120$\,mHz) due to type-1 loop. \textbf {(c)}~Time-domain, Scenario~E: stable estimators. \textbf {(d)}~Time-domain, Scenario~E: unstable estimators (TKEO excluded, RMSE\,$\geq 7800$\,mHz). \textbf {(e)}~Pareto frontier: CPU time/sample vs.\ $T_{\mathrm {trip}}$, Scenario~E; 2D projection only---RMSE is a third independent dimension not shown here. $\dagger $PI-GRU excluded (CPU\,${\approx }154$\,ms/sample, $T_{\mathrm {trip}}\!\approx \!3.8$\,s). All CPU values are Python baselines; embedded speedups of 10--100$\times $ expected with C/FPGA implementations. \textbf {(f)}~Radar chart: normalised multi-metric profile per estimator (lower area = better overall balance across all metrics). \textbf {(g)}~Non-normative compliance heatmap, all scenarios. Pass thresholds: RMSE\,$<0.05$\,Hz, Peak\,$<0.5$\,Hz, $T_{\mathrm {trip}}<0.1$\,s (from IEC/IEEE~60255-118-1 accuracy classes; visualisation only, no certification claim). \textbf {F*}\,=\,marginal failure: RMSE overshoot $<1.5\%$ or sub-cycle peak breach only, compliant in all other metrics. RA-EKF, Scenario~D: peak\,$=365$\,mHz, $T_{\mathrm {trip}}\!=\!0$. \textbf {(h)}~Steady-state RMSE, log scale, Scenario~C (Modulation); all values $<1$\,mHz for top-performing estimators}{figure.caption.7}{}}
-\bibstyle{IEEEtran}
-\bibdata{bibtex/bib/references}
-\bibcite{Pinheiro2025}{1}
-\bibcite{WeakGrids2023}{2}
-\bibcite{Bernal2024}{3}
-\bibcite{Zoghby2024}{4}
-\bibcite{Ting2022}{5}
-\bibcite{EPRIPaper}{6}
-\bibcite{Roscoe2019}{7}
-\bibcite{Belega2014}{8}
-\bibcite{PlatasGarza2011}{9}
-\bibcite{Ferrero2020EKF}{10}
-\bibcite{Chamorro2021}{11}
-\bibcite{Zelaya2025}{12}
-\bibcite{Golestan2015}{13}
-\bibcite{IEEE_C37_118}{14}
-\bibcite{Quinn1994}{15}
-\@writefile{toc}{\contentsline {section}{References}{7}{Item.3}\protected@file@percent }
-\gdef\svg@ink@ver@settings{{\m@ne }{inkscape}{\m@ne }}
-\gdef \@abspage@last{7}
+\citation{Netto2018KoopmanKF}
+\@writefile{toc}{\contentsline {section}{\numberline {II}Methodology}{2}{section.3}\protected@file@percent }
+\newlabel{sec:methodology}{{II}{2}{Methodology}{section.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Benchmark scope used in this study. Counts refer to benchmark scenarios.}}{2}{table.4}\protected@file@percent }
+\newlabel{tab:benchmark_scope}{{I}{2}{Benchmark scope used in this study. Counts refer to benchmark scenarios}{table.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {III}Simulation Results and Benchmarking}{2}{section.6}\protected@file@percent }
+\newlabel{sec:results}{{III}{2}{Simulation Results and Benchmarking}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}No Single Estimator Dominates the Standard Scenario Families}{2}{subsection.8}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Representative ground-truth signals in the benchmark. Each row shows a disturbance family with its voltage waveform and true frequency trajectory: (a)--(b) a 10\% magnitude step, (c)--(d) a 3\,Hz/s ramp, (e)--(f) modulation, (g)--(h) a $60^\circ $ phase jump, (i)--(j) an IBR multi-event sequence, and (k)--(l) an IBR power-imbalance ringdown. Dashed lines mark disturbance onset. The figure motivates the family-based analysis used in the rest of the paper: the benchmark mixes clean standard tests with composite IBR events that combine several stressors in one record.}}{3}{figure.5}\protected@file@percent }
+\newlabel{fig:scenario_overview}{{1}{3}{Representative ground-truth signals in the benchmark. Each row shows a disturbance family with its voltage waveform and true frequency trajectory: (a)--(b) a 10\% magnitude step, (c)--(d) a 3\,Hz/s ramp, (e)--(f) modulation, (g)--(h) a $60^\circ $ phase jump, (i)--(j) an IBR multi-event sequence, and (k)--(l) an IBR power-imbalance ringdown. Dashed lines mark disturbance onset. The figure motivates the family-based analysis used in the rest of the paper: the benchmark mixes clean standard tests with composite IBR events that combine several stressors in one record}{figure.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Core disturbance-family comparison for the benchmark study. RMSE values are reported in mHz and computed as family means of scenario means. The uncertainty term is the mean within-scenario Monte Carlo standard deviation for the winning estimator. $\Delta $ is the RMSE gap between the winner and the runner-up.}}{3}{table.7}\protected@file@percent }
+\newlabel{tab:family_summary}{{II}{3}{Core disturbance-family comparison for the benchmark study. RMSE values are reported in mHz and computed as family means of scenario means. The uncertainty term is the mean within-scenario Monte Carlo standard deviation for the winning estimator. $\Delta $ is the RMSE gap between the winner and the runner-up}{table.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}

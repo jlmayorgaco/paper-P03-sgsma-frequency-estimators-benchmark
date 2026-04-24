@@ -1,0 +1,73 @@
+{
+  "scenario": "IEEE_Freq_Ramp_0.25Hzs",
+  "scenario_class": "IEEEFreqRampScenario_0p25Hzs",
+  "scenario_meta": {
+    "description": "IEEE 1547 Frequency Ramp (+0.25 Hz/s)",
+    "standard": "IEC 60255-118-1 frequency ramp test / IEEE 1547 Cat III",
+    "parameters": {
+      "duration_s": 5,
+      "freq_nom_hz": 60.0,
+      "rocof_hz_s": 0.25,
+      "t_start_s": 0.3,
+      "freq_cap_hz": 61.5,
+      "phase_rad": 0.0,
+      "amplitude": 1.0,
+      "noise_sigma": 0.0,
+      "seed": 42
+    },
+    "noise_sigma": 0.0,
+    "dynamics": "Piecewise: 60.0 Hz -> +0.25 Hz/s ramp -> hold at 61.5 Hz.",
+    "purpose": "Evaluate stochastic estimation lag and structural tracking latency under low-inertia RoCoF events.",
+    "monte_carlo_space": {
+      "rocof_hz_s": {
+        "kind": "uniform",
+        "low": 1.0,
+        "high": 5.0
+      },
+      "t_start_s": {
+        "kind": "uniform",
+        "low": 0.2,
+        "high": 0.4
+      },
+      "phase_rad": {
+        "kind": "uniform",
+        "low": 0.0,
+        "high": 6.283185307179586
+      },
+      "noise_sigma": {
+        "kind": "uniform",
+        "low": 0.0005,
+        "high": 0.002
+      }
+    },
+    "fs_physics_hz": 1000000.0
+  },
+  "estimator": "ESPRIT",
+  "estimator_class": "ESPRIT_Estimator",
+  "family": "Window-based",
+  "best_params": {
+    "nominal_f": 60.0,
+    "n_cycles": 3.6055556260208146,
+    "execution_stride": 10.0
+  },
+  "defaults": {
+    "nominal_f": 60.0,
+    "n_cycles": 1.0,
+    "execution_stride": 10.0
+  },
+  "n_trials_tuning": 100,
+  "n_mc_runs": 60,
+  "artifacts": {
+    "summary_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Freq_Ramp_0.25Hzs\\ESPRIT\\IEEE_Freq_Ramp_0.25Hzs__ESPRIT_summary.csv"
+    ],
+    "signals_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Freq_Ramp_0.25Hzs\\ESPRIT\\IEEE_Freq_Ramp_0.25Hzs__ESPRIT_signals.csv"
+    ],
+    "tracking_plots": [
+      "tests\\montecarlo\\outputs\\IEEE_Freq_Ramp_0.25Hzs\\ESPRIT\\tracking_ESPRIT.png"
+    ],
+    "scenario_csv": "tests\\montecarlo\\outputs\\IEEE_Freq_Ramp_0.25Hzs\\IEEE_Freq_Ramp_0.25Hzs_scenario.csv",
+    "scenario_zoom_plot": "tests\\montecarlo\\outputs\\IEEE_Freq_Ramp_0.25Hzs\\IEEE_Freq_Ramp_0.25Hzs_zoom.png"
+  }
+}

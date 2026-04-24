@@ -1,160 +1,90 @@
-\section{Methodology and Test Framework}
+\section{Methodology}
 \label{sec:methodology}
 
-A dual-rate framework separates continuous-time physics
-($f_{\mathrm{s,phys}}=1$\,MHz) from DSP estimation ($f_{\mathrm{s,DSP}}=10$\,kHz,
-ratio $100{:}1$), reproducing relay-class sampling constraints with
-negligible numerical error. Throughout, $\omega$ denotes angular frequency
-(rad/s); $f = \omega/2\pi$ in Hz or mHz.
-% ---------------------------------------------------------
-\subsection{Evaluated Estimators}
-% ---------------------------------------------------------
+The benchmark compares 16 frequency estimators on a common dynamic test set
+using waveform generation at $1$\,MHz and estimator outputs at $10$\,kHz. The
+estimator pool spans zero-crossing, windowed spectral, PLL-based,
+Kalman-filter, adaptive, and reduced-order designs: ZCD, IpDFT, TFT, RLS, PLL,
+SOGI-PLL, SOGI-FLL, Type-3 SOGI-PLL, LKF2, EKF, UKF, RA-EKF, TKEO, Prony,
+ESPRIT, and Koopman (RK-DPMU). This mix is broad enough to expose the main
+trade-offs of interest in protection and monitoring: accuracy, transient risk,
+settling behavior, and computational burden.
 
-Twelve estimators from five algorithmic families are evaluated
-(Table~\ref{tab:unified_2024_big}).
-\textbf{Loop-based:} SRF-PLL and a bandpass-pre-filtered SOGI-FLL.
-The SOGI-FLL departs from the textbook formulation~\cite{Golestan2015}
-through two additions: an IIR bandpass pre-filter at 50\,Hz that suppresses
-harmonic contamination before the SOGI core, and a FastRMS adaptive normalizer
-that compensates amplitude variations. A $2\pi$-scaling error in the standard
-adaptation law (gain mis-scaled by ${\approx}377\times$) was corrected before
-evaluation; results are therefore not directly comparable to published SOGI-FLL
-figures. The resulting narrow passband suppresses apparent frequency deviation
-under phase jumps but cannot track sustained RoCoF, explaining the divergent
-ranking across Scenarios~B and~D.
-\textbf{Window-based:} IpDFT with a Hann window and three-point
-magnitude-parabolic interpolation~\cite{Quinn1994}; TFT with a 2nd-order
-Taylor-Fourier model, Hann-weighted, providing improved RoCoF tracking at
-the cost of higher noise sensitivity~\cite{PlatasGarza2011}.
-\textbf{Adaptive recursive:} RLS and VFF-RLS with AR(2) bandpass pre-whitening.
-\textbf{Data-driven:} Koopman (RK-DPMU) and PI-GRU.
-\textbf{Model-based:} EKF, UKF, and RA-EKF (``RoCoF Out.'': S\,=\,explicit
-state, D\,=\,finite-difference). The UKF applies a 10-sample output moving
-average ($+0.5$\,ms group delay), which marginally improves steady-state
-RMSE at the cost of transient settling time.
+We use standard acronyms throughout. The main ones are the zero-crossing
+detector (ZCD), interpolated DFT (IpDFT), Taylor-Fourier transform (TFT),
+phase-locked loop (PLL), and second-order generalized-integrator PLL and FLL
+(SOGI-PLL and SOGI-FLL). We also use extended Kalman filter (EKF), unscented
+Kalman filter (UKF), robust adaptive EKF (RA-EKF), and estimation of signal
+parameters via rotational invariance techniques (ESPRIT).
 
-The RA-EKF extends the 3-state EKF with an explicit RoCoF state,
-$\mathbf{x}_k = [\theta_k,\omega_k,A_k,\dot{\omega}_k]^\top$, and two
-IBR-specific mechanisms~\cite{Ferrero2020EKF,Chamorro2021}.
-\emph{Innovation-Driven Covariance Scaling} scales the process noise matrix
-by the normalised innovation magnitude, inflating $\mathbf{Q}_k$ during
-transients and shrinking it at steady state.
-\emph{Event Gating} soft-resets only $\theta_k$ when the innovation exceeds
-$\gamma\hat{\sigma}_\nu$ ($\gamma\!=\!2.0$), preserving $\omega_k$ and
-$\dot{\omega}_k$ to bound cycle-slip at phase discontinuities.
+The study contains 34 benchmark scenarios. Rather than read the benchmark as a
+flat scenario list, we group the scenarios by disturbance family.
+Table~\ref{tab:benchmark_scope} summarizes the resulting ten-family structure,
+and Fig.~\ref{fig:scenario_overview} shows representative ground-truth signals
+for six of those families.
 
-% ---------------------------------------------------------
-\subsection{Test Scenarios and Noise Model}
-\label{sec:scenarios}
-% ---------------------------------------------------------
-
-Five scenarios stress the estimators under IBR-grid conditions
-(Fig.~\ref{fig:scenarios}). Ground-truth frequency is the analytical
-time derivative of the phase signal; this produces a non-flat trajectory
-after phase jumps. Noise levels: AWGN $\sigma=0.001$\,pu for (A)--(C),
-$0.005$\,pu for (D), and $0.003$\,pu with sparse impulsive samples
-($\leq\!0.05$\,pu, $<\!1\%$ rate) for (E).
-%
-\begin{itemize}[leftmargin=*, nosep, topsep=1pt, itemsep=1pt]
-  \item[\textbf{(A)}] \textbf{Magnitude Step:} $+10\%$ voltage step with
-    zero phase angle at the disturbance onset.
-  \item[\textbf{(B)}] \textbf{Frequency Ramp:} $+3.0$\,Hz/s RoCoF (IEEE 1547-2018 Category III compliant).
-  \item[\textbf{(C)}] \textbf{AM Modulation:} 10\% depth at 2\,Hz.
-  \item[\textbf{(D)}] \textbf{Composite Islanding:} instantaneous
-    $+60^\circ$ phase jump~\cite{Roscoe2019}, 5th/7th harmonics (4\%/2\%),
-    0.5\% 32.5\,Hz interharmonic~\cite{Bernal2024,Zoghby2024}
-    (THD\,$\approx$\,4.5\%, IEEE~519 compliant), $\sigma=0.005$\,pu noise.
-  \item[\textbf{(E)}] \textbf{IBR Multi-Event:} 5\,s sequence with
-    harmonic-rich steady state (5th: 4\%, 7th: 2\%;
-    THD\,$\approx$\,4.5\%, IEEE~519 compliant), a $+40^\circ$
-    phase jump, a $-3.0$\,Hz/s RoCoF segment reaching a nadir of
-    $57.5$\,Hz (IEEE~1547-2018 UFLS limit), a $+80^\circ$ jump with
-    second-order ring-down recovery, and impulsive noise~\cite{Chamorro2021}.
-  \item[\textbf{(F)}] \textbf{Primary Frequency Response} (\emph{planned extension}):
-    a second-order electromechanical recovery following a generation loss
-    event, modelling governor--turbine dynamics with damping. Monte Carlo
-    evaluation under this scenario is reserved for future work.
-\end{itemize}
-%
-Scenarios~(A)--(C) follow the IEC/IEEE~60255-118-1 test philosophy,
-whereas Scenarios~(D)--(E) introduce IBR-specific disturbances beyond
-the standard scope.
-
-% ---------------------------------------------------------
-\subsection{Performance Metrics and Optimization Protocol}
-\label{sec:metrics}
-% ---------------------------------------------------------
-
-Scenario-wise grid search (Table~\ref{tab:hyperparams}) minimizes RMSE
-per estimator--scenario pair, establishing the \emph{performance ceiling}
-of each family independently. PI-GRU is a fixed pre-trained baseline;
-all classical methods are scenario-optimized. Monte Carlo robustness uses
-$N\!=\!30$ runs per pair (seeds 2000--2029; tuning seed: 42).
-Let $e(t)=\hat{f}(t)-f_{\mathrm{true}}(t)$.
-Four metrics quantify performance: \textbf{RMSE},
-\textbf{Peak Error} ($|e|_{\max}$),
-\textbf{Settling Time} (first time $|e|\leq\!200$\,mHz sustained for
-$\geq\!20$\,ms), and \textbf{Trip-Risk Duration} ($T_{\mathrm{trip}}$:
-cumulative time with $|e|>0.5$\,Hz).
-Computational cost is mean time per sample over 20 timed repetitions
-(Python~3.13, Intel Core Ultra 5 125H, single-threaded); reported values
-are Python baselines for relative comparison only---C/FPGA implementations
-yield 10--100$\times$ lower latencies. IpDFT structural latency equals
-$N_c/f_0 = 33$--$167$\,ms (observation delay, not stochastic lag).
-
-The compliance heatmap (Fig.~\ref{fig:dashboard_mega}g) applies
-IEC/IEEE~60255-118-1-derived thresholds: RMSE\,$<$\,50\,mHz,
-peak\,$<$\,500\,mHz, $T_{\mathrm{trip}}<0.1$\,s (visualization only;
-no certification implied). \textbf{F*} marks marginal failure: RMSE
-overshoot $<\!1.5\%$ above threshold or a sub-cycle peak exceedance only.
-
-\begin{table}[b!]
+\begin{table}[t]
   \centering
+  \caption{Benchmark scope used in this study. Counts refer to benchmark
+    scenarios.}
+  \label{tab:benchmark_scope}
   \scriptsize
   \setlength{\tabcolsep}{3pt}
-  \caption{Tuning Parameter Search Space (${\approx}5{,}000$ total runs).
-    \emph{log}: 12 log-spaced pts/decade; \emph{linear}: 10 pts;
-    $\{\cdot\}$: discrete set.
-    Units: $K_p$~[pu/rad], $K_i$~[pu/(rad$\cdot$s)], $R$~[pu$^2$],
-    $N_c$~[cycles], $N_{\mathrm{smooth}}$~[samples].}
-  \label{tab:hyperparams}
-  \begin{tabular}{l l p{4.5cm}}
+  \renewcommand{\arraystretch}{1.08}
+  \begin{tabular}{L{1.7cm} c L{3.95cm}}
     \toprule
-    \textbf{Method} & \textbf{Param.} & \textbf{Search Range (spacing; \# pts)} \\
+    Family & Count & Stress tested \\
     \midrule
-    SRF-PLL      & $K_p$, $K_i$
-                 & $[1,60]$, $[1,200]$ (linear, 10 pts each) \\
-    EKF / RA-EKF & $Q$
-                 & $10^{-4}$--$10^{4}$ (log, 12 pts) \\
-                 & $R$
-                 & $10^{-5}$--$10^{0}$ (log, 12 pts; $R_{\max}=1.0$) \\
-    RA-EKF only  & $\hat{\sigma}_\nu$, $\gamma$
-                 & $\{0.1,0.3\}$, $2.0$ (fixed; 2 pts / 1 pt) \\
-    SOGI-FLL     & $k$, $g_{\rm FLL}$
-                 & $\{0.5,1.0,1.5,2.0\}$, $\{5,10,\ldots,150\}$ \\
-    IpDFT        & $N_c$
-                 & $\{2,3,4,6,8,10\}$ cycles (6 pts) \\
-    RLS / VFF    & $\lambda$, $N_{\mathrm{smooth}}$
-                 & $0.9$--$0.99999$ (log, 12 pts), $2$--$2000$\,samp. (log, 10 pts) \\
-    TFT          & $N_c$
-                 & $\{2,3,4,6\}$ cycles (4 pts) \\
-    TKEO         & Smooth window
-                 & $10$--$50$\,samples (linear, 9 pts) \\
+    IEEE ramps & 9 & Sustained RoCoF from 0.25 to 20\,Hz/s \\
+    Mag.\ steps & 7 & 1\% to 50\% magnitude changes \\
+    Modulation & 3 & Nominal, AM, and FM tracking \\
+    Phase jumps & 3 & IEEE $20^\circ$ and IEEE/NERC $60^\circ$ re-lock tests \\
+    OOB interference & 1 & Spectral rejection under off-nominal content \\
+    Single-tone & 1 & Deterministic steady-state control case \\
+    IBR harmonics & 3 & Small, medium, and large harmonic stress \\
+    IBR ringdown & 5 & Power-imbalance ringdown with noise sweep \\
+    IBR multi-event & 1 & Composite phase jump, ramp, harmonics, and ringdown \\
+    Freq.\ step & 1 & Isolated frequency-step control case \\
     \bottomrule
   \end{tabular}
 \end{table}
 
+The family structure reflects distinct physical stress modes. Ramps probe
+sustained RoCoF tracking.
+Magnitude steps and modulation probe frequency-amplitude decoupling. Phase
+jumps probe re-lock behavior and transient overshoot. Out-of-band interference
+and IBR harmonics probe spectral leakage. Ringdown and multi-event cases
+combine these effects under changing noise and transient recovery, which makes
+them the strongest stress tests in the benchmark. Figure~\ref{fig:scenario_overview}
+illustrates that difference directly: some benchmark families are isolated
+compliance-style events, whereas others stack abrupt discontinuities, ramps,
+and oscillatory recovery inside the same record.
 
-\begin{figure*}[t!]
-    \centering
-    \includegraphics[width=0.99\textwidth]{Figures/Plots_And_Graphs/Fig1_Scenarios_Final.pdf}
-    \caption{Complete Stress-Test Scenario Suite. (A–C) Dynamic performance
-        profiles following the test philosophy of IEC/IEEE~60255-118-1
-        (step, ramp, modulation). (D) Composite Islanding featuring an
-        instantaneous $+60^\circ$ phase jump with harmonics and elevated noise
-        ($\sigma = 0.005$\,pu; Section~\ref{sec:scenarios}).
-        (E) IBR Multi-Event: scenario-dependent noise ($\sigma_\text{base}=0.003$\,pu
-        plus sparse impulsive spikes $\leq 0.05$\,pu); frequency profile shows
-        the full 5\,s composite sequence.}
-    \label{fig:scenarios}
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.98\textwidth,height=0.48\textheight,keepaspectratio]{Fig1_Scenarios_Final.png}
+  \caption{Representative ground-truth signals in the benchmark. Each row shows
+    a disturbance family with its voltage waveform and true frequency
+    trajectory: (a)--(b) a 10\% magnitude step, (c)--(d) a 3\,Hz/s ramp,
+    (e)--(f) modulation, (g)--(h) a $60^\circ$ phase jump, (i)--(j) an IBR
+    multi-event sequence, and (k)--(l) an IBR power-imbalance ringdown. Dashed
+    lines mark disturbance onset. The figure motivates the family-based
+    analysis used in the rest of the paper: the benchmark mixes clean standard
+    tests with composite IBR events that combine several stressors in one
+    record.}
+  \label{fig:scenario_overview}
 \end{figure*}
+
+Each estimator--scenario pair is tuned over 100 trials and then evaluated over
+60 Monte Carlo runs. The study therefore contains 544
+estimator--scenario summaries derived from 32,640 Monte Carlo records. Let
+$e[k]=\hat{f}[k]-f_{\mathrm{true}}[k]$. We track
+$\mathrm{RMSE}=\sqrt{N^{-1}\sum_k e[k]^2}$, the maximum peak error
+$\max_k |e[k]|$, trip-risk duration
+$T_{\mathrm{trip}}=\Delta t\sum_k \mathbf{1}\{|e[k]|>0.5\}$, settling time, and
+CPU time per sample. CPU time is interpreted as a relative computational-cost
+indicator rather than a device latency. For any metric $m$, the family summary
+is $\bar{m}_F=|F|^{-1}\sum_{s\in F}\bar{m}_s$, where $\bar{m}_s$ is the
+scenario mean over the 60 realizations. This prevents dense families
+from dominating the comparison. Unless stated otherwise, frequency errors are
+reported in mHz in the tables and discussion.

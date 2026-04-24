@@ -1,0 +1,74 @@
+{
+  "scenario": "IBR_Power_Imbalance_Ringdown_Severe_Noise",
+  "scenario_class": "IBRPowerImbalanceRingdownScenario_Severe_Noise",
+  "scenario_meta": {
+    "description": "IBR Ringdown: Dual phase jumps, coupled V-f dynamics.",
+    "monte_carlo_space": {
+      "phase_jump_event_rad": {
+        "kind": "uniform",
+        "low": 0.08726646259971647,
+        "high": 0.2617993877991494
+      },
+      "amp_fault_pu": {
+        "kind": "uniform",
+        "low": 0.4,
+        "high": 0.8
+      },
+      "ring_tau_s": {
+        "kind": "uniform",
+        "low": 0.1,
+        "high": 0.4
+      }
+    },
+    "fs_physics_hz": 1000000.0,
+    "parameters": {
+      "duration_s": 5,
+      "freq_nom_hz": 60.0,
+      "amp_pre_pu": 1.0,
+      "amp_fault_pu": 0.6,
+      "amp_post_pu": 0.95,
+      "amp_freq_coupling": 0.05,
+      "t_ramp_s": 0.5,
+      "rocof_hz_s": -2.0,
+      "phase_jump_ramp_rad": 0.7853981633974483,
+      "t_event_s": 1.0,
+      "phase_jump_event_rad": 0.17453292519943295,
+      "ring_jump_hz": 1.0,
+      "ring_freq_hz": 4.0,
+      "ring_tau_s": 0.25,
+      "dc_offset_pu": 0.12,
+      "dc_tau_s": 0.03,
+      "interharmonic_hz": 32.5,
+      "interharmonic_pu": 0.1,
+      "white_noise_sigma": 0.0,
+      "brown_noise_sigma": 0.0,
+      "impulse_prob": 0.0,
+      "impulse_mag": 0.2,
+      "seed": 42
+    }
+  },
+  "estimator": "Koopman (RK-DPMU)",
+  "estimator_class": "Koopman_Estimator",
+  "family": "Unknown",
+  "best_params": {
+    "nominal_f": 60.0
+  },
+  "defaults": {
+    "nominal_f": 60.0
+  },
+  "n_trials_tuning": 100,
+  "n_mc_runs": 60,
+  "artifacts": {
+    "summary_csv": [
+      "tests\\montecarlo\\outputs\\IBR_Power_Imbalance_Ringdown_Severe_Noise\\Koopman (RK-DPMU)\\IBR_Power_Imbalance_Ringdown_Severe_Noise__Koopman (RK-DPMU)_summary.csv"
+    ],
+    "signals_csv": [
+      "tests\\montecarlo\\outputs\\IBR_Power_Imbalance_Ringdown_Severe_Noise\\Koopman (RK-DPMU)\\IBR_Power_Imbalance_Ringdown_Severe_Noise__Koopman (RK-DPMU)_signals.csv"
+    ],
+    "tracking_plots": [
+      "tests\\montecarlo\\outputs\\IBR_Power_Imbalance_Ringdown_Severe_Noise\\Koopman (RK-DPMU)\\tracking_Koopman (RK-DPMU).png"
+    ],
+    "scenario_csv": "tests\\montecarlo\\outputs\\IBR_Power_Imbalance_Ringdown_Severe_Noise\\IBR_Power_Imbalance_Ringdown_Severe_Noise_scenario.csv",
+    "scenario_zoom_plot": "tests\\montecarlo\\outputs\\IBR_Power_Imbalance_Ringdown_Severe_Noise\\IBR_Power_Imbalance_Ringdown_Severe_Noise_zoom.png"
+  }
+}

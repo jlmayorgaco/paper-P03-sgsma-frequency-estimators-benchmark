@@ -1,0 +1,78 @@
+{
+  "scenario": "IEEE_Single_SinWave",
+  "scenario_class": "IEEESingleSinWaveScenario",
+  "scenario_meta": {
+    "description": "IEEE_Single_SinWave — clean constant-frequency sinusoid",
+    "standard": "Synthetic baseline / sanity-check scenario",
+    "parameters": {
+      "duration_s": 5,
+      "amplitude": 1.0,
+      "freq_hz": 60.0,
+      "phase_rad": 0.0,
+      "noise_sigma": 0.0,
+      "seed": 42
+    },
+    "noise_sigma": 0.0,
+    "dynamics": "Constant amplitude, constant frequency, constant phase slope.",
+    "purpose": "Smoke test, clean tracking validation, estimator sanity baseline.",
+    "monte_carlo_space": {
+      "amplitude": {
+        "kind": "uniform",
+        "low": 0.9,
+        "high": 1.1
+      },
+      "freq_hz": {
+        "kind": "uniform",
+        "low": 59.85,
+        "high": 60.15
+      },
+      "phase_rad": {
+        "kind": "uniform",
+        "low": 0.0,
+        "high": 6.283185307179586
+      },
+      "noise_sigma": {
+        "kind": "uniform",
+        "low": 0.0,
+        "high": 1e-12
+      }
+    },
+    "fs_physics_hz": 1000000.0
+  },
+  "estimator": "LKF2",
+  "estimator_class": "LKF2_Estimator",
+  "family": "Unknown",
+  "best_params": {
+    "nominal_f": 60.0,
+    "q_dc": 0.005,
+    "q_vc": 0.05,
+    "q_vs": 0.05,
+    "r": 1.0,
+    "beta": 50.0,
+    "lpf_mu": 1.0
+  },
+  "defaults": {
+    "nominal_f": 60.0,
+    "q_dc": 0.005,
+    "q_vc": 0.05,
+    "q_vs": 0.05,
+    "r": 1.0,
+    "beta": 50.0,
+    "lpf_mu": 1.0
+  },
+  "n_trials_tuning": 100,
+  "n_mc_runs": 60,
+  "artifacts": {
+    "summary_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Single_SinWave\\LKF2\\IEEE_Single_SinWave__LKF2_summary.csv"
+    ],
+    "signals_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Single_SinWave\\LKF2\\IEEE_Single_SinWave__LKF2_signals.csv"
+    ],
+    "tracking_plots": [
+      "tests\\montecarlo\\outputs\\IEEE_Single_SinWave\\LKF2\\tracking_LKF2.png"
+    ],
+    "scenario_csv": "tests\\montecarlo\\outputs\\IEEE_Single_SinWave\\IEEE_Single_SinWave_scenario.csv",
+    "scenario_zoom_plot": "tests\\montecarlo\\outputs\\IEEE_Single_SinWave\\IEEE_Single_SinWave_zoom.png"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "scenario": "IBR_Harmonics_Small",
+  "scenario_class": "IBRHarmonicsSmallScenario",
+  "scenario_meta": {
+    "description": "IBR Harmonics Small: +0.30 Hz step at t=1.0s, THD ≈ 2.5%",
+    "standard": "IEEE 519 compliant (THD < 5 %)",
+    "dynamics": "Small frequency step with low harmonic distortion and white noise only.",
+    "purpose": "Baseline harmonic rejection benchmark under clean IBR conditions.",
+    "parameters": {
+      "freq_nom_hz": 60.0,
+      "freq_step_hz": 0.3,
+      "t_event_s": 1.0,
+      "amp_pu": 1.0,
+      "h5_pct": 0.02,
+      "h7_pct": 0.015,
+      "h11_pct": 0.005
+    },
+    "monte_carlo_space": {
+      "freq_step_hz": {
+        "kind": "uniform",
+        "low": -0.5,
+        "high": 0.5
+      },
+      "h5_pct": {
+        "kind": "uniform",
+        "low": 0.01,
+        "high": 0.03
+      }
+    },
+    "fs_physics_hz": 1000000.0
+  },
+  "estimator": "Koopman (RK-DPMU)",
+  "estimator_class": "Koopman_Estimator",
+  "family": "Unknown",
+  "best_params": {
+    "nominal_f": 60.0
+  },
+  "defaults": {
+    "nominal_f": 60.0
+  },
+  "n_trials_tuning": 300,
+  "n_mc_runs": 100,
+  "artifacts": {
+    "summary_csv": [
+      "tests\\montecarlo\\outputs\\IBR_Harmonics_Small\\Koopman (RK-DPMU)\\IBR_Harmonics_Small__Koopman (RK-DPMU)_summary.csv"
+    ],
+    "signals_csv": [
+      "tests\\montecarlo\\outputs\\IBR_Harmonics_Small\\Koopman (RK-DPMU)\\IBR_Harmonics_Small__Koopman (RK-DPMU)_signals.csv"
+    ],
+    "tracking_plots": [
+      "tests\\montecarlo\\outputs\\IBR_Harmonics_Small\\Koopman (RK-DPMU)\\tracking_Koopman (RK-DPMU).png"
+    ],
+    "scenario_csv": "tests\\montecarlo\\outputs\\IBR_Harmonics_Small\\IBR_Harmonics_Small_scenario.csv",
+    "scenario_zoom_plot": "tests\\montecarlo\\outputs\\IBR_Harmonics_Small\\IBR_Harmonics_Small_zoom.png"
+  }
+}

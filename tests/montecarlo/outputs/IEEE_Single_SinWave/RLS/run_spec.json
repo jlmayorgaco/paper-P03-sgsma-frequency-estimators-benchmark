@@ -1,0 +1,86 @@
+{
+  "scenario": "IEEE_Single_SinWave",
+  "scenario_class": "IEEESingleSinWaveScenario",
+  "scenario_meta": {
+    "description": "IEEE_Single_SinWave — clean constant-frequency sinusoid",
+    "standard": "Synthetic baseline / sanity-check scenario",
+    "parameters": {
+      "duration_s": 5,
+      "amplitude": 1.0,
+      "freq_hz": 60.0,
+      "phase_rad": 0.0,
+      "noise_sigma": 0.0,
+      "seed": 42
+    },
+    "noise_sigma": 0.0,
+    "dynamics": "Constant amplitude, constant frequency, constant phase slope.",
+    "purpose": "Smoke test, clean tracking validation, estimator sanity baseline.",
+    "monte_carlo_space": {
+      "amplitude": {
+        "kind": "uniform",
+        "low": 0.9,
+        "high": 1.1
+      },
+      "freq_hz": {
+        "kind": "uniform",
+        "low": 59.85,
+        "high": 60.15
+      },
+      "phase_rad": {
+        "kind": "uniform",
+        "low": 0.0,
+        "high": 6.283185307179586
+      },
+      "noise_sigma": {
+        "kind": "uniform",
+        "low": 0.0,
+        "high": 1e-12
+      }
+    },
+    "fs_physics_hz": 1000000.0
+  },
+  "estimator": "RLS",
+  "estimator_class": "RLS_Estimator",
+  "family": "Adaptive",
+  "best_params": {
+    "nominal_f": 60.0,
+    "is_vff": true,
+    "lambda_fixed": 0.995,
+    "alpha_vff": 0.11117151864214139,
+    "lambda_min": 0.8523158121984561,
+    "lambda_max": 0.9995,
+    "vff_beta": 0.02,
+    "output_smoothing": 0.03,
+    "pole_radius_min": 0.95,
+    "pole_radius_max": 1.0,
+    "p0": 0.01
+  },
+  "defaults": {
+    "nominal_f": 60.0,
+    "is_vff": false,
+    "lambda_fixed": 0.995,
+    "alpha_vff": 0.2,
+    "lambda_min": 0.9,
+    "lambda_max": 0.9995,
+    "vff_beta": 0.02,
+    "output_smoothing": 0.03,
+    "pole_radius_min": 0.95,
+    "pole_radius_max": 1.0,
+    "p0": 0.01
+  },
+  "n_trials_tuning": 100,
+  "n_mc_runs": 60,
+  "artifacts": {
+    "summary_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Single_SinWave\\RLS\\IEEE_Single_SinWave__RLS_summary.csv"
+    ],
+    "signals_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Single_SinWave\\RLS\\IEEE_Single_SinWave__RLS_signals.csv"
+    ],
+    "tracking_plots": [
+      "tests\\montecarlo\\outputs\\IEEE_Single_SinWave\\RLS\\tracking_RLS.png"
+    ],
+    "scenario_csv": "tests\\montecarlo\\outputs\\IEEE_Single_SinWave\\IEEE_Single_SinWave_scenario.csv",
+    "scenario_zoom_plot": "tests\\montecarlo\\outputs\\IEEE_Single_SinWave\\IEEE_Single_SinWave_zoom.png"
+  }
+}

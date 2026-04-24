@@ -1,61 +1,31 @@
 % =========================
 % Core references & math
 % =========================
-\usepackage{amsmath}            % Math environments
-\usepackage{cite}               % Compressed, sorted citations (IEEEtran-friendly)
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{cite}
 
 % =========================
-% Graphics & plotting
+% Graphics
 % =========================
-\usepackage[pdftex]{graphicx}   % Figures (load early)
-\usepackage{svg}                % \includesvg (requires inkscape for conversion)
-\usepackage{tikz}               % Vector graphics
-\usetikzlibrary{
-    calc,
-    fit,
-    positioning,
-    arrows.meta,
-    shapes.geometric,
-    shapes.multipart,
-    decorations.pathreplacing
-}
-
-\usepackage{pgfplots} 
-\pgfplotsset{compat=1.18}
+\usepackage[pdftex]{graphicx}
 
 % =========================
-% Figures: subfigures
+% Figures: IEEE-recommended subfig setup
 % =========================
-% IEEEtran prefers subfig with caption=false (avoid subcaption conflicts)
-\usepackage[caption=false,font=normalsize,labelfont=sf,textfont=sf]{subfig}
+\usepackage[caption=false,font=footnotesize]{subfig}
 
 % =========================
 % Tables
 % =========================
-\usepackage{array}              % Column types and alignment
-\usepackage{makecell}           % Line breaks in headers/cells
-\usepackage{tabularx}           % Auto-width X columns
-\usepackage{booktabs}           % \toprule \midrule \bottomrule
-\usepackage{threeparttable}     % Table-local notes (tablenotes)
-\usepackage{tablefootnote}      % Page-level table notes (optional)
-
-% =========================
-% Lists & algorithms
-% =========================
-\usepackage{enumitem}           % Compact lists: \setlist{nosep}
-\usepackage{algorithmic}        % Algorithm pseudocode blocks
+\usepackage{array}
+\usepackage{booktabs}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 
 % =========================
 % Links
 % =========================
-% hyperref should be loaded LAST. It already loads url internally.
-\usepackage[hidelinks]{hyperref}
-\usepackage{amssymb}
-\usepackage{amsfonts}
-
-% Note: algorithm, algorithmic, amsmath, booktabs, makecell already loaded above
-\usepackage{algorithm}
-\usepackage{multirow}
-% xcolor and soul loaded below via commands.tex; avoid reloading here
-
-
+% hyperref should be loaded last. hypertexnames=false avoids duplicate
+% destination warnings with wide floats and included dashboard PDFs.
+\usepackage[hidelinks,hypertexnames=false]{hyperref}

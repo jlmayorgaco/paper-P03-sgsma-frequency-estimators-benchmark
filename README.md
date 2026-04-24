@@ -1,159 +1,139 @@
-# 📊 Benchmarking Dynamic Frequency Estimators for Low-Inertia IBR Grids  
-### A Latency–Robustness Trade-off Analysis
+# Benchmarking Dynamic Frequency Estimators for Low-Inertia IBR Grids
 
-This repository contains the **complete codebase, simulation framework, and LaTeX source** for the paper:
+This repository contains the simulation code, benchmarking pipeline, plotting
+modules, and LaTeX source for the SGSMA 2026 paper:
 
-> *Benchmarking Dynamic Frequency Estimators for Low-Inertia IBR Grids: A Latency–Robustness Trade-off Analysis*
+`Benchmarking Dynamic Frequency Estimators for Low-Inertia IBR Grids: A Latency-Robustness Trade-off Analysis`
 
----
+## Scope
 
-## 🚀 Overview
+The project evaluates dynamic frequency estimators for relay-class and local
+measurement use in low-inertia, inverter-based-resource (IBR) grids. The code
+base includes:
 
-As power systems transition toward **low-inertia grids dominated by inverter-based resources (IBRs)**, frequency dynamics become faster and more volatile.
+- estimator implementations under `src/estimators/`
+- disturbance scenarios under `src/scenarios/`
+- metric and Monte Carlo logic under `src/analysis/`
+- the reorganized benchmark pipeline under `src/pipelines/`
+- modular dashboard plotting under `src/plotting/benchmark/`
+- the paper source under `paper/`
 
-This repository provides a **reproducible benchmarking platform** to evaluate frequency estimation algorithms under realistic and extreme conditions, focusing on the trade-off between:
+## Repository layout
 
-- ⚡ **Latency** → fast response for protection  
-- 🛡️ **Robustness** → resilience to noise, harmonics, and transients  
-
----
-
-## 🧠 Key Features
-
-- 🔬 **Multi-family estimator benchmark**
-  - PLL-based: SRF-PLL, SOGI-FLL  
-  - Window-based: IpDFT, TFT  
-  - Recursive: RLS, VFF-RLS  
-  - Model-based: EKF, UKF, RA-EKF  
-  - Data-driven: Koopman, PI-GRU  
-
-- ⚡ **Proposed RA-EKF**
-  - Explicit RoCoF state  
-  - Innovation-driven covariance scaling  
-  - Event-gating for phase discontinuities  
-
-- 🧪 **Stress-test scenarios**
-  - IEC/IEEE-inspired tests (step, ramp, modulation)  
-  - Composite islanding (phase jumps + harmonics)  
-  - Multi-event IBR disturbance sequence  
-
-- 📊 **Advanced performance metrics**
-  - RMSE  
-  - Peak error  
-  - Settling time  
-  - **Trip-risk duration (protection-critical)**  
-
----
-
-## 🏗️ Repository Structure
-
-```
+```text
 .
-├── src/
-│   ├── estimators/        # Estimator implementations
-│   ├── scenarios/         # Test scenario generators
-│   ├── benchmark/         # Evaluation pipeline
-│   └── utils/             # Helpers and signal processing
-│
-├── results/
-│   ├── figures/           # IEEE-ready plots
-│   ├── tables/            # Benchmark tables
-│   └── reports/           # JSON outputs
-│
-├── latex/
-│   ├── main.tex
-│   ├── sections/
-│   ├── figures/
-│   └── bibliography.bib
-│
-├── configs/
-├── scripts/
-├── requirements.txt
-└── README.md
+|-- src/
+|   |-- analysis/
+|   |-- estimators/
+|   |-- pipelines/
+|   |-- plotting/
+|   |   `-- benchmark/
+|   |-- scenarios/
+|   `-- tests/
+|-- tests/
+|   |-- estimators/
+|   `-- montecarlo/
+|-- paper/
+|   |-- Config/
+|   |-- Figures/
+|   `-- Sections/
+|-- artifacts/
+|   `-- full_mc_benchmark/
+`-- REVIEW.md
 ```
 
----
+## Canonical execution paths
 
-## ⚙️ Installation
+There are currently two code universes in the repository:
+
+- `src/main.py`
+  Used by the camera-ready paper workflow described in `AGENTS.md`.
+- `src/pipelines/full_mc_benchmark.py`
+  The reorganized benchmarking pipeline derived from the previous
+  `tests/montecarlo/test_dedicated_smoke_test.py` workflow.
+
+If you are working on the new modular benchmark structure, use:
 
 ```bash
-pip install -r requirements.txt
+cd src
+python -m pipelines.full_mc_benchmark
 ```
 
----
+Generated dashboard artifacts are written to:
 
-## ▶️ Usage
+- `artifacts/full_mc_benchmark/`
+
+To copy the canonical paper figures into the LaTeX figure directory with the
+expected names, run:
 
 ```bash
-# Run full benchmark
-python main.py
-
-# Generate plots and tables
-python scripts/generate_results.py
+cd src
+python -m pipelines.sync_paper_artifacts
 ```
 
----
+## Plotting structure
 
-## 📈 Key Insights
+Dashboard generation is split into modular subplot builders under
+`src/plotting/benchmark/`. The intent is to keep each subplot independently
+debuggable while preserving a single orchestration entry point:
 
-- Window-based methods → best steady-state accuracy  
-- Model-based methods (RA-EKF) → best dynamic tracking  
-- PLL-based → low computational cost but higher trip-risk  
+- `src/plotting/benchmark/generate_mega_dashboards.py`
+- `src/plotting/benchmark/mega_dashboard1.py`
+- `src/plotting/benchmark/mega_dashboard2_p*.py`
 
-👉 The proposed **RA-EKF significantly reduces trip-risk under phase discontinuities** while maintaining low latency.
+## Python environment
 
----
+Install the project dependencies in your active environment before running the
+benchmark or the paper build support scripts.
 
-## 🧪 Reproducibility
+Typical scientific stack required by the repository:
 
-- Deterministic simulations  
-- Structured parameter search  
-- JSON-based result storage  
-- Fully automated figure generation  
+- `numpy`
+- `scipy`
+- `pandas`
+- `matplotlib`
+- `numba`
+- `optuna`
+- `pytest`
+- `tqdm`
 
----
+Optional dependency:
 
-## 🎯 Research Scope
+- `torch`
+  Required only for the PI-GRU estimator and its dedicated tests. If `torch` is
+  not installed, PI-GRU-specific tests are skipped.
 
-This repository is intended as a **benchmarking platform for**:
+## Testing
 
-- Frequency estimation in low-inertia grids  
-- Protection and relay applications  
-- DSP / FPGA implementation studies  
-- Future estimator development  
+Useful focused checks:
 
----
-
-## 📌 Future Work
-
-- Hardware-in-the-loop validation  
-- FPGA / real-time deployment  
-- Distributed estimation (multi-agent / DKF)  
-- Extended statistical analysis (Monte Carlo, hypothesis testing)  
-
----
-
-## 📚 Citation
-
-```bibtex
-@inproceedings{mayorga2026benchmark,
-  title={Benchmarking Dynamic Frequency Estimators for Low-Inertia IBR Grids: A Latency-Robustness Trade-off Analysis},
-  author={Mayorga Taborda, Jorge Luis and Africano Rodriguez, Yessica and Jimenez, Fernando},
-  booktitle={IEEE SGSMA 2026},
-  year={2026}
-}
+```bash
+pytest src/tests/test_scalar_vs_vector.py -v
+pytest tests/estimators/esprit/test_esprit.py -v
+pytest tests/estimators/prony/test_prony.py -v
+pytest tests/estimators/pi_gru -q
 ```
 
----
+## Paper build
 
-## 🧑‍💻 Author
+Build from `paper/`:
 
-**Jorge Luis Mayorga Taborda**  
-MSc Robotics & Control  
-Universidad de los Andes  
+```bash
+pdflatex index
+bibtex index
+pdflatex index
+pdflatex index
+```
 
----
+The LaTeX source now targets the IEEEtran conference template more directly.
+If the manuscript exceeds the page limit after removing layout compression
+hacks, content must be reduced instead of forcing the template.
 
-## ⭐ Philosophy
+## Current status
 
-> “You cannot improve what you don’t benchmark — and you cannot benchmark what you don’t stress.”
+The repository is under active consolidation. The main technical priorities are:
+
+- keep `step()` and `step_vectorized()` behavior equivalent
+- keep benchmark outputs traceable to one canonical artifact set
+- keep plotting logic modular and paper-facing filenames stable
+- keep paper numbers derived from fresh generated artifacts, not hardcoded edits

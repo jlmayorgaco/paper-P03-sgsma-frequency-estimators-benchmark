@@ -41,8 +41,12 @@ from estimators.tft      import TFT_Estimator
 from estimators.rls      import RLS_Estimator
 from estimators.tkeo     import TKEO_Estimator
 from estimators.koopman  import Koopman_Estimator
-from estimators.pi_gru   import PI_GRU_Estimator
 from analysis.metrics    import calculate_all_metrics
+
+try:
+    from estimators.pi_gru import PI_GRU_Estimator
+except ModuleNotFoundError:
+    PI_GRU_Estimator = None
 
 # ── Constants ────────────────────────────────────────────────────────────────
 FS_DSP_ACTUAL = 10_000.0   # Target sample rate reaching estimators after decimation
@@ -67,8 +71,10 @@ ESTIMATORS: dict[str, tuple[type, dict, bool]] = {
     "RLS-VFF":  (RLS_Estimator,      {"is_vff": True},    True),
     "Teager":   (TKEO_Estimator,     {},                  True),
     "Koopman":  (Koopman_Estimator,  {},                  True),
-    "PI-GRU":   (PI_GRU_Estimator,   {},                  False),  # MC-excluded
 }
+
+if PI_GRU_Estimator is not None:
+    ESTIMATORS["PI-GRU"] = (PI_GRU_Estimator, {}, False)  # MC-excluded
 
 
 def make_estimator(cls: type, extra: dict):

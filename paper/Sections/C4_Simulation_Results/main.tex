@@ -1,202 +1,214 @@
 \section{Simulation Results and Benchmarking}
 \label{sec:results}
 
-\emph{All frequency errors are reported in mHz unless otherwise stated.}
-
-% ---------------------------------------------------------
-\subsection{Performance on Standard IEC/IEEE Scenarios}
-% ---------------------------------------------------------
-
-Table~\ref{tab:unified_results} summarizes performance on standard scenarios (3\,s.f.).
-\textbf{Steady-state:} SRF-PLL achieves RMSE\,$=0.130$\,mHz (Modulation);
-window-based methods reach RMSE\,$<0.300$\,mHz.
-\textbf{Ramp:} SOGI-FLL fails to track ($1120$\,mHz; type-1 loop).
-The RA-EKF achieves RMSE\,$=\mathbf{8.23}$\,mHz---$8.15\!\times$ lower
-than SRF-PLL and $1.41\!\times$ lower than EKF.
-
-
-\begin{table*}[t!]
+\begin{table*}[t]
   \centering
-  \caption{Unified Benchmark Results: Standard vs. IBR-Specific Stress Scenarios [Errors in \textbf{mHz}, $T_{\mathrm{trip}}$ in \textbf{s}; mean $\pm$ std, $N=30$].}
-  \label{tab:unified_results}
+  \caption{Core disturbance-family comparison for the benchmark study.
+    RMSE values are reported in mHz and computed as family means of
+    scenario means. The uncertainty term is the mean within-scenario Monte
+    Carlo standard deviation for the winning estimator. $\Delta$ is the RMSE gap
+    between the winner and the runner-up.}
+  \label{tab:family_summary}
   \scriptsize
-  \setlength{\tabcolsep}{2.2pt}
-  \renewcommand{\arraystretch}{1.2}
-  \resizebox{\textwidth}{!}{%
-  \begin{tabular}{l cc | cc | cc | cc}
+  \setlength{\tabcolsep}{2.8pt}
+  \renewcommand{\arraystretch}{1.1}
+  \begin{tabular}{l c l c l c l}
     \toprule
-    & \multicolumn{6}{c|}{\textbf{IEC/IEEE 60255-118-1 (Standard Scenarios)}} & \multicolumn{2}{c}{\textbf{Composite Islanding (Scenario D)}} \\
-    & \multicolumn{2}{c|}{\textbf{Step (+10\%)}} & \multicolumn{2}{c|}{\textbf{Ramp (+3\,Hz/s)}} & \multicolumn{2}{c|}{\textbf{Modulation (2\,Hz)}} & \multicolumn{2}{c}{\textbf{Phase Jump (+60$^\circ$)}} \\
-    \textbf{Method} & \textbf{RMSE} & \textbf{Peak} & \textbf{RMSE} & \textbf{Peak} & \textbf{RMSE} & \textbf{Peak} & \textbf{RMSE [mHz]} & \textbf{$T_{\mathrm{trip}}$ [s]} \\
+    Family & Count & RMSE winner & RMSE [mHz] & Runner-up & $\Delta$ [mHz] & Lowest $T_{\mathrm{trip}}$ [s] \\
     \midrule
-    \textit{Window-based} & & & & & & & & \\
-    IpDFT & $1.60 \pm 0.04$ & $7.53 \pm 0.23$ & $35.3 \pm 0.02$ & $83.0 \pm 1.38$ & $0.260 \pm 0.02$ & $0.680 \pm 0.10$ & $484 \pm 0$ & $0.086$ \\
-    TFT   & $2.12 \pm 0.03$ & $19.0 \pm 0.23$ & $30.7 \pm 0.02$ & $55.7 \pm 0.67$ & $0.260 \pm 0.02$ & $0.820 \pm 0.13$ & $479 \pm 0$ & $0.087$ \\
-    \midrule
-    \textit{Data-driven} & & & & & & & & \\
-    Koopman & $1.25 \pm 0.04$ & $8.79 \pm 0.21$ & $28.6 \pm 0.02$ & $54.7 \pm 0.97$ & $1.23 \pm 0.02$ & $2.20 \pm 0.12$ & $419 \pm 0$ & $0.148$ \\
-    \midrule
-    \textit{Loop-based} & & & & & & & & \\
-    SRF-PLL & \textbf{0.140} & \textbf{0.730} & $67.1 \pm 0.02$ & $173 \pm 0.28$ & \textbf{0.130} & \textbf{0.250} & $45.0 \pm 0$ & \textbf{0.000} \\
-    SOGI-FLL & $8.99 \pm 0$ & $13.4 \pm 0$ & $1120^\dagger$ & $1560 \pm 0.03$ & $8.99 \pm 0$ & $13.4 \pm 0$ & \textbf{8.36} & \textbf{0.000} \\
-    \midrule
-    \textit{Model-based} & & & & & & & & \\
-    EKF   & $0.240 \pm 0.01$ & $2.52 \pm 0.03$ & $11.6 \pm 0.11$ & $41.1 \pm 3.08$ & $0.150 \pm 0$ & $0.570 \pm 0.06$ & $225 \pm 0$ & $0.120$ \\
-    UKF   & $0.280 \pm 0.04$ & $2.57 \pm 0.04$ & $12.7 \pm 0.16$ & $45.2 \pm 3.70$ & $0.280 \pm 0.02$ & $1.70 \pm 0.16$ & $225 \pm 0$ & $0.120$ \\
-    RA-EKF & $2.31 \pm 0.02$ & $29.9 \pm 0.24$ & \textbf{8.23} & \textbf{31.8} & $4.78 \pm 0.03$ & $12.8 \pm 0.41$ & $39.3 \pm 2.40$ & \textbf{0.000} \\
+    IEEE ramps & 9 & SOGI-PLL & $19.4 \pm 6.4$ & Koopman & 2.7 & 0 (multiple) \\
+    Mag.\ steps & 7 & EKF & $0.388 \pm 0.143$ & RA-EKF & 1.45 & 0 (multiple) \\
+    Modulation & 3 & RA-EKF & $17.8 \pm 21.4$ & Koopman & 13.7 & 0 (multiple) \\
+    Phase jumps & 3 & SOGI-FLL & $174 \pm 67.5$ & PLL & 4.03 & ZCD: 0.0194 \\
+    OOB interf. & 1 & EKF & $13.6 \pm 11.1$ & RA-EKF & 7.35 & EKF, RA-EKF: 0 \\
+    IBR harmonics & 3 & EKF & $70.5 \pm 27.3$ & TFT & 4.13 & TFT, Prony: 0.00947 \\
+    IBR ringdown & 5 & UKF & $313 \pm 23.2$ & EKF & 6.67 & ESPRIT: 0.0989 \\
+    IBR multi-event & 1 & PLL & $173.5 \pm 66.7$ & UKF & 2.74 & IpDFT: 0.0439 \\
     \bottomrule
-    \multicolumn{9}{l}{\scriptsize $^\dagger$SOGI-FLL fails to track sustained RoCoF (type-1 frequency loop). All errors in mHz. $\pm 0$: std\,$<0.5$\,mHz (negligible MC variance; deterministic scenario response). Bold: best in category.}
-  \end{tabular}}
+  \end{tabular}
 \end{table*}
 
-% ---------------------------------------------------------
-\subsection{Robustness Under Severe IBR Disturbances}
-% ---------------------------------------------------------
+\subsection{No Single Estimator Dominates the Standard Scenario Families}
 
-\subsubsection{Composite Islanding (Scenario D)}
+The standard disturbance families do not yield a single ranking
+(Table~\ref{tab:family_summary}). SOGI-PLL gives the lowest mean RMSE on IEEE
+ramp cases (19.4\,mHz). EKF dominates the magnitude-step family
+(0.388\,mHz) and out-of-band interference (13.6\,mHz), and RA-EKF leads the
+modulation family (17.8\,mHz). Zero-trip-risk ties are common in ramps,
+magnitude steps, and
+modulation, which means those families separate the estimators mainly by
+accuracy rather than by protection-oriented risk. The margins are often small:
+the ramp-family gap between SOGI-PLL and Koopman is only 2.7\,mHz, while the
+gap between EKF and RA-EKF in magnitude steps is 1.45\,mHz.
 
-Window-based methods exhibit spectral leakage: IpDFT reaches RMSE\,$=484$\,mHz (peak $2910$\,mHz); TFT peak $2740$\,mHz.
-EKF/UKF, lacking phase-reset mechanisms, incur $T_{\mathrm{trip}}=0.122$\,s; SRF-PLL avoids leakage (RMSE\,$=45.0$\,mHz, $T_{\mathrm{trip}}=0$).
-Among model-based estimators, the RA-EKF achieves RMSE\,$=39.3$\,mHz---a $5.7\!\times$ RMSE reduction vs.\ EKF---with zero threshold breaches ($T_{\mathrm{trip}}=0$; peak $365$\,mHz $<0.5$\,Hz, Fig.~\ref{fig:dashboard_mega}g).
-\emph{Note:} Scenario~D applies all disturbances simultaneously; isolating
-the contribution of harmonic leakage vs.\ noise amplification requires
-single-effect experiments outside this benchmark's scope.
+The scenario-level winners show the same fragmentation. Across the 34
+benchmark scenarios, nine different estimators win at least one scenario on
+RMSE, and no estimator wins more than 10 of them. Even inside the ramp
+family, SOGI-PLL wins six of the nine RMSE scenarios while RA-EKF takes the
+other three. The magnitude-step family is the clearest exception: EKF wins all
+seven magnitude-step scenarios and the family mean as well.
 
-\subsubsection{Multi-Event Stress Test (Scenario E)}
+Table~\ref{tab:family_summary} also distinguishes a winner from a decisive
+winner. In the magnitude-step family, EKF's 1.45\,mHz lead over RA-EKF is about
+one order of magnitude larger than the winner's mean within-scenario spread
+(0.143\,mHz), so the aggregate advantage is meaningful. By contrast, the ramp,
+modulation, phase-jump, harmonic, ringdown, and out-of-band families all have
+family-level margins that are smaller than or comparable to the same spread.
+Those families should therefore be read as closely contested rather than
+exhibiting stable single-method dominance.
 
-Table~\ref{tab:risk_metrics} quantifies trip-risk under the IBR Multi-Event sequence (5th/7th harmonics; THD\,$\approx$\,4.5\%, IEEE~519 compliant). SOGI-FLL incurs the highest trip-risk ($3.10$\,s); SRF-PLL accumulates $T_{\mathrm{trip}}=0.353$\,s (RMSE\,$=307$\,mHz). The RA-EKF achieves RMSE\,$=159$\,mHz with $T_{\mathrm{trip}}=0.081$\,s at $88.5\,\mu$s/sample---a $4.4\!\times$ trip-risk reduction vs.\ SRF-PLL and $4.5\!\times$ vs.\ EKF in this benchmark. IpDFT: $T_{\mathrm{trip}}=0.563$\,s; Koopman: $0.068$\,s.
+Trip-risk is even less discriminating in the clean standard cases. In 23 of the
+34 scenarios, the minimum trip-risk is zero, often
+shared by 10 to 13 estimators in the ramp and magnitude-step families. In those
+cases, trip-risk is useful mainly as a pass/fail screen, while RMSE and peak
+error carry most of the ranking information.
 
-\begin{table}[b!]
+Phase jumps behave differently. SOGI-FLL gives the lowest mean RMSE across the
+phase-jump family (174\,mHz), but ZCD gives the lowest mean trip-risk
+($0.0194$\,s). The protection and accuracy metrics therefore point to
+different designs. In the $60^\circ$ phase-jump case, ZCD keeps trip-risk below
+the leading low-RMSE methods, but only with much larger error excursions. Even
+within the standard test set, RMSE and trip-risk are not interchangeable
+objectives.
+
+\subsection{Composite IBR Stress Reorders the Ranking}
+
+The broadest change appears when the disturbance becomes composite. The hardest
+benchmark scenarios, measured by median RMSE across estimators, are the IBR
+multi-event sequence (826\,mHz), the IEEE and NERC $60^\circ$ phase jumps
+(675\,mHz and 637\,mHz), and the noisy IBR ringdown scenarios
+(474--528\,mHz). These are precisely the cases where the usual standard test
+intuition starts to fail.
+
+The scale change is itself important. The easiest family in
+Table~\ref{tab:family_summary}, magnitude steps, stays below 1\,mHz, whereas
+the IBR multi-event scenario reaches 826\,mHz median RMSE across estimators and
+the noisy ringdown family sits near half a hertz. The benchmark therefore spans
+roughly three orders of magnitude in error severity: the median RMSE of the
+IBR multi-event case is about $1.55\times10^3$ times that of the single-tone
+case. That spread explains why rankings inferred from clean standard tests do
+not transfer directly to composite IBR stress.
+
+The IBR multi-event sequence is the clearest example. PLL gives the lowest RMSE
+of 173.5\,mHz. UKF trails by only 2.74\,mHz on the family mean. EKF remains
+nearly tied in the scenario readout at 176.4\,mHz while reducing trip-risk to
+$0.0874$\,s. IpDFT yields the lowest trip-risk ($0.0439$\,s) but at the cost
+of a much larger peak error (2550\,mHz). The
+ranking therefore depends on the deployment objective: minimizing average error,
+minimizing time above the trip threshold, or bounding transient severity.
+
+The same pattern appears in the other IBR-specific families. EKF gives the
+lowest mean RMSE across the harmonic family (70.5\,mHz), but TFT and Prony
+give the lowest mean trip-risk there ($0.00947$\,s). In the ringdown and noise
+family, UKF gives the lowest mean RMSE (313\,mHz), whereas ESPRIT gives the
+lowest mean trip-risk ($0.0989$\,s) at a far higher computational cost. These
+results argue against a single global ranking. Scenario family is part of
+the problem definition, not a \emph{post hoc} qualifier.
+
+The scenario-level results make that split sharper. Among the 12 scenarios with a unique
+trip-risk winner, 9 have a different winner than the RMSE leader. Those
+disagreements concentrate in the $60^\circ$ phase jumps and in the harmonic,
+ringdown, and multi-event IBR cases. The harmonic family is especially
+instructive: TFT wins two of the three individual harmonic scenarios, and
+RA-EKF wins the third. Yet EKF still achieves the best family-average RMSE
+because it stays consistently close to the scenario leaders across all three
+stress levels.
+
+Composite stress also changes which metric carries the practical decision. In
+magnitude steps and clean ramps, many leading estimators already tie at zero
+trip-risk, so RMSE is the useful separator. In the multi-event, phase-jump, and
+ringdown families, RMSE, trip-risk, and peak excursion split across different
+estimators. That metric split, not just the change in rank order, is the core
+reason a single scalar ranking fails to describe protection-relevant
+behavior.
+
+\subsection{Global Rankings Are Useful Only as Secondary Evidence}
+
+Family-by-family reading is the main analysis, but the global summaries still
+help when they are interpreted carefully. The interpretation depends on the
+aggregation rule. Mean-rank summaries across the 34 benchmark scenarios favor
+TFT on RMSE ($4.38$) and peak error
+($4.32$), with RA-EKF close behind on both ($4.62$ and $4.59$). Simple
+averaging over the 34 benchmark scenarios instead favors RA-EKF and EKF,
+with mean RMSE values of 116\,mHz and 123\,mHz, followed by UKF at 131\,mHz.
+That difference is informative rather than contradictory: mean rank rewards
+repeated near-front finishes, whereas raw averaging is driven more strongly by
+the hardest disturbance families.
+
+Consistency statistics make that distinction concrete. EKF is the most frequent
+accuracy leader, with 10 outright RMSE wins, 19 RMSE top-three finishes, and
+20 peak-error top-three finishes across the 34 benchmark scenarios. TFT wins
+only two RMSE scenarios, yet it reaches the RMSE top three in 16 scenarios and
+the peak-error top three in 17, which explains its strong mean-rank position.
+Trip-risk favors a different group again: IpDFT and ESPRIT enter the trip-risk
+top three in 25 and 24 scenarios, respectively. Global summaries are therefore
+best read as screening tools, not as substitutes for family-level evidence.
+
+The MAE versus CPU Pareto front contains EKF, RA-EKF, SOGI-FLL, SOGI-PLL, and
+ZCD, indicating that neither accuracy nor cost alone determines the admissible
+set. As secondary evidence, the study
+also includes ANOVA and Kruskal-Wallis family tests on RMSE, MAE, peak error,
+trip-risk, settling time, and CPU time; both tests reject the null hypothesis
+of equal family-level distributions for all six metrics (all $p<10^{-16}$).
+These tests are coarse
+and do not replace the scenario-family analysis, but they support the claim
+that the observed ranking differences are not confined to one metric.
+
+ZCD remains on the MAE versus CPU Pareto front because its cost is negligible,
+not because its transient accuracy remains competitive under phase jumps or
+multi-event stress. The practically relevant low-cost region is therefore
+narrower than the raw Pareto set suggests.
+
+For deployment decisions, the recommendation remains scenario-dependent.
+SOGI-PLL is the strongest
+choice when ramp RMSE is the main objective, EKF is strongest on magnitude-step
+and out-of-band families, RA-EKF is strongest on modulation, and PLL is the
+lowest-RMSE option in the composite IBR event. None of those statements can be
+promoted to a universal recommendation, because the lowest trip-risk in the
+same family may belong to a different method. That conditional reading is
+stronger than a flat ranked list because it keeps both the disturbance family
+and the operating objective in view.
+
+\subsection{Cost Keeps Fast Embedded Methods in the Discussion}
+
+CPU cost changes the ranking again. Figure~\ref{fig:dashboard_mega} gathers
+representative time-domain cases together with the global summaries. EKF and
+RA-EKF occupy the best global accuracy region with mean CPU costs of
+$0.813\,\mu$s and $1.61\,\mu$s per sample. SOGI-PLL and SOGI-FLL remain much
+cheaper ($0.0867\,\mu$s and $0.0348\,\mu$s) and therefore stay relevant for
+embedded protection even when they lose some accuracy. Window-based methods
+such as TFT and IpDFT improve global trip-risk relative to some loop methods,
+but they do so at about $3$--$4\,\mu$s per sample. ESPRIT reaches the
+trip-risk top three almost as often as IpDFT, but at $2838\,\mu$s per sample
+instead of $3.68\,\mu$s. Koopman and ESPRIT therefore occupy a substantially
+higher-cost region, with mean costs of $390\,\mu$s and $2838\,\mu$s, without a matching
+global RMSE gain. The time-domain panels illustrate the same conclusion from a different
+way: the estimator that looks best in the ramp case is not the one that best
+manages the multi-event or ringdown case.
+
+Taken together, the results suggest two practically relevant operating
+regions. EKF and RA-EKF define the low-error middle-cost region: they are not
+the cheapest estimators, but they remain competitive across the widest range of
+families and give the strongest aggregate balance once composite IBR stress is
+included. SOGI-PLL and SOGI-FLL define the low-cost embedded region: they keep
+sub-microsecond cost while remaining credible on ramps and selected phase-jump
+conditions. Window-based methods such as TFT and IpDFT remain useful when lower
+trip-risk justifies extra compute, but the more expensive reduced-order methods
+do not show a broad enough error advantage in this benchmark to justify routine
+deployment.
+
+\begin{figure*}[!t]
   \centering
-  \scriptsize
-  \setlength{\tabcolsep}{5pt}
-  \renewcommand{\arraystretch}{1.15}
-  \caption{Trip-Risk and Cost: Scenario~(E), $N\!=\!30$ MC.
-    $T_{\mathrm{trip}}$: cumulative time $|e|>0.5$\,Hz (trip proxy;
-    no IEC compliance claimed); quantized to $dt=0.1$\,ms---differences
-    below ${\approx}1$\,ms should be interpreted as within measurement
-    resolution. CPU: Python baseline.
-    MC std\,$<\!1$\,mHz and $<\!0.002$\,s for all methods except
-    RA-EKF RMSE ($\pm3$\,mHz).
-    Omitted: TKEO ($\geq\!7800$\,mHz);
-    RLS (342\,mHz, 0.367\,s, 12.7\,$\mu$s);
-    RLS-VFF (874\,mHz, 2.20\,s);
-    TFT (0.349\,s);
-    PI-GRU (1830\,mHz, 3.76\,s, ${\approx}$154\,ms).}
-  \label{tab:risk_metrics}
-  \begin{tabular}{l r r r}
-    \toprule
-    \textbf{Method}
-      & \makecell[r]{\textbf{RMSE}\\\textbf{[mHz]}}
-      & \makecell[r]{$\boldsymbol{T_{\mathrm{trip}}}$\\\textbf{[s]}}
-      & \makecell[r]{\textbf{CPU}\\{[$\boldsymbol{\mu}$\textbf{s}]}} \\
-    \midrule
-    RA-EKF   & \textbf{159}$^{\dagger}$ & 0.081 & 88.5 \\
-    EKF      & 335 & 0.364 & 29.5 \\
-    Koopman  & 471 & \textbf{0.068} & 120  \\
-    UKF      & 337 & 0.366 & 215  \\
-    SRF-PLL  & 307 & 0.353 & \textbf{16.7} \\
-    IpDFT    & 636 & 0.563 & 110  \\
-    SOGI-FLL & 826 & 3.100 & 41.7 \\
-    \bottomrule
-    \multicolumn{4}{l}{$^{\dagger}$MC std $\pm3$\,mHz. Bold: best per column.}
-  \end{tabular}
-\end{table}
-
-% ---------------------------------------------------------
-\subsection{Computational Feasibility}
-% ---------------------------------------------------------
-
-Table~\ref{tab:complexity} and Fig.~\ref{fig:dashboard_mega}e show the
-cost--risk Pareto frontier. All timings are Python~3.13 baselines
-(Intel Core Ultra 5 125H, single-threaded) for \emph{relative comparison
-only}; C/FPGA implementations yield 10--100$\times$ lower absolute latencies.
-SRF-PLL ($16.7\,\mu$s) and EKF ($29.5\,\mu$s) are least expensive; SRF-PLL
-incurs elevated trip-risk ($T_{\mathrm{trip}}\!=\!0.353$\,s, Scenario~E).
-RA-EKF ($88.5\,\mu$s) is a viable DSP/FPGA candidate pending C/HIL validation.
-PI-GRU (${\approx}154$\,ms/sample) is prohibitive for embedded real-time
-protection without GPU acceleration.
-
-\begin{table}[t!]
-  \centering
-  \caption{Computational Cost per Sample (Python Baselines).
-    CPU: mean time per sample over 20 runs on an Intel Core Ultra 5 125H
-    (single-threaded Python~3.13; not C or FPGA projections).
-    Deployment class: P1 ($<$20\,$\mu$s, embedded MCU),
-    P2 (20--40\,$\mu$s, DSP), M1 ($>$40\,$\mu$s, DSP/FPGA or higher);
-    these are per-sample execution time thresholds, not estimator
-    response-latency classes.}
-  \label{tab:complexity}
-  \footnotesize
-  \begin{tabular}{l c c l}
-    \toprule
-    \textbf{Method} & \textbf{Time/Sample ($\mu$s)} & \textbf{Class}
-                    & \textbf{Target HW} \\
-    \midrule
-    SRF-PLL  & $16.7\,\mu$s  & P1 & Low-end MCU \\
-    EKF      & $29.5\,\mu$s  & P2 & DSP \\
-    SOGI-FLL & $41.7\,\mu$s  & M1 & MCU / DSP \\
-    TFT      & $45.6\,\mu$s  & M1 & DSP \\
-    RA-EKF  & $88.5\,\mu\text{s}$ & M1 & DSP / FPGA \\
-    IpDFT    & $110\,\mu\text{s}$ & M1 & DSP / FPGA \\
-    Koopman  & $120\,\mu\text{s}$ & M1 & CPU \\
-    UKF      & $215\,\mu\text{s}$ & M1 & High-perf CPU \\
-    PI-GRU$^\ddagger$ & ${153{,}900}\,\mu\text{s}$ (${\approx}154$\,ms) & — & GPU only \\
-    \bottomrule
-  \end{tabular}
-  \par\smallskip
-  {\scriptsize $^\ddagger$PI-GRU inference uses unoptimized PyTorch eager mode
-    without batching. Production deployments with TorchScript/ONNX and batched
-    windowing would reduce per-sample cost by $\geq\!100\times$; however, this
-    remains outside the scope of embedded relay protection without dedicated
-    hardware acceleration.}
-\end{table}
-
-% ---------------------------------------------------------
-\subsection{Failure Mode Summary by Estimator Family}
-% ---------------------------------------------------------
-
-Dominant failure modes (Table~\ref{tab:unified_2024_big}):
-\textbf{Window-based:} spectral leakage ($>450$\,mHz RMSE, Scenario~D) and structural latency.
-\textbf{Loop-based:} SRF-PLL cycle-slip under phase jumps;
-SOGI-FLL type-1 loop fails sustained RoCoF ($1120$\,mHz, Scenario~B).
-\textbf{Adaptive recursive:} VFF blow-up and covariance instability under multi-event
-transients; TKEO diverges under noise (RMSE\,$\geq$\,7800\,mHz, excluded from Tables~II--III).
-\textbf{Data-driven:} PI-GRU dataset shift---the fixed pre-trained model underperforms
-scenario-optimized classical methods on RMSE and trip-risk in all five scenarios.
-\textbf{Model-based:} EKF/UKF Jacobian divergence ($T_{\mathrm{trip}}\!=\!0.120$\,s,
-Scenario~D); RA-EKF event-gating mitigates this.
-
-\begin{figure*}[t!]
-  \centering
-  \includegraphics[width=0.999\textwidth]{%
-    Figures/Plots_And_Graphs/Fig2_Mega_Dashboard.pdf}
-\caption{Comprehensive Performance Dashboard (all errors in mHz; $N=30$ MC).
-\textbf{(a)}~Time-domain frequency error, Scenario~D (Composite Islanding):
-event-gating in RA-EKF limits $T_{\mathrm{trip}}$ to ${\approx}0.40$\,ms
-vs.\ 122\,ms for standard EKF.
-\textbf{(b)}~Time-domain frequency error, Scenario~B (Ramp):
-RA-EKF lowest RMSE among evaluated estimators ($8.23$\,mHz) via explicit
-$\dot{\omega}$ state; IpDFT at 2-cycle window has 33\,ms structural latency
-(observation delay, not stochastic lag) and achieves RMSE\,$=35$\,mHz;
-SOGI-FLL fails ($1120$\,mHz) due to type-1 loop.
-\textbf{(c)}~Time-domain, Scenario~E: stable estimators.
-\textbf{(d)}~Time-domain, Scenario~E: unstable estimators
-(TKEO excluded, RMSE\,$\geq7800$\,mHz).
-\textbf{(e)}~Pareto frontier: CPU time/sample vs.\ $T_{\mathrm{trip}}$,
-Scenario~E; 2D projection only---RMSE is a third independent dimension
-not shown here. $\dagger$PI-GRU excluded (CPU\,${\approx}154$\,ms/sample,
-$T_{\mathrm{trip}}\!\approx\!3.8$\,s). All CPU values are Python baselines;
-embedded speedups of 10--100$\times$ expected with C/FPGA implementations.
-\textbf{(f)}~Radar chart: normalised multi-metric profile per estimator
-(lower area = better overall balance across all metrics).
-\textbf{(g)}~Non-normative compliance heatmap, all scenarios.
-Pass thresholds: RMSE\,$<0.05$\,Hz, Peak\,$<0.5$\,Hz, $T_{\mathrm{trip}}<0.1$\,s
-(from IEC/IEEE~60255-118-1 accuracy classes; visualisation only, no certification
-claim). \textbf{F*}\,=\,marginal failure: RMSE overshoot $<1.5\%$ or sub-cycle
-peak breach only, compliant in all other metrics.
-RA-EKF, Scenario~D: peak\,$=365$\,mHz, $T_{\mathrm{trip}}\!=\!0$.
-\textbf{(h)}~Steady-state RMSE, log scale, Scenario~C (Modulation);
-all values $<1$\,mHz for top-performing estimators.}
+  \includegraphics[width=\textwidth,height=0.835\textheight,keepaspectratio]{Fig2_Mega_Dashboard.png}
+  \caption{Representative benchmark views from the study.
+    Panels (a)--(d) and (f) show single-scenario responses, each summarized
+    over the same 60 Monte Carlo runs used throughout the paper; panels (e),
+    (g), and (h) summarize all 34 benchmark scenarios. (a) Phase-jump
+    response. (b) Ramp response. (c) IBR multi-event response. (d) Ringdown
+    response. (e) RMSE distributions by estimator family. (f) Harmonic-stress
+    response. (g) Global mean MAE versus CPU time. (h) Global mean trip-risk
+    versus CPU time. Together the panels show why the benchmark should be
+    interpreted by disturbance family and operating objective rather than by a
+    single scalar score.}
   \label{fig:dashboard_mega}
 \end{figure*}

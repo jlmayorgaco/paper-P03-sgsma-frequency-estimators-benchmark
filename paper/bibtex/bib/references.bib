@@ -12,18 +12,31 @@
   doi     = {10.1016/j.segan.2025.101827}
 }
 
-@article{Ting2022,
-  author  = {Ting, Jocelyn and Wang, Bin and Kenyon, Rick Wallace and Hoke, Andy},
-  title   = {Evaluating Methods for Measuring Grid Frequency in Low-Inertia Power Systems},
-  journal = {Proc. IEEE Kansas Power and Energy Conference},
-  year    = {2022},
-  number  = {NREL/CP-5D00-81400}
+@inproceedings{Ting2022,
+  author    = {Ting, Jocelyn and Wang, Bin and Kenyon, Rick Wallace and Hoke, Andy},
+  title     = {Evaluating Methods for Measuring Grid Frequency in Low-Inertia Power Systems},
+  booktitle = {2022 IEEE Kansas Power and Energy Conference (KPEC)},
+  year      = {2022},
+  doi       = {10.1109/KPEC54747.2022.9814727},
+  note      = {NREL/CP-6A40-83784}
 }
 
-@article{Bernal2024,
+@inproceedings{Milano2018LowInertia,
+  author    = {Milano, Federico and D{\"o}rfler, Florian and Hug, Gabriela and Hill, David J. and Verbi{\v{c}}, Gregor},
+  title     = {Foundations and Challenges of Low-Inertia Systems (Invited Paper)},
+  booktitle = {2018 Power Systems Computation Conference (PSCC)},
+  year      = {2018},
+  pages     = {1--25},
+  doi       = {10.23919/PSCC.2018.8450880}
+}
+
+@article{Bernal2025,
   author  = {Bernal, Rodrigo and Milano, Federico},
   title   = {A Complex Frequency-Based Control for Inverter-Based Resources},
   journal = {Journal of Modern Power Systems and Clean Energy},
+  volume  = {13},
+  number  = {5},
+  pages   = {1630--1641},
   year    = {2025},
   doi     = {10.35833/MPCE.2024.000907}
 }
@@ -64,9 +77,10 @@
 @inproceedings{Zoghby2024,
   author    = {Zoghby, Pamela and Marinescu, Bogdan and Ross{\'e}, Antoine},
   title     = {A New Benchmarking Method for the Study of Dynamic Interactions in Island Power Systems with Hybrid Conventional and Inverter-Based Resources Controlled in Grid-Forming Mode},
-  booktitle = {Proc. 2nd Int. Conf. on Renewable Energies and Smart Technologies (REST)},
+  booktitle = {2024 International Conference on Renewable Energies and Smart Technologies (REST)},
   year      = {2024},
-  address   = {Prishtina, Kosovo}
+  address   = {Prishtina, Kosovo},
+  doi       = {10.1109/REST59987.2024.10645455}
 }
 
 % ==================================================================================
@@ -135,14 +149,15 @@
 % 4. PLL, IpDFT, TFT & OTHER ESTIMATORS
 % ==================================================================================
 
-@article{Golestan2015,
+@article{Golestan2017,
   author  = {Golestan, Saeed and Guerrero, Josep M. and Vasquez, Juan C.},
   title   = {Three-Phase {PLL}s: A Review of Recent Advances},
   journal = {IEEE Transactions on Power Electronics},
-  volume  = {30},
-  number  = {9},
-  pages   = {5219--5230},
-  year    = {2015}
+  volume  = {32},
+  number  = {3},
+  pages   = {1894--1907},
+  year    = {2017},
+  doi     = {10.1109/TPEL.2016.2565642}
 }
 
 % FIX ❶ — Paolone2010 was a wavelet/power-quality paper unrelated to PMU performance.
@@ -168,14 +183,15 @@
   year    = {2014}
 }
 
-@article{Roscoe2019,
-  author  = {Roscoe, Andrew J. and Owen, Guy and S{\'a}nchez, Eduardo},
+@article{Wright2019,
+  author  = {Wright, Paul S. and Davis, Peter N. and Johnstone, Kevin and Rietveld, Gert and Roscoe, Andrew J.},
   title   = {Field Measurement of Frequency and {RoCoF} in the Presence of Phase Steps},
   journal = {IEEE Transactions on Instrumentation and Measurement},
   volume  = {68},
   number  = {6},
-  pages   = {2046--2056},
-  year    = {2019}
+  pages   = {1688--1695},
+  year    = {2019},
+  doi     = {10.1109/TIM.2018.2882907}
 }
 
 @article{TaylorFourier2012,
@@ -219,7 +235,7 @@
 @INPROCEEDINGS{Chamorro2021,
   author    = {Chamorro, Harold R. and Guel-Cortez, Adrian-Josue and Africano, Yessica
                and Jimenez, Fernando and Tonkoski, Reinaldo and Martinez, Wilmar},
-  booktitle = {2021 IEEE 30th International Symposium on Industrial Electronics (ISIE)},
+  booktitle = {2021 IEEE 30th Int. Symp. on Industrial Electronics (ISIE)},
   title     = {Grid Frequency Estimation based on Extended {Kalman} Filter in Connected {AC} Microgrids},
   year      = {2021},
   pages     = {1--6},
@@ -241,7 +257,7 @@
   number    = {7},
   pages     = {4818--4826},
   year      = {2020},
-  publisher = {IEEE}
+  doi       = {10.1109/TIM.2019.2955797}
 }
 
 @article{Williams2015,
@@ -255,12 +271,24 @@
 }
 
 @article{Netto2018KoopmanKF,
-  author  = {Netto, Marcelo and da Silva, Leonardo T. and Milano, Federico},
-  title   = {A Koopman--Kalman Approach for Power System Dynamic State Estimation},
-  journal = {Electric Power Systems Research},
-  volume  = {163},
-  pages   = {375--388},
-  year    = {2018}
+  author  = {Netto, Marcos and Mili, Lamine},
+  title   = {A Robust Data-Driven {Koopman Kalman} Filter for Power Systems Dynamic State Estimation},
+  journal = {IEEE Transactions on Power Systems},
+  volume  = {33},
+  number  = {6},
+  pages   = {7228--7237},
+  year    = {2018},
+  doi     = {10.1109/TPWRS.2018.2846744}
+}
+
+@article{Ponce2025,
+  author  = {Ponce, Ignacio and Rahmann, Claudia and Pourbeik, Pouyan},
+  title   = {Identification of Weak Frequency Areas in Low Inertia Systems},
+  journal = {IEEE Access},
+  volume  = {13},
+  pages   = {90262--90272},
+  year    = {2025},
+  doi     = {10.1109/ACCESS.2025.3570908}
 }
 
 @article{RoCoFReview2023,

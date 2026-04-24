@@ -1,0 +1,74 @@
+{
+  "scenario": "IBR_Harmonics_Small",
+  "scenario_class": "IBRHarmonicsSmallScenario",
+  "scenario_meta": {
+    "description": "IBR Harmonics Small: +0.30 Hz step at t=1.0s, THD ≈ 2.5%",
+    "standard": "IEEE 519 compliant (THD < 5 %)",
+    "dynamics": "Small frequency step with low harmonic distortion and white noise only.",
+    "purpose": "Baseline harmonic rejection benchmark under clean IBR conditions.",
+    "parameters": {
+      "freq_nom_hz": 60.0,
+      "freq_step_hz": 0.3,
+      "t_event_s": 1.0,
+      "amp_pu": 1.0,
+      "h5_pct": 0.02,
+      "h7_pct": 0.015,
+      "h11_pct": 0.005
+    },
+    "monte_carlo_space": {
+      "freq_step_hz": {
+        "kind": "uniform",
+        "low": -0.5,
+        "high": 0.5
+      },
+      "h5_pct": {
+        "kind": "uniform",
+        "low": 0.01,
+        "high": 0.03
+      }
+    },
+    "fs_physics_hz": 1000000.0
+  },
+  "estimator": "RA-EKF",
+  "estimator_class": "RAEKF_Estimator",
+  "family": "Model-based",
+  "best_params": {
+    "nominal_f": 60.0,
+    "q_theta": 1.7594887395981829e-10,
+    "q_omega": 0.0007863057881452437,
+    "q_A": 0.00028444810727585207,
+    "q_rocof": 3.044852730992006e-08,
+    "r_meas": 9.585064785049941e-06,
+    "sigma_v": 0.7191486156779431,
+    "gamma": 36.3237286925847,
+    "deriv_lpf_alpha": 0.36295107174278346,
+    "tau_rocof": 0.9701535618474225
+  },
+  "defaults": {
+    "nominal_f": 60.0,
+    "q_theta": 1e-06,
+    "q_omega": 0.0005,
+    "q_A": 1e-06,
+    "q_rocof": 0.005,
+    "r_meas": 0.0001,
+    "sigma_v": 0.05,
+    "gamma": 8.0,
+    "deriv_lpf_alpha": 0.08,
+    "tau_rocof": 0.15
+  },
+  "n_trials_tuning": 300,
+  "n_mc_runs": 100,
+  "artifacts": {
+    "summary_csv": [
+      "tests\\montecarlo\\outputs\\IBR_Harmonics_Small\\RA-EKF\\IBR_Harmonics_Small__RA-EKF_summary.csv"
+    ],
+    "signals_csv": [
+      "tests\\montecarlo\\outputs\\IBR_Harmonics_Small\\RA-EKF\\IBR_Harmonics_Small__RA-EKF_signals.csv"
+    ],
+    "tracking_plots": [
+      "tests\\montecarlo\\outputs\\IBR_Harmonics_Small\\RA-EKF\\tracking_RA-EKF.png"
+    ],
+    "scenario_csv": "tests\\montecarlo\\outputs\\IBR_Harmonics_Small\\IBR_Harmonics_Small_scenario.csv",
+    "scenario_zoom_plot": "tests\\montecarlo\\outputs\\IBR_Harmonics_Small\\IBR_Harmonics_Small_zoom.png"
+  }
+}

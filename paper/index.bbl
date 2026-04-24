@@ -21,42 +21,33 @@
 \providecommand{\BIBdecl}{\relax}
 \BIBdecl
 
+\bibitem{Milano2018LowInertia}
+F.~Milano, F.~D{\"o}rfler, G.~Hug, D.~J. Hill, and G.~Verbi{\v{c}},
+  ``Foundations and challenges of low-inertia systems (invited paper),'' in
+  \emph{2018 Power Systems Computation Conference (PSCC)}, 2018, pp. 1--25.
+
 \bibitem{Pinheiro2025}
 B.~Pinheiro, M.~C. Llerena~Velasquez, G.~Faria, A.~F.~C. Aquino, D.~Issicaba,
   and D.~Dotta, ``Evaluation of the impact of {IBR} on the frequency dynamics
   in the {Brazilian Power System},'' \emph{Sustainable Energy, Grids and
   Networks}, vol.~43, p. 101827, 2025.
 
-\bibitem{WeakGrids2023}
-H.~H. Alhelou, M.~A. Zamani, and J.~V. Milanovi{\'c}, ``Identification of weak
-  frequency areas in low-inertia systems,'' \emph{IEEE Access}, vol.~11, pp.
-  106\,145--106\,159, 2023.
+\bibitem{Ponce2025}
+I.~Ponce, C.~Rahmann, and P.~Pourbeik, ``Identification of weak frequency areas
+  in low inertia systems,'' \emph{IEEE Access}, vol.~13, pp. 90\,262--90\,272,
+  2025.
 
-\bibitem{Bernal2024}
+\bibitem{Bernal2025}
 R.~Bernal and F.~Milano, ``A complex frequency-based control for inverter-based
-  resources,'' \emph{Journal of Modern Power Systems and Clean Energy}, 2025.
+  resources,'' \emph{Journal of Modern Power Systems and Clean Energy},
+  vol.~13, no.~5, pp. 1630--1641, 2025.
 
 \bibitem{Zoghby2024}
 P.~Zoghby, B.~Marinescu, and A.~Ross{\'e}, ``A new benchmarking method for the
   study of dynamic interactions in island power systems with hybrid
   conventional and inverter-based resources controlled in grid-forming mode,''
-  in \emph{Proc. 2nd Int. Conf. on Renewable Energies and Smart Technologies
-  (REST)}, Prishtina, Kosovo, 2024.
-
-\bibitem{Ting2022}
-J.~Ting, B.~Wang, R.~W. Kenyon, and A.~Hoke, ``Evaluating methods for measuring
-  grid frequency in low-inertia power systems,'' \emph{Proc. IEEE Kansas Power
-  and Energy Conference}, no. NREL/CP-5D00-81400, 2022.
-
-\bibitem{EPRIPaper}
-D.~Ramasubramanian, ``Frequency control in a 100\% inverter based grid,''
-  Electric Power Research Institute (EPRI) Presentation, ESIG Webinar, January
-  2021.
-
-\bibitem{Roscoe2019}
-A.~J. Roscoe, G.~Owen, and E.~S{\'a}nchez, ``Field measurement of frequency and
-  {RoCoF} in the presence of phase steps,'' \emph{IEEE Transactions on
-  Instrumentation and Measurement}, vol.~68, no.~6, pp. 2046--2056, 2019.
+  in \emph{2024 International Conference on Renewable Energies and Smart
+  Technologies (REST)}, Prishtina, Kosovo, 2024.
 
 \bibitem{Belega2014}
 D.~Belega and D.~Dallet, ``An improved {DFT}-based method for the accurate
@@ -69,6 +60,17 @@ F.~J. Platas-Garc{\'i}a and J.~A. de~la O~Serna, ``Dynamic phasor estimation
   using a taylor--fourier multisignal model,'' \emph{IEEE Transactions on
   Instrumentation and Measurement}, vol.~60, no.~6, pp. 2112--2121, 2011.
 
+\bibitem{Golestan2017}
+S.~Golestan, J.~M. Guerrero, and J.~C. Vasquez, ``Three-phase {PLL}s: A review
+  of recent advances,'' \emph{IEEE Transactions on Power Electronics}, vol.~32,
+  no.~3, pp. 1894--1907, 2017.
+
+\bibitem{Wright2019}
+P.~S. Wright, P.~N. Davis, K.~Johnstone, G.~Rietveld, and A.~J. Roscoe, ``Field
+  measurement of frequency and {RoCoF} in the presence of phase steps,''
+  \emph{IEEE Transactions on Instrumentation and Measurement}, vol.~68, no.~6,
+  pp. 1688--1695, 2019.
+
 \bibitem{Ferrero2020EKF}
 R.~Ferrero, P.~A. Pegoraro, and S.~Toscani, ``Dynamic synchrophasor estimation
   by extended {Kalman} filter,'' \emph{IEEE Transactions on Instrumentation and
@@ -77,28 +79,26 @@ R.~Ferrero, P.~A. Pegoraro, and S.~Toscani, ``Dynamic synchrophasor estimation
 \bibitem{Chamorro2021}
 H.~R. Chamorro, A.-J. Guel-Cortez, Y.~Africano, F.~Jimenez, R.~Tonkoski, and
   W.~Martinez, ``Grid frequency estimation based on extended {Kalman} filter in
-  connected {AC} microgrids,'' in \emph{2021 IEEE 30th International Symposium
-  on Industrial Electronics (ISIE)}, 2021, pp. 1--6.
+  connected {AC} microgrids,'' in \emph{2021 IEEE 30th Int. Symp. on Industrial
+  Electronics (ISIE)}, 2021, pp. 1--6.
 
-\bibitem{Zelaya2025}
-F.~Zelaya-Arrazabal, S.~Martinez-Lizana, and H.~Pulgar-Painemal, ``Modal-based
-  prediction of power system frequency response and frequency nadir,'' arXiv
-  preprint arXiv:2502.02735v2, 2025, under review; no peer-reviewed venue
-  confirmed as of submission date.
+\bibitem{Netto2018KoopmanKF}
+M.~Netto and L.~Mili, ``A robust data-driven {Koopman Kalman} filter for power
+  systems dynamic state estimation,'' \emph{IEEE Transactions on Power
+  Systems}, vol.~33, no.~6, pp. 7228--7237, 2018.
 
-\bibitem{Golestan2015}
-S.~Golestan, J.~M. Guerrero, and J.~C. Vasquez, ``Three-phase {PLL}s: A review
-  of recent advances,'' \emph{IEEE Transactions on Power Electronics}, vol.~30,
-  no.~9, pp. 5219--5230, 2015.
+\bibitem{Ting2022}
+J.~Ting, B.~Wang, R.~W. Kenyon, and A.~Hoke, ``Evaluating methods for measuring
+  grid frequency in low-inertia power systems,'' in \emph{2022 IEEE Kansas
+  Power and Energy Conference (KPEC)}, 2022, nREL/CP-6A40-83784.
 
 \bibitem{IEEE_C37_118}
 {IEEE Power and Energy Society}, ``{IEEE} standard for synchrophasor
   measurements for power systems ({C37.118.1-2011}, amendment
   {C37.118.1a-2014}),'' IEEE Std C37.118.1, 2011.
 
-\bibitem{Quinn1994}
-B.~G. Quinn, ``Estimating frequency by interpolation using {Fourier}
-  coefficients,'' \emph{{IEEE} Transactions on Signal Processing}, vol.~42,
-  no.~5, pp. 1264--1268, 1994.
+\bibitem{IEC_IEEE_60255_118_1_2018}
+{IEC and IEEE}, ``{IEC/IEEE} international standard 60255-118-1: Synchrophasor
+  measurements for power systems,'' IEC/IEEE 60255-118-1:2018, 2018.
 
 \end{thebibliography}

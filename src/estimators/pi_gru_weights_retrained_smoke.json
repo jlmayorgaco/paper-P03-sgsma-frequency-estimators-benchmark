@@ -1,0 +1,17 @@
+{
+  "weights_path": "C:\\Users\\walla\\Documents\\Github\\paper-P03-sgsma-frequency-estimators-benchmark\\src\\estimators\\pi_gru_weights_retrained_smoke.pt",
+  "model_config": {
+    "input_dim": 3,
+    "conv_channels": 48,
+    "hidden_dim": 64,
+    "fc_hidden_dim": 96,
+    "num_layers": 1,
+    "dropout": 0.1
+  },
+  "train_samples": 15667,
+  "val_samples": 1741,
+  "best_epoch": 1,
+  "best_val_loss": 1.1970683336257935,
+  "scenario_count": 32,
+  "synthetic_source_count": 36
+}

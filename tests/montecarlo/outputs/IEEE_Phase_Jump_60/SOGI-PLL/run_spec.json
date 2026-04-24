@@ -1,0 +1,65 @@
+{
+  "scenario": "IEEE_Phase_Jump_60",
+  "scenario_class": "IEEEPhaseJump60Scenario",
+  "scenario_meta": {
+    "description": "Large Phase Jump (+60.0°)",
+    "standard": "Large phase discontinuity stress test",
+    "parameters": {
+      "duration_s": 5,
+      "freq_hz": 60.0,
+      "phase_jump_rad": 1.0471975511965976,
+      "t_jump_s": 0.7,
+      "noise_sigma": 0.0
+    },
+    "dynamics": "Constant 60 Hz; Instantaneous +60.0° step at t=0.7s. Clean signal.",
+    "purpose": "Evaluate estimator robustness and recovery under severe phase discontinuity.",
+    "monte_carlo_space": {
+      "phase_jump_rad": {
+        "kind": "uniform",
+        "low": 0.7853981633974483,
+        "high": 1.3089969389957472
+      },
+      "t_jump_s": {
+        "kind": "uniform",
+        "low": 0.5,
+        "high": 0.9
+      },
+      "noise_sigma": {
+        "kind": "uniform",
+        "low": 0.0005,
+        "high": 0.002
+      }
+    },
+    "fs_physics_hz": 1000000.0
+  },
+  "estimator": "SOGI-PLL",
+  "estimator_class": "SOGIPLLEstimator",
+  "family": "Loop-based",
+  "best_params": {
+    "nominal_f": 60.0,
+    "k_sogi": 0.7168080799425737,
+    "settle_time": 0.19992834314211538,
+    "output_smoothing": 0.015
+  },
+  "defaults": {
+    "nominal_f": 60.0,
+    "k_sogi": 1.414,
+    "settle_time": 0.06,
+    "output_smoothing": 0.015
+  },
+  "n_trials_tuning": 100,
+  "n_mc_runs": 60,
+  "artifacts": {
+    "summary_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Phase_Jump_60\\SOGI-PLL\\IEEE_Phase_Jump_60__SOGI-PLL_summary.csv"
+    ],
+    "signals_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Phase_Jump_60\\SOGI-PLL\\IEEE_Phase_Jump_60__SOGI-PLL_signals.csv"
+    ],
+    "tracking_plots": [
+      "tests\\montecarlo\\outputs\\IEEE_Phase_Jump_60\\SOGI-PLL\\tracking_SOGI-PLL.png"
+    ],
+    "scenario_csv": "tests\\montecarlo\\outputs\\IEEE_Phase_Jump_60\\IEEE_Phase_Jump_60_scenario.csv",
+    "scenario_zoom_plot": "tests\\montecarlo\\outputs\\IEEE_Phase_Jump_60\\IEEE_Phase_Jump_60_zoom.png"
+  }
+}

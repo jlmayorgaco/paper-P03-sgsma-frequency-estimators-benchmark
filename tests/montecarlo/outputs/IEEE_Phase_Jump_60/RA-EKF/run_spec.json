@@ -1,0 +1,77 @@
+{
+  "scenario": "IEEE_Phase_Jump_60",
+  "scenario_class": "IEEEPhaseJump60Scenario",
+  "scenario_meta": {
+    "description": "Large Phase Jump (+60.0°)",
+    "standard": "Large phase discontinuity stress test",
+    "parameters": {
+      "duration_s": 5,
+      "freq_hz": 60.0,
+      "phase_jump_rad": 1.0471975511965976,
+      "t_jump_s": 0.7,
+      "noise_sigma": 0.0
+    },
+    "dynamics": "Constant 60 Hz; Instantaneous +60.0° step at t=0.7s. Clean signal.",
+    "purpose": "Evaluate estimator robustness and recovery under severe phase discontinuity.",
+    "monte_carlo_space": {
+      "phase_jump_rad": {
+        "kind": "uniform",
+        "low": 0.7853981633974483,
+        "high": 1.3089969389957472
+      },
+      "t_jump_s": {
+        "kind": "uniform",
+        "low": 0.5,
+        "high": 0.9
+      },
+      "noise_sigma": {
+        "kind": "uniform",
+        "low": 0.0005,
+        "high": 0.002
+      }
+    },
+    "fs_physics_hz": 1000000.0
+  },
+  "estimator": "RA-EKF",
+  "estimator_class": "RAEKF_Estimator",
+  "family": "Model-based",
+  "best_params": {
+    "nominal_f": 60.0,
+    "q_theta": 3.205937075027083e-09,
+    "q_omega": 2.750056682748392e-06,
+    "q_A": 2.7514885654619244e-05,
+    "q_rocof": 3.1245301029511024e-06,
+    "r_meas": 1.074543502820609e-06,
+    "sigma_v": 0.19295793041944892,
+    "gamma": 9.762465644087511,
+    "deriv_lpf_alpha": 0.16547409756770626,
+    "tau_rocof": 0.37732262495288305
+  },
+  "defaults": {
+    "nominal_f": 60.0,
+    "q_theta": 1e-06,
+    "q_omega": 0.0005,
+    "q_A": 1e-06,
+    "q_rocof": 0.005,
+    "r_meas": 0.0001,
+    "sigma_v": 0.05,
+    "gamma": 8.0,
+    "deriv_lpf_alpha": 0.08,
+    "tau_rocof": 0.15
+  },
+  "n_trials_tuning": 100,
+  "n_mc_runs": 60,
+  "artifacts": {
+    "summary_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Phase_Jump_60\\RA-EKF\\IEEE_Phase_Jump_60__RA-EKF_summary.csv"
+    ],
+    "signals_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Phase_Jump_60\\RA-EKF\\IEEE_Phase_Jump_60__RA-EKF_signals.csv"
+    ],
+    "tracking_plots": [
+      "tests\\montecarlo\\outputs\\IEEE_Phase_Jump_60\\RA-EKF\\tracking_RA-EKF.png"
+    ],
+    "scenario_csv": "tests\\montecarlo\\outputs\\IEEE_Phase_Jump_60\\IEEE_Phase_Jump_60_scenario.csv",
+    "scenario_zoom_plot": "tests\\montecarlo\\outputs\\IEEE_Phase_Jump_60\\IEEE_Phase_Jump_60_zoom.png"
+  }
+}

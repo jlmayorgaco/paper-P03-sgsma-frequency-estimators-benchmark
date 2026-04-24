@@ -84,6 +84,26 @@ class MonteCarloEngine:
     estimator_params: dict[str, Any] | None = None
     n_runs: int = 30
     base_seed: int = 12345
+    n_cost_reps: int = 20
+
+    @staticmethod
+    def _resolve_worker_count(n_runs: int) -> int:
+        """
+        Resolve process count for MC execution.
+        Default policy avoids spawning more workers than runs.
+        Optional override: BENCHMARK_MC_MAX_WORKERS.
+        """
+        max_default = max(1, min(int(n_runs), multiprocessing.cpu_count()))
+        raw = os.getenv("BENCHMARK_MC_MAX_WORKERS")
+        if raw is None:
+            return max_default
+        try:
+            requested = int(raw)
+        except ValueError:
+            return max_default
+        if requested <= 0:
+            return max_default
+        return max(1, min(max_default, requested))
 
     def sample_from_space(self, rng: np.random.Generator, spec: dict[str, Any]) -> Any:
         kind = spec["kind"]
@@ -153,6 +173,23 @@ class MonteCarloEngine:
             "f_hat": np.asarray(f_hat, dtype=float),
             "struct_samples": struct_samples
         }
+
+    def _measure_exec_time(self, v: np.ndarray) -> float:
+        """
+        Mean CPU time for one full estimator pass.
+        """
+        if self.estimator_cls is None:
+            return 0.0
+
+        n_reps = max(1, int(self.n_cost_reps))
+        timings_s: list[float] = []
+
+        for _ in range(n_reps):
+            start_cpu = time.process_time()
+            self._run_estimator(v)
+            timings_s.append(time.process_time() - start_cpu)
+
+        return float(np.mean(timings_s))
     
     def run_once(self, run_idx: int) -> tuple[dict[str, Any], pd.DataFrame]:
         params = self.sample_params(run_idx)
@@ -165,6 +202,9 @@ class MonteCarloEngine:
                 f"[T-100] Scenario {sc.name} returned dt={dt_actual:.2e} "
                 f"(expected 1e-4 s = 10 kHz). Scenario.run() decimation may be broken."
             )
+            fs_dsp = 1.0 / dt_actual
+        else:
+            fs_dsp = 10000.0
 
         # T-202 WARMUP: Trigger Numba JIT compilation BEFORE the timed window.
         # Without this, the first MC run includes compilation time (up to several
@@ -187,9 +227,8 @@ class MonteCarloEngine:
             del _est_warmup, _warmup_v, _params_warmup
 
         # Medición del tiempo de CPU (perf_counter es el reloj de más alta resolución)
-        start_time = time.perf_counter()
         est_out = self._run_estimator(sc.v)
-        exec_time_s = time.perf_counter() - start_time
+        exec_time_s = self._measure_exec_time(sc.v)
 
         row = {
             "run_idx": run_idx,
@@ -232,7 +271,7 @@ class MonteCarloEngine:
             advanced_metrics = calculate_all_metrics(
                 f_hat=f_hat,
                 f_true=np.asarray(sc.f_true, dtype=float),
-                fs_dsp=10000.0, # FS_DSP asumido a 10 kHz (estándar de tu benchmark)
+                fs_dsp=fs_dsp,
                 exec_time_s=exec_time_s,
                 structural_samples=struct_samples,
                 noise_sigma=noise_sigma,
@@ -248,7 +287,7 @@ class MonteCarloEngine:
         return row, signal_df
 
     def run(self) -> MonteCarloResult:
-        num_workers = multiprocessing.cpu_count()
+        num_workers = self._resolve_worker_count(self.n_runs)
         print(f"Lanzando {self.n_runs} iteraciones en {num_workers} procesos...")
 
         summary_rows = []
@@ -294,3 +333,4 @@ class MonteCarloEngine:
         result.signals_df.to_csv(signals_path, index=False)
 
         return summary_path, signals_path
+

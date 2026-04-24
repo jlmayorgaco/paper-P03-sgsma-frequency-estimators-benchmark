@@ -1,0 +1,77 @@
+{
+  "scenario": "IEEE_Modulation_FM",
+  "scenario_class": "IEEEModulationFMScenario",
+  "scenario_meta": {
+    "description": "Pure PM/FM (ka=0.1, fm=2.0Hz)",
+    "standard": "Derived from IEC 60255-118-1",
+    "parameters": {
+      "duration_s": 5,
+      "freq_nom_hz": 60.0,
+      "ka": 0.1,
+      "fm_hz": 2.0,
+      "noise_sigma": 0.0
+    },
+    "dynamics": "Constant amplitude with oscillating frequency.",
+    "purpose": "Evaluate pure frequency tracking bandwidth.",
+    "monte_carlo_space": {
+      "fm_hz": {
+        "kind": "uniform",
+        "low": 0.5,
+        "high": 5.0
+      },
+      "ka": {
+        "kind": "uniform",
+        "low": 0.05,
+        "high": 0.15
+      },
+      "noise_sigma": {
+        "kind": "uniform",
+        "low": 0.0005,
+        "high": 0.002
+      }
+    },
+    "fs_physics_hz": 1000000.0
+  },
+  "estimator": "RA-EKF",
+  "estimator_class": "RAEKF_Estimator",
+  "family": "Model-based",
+  "best_params": {
+    "nominal_f": 60.0,
+    "q_theta": 1.0175672631850652e-09,
+    "q_omega": 3.569129141346607e-08,
+    "q_A": 1.4337104677012734e-09,
+    "q_rocof": 0.03900090482154629,
+    "r_meas": 1.9557965199871667e-06,
+    "sigma_v": 0.13653127479466662,
+    "gamma": 23.34596381192427,
+    "deriv_lpf_alpha": 0.1189203975804194,
+    "tau_rocof": 0.38781083809540584
+  },
+  "defaults": {
+    "nominal_f": 60.0,
+    "q_theta": 1e-06,
+    "q_omega": 0.0005,
+    "q_A": 1e-06,
+    "q_rocof": 0.005,
+    "r_meas": 0.0001,
+    "sigma_v": 0.05,
+    "gamma": 8.0,
+    "deriv_lpf_alpha": 0.08,
+    "tau_rocof": 0.15
+  },
+  "n_trials_tuning": 100,
+  "n_mc_runs": 60,
+  "artifacts": {
+    "summary_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Modulation_FM\\RA-EKF\\IEEE_Modulation_FM__RA-EKF_summary.csv"
+    ],
+    "signals_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Modulation_FM\\RA-EKF\\IEEE_Modulation_FM__RA-EKF_signals.csv"
+    ],
+    "tracking_plots": [
+      "tests\\montecarlo\\outputs\\IEEE_Modulation_FM\\RA-EKF\\tracking_RA-EKF.png"
+    ],
+    "scenario_csv": "tests\\montecarlo\\outputs\\IEEE_Modulation_FM\\IEEE_Modulation_FM_scenario.csv",
+    "scenario_zoom_plot": "tests\\montecarlo\\outputs\\IEEE_Modulation_FM\\IEEE_Modulation_FM_zoom.png"
+  }
+}

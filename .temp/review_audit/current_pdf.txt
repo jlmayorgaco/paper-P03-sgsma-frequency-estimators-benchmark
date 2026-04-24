@@ -1,0 +1,555 @@
+  Benchmarking Dynamic Frequency Estimators for
+   Low-Inertia IBR Grids: A Latency–Robustness
+                 Trade-off Analysis
+                    Jorge Luis Mayorga Taborda, Yessica Africano Rodriguez, Fernando Jimenez
+                                      Department of Electrical and Electronics Engineering
+                                                  Universidad de los Andes
+                                                       Bogotá, Colombia
+                                 {jl.mayorga236, ya.africano1030, fjimenez}@uniandes.edu.co
+
+
+
+   Abstract—In low-inertia grids dominated by Inverter-Based         injection can cause spectral leakage in DFT-based estimators.
+Resources (IBRs), the latency and robustness of frequency estima-    These failure modes may occur simultaneously, yet existing
+tion are critical for protection and dynamic security assessment.    benchmarks typically assess them in isolation [5], leaving a
+This paper presents a stress-oriented benchmark of twelve esti-
+mators from five algorithmic families evaluated under five scenar-   gap for protection-class applications.
+ios using dual-rate numerical simulation (1 MHz physics / 10 kHz        The main estimator families address the latency–robustness
+DSP). Each estimator is independently tuned per scenario via grid    trade-off differently. SRF-PLL is widely used but suscepti-
+search—establishing the performance ceiling for each estimator–      ble to cycle-slip under abrupt phase discontinuities [6], [7].
+scenario pair—and assessed on RMSE, peak error, trip-risk
+duration (Ttrip ), and computational cost (N = 30 Monte Carlo).      Window-based methods (IpDFT, TFT) provide strong har-
+Tests (A)–(C) follow the IEC/IEEE 60255-118-1 test philosophy;       monic rejection at the cost of structural observation latency [8],
+Scenarios (D)–(E) introduce IBR-specific composite disturbances      [9]. Model-based filters (EKF, UKF) improve tracking under
+beyond the standard scope. Results show that several estimators      transients [10], [11], while data-driven approaches may offer
+passing standard compliance tests degrade substantially under        accuracy gains at higher computational cost [5], [12].
+composite IBR disturbances, and that no single family dominates
+across all scenario types. Window-based and loop-based meth-            This paper presents a stress-oriented benchmark of twelve
+ods exhibit complementary strengths; data-driven approaches          estimators from five algorithmic families, evaluated in a
+exhibit higher computational cost without consistent accuracy        local, non-time-synchronized relay-class configuration under
+gains over scenario-optimized classical methods in the evaluated     five scenarios: (A)–(C) follow the IEC/IEEE 60255-118-1 test
+scenarios. The findings suggest that the IEC/IEEE 60255-118-
+1 test scope may not fully characterize estimator resilience in      philosophy; (D)–(E) introduce IBR-specific composite distur-
+IBR-dominated conditions, and that composite phase-step and          bances beyond the standard scope. The main contributions
+harmonic distortion scenarios expose failure modes not revealed      are: (1) a comprehensive benchmark of twelve frequency
+by isolated single-disturbance tests.                                estimators spanning five algorithmic families under five stress
+   Index Terms—Frequency Estimation, Inverter-Based Re-              scenarios—including two composite IBR-specific disturbance
+sources (IBR), Low-Inertia Systems, Extended Kalman Filter
+                                                                     scenarios (Scenarios D–E) not covered by IEC/IEEE 60255-
+(EKF), Phase-Locked Loop (PLL), RoCoF Measurement, Sub-
+Cycle Transient Tracking, Taylor-Fourier Methods, Benchmark-         118-1; (2) scenario-wise grid-search tuning with dual-rate
+ing, Protection and False-Trip Risk.                                 simulation (1 MHz physics / 10 kHz DSP), establishing the
+                                                                     performance ceiling for each estimator–scenario pair; and (3) a
+                      I. I NTRODUCTION                               comparative analysis of RMSE, peak error, trip-risk duration,
+                                                                     and computational cost, providing actionable selection guid-
+   The transition toward inverter-dominated power systems            ance for relay-class deployment in low-inertia grids.
+is reducing grid inertia and accelerating frequency dynam-
+ics. Frequency deviations and Rate of Change of Frequency            A. Algorithmic Landscape and Prior Art
+(RoCoF) can exceed protection thresholds within millisec-               Frequency estimation involves a latency–robustness trade-
+onds [1], [2]. Unlike synchronous machines, Inverter-Based           off [5]. Structural observation latency (Nc /f0 for window-
+Resources (IBRs) regulate power electronically, decoupling           based methods) is signal-independent; stochastic estimation
+the primary energy source from electrical frequency and              lag depends on disturbance type and estimator parameters—
+increasing the impact of harmonics, phase discontinuities,           these are independent metrics. Window-based methods
+and nonstationary disturbances on protection and dynamic             (IpDFT, TFT) provide harmonic rejection but impose struc-
+security assessment [1], [3], [4]. In IBR-dominated grids,           tural latency [8], [9]. Loop-based methods (SRF-PLL, SOGI-
+phase discontinuities can induce cycle-slips in phase-locked         FLL) are computationally efficient but susceptible to cycle-slip
+loops, sustained RoCoF can exceed the tracking capacity of           under phase discontinuities [13]. Adaptive recursive estima-
+multi-cycle window methods, and converter-driven harmonic            tors (RLS, VFF-RLS) may diverge under severe transients.
+Model-based filters (EKF, UKF, RA-EKF) offer improved               slightly favours the UKF on RMSE but penalises its transient
+tracking [10], [11]. Data-driven approaches (Koopman, PI-           response relative to a raw-output EKF.
+GRU) show competitive accuracy at higher cost [5], [12]. Prior      1) Implemented RA-EKF Estimator
+studies evaluate disturbances in isolation; composite scenarios        RoCoF state augmentation in the EKF has been studied
+are not assessed simultaneously. Table I compares all twelve        previously [10], [11]. The RA-EKF uses a 4-state vector
+evaluated estimators.                                               xk = [θk , ωk , Ak , ω̇k ]⊤ (ω = 2πf ) with the discrete-time
+                                                                    state-transition matrix 
+       II. M ETHODOLOGY AND T EST F RAMEWORK
+                                                                                               1 ∆t 0 12 ∆t2
+                                                                                                              
+
+   A dual-rate simulation framework separates continuous-time                               0 1 0        ∆t 
+                                                                                      F=   0 0 1
+                                                                                                              ,               (1)
+system physics (fs,phys = 1 MHz) from discrete-time estima-                                                0 
+tion (fs,DSP = 10 kHz, ratio 100:1). Throughout the paper,                                     0 0 0       1
+ω denotes angular frequency in rad/s; scalar frequency values       and scalar measurement yk = Ak cos θk with linearised
+are reported in Hz or mHz (f = ω/2π). This yields negligible        observation row vector
+numerical error in ground-truth frequency trajectories while                                                     
+                                                                                   Hk = −Ak sin θk , 0, cos θk , 0 .           (2)
+reproducing the sampling constraints of commercial protection
+                                                                    Two IBR-tailored mechanisms are added. Innovation-Driven
+relays.
+                                                                    Covariance Scaling: Qk = clip(rk , 0.25, 4) Qbase , where
+A. Evaluated Estimators                                             rk = |νk |/σ̂ν and σ̂ν is the running estimate of the steady-state
+    Twelve estimators from five algorithmic families are eval-      innovation standard deviation, updated each step as an expo-
+uated (Table I). Loop-based: SRF-PLL and a bandpass-pre-            nentially weighted moving average σ̂ν ← 0.99 σ̂ν + 0.01 |νk |.
+filtered SOGI-FLL (not a standard textbook SOGI-FLL [13]).          This inflates process noise during transients and shrinks it
+The implemented SOGI-FLL adds two non-standard front-               at steady state. Event Gating: when |νk | > γ σ̂ν (γ = 2.0,
+end stages: (i) an IIR bandpass pre-filter centred at 50 Hz         fixed after preliminary sensitivity experiments), a soft re-
+to suppress harmonic contamination before the SOGI core             initialization updates θk only, preserving ωk and ω̇k to limit
+(without it, the 5th and 7th harmonics in Scenarios D–E             cycle-slip behavior at phase discontinuities. This heuristic
+induce false frequency deviations in the FLL loop); and (ii) a      trades strict stochastic optimality for bounded nonlinear sta-
+FastRMS adaptive amplitude normalizer that compensates              bility during abrupt phase steps; γ was not optimised and its
+voltage-step amplitude variations and maintains the SOGI            sensitivity is not further explored here.
+resonance condition. These additions create a narrow effec- B. Test Scenarios and Noise Model
+tive passband that suppresses apparent frequency deviation
+                                                                     Five scenarios stress the estimators under representative
+under a phase jump but cannot track sustained linear RoCoF,
+                                                                  IBR-grid conditions (Fig. 1). The ground-truth frequency is
+explaining the divergent ranking across Scenarios B and D.
+                                                                  defined as the time derivative of the phase signal, computed
+A unit inconsistency in the standard SOGI-FLL adaptation
+                                                                  analytically from the continuous-time generator model (central
+law (rad/s vs. Hz, factor 2π · 60 = 120π rad/s) was identified
+                                                                  difference for numerical evaluation); this definition produces a
+and corrected prior to evaluation; without the correction the
+                                                                  non-flat frequency trajectory after phase jumps in Scenarios D
+adaptation gain would be mis-scaled by ≈377×, making
+                                                                  and E. Tests (A)–(C) use Additive White Gaussian Noise
+the FLL loop either unstable or unresponsive depending on
+                                                                  (AWGN) with σ = 0.001 pu; Scenario (D) uses σ = 0.005 pu;
+gain direction. The results are therefore not directly compa-
+                                                                  and Scenario (E) uses σ = 0.003 pu base noise plus sparse
+rable to textbook SOGI-FLL performance figures from [13].
+                                                                  impulsive samples (amplitude ≤ 0.05 pu, probability < 1%).
+Window-based: IpDFT with a Hann window and three-
+point magnitude-parabolic interpolation [15] (the complex (A) Magnitude Step: +10% voltage step with zero phase angle
+Jacobsen estimator is unsuitable here because Hann-window           at the disturbance onset.
+sidelobes are negative-real, which inverts the interpolation    (B) Frequency      Ramp: +3.0 Hz/s RoCoF (IEEE 1547-2018
+direction); TFT with a 2nd-order Taylor-series expansion of         Category   III  compliant).
+the fundamental component, Hann-weighted, which improves        (C) AM    Modulation:      10% depth at 2 Hz.
+RoCoF tracking relative to a static DFT at the cost of higher   (D) Composite       Islanding:    instantaneous +60◦ phase jump
+noise sensitivity [9]. Adaptive recursive: RLS and VFF-             (maximum      mismatch      during   breaker reclosing [7]), 4%
+RLS with a 2nd-order AR(2) bandpass pre-whitening filter.           5th  harmonic     (250  Hz),  2%   7th harmonic (350 Hz), 0.5%
+Data-driven: Koopman (RK-DPMU) and PI-GRU. Model-                   32.5 Hz  interharmonic     (a representative sub-synchronous in-
+based: EKF, UKF, and RA-EKF. The column “RoCoF Out.”                terharmonic    in  the range  produced  by IBR  converter control
+indicates whether RoCoF is available as an explicit output (S)      interactions   [3],  [4];  THD  ≈  4.5%,  IEEE   519 compliant),
+or derived by implicit differentiation (D). The UKF includes        and  σ  = 0.005    pu  noise.
+a 10-sample output moving average not present in the classic (E) IBR Multi-Event: 5 s sequence with harmonic-rich steady
+EKF; at fs,DSP = 10 kHz this adds ≈ 0.5 ms of causal group          state (5th: 4%, 7th: 2%; THD ≈ 4.5%, IEEE 519 compliant),
+delay (half the window length) and increases effective settling     a +40◦ phase jump, a −3.0 Hz/s RoCoF segment reaching
+time by the same amount—a hidden smoothing trade-off that           a nadir of 57.5 Hz (IEEE 1547-2018 UFLS limit), a +80◦
+ TABLE I: Unified Qualitative Benchmark of Frequency Estimators (relay-class, non-synchronized context). Scores (0=Fail, 1=Poor, 2=Fair,
+ 3=Excellent) are qualitative assessments derived from observed benchmark performance (this work; see Tables II–III for quantitative
+ evidence) and published literature [9], [10], [13]; they are intended for algorithmic comparison and are not certification ratings. hHU :
+ Harmonic/Unbalance Immunity; r32.5 : rejection of 32.5 Hz sub-synchronous interharmonic (representative of IBR converter control
+ interactions [3]; used in Scenarios D–E, Section II-B); nsens : noise floor sensitivity; nNG : Non-Gaussian noise robustness; Latency class:
+ P1 < 20 ms, P2: 20–40 ms, M1 > 40 ms, P3: sub-cycle (<1 ms); vRT : real-time viability (3=embedded, 0=GPU only); RoCoF Out.: S = explicit
+ state output, D = implicit differentiation; Phase Resp.: phase-jump response type — S = settles without cycle-slip, D = cycle-slip susceptible;
+ †
+   IpDFT latency is structural: Nc /f0 = 33 ms at Nc = 2 to 167 ms at Nc = 10 (observation delay, not stochastic lag).
+                                       Phase RoCoF                     Latency                Comp.            Dominant
+                    Method                         hHU r32.5 nsens nNG         vRT
+                                       Resp. Out.                       Class                 Order           Failure Mode
+                    I. SOTA Methods (Post-2020)
+                    VFF-RLS            S      D         2   3     3     2       P2     3     O(p2 )           VFF blow-up
+                    UKF                S       S        2   2     2     2       P1     1     O(n3 )         Sigma-pt collapse
+                    Koopman (DPMU) S           S        2   2     2     1       M1     1     O(n2 )         Model mismatch
+                    PI-GRU (DL)        S       S        1   1     2     1       P1     0    O(Conv)           Dataset shift
+                    II. Industrial / Advanced Digital
+                    RA-EKF                S      S      2   2     3     2       P1     1     O(n3 )    Jacobian divergence
+                    EKF                   S      S      2   2     2     1       P1     3     O(n3 )   Phase-jump divergence
+                    TFT                   S      S      2   2     2     1       P1     1     O(N 2 )     Runge overshoot
+                    SRF-PLL               D      D      1   1     1     0       P2     3      O(1)       Cycle slip / Lag
+                    SOGI-FLL              D      D      2   1     2     1       P2     3      O(1)       Tuning trade-off
+                    IpDFT†                S      D      3   1     3     0       M1     2   O(N log N ) Leakage / Latency
+                    III. Legacy Baselines
+                    RLS (fixed λ)         S      D      1   1     1     0       P2     3      O(p2 )       Covariance blow-up
+                    TKEO                  S      D      0   0     0     0       P3     3      O(1)         Noise amplification
+
+
+
+    jump with second-order ring-down recovery, and impulsive                structural latency: Nc /f0 = 33–167 ms (observation delay, not
+    noise [11].                                                             stochastic lag).
+(F) Primary Frequency Response (planned extension): a                          For the non-normative compliance heatmap (Fig. 2g), a Pass
+    second-order electromechanical recovery following a gen-                requires RMSE < 0.05 Hz, |e|max < 0.5 Hz, and Ttrip < 0.1 s.
+    eration loss event, modelling governor–turbine dynamics                 These thresholds are drawn from IEC/IEEE 60255-118-1 accu-
+    with damping. Monte Carlo evaluation under this scenario                racy classes and are used here for visualization only; no formal
+    is reserved for future work.                                            certification claim is implied. A symbol F* denotes marginal
+ Scenarios (A)–(C) follow the IEC/IEEE 60255-118-1 test                     failure: RMSE exceeds the 0.05 Hz threshold by < 1.5% or the
+ philosophy, whereas Scenarios (D)–(E) introduce IBR-specific               peak breach is sub-cycle in duration—compliant in all other
+ disturbances beyond the standard scope.                                    metrics and considered borderline rather than a hard fail.
+
+ C. Performance Metrics and Optimization Protocol                                III. S IMULATION R ESULTS AND B ENCHMARKING
+    A scenario-wise grid search (Table II) selects the configu-                All frequency errors are reported in mHz unless otherwise
+ ration minimizing RMSE per estimator–scenario pair, estab-                 stated.
+ lishing the performance ceiling of each family under each                  A. Performance on Standard IEC/IEEE Scenarios
+ disturbance type. Scenario-wise tuning identifies this ceiling;
+                                                                               Table III summarizes performance on standard scenar-
+ practical deployment requires a fixed parameter set across all
+                                                                            ios (3 s.f.). Steady-state: SRF-PLL achieves RMSE =
+ disturbance types. PI-GRU is a fixed pre-trained generalist
+                                                                            0.130 mHz (Modulation); window-based methods reach
+ baseline and is not tuned per scenario; all classical methods
+ are scenario-optimized. Monte Carlo uses N = 30 independent                TABLE II: Tuning Parameter Search Space (≈5,000 total runs). log:
+                                                                            12 log-spaced pts/decade; linear: 10 pts; {·}: discrete set. Units:
+ runs with fixed tuned parameters (seeds 2000–2029; tuning                  Kp [pu/rad], Ki [pu/(rad·s)], R [pu2 ], Nc [cycles], Nsmooth [sam-
+ seed: 42). Let e(t) = fˆ(t)−ftrue (t). Four metrics are reported:          ples].
+ RMSE, Peak Error (|e|max ), Settling Time (first time |e|                    Method        Param.          Search Range (spacing; # pts)
+ falls and remains ≤ 200 mHz for ≥ 20 ms), and Trip-Risk
+                                                                              SRF-PLL      K p , Ki       [1, 60], [1, 200] (linear, 10 pts each)
+ Duration (Ttrip : cumulative time with |e| > 0.5 Hz). Ground-                EKF / RA-EKF Q              10−4 –104 (log, 12 pts)
+ truth frequency is the analytical time derivative of the phase                            R              10−5 –100 (log, 12 pts; Rmax = 1.0)
+                                                                              RA-EKF only  σ̂ν , γ        {0.1, 0.3}, 2.0 (fixed; 2 pts / 1 pt)
+ signal, computed from the continuous-time generator model.                   SOGI-FLL     k, gFLL        {0.5, 1.0, 1.5, 2.0}, {5, 10, . . . , 150}
+ Computational cost is mean time per sample over 20 repeti-                   IpDFT        Nc             {2, 3, 4, 6, 8, 10} cycles (6 pts)
+                                                                              RLS / VFF    λ, Nsmooth     0.9–0.99999 (log, 12 pts), 2–2000 samp.
+ tions (single-threaded Python 3.13, Intel Core Ultra 5 125H).                                            (log, 10 pts)
+ Python timings are relative benchmarks only; C/FPGA imple-                   TFT           Nc            {2, 3, 4, 6} cycles (4 pts)
+                                                                              TKEO          Smooth window 10–50 samples (linear, 9 pts)
+ mentations yield 10–100× lower absolute latencies. IpDFT
+                                                                          $   0 D J   6 W H S                                                                                        
+                                                                                                                                                                                                       ) U H T   X Q F K D Q J H G
+  9  > S X @
+
+
+
+
+                                                                                                                                                                                 f  > + ] @
+                                                                                                                                                                                                
+
+                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                             
+                                                                                         7 L P H  > P V @                                                                                                                                                                      7 L P H  > P V @
+                                                                     %   ) U H T   5 D P S      + ]  V 
+                                                                                                                                                                                                        + ]  V  U D P S
+  9  > S X @
+
+
+
+
+                                                                                                                                                                                 f  > + ] @
+                                                                                                                                                                                                
+                                                                                                                                                                                                 
+                 
+                                                                                                                                                                                                                                                                                         
+                                                                                         7 L P H  > P V @                                                                                                                                                                      7 L P H  > P V @
+                                                                    &   $ 0  0 R G           + ]                                                                                   
+                                                                                                                                                                                                       $ 0  ) 0  P R G X O D W L R Q
+  9  > S X @
+
+
+
+
+                                                                                                                                                                                 f  > + ] @
+                                                                                                                                                                                                
+
+                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                                 
+                                                                                         7 L P H  > P V @                                                                                                                                                                      7 L P H  > P V @
+                                                                      '   & R P S R V L W H  , V O D Q G L Q J                                                                               
+                                                                                                     3 K D V H                                                                                         3 K D V H  V W H S  I U H T X H Q F \  W U D Q V L H Q W
+                                                                                                      - X P S
+  9  > S X @
+
+
+
+
+                                                                                                                                                                                f  > + ] @     
+
+                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                             
+                                                                                         7 L P H  > P V @                                                                                                                                                                      7 L P H  > P V @
+                                                                         (   0 X O W L  ( Y H Q W  & O D V V L F
+                                                                                                                                                                                                 5 R & R )     + ]  V         + ]  Q D G L U
+                                                                                                      - X P S                                                                                                     M X P S V
+  9  > S X @
+
+
+
+
+                                                                                                                                                                                                 
+                                                                                                                                                                                 f  > + ] @
+
+
+
+
+                 
+                                                                                                                                                                                                 
+                 
+                                                                                                                                                                                                                                                                                                               
+                                                                                         7 L P H  > P V @                                                                                                                                                                      7 L P H  > P V @
+                                                                   )   3 U L P D U \  ) U H T   5 H V S R Q V H
+                                                                                                                                                                                               3 U L P D U \  I U H T   U H V S R Q V H
+                                                                                                      - X P S                                                                                                M X P S   V H W W O L Q J
+  9  > S X @
+
+
+
+
+                                                                                                                                                                              f  > + ] @
+
+
+
+
+                                                                                                                                                                                               
+
+                                                                                                                                                                                               
+                                                                                                                                                                                                                                                                                             
+                                                                                         7 L P H  > P V @                                                                                                                                                                      7 L P H  > P V @
+Fig. 1: Complete Stress-Test Scenario Suite. (A–C) Dynamic performance profiles following the test philosophy of IEC/IEEE 60255-118-
+1 (step, ramp, modulation). (D) Composite Islanding featuring an instantaneous +60◦ phase jump with harmonics and elevated noise
+(σ = 0.005 pu; Section II-B). (E) IBR Multi-Event: scenario-dependent noise (σbase = 0.003 pu plus sparse impulsive spikes ≤ 0.05 pu);
+frequency profile shows the full 5 s composite sequence.
+
+
+RMSE < 0.300 mHz. Ramp: The Ramp test exposes structural                                                                                                                                    45.0 mHz, Ttrip = 0). Among model-based estimators, the
+limitations. SOGI-FLL fails to track (RMSE = 1120 mHz;                                                                                                                                      RA-EKF achieves RMSE = 39.3 mHz—a 5.7× RMSE re-
+type-1 loop). Among evaluated estimators under this scenario,                                                                                                                               duction vs. EKF—with zero threshold breaches (Ttrip = 0;
+the RA-EKF achieves RMSE = 8.23 mHz—8.15× lower than                                                                                                                                        peak 365 mHz < 0.5 Hz, Fig. 2g). Note: Scenario D applies
+SRF-PLL and 1.41× lower than EKF.                                                                                                                                                           all disturbances simultaneously; isolating the contribution of
+                                                                                                                                                                                            harmonic leakage vs. noise amplification requires single-effect
+B. Robustness Under Severe IBR Disturbances
+                                                                                                                                                                                            experiments outside this benchmark’s scope.
+1) Composite Islanding (Scenario D)
+   Window-based methods exhibit spectral leakage: IpDFT                                                                                                                                     2) Multi-Event Stress Test (Scenario E)
+reaches RMSE = 484 mHz (peak 2910 mHz); TFT peak                                                                                                                                               Table IV quantifies trip-risk under the IBR Multi-Event
+2740 mHz. EKF/UKF, lacking phase-reset mechanisms, in-                                                                                                                                      sequence (5th/7th harmonics; THD ≈ 4.5%, IEEE 519 com-
+cur Ttrip = 0.122 s; SRF-PLL avoids leakage (RMSE =                                                                                                                                         pliant). SOGI-FLL incurs the highest trip-risk (3.10 s); SRF-
+    TABLE III: Unified Benchmark Results: Standard vs. IBR-Specific Stress Scenarios [Errors in mHz, Ttrip in s; mean ± std, N = 30].
+                                   IEC/IEEE 60255-118-1 (Standard Scenarios)                                                       Composite Islanding (Scenario D)
+                       Step (+10%)             Ramp (+3 Hz/s)            Modulation (2 Hz)                                              Phase Jump (+60◦ )
+Method               RMSE        Peak       RMSE           Peak        RMSE           Peak                   RMSE [mHz]                               Ttrip [s]
+
+Window-based
+IpDFT        1.60 ± 0.04 7.53 ± 0.23 35.3 ± 0.02 83.0 ± 1.38 0.260 ± 0.02 0.680 ± 0.10                          484 ± 0                                  0.086
+TFT          2.12 ± 0.03 19.0 ± 0.23 30.7 ± 0.02 55.7 ± 0.67 0.260 ± 0.02 0.820 ± 0.13                          479 ± 0                                  0.087
+
+Data-driven
+Koopman           1.25 ± 0.04 8.79 ± 0.21 28.6 ± 0.02 54.7 ± 0.97             1.23 ± 0.02     2.20 ± 0.12       419 ± 0                                  0.148
+
+Loop-based
+SRF-PLL               0.140          0.730      67.1 ± 0.02 173 ± 0.28            0.130           0.250         45.0 ± 0                                  0.000
+SOGI-FLL            8.99 ± 0       13.4 ± 0        1120†    1560 ± 0.03         8.99 ± 0        13.4 ± 0          8.36                                    0.000
+
+Model-based
+EKF               0.240 ± 0.01 2.52 ± 0.03 11.6 ± 0.11 41.1 ± 3.08  0.150 ± 0 0.570 ± 0.06   225 ± 0                                                     0.120
+UKF               0.280 ± 0.04 2.57 ± 0.04 12.7 ± 0.16 45.2 ± 3.70 0.280 ± 0.02 1.70 ± 0.16  225 ± 0                                                     0.120
+RA-EKF            2.31 ± 0.02 29.9 ± 0.24      8.23        31.8    4.78 ± 0.03 12.8 ± 0.41 39.3 ± 2.40                                                   0.000
+†
+    SOGI-FLL fails to track sustained RoCoF (type-1 frequency loop). All errors in mHz. ±0: std < 0.5 mHz (negligible MC variance; deterministic scenario response). Bold: best in category.
+
+
+
+                                                                                                 TABLE V: Computational Cost per Sample (Python Baselines). CPU:
+PLL accumulates Ttrip = 0.353 s (RMSE = 307 mHz). The
+                                                                                                 mean time per sample over 20 runs on an Intel Core Ultra 5
+RA-EKF achieves RMSE = 159 mHz with Ttrip = 0.081 s at                                           125H (single-threaded Python 3.13; not C or FPGA projections).
+88.5 µs/sample—a 4.4× trip-risk reduction vs. SRF-PLL and                                        Deployment class: P1 (<20 µs, embedded MCU), P2 (20–40 µs,
+4.5× vs. EKF in this benchmark. IpDFT: Ttrip = 0.563 s;                                          DSP), M1 (>40 µs, DSP/FPGA or higher); these are per-sample
+Koopman: 0.068 s.                                                                                execution time thresholds, not estimator response-latency classes.
+                                                                                                        Method             Time/Sample (µs)              Class      Target HW
+C. Computational Feasibility
+   Table V and Fig. 2e show the cost–risk Pareto frontier. All                                          SRF-PLL                16.7 µs                    P1        Low-end MCU
+                                                                                                        EKF                    29.5 µs                    P2        DSP
+timings are Python 3.13 baselines (Intel Core Ultra 5 125H,                                             SOGI-FLL               41.7 µs                    M1        MCU / DSP
+single-threaded) for relative comparison only; C/FPGA im-                                               TFT                    45.6 µs                    M1        DSP
+plementations yield 10–100× lower absolute latencies. SRF-                                              RA-EKF                 88.5 µs                    M1        DSP / FPGA
+                                                                                                        IpDFT                   110 µs                    M1        DSP / FPGA
+PLL (16.7 µs) and EKF (29.5 µs) are least expensive; SRF-                                               Koopman                 120 µs                    M1        CPU
+PLL incurs elevated trip-risk (Ttrip = 0.353 s, Scenario E).                                            UKF                     215 µs                    M1        High-perf CPU
+RA-EKF (88.5 µs) is a viable DSP/FPGA candidate pending                                                 PI-GRU           153,900 µs (≈154 ms)             —         GPU only
+C/HIL validation. PI-GRU (≈154 ms/sample) is prohibitive for
+embedded real-time protection without GPU acceleration.                                          SOGI-FLL type-1 loop fails sustained RoCoF (1120 mHz,
+                                                                                                 Scenario B). Adaptive recursive: VFF blow-up and covari-
+D. Failure Mode Summary by Estimator Family                                                      ance instability under multi-event transients; TKEO diverges
+   Dominant failure modes (Table I): Window-based: spec-                                         under noise (RMSE ≥ 7800 mHz, excluded from Tables II–
+tral leakage (> 450 mHz RMSE, Scenario D) and structural                                         III). Data-driven: PI-GRU dataset shift—the fixed pre-trained
+latency. Loop-based: SRF-PLL cycle-slip under phase jumps;                                       model underperforms scenario-optimized classical methods
+TABLE IV: Trip-Risk Analysis: Multi-Event Scenario (E). Ttrip :                                  on RMSE and trip-risk in all five scenarios. Model-based:
+total cumulative time summed over all non-contiguous intervals                                   EKF/UKF Jacobian divergence (Ttrip = 0.120 s, Scenario D);
+where |e(t)| > 0.5 Hz (0.5 Hz threshold from IEC/IEEE 60255-                                     RA-EKF event-gating mitigates this.
+118-1 Class 0 RMSE accuracy class, used here as a protection-
+relevant trip proxy for visualisation only; no formal IEC compliance
+                                                                                                                                 IV. C ONCLUSION
+is claimed). Note: multiple short excursions may be more harmful
+than a single long one in a relay-protection context; Ttrip does                                    The     simulation     results   indicate    that   standard
+not capture excursion count or inter-excursion timing. CPU: mean                                 IEC/IEEE 60255-118-1 evaluation tests may not fully
+time per sample (µs), Scenario E run (Python baseline; not a real-
+time deployment projection). Values: mean ± std from Monte Carlo                                 characterize frequency estimator behavior in converter-
+(N=30). Methods not shown: TKEO (RMSE ≥ 7800 mHz, diverges);                                     dominated grids, where phase discontinuities, high RoCoF,
+RLS (342 mHz, Ttrip = 0.367 s, CPU = 12.7 µs; similar to EKF);                                   and harmonic distortion can expose failure modes that isolated
+RLS-VFF (874 mHz, Ttrip = 2.20 s); TFT (Ttrip = 0.349 s); PI-GRU                                 single-disturbance tests do not reveal. This benchmark
+(1830 mHz, Ttrip = 3.76 s, CPU ≈ 1.54×105 µs; Table V).                                          evaluates twelve estimators across five algorithmic families
+    Method           RMSE [mHz] (µ ± σ)              Ttrip [s] (µ ± σ)        CPU [µs]           under five stress scenarios and reports three main observations.
+    RA-EKF                     159 ± 3                 0.081 ± 0.001              88.5           1) Latency–Robustness Trade-off: Window-based methods
+    EKF                        335 ± 0                 0.364 ± 0.001              29.5               achieve strong steady-state accuracy, but their behavior
+    Koopman                    471 ± 0                 0.068 ± 0.000              120
+    UKF                        337 ± 0                 0.366 ± 0.001              215                differs across scenario types. IpDFT is better suited to
+    SRF-PLL                    307 ± 0                 0.353 ± 0.001              16.7               metering-oriented operation, whereas TFT reduces obser-
+    IpDFT                      636 ± 0                 0.563 ± 0.000              110                vation delay at the cost of higher noise sensitivity under
+    SOGI-FLL                   826 ± 0                 3.100 ± 0.000              41.7
+                                                                                                     composite disturbances. Loop-based estimators (SRF-PLL,
+                                                                            D   3 K D V H  - X P S  5 R E X V W Q H V V   6 F H Q   '                                                                                                                                   E   5 D P S  7 U D F N L Q J  / D J   6 F H Q   % 
+                                                                        - X P S                                                                                                                                                    
+                                                                                                                                                                                    5 H I                                                                     5 H I
+                                                                                                                                                                                  5 $  ( . )                                                               5 $  ( . )
+                                                                                                                                                                                    ( . )                                                                   ( . )
+          f  > + ] @
+
+
+
+
+                                                                                                                                                                                                                     f  > + ] @
+                                                                                                                                                                                  6 5 )  3 / /                                                             6 5 )  3 / /
+                                                                                                                                                                                    , S ' ) 7                                                                 , S ' ) 7
+                                                                                                                                                                                  8 . )                                                                   7 ) 7                                                                                   , S ' ) 7   H Q G  R I  Z L Q G R Z
+                                                                                                         5 $  ( . )   7 U L S 7 L P H         P V                                                                                                                                                                                                              U H I   Nc    O D J 
+                                                                                                                                                                                                                                                                                                                                              
+                                                                                                                    7 L P H  > P V @                                                                                                                                                                           7 L P H  > P V @
+                                                               F   3 U L P   ) U H T   5 H V S R Q V H  3 K D V H  - X P S                                                                                                           G   0 X O W L  ( Y H Q W  & O D V V L F    5 R & R )  Q D G L U  U L Q J  G R Z Q  V W U H V V
+                                                                                                                                                                                                                                                                                                                                                                      5 H I
+                                                                                                                                                5 $  ( . )                                                                                                                                                                                                               6 5 )  3 / /
+                                                                                                                                                U H F R Y H U V                                                                                                                                                                                                           6 2 * ,  ) / /
+                                                                                                                                                                                                                                       
+          f  > + ] @
+
+
+
+
+                                                                                                                                                I D V W H V W
+
+
+
+
+                                                                                                                                                                                                                     f  > + ] @
+                                                         + ]  V D I H  E D Q G                                                                                                                                                                                                                                                                                      7 ) 7
+                                                                                                    - X P S
+                                                                                                                                                         5 H I                      6 5 )  3 / /                                                                                                                                                                         9 ) )  5 / 6
+                                                                                                                                                       5 $  ( . )                , S ' ) 7                                                                                                                                                                           5 / 6
+                                                                                                                                                         ( . )
+                                              8 Q G H U G D P S H G  V H W W O L Q J  D W  W      V   V H H  6 F H Q   )  I X O O  W U D F H                                                                                         7 . ( 2  H [ F O    5 0 6 (      + ]   R I I  V F D O H 
+                                                                                                                                                                                                                                                                                                                                                   
+                                            J                                                                     7 L P H  > P V @                                                                                                                                                                           7 L P H  > P V @
+                                                    6 W H S                   5 D P S                        0 R G                          , V O                  0 X O W L  (        3 ) 5                                                     K   6 W H D G \  6 W D W H  ( U U R U   6 F H Q   & 
+      3 ,  * 5 8                                     )                          )                            )                              )                        )                   )
+    . R R S P D Q                                     3                          3                            3                              )                        )                   )                                                                                                                                                                                  6 5 )  3 / /
+                                                                                                                                                                                                                                        
+             7 ) 7
+        , S ' ) 7
+                                                      3
+                                                      3
+                                                                                 3
+                                                                                 3
+                                                                                                              3
+                                                                                                              3
+                                                                                                                                             )
+                                                                                                                                             )
+                                                                                                                                                                      )
+                                                                                                                                                                      )
+                                                                                                                                                                                          )
+                                                                                                                                                                                          )                 O R J|e(t)|  > + ] @                                                                                                                                            5 $  ( . )
+                                                                                                                                                                                                                                                                                                                                                                             , S ' ) 7
+  6 2 * ,  ) / /                                     3                          )                            3                              3                        )                   )
+    6 5 )  3 / /                                     3                          )                            3                              3                        )                   )                                             
+             ( . )                                    3                          3                            3                              )                        )                   )
+            8 . )                                     3                          3                            3                              )                        )                   )
+     5 $  ( . )                                      3                          3                            3                              3                        )                   )                                             
+                                                                                                                                                                                                                                                                                                   % D O D Q F H     3 U R I L O    
+                                                                                                                                                                                                                                                                                             I                                   H                                    
+                                                                                                                                                                                                                                                                                                                7 L P H  > P V @
+                                                                                                                                                                                                                                                                                                                    $ F F X U D F \
+                                                                                          W L  ( Y H Q W @
+                                            H   & R V W  Y V   5 L V N   > 0 X O 6 2 * ,  ) / /                                                                                                                                                                                                                              
+                                                                                                                                             & R V W O \  	  5 L V N \                                                                                                                                                            
+                                   6 5 )  3 / /                                                                                                                                                 8 . )                                                                                                                         
+                                                                                                                                                                                                                                                                                7 U D Q V L H Q W                                                      1 R L V H
+   7 U L S  5 L V N  > V @
+
+
+
+
+                                                                 ( . )                                                    7 ) 7                                    , S ' ) 7                     . R R S P D Q                                                                                                                  
+                                   
+
+                                            ( I I L F L H Q W  	  6 D I H                                                                        5 $  ( . )
+                                                                                                                                                                                                                                                                                               6 D I H W \                                   6 S H H G
+                                            & 3 8   3 \ W K R Q  E D V H O L Q H   , % 5  0 X O W L  ( Y H Q W  V F H Q D U L R                                                                                                                                                  5 $  ( . )                     , S ' ) 7                 3 ,  * 5 8
+                                                                                                 & 3 8  W L P H    V D P S O H  >  V @                                                                                                                                                6 5 )  3 / /                   8 . )
+
+Fig. 2: Comprehensive Performance Dashboard (all errors in mHz; N = 30 MC). (a) Time-domain frequency error, Scenario D (Composite
+Islanding): event-gating in RA-EKF limits Ttrip to ≈0.40 ms vs. 122 ms for standard EKF. (b) Time-domain frequency error, Scenario B
+(Ramp): RA-EKF lowest RMSE among evaluated estimators (8.23 mHz) via explicit ω̇ state; IpDFT at 2-cycle window has 33 ms structural
+latency (observation delay, not stochastic lag) and achieves RMSE = 35 mHz; SOGI-FLL fails (1120 mHz) due to type-1 loop. (c) Time-
+domain, Scenario E: stable estimators. (d) Time-domain, Scenario E: unstable estimators (TKEO excluded, RMSE ≥ 7800 mHz). (e) Pareto
+frontier: CPU time/sample vs. Ttrip , Scenario E; 2D projection only—RMSE is a third independent dimension not shown here. †PI-GRU
+excluded (CPU ≈154 ms/sample, Ttrip ≈ 3.8 s). All CPU values are Python baselines; embedded speedups of 10–100× expected with
+C/FPGA implementations. (f) Radar chart: normalised multi-metric profile per estimator (lower area = better overall balance across all
+metrics). (g) Non-normative compliance heatmap, all scenarios. Pass thresholds: RMSE < 0.05 Hz, Peak < 0.5 Hz, Ttrip < 0.1 s (from
+IEC/IEEE 60255-118-1 accuracy classes; visualisation only, no certification claim). F* = marginal failure: RMSE overshoot < 1.5% or sub-
+cycle peak breach only, compliant in all other metrics. RA-EKF, Scenario D: peak = 365 mHz, Ttrip = 0. (h) Steady-state RMSE, log scale,
+Scenario C (Modulation); all values < 1 mHz for top-performing estimators.
+
+
+            SOGI-FLL) are computationally efficient and handle iso-                                                                                                                                         2) Model-Based Filters: Within the model-based family, the
+            lated phase jumps well, but exhibit elevated trip-risk under                                                                                                                                       RA-EKF (augmented with an explicit ω̇ state, Innovation-
+            the composite Multi-Event sequence (Ttrip = 0.353 s for                                                                                                                                            Driven Covariance Scaling, and Event Gating) achieves
+            SRF-PLL; Table IV).                                                                                                                                                                                Ttrip = 0 under Composite Islanding vs. Ttrip = 0.120 s for
+     the standard EKF (N = 30 Monte Carlo), at 88.5 µs/sample                       R. Tonkoski, and W. Martinez, “Grid frequency estimation based on
+     (Python baseline; C/HIL validation remains future work).                       extended Kalman filter in connected AC microgrids,” in 2021 IEEE
+                                                                                    30th International Symposium on Industrial Electronics (ISIE), 2021,
+     The standard EKF and UKF offer lower cost but higher                           pp. 1–6.
+     trip-risk under composite disturbances; all three model-                  [12] F. Zelaya-Arrazabal, S. Martinez-Lizana, and H. Pulgar-Painemal,
+     based filters require careful tuning for IBR-specific dis-                     “Modal-based prediction of power system frequency response and fre-
+                                                                                    quency nadir,” arXiv preprint arXiv:2502.02735v2, 2025, under review;
+     turbance types.                                                                no peer-reviewed venue confirmed as of submission date.
+3) Limits of Standard Compliance Tests: Several estima-                        [13] S. Golestan, J. M. Guerrero, and J. C. Vasquez, “Three-phase PLLs: A
+     tors passing IEC/IEEE 60255-118-1 step and ramp tests                          review of recent advances,” IEEE Transactions on Power Electronics,
+                                                                                    vol. 30, no. 9, pp. 5219–5230, 2015.
+     exhibited degraded performance under composite multi-                     [14] IEEE Power and Energy Society, “IEEE standard for synchropha-
+     disturbance scenarios, suggesting that standard compliance                     sor measurements for power systems (C37.118.1-2011, amendment
+     tests may not fully capture estimator resilience in IBR-                       C37.118.1a-2014),” IEEE Std C37.118.1, 2011.
+                                                                               [15] B. G. Quinn, “Estimating frequency by interpolation using Fourier
+     dominated conditions.                                                          coefficients,” IEEE Transactions on Signal Processing, vol. 42, no. 5,
+   Data-driven approaches show variable cost: PI-GRU re-                            pp. 1264–1268, 1994.
+quires ≈154 ms/sample (Python/PyTorch CPU baseline), pro-
+hibitive for embedded protection without GPU acceleration,
+and did not outperform scenario-optimized classical methods
+in any of the five evaluated scenarios. This benchmark is
+simulation-based; hardware-in-the-loop validation remains a
+next step. The results suggest that IEC/IEEE 60255-118-1
+compliance tests do not fully characterize estimator resilience
+in IBR-dominated grids; a Composite Phase-Step with Har-
+monic Distortion scenario—analogous to Scenarios D–E—
+with probabilistic compliance bounds (PCB = µ|e| + 3σ|e| )
+may better assess relay security. Simulation code and hyper-
+parameter grids are available from the authors for reproducibil-
+ity.
+                             R EFERENCES
+ [1] B. Pinheiro, M. C. Llerena Velasquez, G. Faria, A. F. C. Aquino,
+     D. Issicaba, and D. Dotta, “Evaluation of the impact of IBR on the
+     frequency dynamics in the Brazilian Power System,” Sustainable Energy,
+     Grids and Networks, vol. 43, p. 101827, 2025.
+ [2] H. H. Alhelou, M. A. Zamani, and J. V. Milanović, “Identification of
+     weak frequency areas in low-inertia systems,” IEEE Access, vol. 11, pp.
+     106 145–106 159, 2023.
+ [3] R. Bernal and F. Milano, “A complex frequency-based control for
+     inverter-based resources,” Journal of Modern Power Systems and Clean
+     Energy, 2025.
+ [4] P. Zoghby, B. Marinescu, and A. Rossé, “A new benchmarking method
+     for the study of dynamic interactions in island power systems with
+     hybrid conventional and inverter-based resources controlled in grid-
+     forming mode,” in Proc. 2nd Int. Conf. on Renewable Energies and
+     Smart Technologies (REST), Prishtina, Kosovo, 2024.
+ [5] J. Ting, B. Wang, R. W. Kenyon, and A. Hoke, “Evaluating methods
+     for measuring grid frequency in low-inertia power systems,” Proc. IEEE
+     Kansas Power and Energy Conference, no. NREL/CP-5D00-81400,
+     2022.
+ [6] D. Ramasubramanian, “Frequency control in a 100% inverter based
+     grid,” Electric Power Research Institute (EPRI) Presentation, ESIG
+     Webinar, January 2021.
+ [7] A. J. Roscoe, G. Owen, and E. Sánchez, “Field measurement of
+     frequency and RoCoF in the presence of phase steps,” IEEE Transactions
+     on Instrumentation and Measurement, vol. 68, no. 6, pp. 2046–2056,
+     2019.
+ [8] D. Belega and D. Dallet, “An improved DFT-based method for the
+     accurate measurement of frequency, amplitude, and phase of power sys-
+     tem signals,” IEEE Transactions on Instrumentation and Measurement,
+     vol. 63, no. 2, pp. 364–371, 2014.
+ [9] F. J. Platas-Garcı́a and J. A. de la O Serna, “Dynamic phasor estima-
+     tion using a taylor–fourier multisignal model,” IEEE Transactions on
+     Instrumentation and Measurement, vol. 60, no. 6, pp. 2112–2121, 2011.
+[10] R. Ferrero, P. A. Pegoraro, and S. Toscani, “Dynamic synchrophasor
+     estimation by extended Kalman filter,” IEEE Transactions on Instru-
+     mentation and Measurement, vol. 69, no. 7, pp. 4818–4826, 2020.
+[11] H. R. Chamorro, A.-J. Guel-Cortez, Y. Africano, F. Jimenez,
+

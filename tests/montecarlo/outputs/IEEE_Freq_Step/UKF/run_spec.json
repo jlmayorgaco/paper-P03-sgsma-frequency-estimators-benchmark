@@ -1,0 +1,86 @@
+{
+  "scenario": "IEEE_Freq_Step",
+  "scenario_class": "IEEEFreqStepScenario",
+  "scenario_meta": {
+    "description": "IEEE 1547 Frequency Step (-1.0 Hz)",
+    "standard": "IEC 60255-118-1 frequency step test",
+    "parameters": {
+      "duration_s": 5,
+      "freq_pre_hz": 60.0,
+      "freq_post_hz": 59.0,
+      "phase_rad": 0.0,
+      "amplitude": 1.0,
+      "t_step_s": 0.5,
+      "noise_sigma": 0.0,
+      "seed": 42
+    },
+    "noise_sigma": 0.0,
+    "dynamics": "C0-continuous phase with frequency stepping from 60.0 Hz to 59.0 Hz at 0.5s.",
+    "purpose": "Determine algorithm response time, settling time, and overshoot under pure frequency changes.",
+    "monte_carlo_space": {
+      "freq_post_hz": {
+        "kind": "uniform",
+        "low": 58.0,
+        "high": 62.0
+      },
+      "t_step_s": {
+        "kind": "uniform",
+        "low": 0.4,
+        "high": 0.8
+      },
+      "phase_rad": {
+        "kind": "uniform",
+        "low": 0.0,
+        "high": 6.283185307179586
+      },
+      "noise_sigma": {
+        "kind": "uniform",
+        "low": 0.0005,
+        "high": 0.002
+      }
+    },
+    "fs_physics_hz": 1000000.0
+  },
+  "estimator": "UKF",
+  "estimator_class": "UKF_Estimator",
+  "family": "Model-based",
+  "best_params": {
+    "nominal_f": 60.0,
+    "q_dc": 1e-06,
+    "q_alpha": 0.0001,
+    "q_beta": 0.0001,
+    "q_omega": 0.05,
+    "r_meas": 0.001,
+    "output_smoothing": 0.02,
+    "alpha_ut": 0.1,
+    "beta_ut": 2.0,
+    "kappa_ut": 0.0
+  },
+  "defaults": {
+    "nominal_f": 60.0,
+    "q_dc": 1e-06,
+    "q_alpha": 0.0001,
+    "q_beta": 0.0001,
+    "q_omega": 0.05,
+    "r_meas": 0.001,
+    "output_smoothing": 0.02,
+    "alpha_ut": 0.1,
+    "beta_ut": 2.0,
+    "kappa_ut": 0.0
+  },
+  "n_trials_tuning": 300,
+  "n_mc_runs": 100,
+  "artifacts": {
+    "summary_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Freq_Step\\UKF\\IEEE_Freq_Step__UKF_summary.csv"
+    ],
+    "signals_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Freq_Step\\UKF\\IEEE_Freq_Step__UKF_signals.csv"
+    ],
+    "tracking_plots": [
+      "tests\\montecarlo\\outputs\\IEEE_Freq_Step\\UKF\\tracking_UKF.png"
+    ],
+    "scenario_csv": "tests\\montecarlo\\outputs\\IEEE_Freq_Step\\IEEE_Freq_Step_scenario.csv",
+    "scenario_zoom_plot": "tests\\montecarlo\\outputs\\IEEE_Freq_Step\\IEEE_Freq_Step_zoom.png"
+  }
+}

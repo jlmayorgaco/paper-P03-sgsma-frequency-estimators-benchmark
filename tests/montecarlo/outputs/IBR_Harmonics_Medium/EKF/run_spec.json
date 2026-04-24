@@ -1,0 +1,77 @@
+{
+  "scenario": "IBR_Harmonics_Medium",
+  "scenario_class": "IBRHarmonicsMediumScenario",
+  "scenario_meta": {
+    "description": "IBR Harmonics Medium: RoCoF -1.0 Hz/s for 0.4 s → f_nadir=59.60 Hz, THD ≈ 6.4%",
+    "standard": "Near IEEE 519 limit (THD ≈ 8 %)",
+    "dynamics": "RoCoF ramp + nadir hold, moderate harmonics, interharmonic at 75 Hz, brown noise.",
+    "purpose": "Harmonic robustness under realistic IBR grid edge conditions.",
+    "parameters": {
+      "freq_nom_hz": 60.0,
+      "f_steady_hz": 59.6,
+      "rocof_hz_s": -1.0,
+      "rocof_duration_s": 0.4,
+      "t_event_s": 0.8,
+      "thd_pct": 6.42
+    },
+    "monte_carlo_space": {
+      "rocof_hz_s": {
+        "kind": "uniform",
+        "low": -2.0,
+        "high": -0.3
+      },
+      "rocof_duration_s": {
+        "kind": "uniform",
+        "low": 0.2,
+        "high": 0.6
+      },
+      "h5_pct": {
+        "kind": "uniform",
+        "low": 0.03,
+        "high": 0.07
+      },
+      "ih75_pct": {
+        "kind": "uniform",
+        "low": 0.01,
+        "high": 0.035
+      }
+    },
+    "fs_physics_hz": 1000000.0
+  },
+  "estimator": "EKF",
+  "estimator_class": "EKF_Estimator",
+  "family": "Model-based",
+  "best_params": {
+    "nominal_f": 60.0,
+    "q_dc": 1e-06,
+    "q_alpha": 0.0001,
+    "q_beta": 0.0001,
+    "q_omega": 0.08510881714904218,
+    "r_meas": 9.968115607956387,
+    "output_smoothing": 0.02
+  },
+  "defaults": {
+    "nominal_f": 60.0,
+    "q_dc": 1e-06,
+    "q_alpha": 0.0001,
+    "q_beta": 0.0001,
+    "q_omega": 0.0001,
+    "r_meas": 0.001,
+    "output_smoothing": 0.02
+  },
+  "n_trials_tuning": 300,
+  "n_mc_runs": 100,
+  "artifacts": {
+    "summary_csv": [
+      "tests\\montecarlo\\outputs\\IBR_Harmonics_Medium\\EKF\\IBR_Harmonics_Medium__EKF_summary.csv"
+    ],
+    "signals_csv": [
+      "tests\\montecarlo\\outputs\\IBR_Harmonics_Medium\\EKF\\IBR_Harmonics_Medium__EKF_signals.csv"
+    ],
+    "tracking_plots": [
+      "tests\\montecarlo\\outputs\\IBR_Harmonics_Medium\\EKF\\tracking_EKF.png"
+    ],
+    "scenario_csv": "tests\\montecarlo\\outputs\\IBR_Harmonics_Medium\\IBR_Harmonics_Medium_scenario.csv",
+    "scenario_zoom_plot": "tests\\montecarlo\\outputs\\IBR_Harmonics_Medium\\IBR_Harmonics_Medium_zoom.png"
+  }
+}

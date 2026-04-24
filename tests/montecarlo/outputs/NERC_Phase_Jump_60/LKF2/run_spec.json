@@ -1,0 +1,71 @@
+{
+  "scenario": "NERC_Phase_Jump_60",
+  "scenario_class": "NERCPhaseJump60Scenario",
+  "scenario_meta": {
+    "description": "NERC Extreme Phase Jump (+60.0°)",
+    "standard": "Exceeds IEEE 1547-2018 (3x limit). Harmonics at IEEE 519 limit.",
+    "parameters": {
+      "duration_s": 5,
+      "freq_hz": 60.0,
+      "phase_jump_rad": 1.0471975511965976,
+      "t_jump_s": 0.7,
+      "noise_sigma": 0.0
+    },
+    "dynamics": "Constant 60 Hz; Instantaneous +60.0° step at t=0.7s. Harmonics: 5th (4%), 7th (2%), Inter: 32.5Hz (0.5%).",
+    "purpose": "Drive headline RMSE and T_trip claims. Stress filter state-divergence under severe islanding.",
+    "monte_carlo_space": {
+      "phase_jump_rad": {
+        "kind": "uniform",
+        "low": 0.6981317007977318,
+        "high": 1.3962634015954636
+      },
+      "t_jump_s": {
+        "kind": "uniform",
+        "low": 0.5,
+        "high": 0.9
+      },
+      "noise_sigma": {
+        "kind": "uniform",
+        "low": 0.003,
+        "high": 0.01
+      }
+    },
+    "fs_physics_hz": 1000000.0
+  },
+  "estimator": "LKF2",
+  "estimator_class": "LKF2_Estimator",
+  "family": "Unknown",
+  "best_params": {
+    "nominal_f": 60.0,
+    "q_dc": 0.005,
+    "q_vc": 0.05,
+    "q_vs": 0.05,
+    "r": 1.0,
+    "beta": 50.0,
+    "lpf_mu": 1.0
+  },
+  "defaults": {
+    "nominal_f": 60.0,
+    "q_dc": 0.005,
+    "q_vc": 0.05,
+    "q_vs": 0.05,
+    "r": 1.0,
+    "beta": 50.0,
+    "lpf_mu": 1.0
+  },
+  "n_trials_tuning": 100,
+  "n_mc_runs": 60,
+  "artifacts": {
+    "summary_csv": [
+      "tests\\montecarlo\\outputs\\NERC_Phase_Jump_60\\LKF2\\NERC_Phase_Jump_60__LKF2_summary.csv"
+    ],
+    "signals_csv": [
+      "tests\\montecarlo\\outputs\\NERC_Phase_Jump_60\\LKF2\\NERC_Phase_Jump_60__LKF2_signals.csv"
+    ],
+    "tracking_plots": [
+      "tests\\montecarlo\\outputs\\NERC_Phase_Jump_60\\LKF2\\tracking_LKF2.png"
+    ],
+    "scenario_csv": "tests\\montecarlo\\outputs\\NERC_Phase_Jump_60\\NERC_Phase_Jump_60_scenario.csv",
+    "scenario_zoom_plot": "tests\\montecarlo\\outputs\\NERC_Phase_Jump_60\\NERC_Phase_Jump_60_zoom.png"
+  }
+}

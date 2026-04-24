@@ -1,0 +1,72 @@
+{
+  "scenario": "IEEE_Mag_Step_10pct",
+  "scenario_class": "IEEEMagStepScenario_10pct",
+  "scenario_meta": {
+    "description": "IEEE 60255-118-1 Amplitude Step (+10% default)",
+    "standard": "IEC/IEEE 60255-118-1 amplitude step test",
+    "parameters": {
+      "duration_s": 5,
+      "freq_hz": 60.0,
+      "phase_rad": 0.0,
+      "amp_pre_pu": 1.0,
+      "amp_post_pu": 1.1,
+      "t_step_s": 0.5,
+      "noise_sigma": 0.0,
+      "seed": 42
+    },
+    "noise_sigma": 0.0,
+    "dynamics": "Amplitude step 1.0 -> 1.1 pu at t=0.5s. Phase C0-continuous.",
+    "purpose": "AM-FM cross-coupling error evaluation without harmonic interference.",
+    "monte_carlo_space": {
+      "amp_post_pu": {
+        "kind": "uniform",
+        "low": 1.05,
+        "high": 1.15
+      },
+      "t_step_s": {
+        "kind": "uniform",
+        "low": 0.4,
+        "high": 0.6
+      },
+      "phase_rad": {
+        "kind": "uniform",
+        "low": 0.0,
+        "high": 6.283185307179586
+      },
+      "noise_sigma": {
+        "kind": "uniform",
+        "low": 0.0005,
+        "high": 0.002
+      }
+    },
+    "fs_physics_hz": 1000000.0
+  },
+  "estimator": "IPDFT",
+  "estimator_class": "IPDFT_Estimator",
+  "family": "Window-based",
+  "best_params": {
+    "nominal_f": 60.0,
+    "cycles": 5.997402435871784,
+    "decim": 1
+  },
+  "defaults": {
+    "nominal_f": 60.0,
+    "cycles": 2.0,
+    "decim": 1
+  },
+  "n_trials_tuning": 100,
+  "n_mc_runs": 60,
+  "artifacts": {
+    "summary_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Mag_Step_10pct\\IPDFT\\IEEE_Mag_Step_10pct__IPDFT_summary.csv"
+    ],
+    "signals_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Mag_Step_10pct\\IPDFT\\IEEE_Mag_Step_10pct__IPDFT_signals.csv"
+    ],
+    "tracking_plots": [
+      "tests\\montecarlo\\outputs\\IEEE_Mag_Step_10pct\\IPDFT\\tracking_IPDFT.png"
+    ],
+    "scenario_csv": "tests\\montecarlo\\outputs\\IEEE_Mag_Step_10pct\\IEEE_Mag_Step_10pct_scenario.csv",
+    "scenario_zoom_plot": "tests\\montecarlo\\outputs\\IEEE_Mag_Step_10pct\\IEEE_Mag_Step_10pct_zoom.png"
+  }
+}

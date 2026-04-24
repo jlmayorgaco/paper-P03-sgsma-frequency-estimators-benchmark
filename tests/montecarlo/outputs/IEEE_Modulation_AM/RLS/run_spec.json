@@ -1,0 +1,79 @@
+{
+  "scenario": "IEEE_Modulation_AM",
+  "scenario_class": "IEEEModulationAMScenario",
+  "scenario_meta": {
+    "description": "Pure AM (kx=0.1, fm=2.0Hz)",
+    "standard": "Derived from IEC 60255-118-1",
+    "parameters": {
+      "duration_s": 5,
+      "freq_nom_hz": 60.0,
+      "kx": 0.1,
+      "fm_hz": 2.0,
+      "noise_sigma": 0.0
+    },
+    "dynamics": "Constant 60 Hz frequency with modulated amplitude.",
+    "purpose": "Isolate AM-FM cross-coupling vulnerabilities.",
+    "monte_carlo_space": {
+      "fm_hz": {
+        "kind": "uniform",
+        "low": 0.5,
+        "high": 5.0
+      },
+      "kx": {
+        "kind": "uniform",
+        "low": 0.05,
+        "high": 0.15
+      },
+      "noise_sigma": {
+        "kind": "uniform",
+        "low": 0.0005,
+        "high": 0.002
+      }
+    },
+    "fs_physics_hz": 1000000.0
+  },
+  "estimator": "RLS",
+  "estimator_class": "RLS_Estimator",
+  "family": "Adaptive",
+  "best_params": {
+    "nominal_f": 60.0,
+    "is_vff": true,
+    "lambda_fixed": 0.995,
+    "alpha_vff": 0.0509577860470633,
+    "lambda_min": 0.9797564080589707,
+    "lambda_max": 0.9995,
+    "vff_beta": 0.02,
+    "output_smoothing": 0.03,
+    "pole_radius_min": 0.95,
+    "pole_radius_max": 1.0,
+    "p0": 0.01
+  },
+  "defaults": {
+    "nominal_f": 60.0,
+    "is_vff": false,
+    "lambda_fixed": 0.995,
+    "alpha_vff": 0.2,
+    "lambda_min": 0.9,
+    "lambda_max": 0.9995,
+    "vff_beta": 0.02,
+    "output_smoothing": 0.03,
+    "pole_radius_min": 0.95,
+    "pole_radius_max": 1.0,
+    "p0": 0.01
+  },
+  "n_trials_tuning": 100,
+  "n_mc_runs": 60,
+  "artifacts": {
+    "summary_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Modulation_AM\\RLS\\IEEE_Modulation_AM__RLS_summary.csv"
+    ],
+    "signals_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Modulation_AM\\RLS\\IEEE_Modulation_AM__RLS_signals.csv"
+    ],
+    "tracking_plots": [
+      "tests\\montecarlo\\outputs\\IEEE_Modulation_AM\\RLS\\tracking_RLS.png"
+    ],
+    "scenario_csv": "tests\\montecarlo\\outputs\\IEEE_Modulation_AM\\IEEE_Modulation_AM_scenario.csv",
+    "scenario_zoom_plot": "tests\\montecarlo\\outputs\\IEEE_Modulation_AM\\IEEE_Modulation_AM_zoom.png"
+  }
+}

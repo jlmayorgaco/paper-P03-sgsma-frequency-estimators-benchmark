@@ -1,0 +1,64 @@
+{
+  "scenario": "IBR_Harmonics_Small",
+  "scenario_class": "IBRHarmonicsSmallScenario",
+  "scenario_meta": {
+    "description": "IBR Harmonics Small: +0.30 Hz step at t=1.0s, THD ≈ 2.5%",
+    "standard": "IEEE 519 compliant (THD < 5 %)",
+    "dynamics": "Small frequency step with low harmonic distortion and white noise only.",
+    "purpose": "Baseline harmonic rejection benchmark under clean IBR conditions.",
+    "parameters": {
+      "freq_nom_hz": 60.0,
+      "freq_step_hz": 0.3,
+      "t_event_s": 1.0,
+      "amp_pu": 1.0,
+      "h5_pct": 0.02,
+      "h7_pct": 0.015,
+      "h11_pct": 0.005
+    },
+    "monte_carlo_space": {
+      "freq_step_hz": {
+        "kind": "uniform",
+        "low": -0.5,
+        "high": 0.5
+      },
+      "h5_pct": {
+        "kind": "uniform",
+        "low": 0.01,
+        "high": 0.03
+      }
+    },
+    "fs_physics_hz": 1000000.0
+  },
+  "estimator": "Type-3 SOGI-PLL",
+  "estimator_class": "Type3_SOGI_PLL_Estimator",
+  "family": "Loop-based",
+  "best_params": {
+    "nominal_f": 60.0,
+    "k_sogi": 1.414,
+    "kp": 10.011681172258937,
+    "ki": 1401.9625127895013,
+    "ki2": 1013.0127993046585
+  },
+  "defaults": {
+    "nominal_f": 60.0,
+    "k_sogi": 1.414,
+    "kp": 90.0,
+    "ki": 2700.0,
+    "ki2": 27000.0
+  },
+  "n_trials_tuning": 300,
+  "n_mc_runs": 100,
+  "artifacts": {
+    "summary_csv": [
+      "tests\\montecarlo\\outputs\\IBR_Harmonics_Small\\Type-3 SOGI-PLL\\IBR_Harmonics_Small__Type-3 SOGI-PLL_summary.csv"
+    ],
+    "signals_csv": [
+      "tests\\montecarlo\\outputs\\IBR_Harmonics_Small\\Type-3 SOGI-PLL\\IBR_Harmonics_Small__Type-3 SOGI-PLL_signals.csv"
+    ],
+    "tracking_plots": [
+      "tests\\montecarlo\\outputs\\IBR_Harmonics_Small\\Type-3 SOGI-PLL\\tracking_Type-3 SOGI-PLL.png"
+    ],
+    "scenario_csv": "tests\\montecarlo\\outputs\\IBR_Harmonics_Small\\IBR_Harmonics_Small_scenario.csv",
+    "scenario_zoom_plot": "tests\\montecarlo\\outputs\\IBR_Harmonics_Small\\IBR_Harmonics_Small_zoom.png"
+  }
+}

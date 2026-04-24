@@ -1,0 +1,77 @@
+{
+  "scenario": "IEEE_Modulation",
+  "scenario_class": "IEEEModulationScenario",
+  "scenario_meta": {
+    "description": "IEEE 1547 Modulation AM/PM (fm=2.0Hz)",
+    "standard": "IEC 60255-118-1 modulation test",
+    "parameters": {
+      "duration_s": 5,
+      "freq_nom_hz": 60.0,
+      "phase_rad": 0.0,
+      "amplitude": 1.0,
+      "kx": 0.1,
+      "ka": 0.1,
+      "fm_hz": 2.0,
+      "noise_sigma": 0.0,
+      "seed": 42
+    },
+    "noise_sigma": 0.0,
+    "dynamics": "AM (kx=0.1) and PM (ka=0.1) modulation at 2.0 Hz.",
+    "purpose": "Evaluate estimator bandwidth, attenuation, and latency under low-frequency oscillations.",
+    "monte_carlo_space": {
+      "fm_hz": {
+        "kind": "uniform",
+        "low": 0.5,
+        "high": 5.0
+      },
+      "kx": {
+        "kind": "uniform",
+        "low": 0.05,
+        "high": 0.15
+      },
+      "ka": {
+        "kind": "uniform",
+        "low": 0.05,
+        "high": 0.15
+      },
+      "noise_sigma": {
+        "kind": "uniform",
+        "low": 0.0005,
+        "high": 0.002
+      }
+    },
+    "fs_physics_hz": 1000000.0
+  },
+  "estimator": "Type-3 SOGI-PLL",
+  "estimator_class": "Type3_SOGI_PLL_Estimator",
+  "family": "Loop-based",
+  "best_params": {
+    "nominal_f": 60.0,
+    "k_sogi": 1.414,
+    "kp": 17.184648468648827,
+    "ki": 2078.4162665510853,
+    "ki2": 1097.148118940479
+  },
+  "defaults": {
+    "nominal_f": 60.0,
+    "k_sogi": 1.414,
+    "kp": 90.0,
+    "ki": 2700.0,
+    "ki2": 27000.0
+  },
+  "n_trials_tuning": 300,
+  "n_mc_runs": 100,
+  "artifacts": {
+    "summary_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Modulation\\Type-3 SOGI-PLL\\IEEE_Modulation__Type-3 SOGI-PLL_summary.csv"
+    ],
+    "signals_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Modulation\\Type-3 SOGI-PLL\\IEEE_Modulation__Type-3 SOGI-PLL_signals.csv"
+    ],
+    "tracking_plots": [
+      "tests\\montecarlo\\outputs\\IEEE_Modulation\\Type-3 SOGI-PLL\\tracking_Type-3 SOGI-PLL.png"
+    ],
+    "scenario_csv": "tests\\montecarlo\\outputs\\IEEE_Modulation\\IEEE_Modulation_scenario.csv",
+    "scenario_zoom_plot": "tests\\montecarlo\\outputs\\IEEE_Modulation\\IEEE_Modulation_zoom.png"
+  }
+}

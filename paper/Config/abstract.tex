@@ -1,20 +1,27 @@
 \begin{abstract}
-Frequency estimation latency and robustness are critical for protection in
-low-inertia, Inverter-Based Resource (IBR)-dominated grids. A stress-oriented
-benchmark evaluates twelve estimators from five algorithmic families under five
-scenarios using dual-rate simulation (1\,MHz physics / 10\,kHz DSP). Each
-estimator is independently tuned per scenario via grid search, establishing the
-performance ceiling per estimator--scenario pair, and assessed on RMSE, peak
-error, trip-risk duration ($T_{\mathrm{trip}}$), and computational cost
-($N\!=\!30$ Monte Carlo). Scenarios~(A)--(C) follow the IEC/IEEE~60255-118-1
-test philosophy; Scenarios~(D)--(E) introduce composite IBR-specific disturbances
-beyond the standard scope. Several estimators that pass standard compliance tests
-degrade substantially under composite IBR disturbances; no single family dominates
-across all scenario types. Window-based and loop-based methods exhibit
-complementary strengths; data-driven approaches incur higher computational cost
-without consistent accuracy gains over scenario-optimized classical methods. The
-results indicate that the IEC/IEEE~60255-118-1 test scope does not fully
-characterize estimator resilience in IBR-dominated conditions, and that composite
-phase-step and harmonic distortion scenarios expose failure modes absent from
-isolated single-disturbance tests.
+Frequency estimators used in relay and monitoring functions face a harder
+problem in inverter-based resource (IBR) grids than in classical synchronous
+systems: phase jumps, harmonics, ringdown, and out-of-band components can
+appear in the same event. Standard compliance-style benchmarks still emphasize
+isolated disturbances, so they say little about how estimator rankings move
+under composite stress. This paper analyzes a Monte Carlo benchmark covering 16
+estimators, 34 benchmark scenarios, and 60 runs per estimator--scenario
+pair. It spans
+IEEE-style ramps, magnitude steps, modulation, phase jumps, out-of-band
+interference, and IBR-specific harmonics, ringdown, and multi-event stress.
+We report RMSE, peak error, trip-risk duration, settling time, and CPU time
+per sample. The results do not support a single best estimator. The
+second-order generalized-integrator PLL (SOGI-PLL) gives the lowest mean RMSE
+on ramp families (19.4\,mHz), the extended Kalman filter (EKF) leads
+magnitude-step and out-of-band cases (0.388\,mHz and 13.6\,mHz), and the robust
+adaptive EKF (RA-EKF) leads modulation (17.8\,mHz). In the IBR multi-event
+case, the phase-locked loop (PLL) attains the lowest RMSE (173.5\,mHz) while
+the interpolated DFT (IpDFT) yields the lowest trip-risk there ($0.0439$\,s). Nine
+different estimators win at least one scenario on RMSE, and in 9 of the 12
+benchmark scenarios with a unique trip-risk winner, that winner differs from the RMSE
+winner. The hardest cases are the IBR multi-event sequence (826\,mHz median
+RMSE across estimators), the $60^\circ$ phase jumps, and noisy ringdown
+scenarios. The error range spans nearly three orders of magnitude, showing that
+isolated tests miss scenario dependence that matters
+for protection design.
 \end{abstract}

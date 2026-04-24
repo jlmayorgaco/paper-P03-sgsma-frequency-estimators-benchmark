@@ -1,0 +1,86 @@
+{
+  "scenario": "IBR_Multi_Event",
+  "scenario_class": "IBRMultiEventScenario",
+  "scenario_meta": {
+    "description": "IBR Multi-Event: 0.5 pu sag/swell, Δφ 45.0°, RoCoF -2.0 Hz/s for 1.0 s → f_nadir = 58.000 Hz",
+    "standard": "Extreme composite dynamic test (beyond IEC 60255-118-1)",
+    "dynamics": "Amplitude step, phase jump, RoCoF ramp with nadir clamp, decaying DC, AM/PM oscillations, Full IBR Spectrum (3rd, 5th, 7th, 11th, 13th, 17th, 19th + 75Hz Inter-harmonic), white + brown + impulsive noise.",
+    "purpose": "IBR algorithm failure-mode analysis; worst-case stress test.",
+    "parameters": {
+      "freq_pre_hz": 60.0,
+      "f_steady_hz": 58.0,
+      "rocof_hz_s": -2.0,
+      "rocof_duration_s": 1.0,
+      "t_event_s": 0.5,
+      "amp_pre_pu": 1.0,
+      "amp_post_pu": 0.5,
+      "phase_jump_rad": 0.7853981633974483,
+      "dc_offset_pu": 0.15,
+      "dc_tau_s": 0.03
+    },
+    "monte_carlo_space": {
+      "amp_post_pu": {
+        "kind": "uniform",
+        "low": 0.2,
+        "high": 1.3
+      },
+      "phase_jump_rad": {
+        "kind": "uniform",
+        "low": -1.0471975511965976,
+        "high": 1.0471975511965976
+      },
+      "rocof_hz_s": {
+        "kind": "uniform",
+        "low": -5.0,
+        "high": 3.0
+      },
+      "rocof_duration_s": {
+        "kind": "uniform",
+        "low": 0.3,
+        "high": 1.5
+      },
+      "dc_offset_pu": {
+        "kind": "uniform",
+        "low": 0.05,
+        "high": 0.25
+      }
+    },
+    "fs_physics_hz": 1000000.0
+  },
+  "estimator": "LKF2",
+  "estimator_class": "LKF2_Estimator",
+  "family": "Model-based",
+  "best_params": {
+    "nominal_f": 60.0,
+    "q_dc": 0.9786593202383167,
+    "q_vc": 5.1631617793736674e-05,
+    "q_vs": 5.783753616060126,
+    "r": 1251.9221124564513,
+    "beta": 19.96864469154496,
+    "lpf_mu": 0.010047388526714041
+  },
+  "defaults": {
+    "nominal_f": 60.0,
+    "q_dc": 0.005,
+    "q_vc": 0.05,
+    "q_vs": 0.05,
+    "r": 1.0,
+    "beta": 50.0,
+    "lpf_mu": 1.0
+  },
+  "n_trials_tuning": 500,
+  "n_mc_runs": 100,
+  "artifacts": {
+    "summary_csv": [
+      "tests\\montecarlo\\outputs\\IBR_Multi_Event\\LKF2\\IBR_Multi_Event__LKF2_summary.csv"
+    ],
+    "signals_csv": [
+      "tests\\montecarlo\\outputs\\IBR_Multi_Event\\LKF2\\IBR_Multi_Event__LKF2_signals.csv"
+    ],
+    "tracking_plots": [
+      "tests\\montecarlo\\outputs\\IBR_Multi_Event\\LKF2\\tracking_LKF2.png"
+    ],
+    "scenario_csv": "tests\\montecarlo\\outputs\\IBR_Multi_Event\\IBR_Multi_Event_scenario.csv",
+    "scenario_zoom_plot": "tests\\montecarlo\\outputs\\IBR_Multi_Event\\IBR_Multi_Event_zoom.png"
+  }
+}

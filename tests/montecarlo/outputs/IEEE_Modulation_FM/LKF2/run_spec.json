@@ -1,0 +1,71 @@
+{
+  "scenario": "IEEE_Modulation_FM",
+  "scenario_class": "IEEEModulationFMScenario",
+  "scenario_meta": {
+    "description": "Pure PM/FM (ka=0.1, fm=2.0Hz)",
+    "standard": "Derived from IEC 60255-118-1",
+    "parameters": {
+      "duration_s": 5,
+      "freq_nom_hz": 60.0,
+      "ka": 0.1,
+      "fm_hz": 2.0,
+      "noise_sigma": 0.0
+    },
+    "dynamics": "Constant amplitude with oscillating frequency.",
+    "purpose": "Evaluate pure frequency tracking bandwidth.",
+    "monte_carlo_space": {
+      "fm_hz": {
+        "kind": "uniform",
+        "low": 0.5,
+        "high": 5.0
+      },
+      "ka": {
+        "kind": "uniform",
+        "low": 0.05,
+        "high": 0.15
+      },
+      "noise_sigma": {
+        "kind": "uniform",
+        "low": 0.0005,
+        "high": 0.002
+      }
+    },
+    "fs_physics_hz": 1000000.0
+  },
+  "estimator": "LKF2",
+  "estimator_class": "LKF2_Estimator",
+  "family": "Unknown",
+  "best_params": {
+    "nominal_f": 60.0,
+    "q_dc": 0.005,
+    "q_vc": 0.05,
+    "q_vs": 0.05,
+    "r": 1.0,
+    "beta": 50.0,
+    "lpf_mu": 1.0
+  },
+  "defaults": {
+    "nominal_f": 60.0,
+    "q_dc": 0.005,
+    "q_vc": 0.05,
+    "q_vs": 0.05,
+    "r": 1.0,
+    "beta": 50.0,
+    "lpf_mu": 1.0
+  },
+  "n_trials_tuning": 100,
+  "n_mc_runs": 60,
+  "artifacts": {
+    "summary_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Modulation_FM\\LKF2\\IEEE_Modulation_FM__LKF2_summary.csv"
+    ],
+    "signals_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Modulation_FM\\LKF2\\IEEE_Modulation_FM__LKF2_signals.csv"
+    ],
+    "tracking_plots": [
+      "tests\\montecarlo\\outputs\\IEEE_Modulation_FM\\LKF2\\tracking_LKF2.png"
+    ],
+    "scenario_csv": "tests\\montecarlo\\outputs\\IEEE_Modulation_FM\\IEEE_Modulation_FM_scenario.csv",
+    "scenario_zoom_plot": "tests\\montecarlo\\outputs\\IEEE_Modulation_FM\\IEEE_Modulation_FM_zoom.png"
+  }
+}

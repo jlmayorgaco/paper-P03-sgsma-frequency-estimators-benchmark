@@ -1,0 +1,86 @@
+{
+  "scenario": "IEEE_Mag_Step_25pct",
+  "scenario_class": "IEEEMagStepScenario_25pct",
+  "scenario_meta": {
+    "description": "IEEE 60255-118-1 Amplitude Step (+10% default)",
+    "standard": "IEC/IEEE 60255-118-1 amplitude step test",
+    "parameters": {
+      "duration_s": 5,
+      "freq_hz": 60.0,
+      "phase_rad": 0.0,
+      "amp_pre_pu": 1.0,
+      "amp_post_pu": 1.25,
+      "t_step_s": 0.5,
+      "noise_sigma": 0.0,
+      "seed": 42
+    },
+    "noise_sigma": 0.0,
+    "dynamics": "Amplitude step 1.0 -> 1.25 pu at t=0.5s. Phase C0-continuous.",
+    "purpose": "AM-FM cross-coupling error evaluation without harmonic interference.",
+    "monte_carlo_space": {
+      "amp_post_pu": {
+        "kind": "uniform",
+        "low": 1.05,
+        "high": 1.15
+      },
+      "t_step_s": {
+        "kind": "uniform",
+        "low": 0.4,
+        "high": 0.6
+      },
+      "phase_rad": {
+        "kind": "uniform",
+        "low": 0.0,
+        "high": 6.283185307179586
+      },
+      "noise_sigma": {
+        "kind": "uniform",
+        "low": 0.0005,
+        "high": 0.002
+      }
+    },
+    "fs_physics_hz": 1000000.0
+  },
+  "estimator": "RA-EKF",
+  "estimator_class": "RAEKF_Estimator",
+  "family": "Model-based",
+  "best_params": {
+    "nominal_f": 60.0,
+    "q_theta": 1.4268844367614809e-09,
+    "q_omega": 7.603643057864313e-09,
+    "q_A": 1.7147500171215427e-08,
+    "q_rocof": 1.864488098789059e-06,
+    "r_meas": 4.2278708551926784e-06,
+    "sigma_v": 0.24363990990386453,
+    "gamma": 22.71204220653385,
+    "deriv_lpf_alpha": 0.19180068973467942,
+    "tau_rocof": 0.19539333515114565
+  },
+  "defaults": {
+    "nominal_f": 60.0,
+    "q_theta": 1e-06,
+    "q_omega": 0.0005,
+    "q_A": 1e-06,
+    "q_rocof": 0.005,
+    "r_meas": 0.0001,
+    "sigma_v": 0.05,
+    "gamma": 8.0,
+    "deriv_lpf_alpha": 0.08,
+    "tau_rocof": 0.15
+  },
+  "n_trials_tuning": 100,
+  "n_mc_runs": 60,
+  "artifacts": {
+    "summary_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Mag_Step_25pct\\RA-EKF\\IEEE_Mag_Step_25pct__RA-EKF_summary.csv"
+    ],
+    "signals_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Mag_Step_25pct\\RA-EKF\\IEEE_Mag_Step_25pct__RA-EKF_signals.csv"
+    ],
+    "tracking_plots": [
+      "tests\\montecarlo\\outputs\\IEEE_Mag_Step_25pct\\RA-EKF\\tracking_RA-EKF.png"
+    ],
+    "scenario_csv": "tests\\montecarlo\\outputs\\IEEE_Mag_Step_25pct\\IEEE_Mag_Step_25pct_scenario.csv",
+    "scenario_zoom_plot": "tests\\montecarlo\\outputs\\IEEE_Mag_Step_25pct\\IEEE_Mag_Step_25pct_zoom.png"
+  }
+}

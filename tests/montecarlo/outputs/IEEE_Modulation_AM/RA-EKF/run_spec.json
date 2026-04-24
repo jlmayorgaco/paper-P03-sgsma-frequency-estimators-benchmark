@@ -1,0 +1,77 @@
+{
+  "scenario": "IEEE_Modulation_AM",
+  "scenario_class": "IEEEModulationAMScenario",
+  "scenario_meta": {
+    "description": "Pure AM (kx=0.1, fm=2.0Hz)",
+    "standard": "Derived from IEC 60255-118-1",
+    "parameters": {
+      "duration_s": 5,
+      "freq_nom_hz": 60.0,
+      "kx": 0.1,
+      "fm_hz": 2.0,
+      "noise_sigma": 0.0
+    },
+    "dynamics": "Constant 60 Hz frequency with modulated amplitude.",
+    "purpose": "Isolate AM-FM cross-coupling vulnerabilities.",
+    "monte_carlo_space": {
+      "fm_hz": {
+        "kind": "uniform",
+        "low": 0.5,
+        "high": 5.0
+      },
+      "kx": {
+        "kind": "uniform",
+        "low": 0.05,
+        "high": 0.15
+      },
+      "noise_sigma": {
+        "kind": "uniform",
+        "low": 0.0005,
+        "high": 0.002
+      }
+    },
+    "fs_physics_hz": 1000000.0
+  },
+  "estimator": "RA-EKF",
+  "estimator_class": "RAEKF_Estimator",
+  "family": "Model-based",
+  "best_params": {
+    "nominal_f": 60.0,
+    "q_theta": 2.1164339742575648e-09,
+    "q_omega": 5.946310778640261e-09,
+    "q_A": 6.845290432717982e-07,
+    "q_rocof": 1.476542029771931e-06,
+    "r_meas": 2.705242523356392e-05,
+    "sigma_v": 0.27391165516226734,
+    "gamma": 6.909301549815156,
+    "deriv_lpf_alpha": 0.18341370136784552,
+    "tau_rocof": 0.11074758556811005
+  },
+  "defaults": {
+    "nominal_f": 60.0,
+    "q_theta": 1e-06,
+    "q_omega": 0.0005,
+    "q_A": 1e-06,
+    "q_rocof": 0.005,
+    "r_meas": 0.0001,
+    "sigma_v": 0.05,
+    "gamma": 8.0,
+    "deriv_lpf_alpha": 0.08,
+    "tau_rocof": 0.15
+  },
+  "n_trials_tuning": 100,
+  "n_mc_runs": 60,
+  "artifacts": {
+    "summary_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Modulation_AM\\RA-EKF\\IEEE_Modulation_AM__RA-EKF_summary.csv"
+    ],
+    "signals_csv": [
+      "tests\\montecarlo\\outputs\\IEEE_Modulation_AM\\RA-EKF\\IEEE_Modulation_AM__RA-EKF_signals.csv"
+    ],
+    "tracking_plots": [
+      "tests\\montecarlo\\outputs\\IEEE_Modulation_AM\\RA-EKF\\tracking_RA-EKF.png"
+    ],
+    "scenario_csv": "tests\\montecarlo\\outputs\\IEEE_Modulation_AM\\IEEE_Modulation_AM_scenario.csv",
+    "scenario_zoom_plot": "tests\\montecarlo\\outputs\\IEEE_Modulation_AM\\IEEE_Modulation_AM_zoom.png"
+  }
+}

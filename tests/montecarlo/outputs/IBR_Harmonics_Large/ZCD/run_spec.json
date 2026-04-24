@@ -1,0 +1,65 @@
+{
+  "scenario": "IBR_Harmonics_Large",
+  "scenario_class": "IBRHarmonicsLargeScenario",
+  "scenario_meta": {
+    "description": "IBR Harmonics Large: +0.80 Hz step at t=1.0s, THD ≈ 11.0%, sub-harmonic + 2 interharmonics + impulsive noise",
+    "standard": "Exceeds IEEE 519 (THD ≈ 15 %) — worst-case IBR stress test",
+    "dynamics": "Freq step, high harmonic distortion, sub-harmonic, interharmonics, impulsive noise.",
+    "purpose": "Worst-case harmonic/noise stress test to expose estimator collapse.",
+    "parameters": {
+      "freq_nom_hz": 60.0,
+      "freq_post_hz": 60.8,
+      "freq_step_hz": 0.8,
+      "t_event_s": 1.0,
+      "thd_pct": 11.05,
+      "f_sub_hz": 30.0
+    },
+    "monte_carlo_space": {
+      "freq_step_hz": {
+        "kind": "uniform",
+        "low": 0.3,
+        "high": 1.5
+      },
+      "h5_pct": {
+        "kind": "uniform",
+        "low": 0.06,
+        "high": 0.12
+      },
+      "white_noise_sigma": {
+        "kind": "uniform",
+        "low": 0.008,
+        "high": 0.025
+      },
+      "impulse_prob": {
+        "kind": "uniform",
+        "low": 0.0005,
+        "high": 0.002
+      }
+    },
+    "fs_physics_hz": 1000000.0
+  },
+  "estimator": "ZCD",
+  "estimator_class": "ZCDEstimator",
+  "family": "Loop-based",
+  "best_params": {
+    "nominal_f": 60.0
+  },
+  "defaults": {
+    "nominal_f": 60.0
+  },
+  "n_trials_tuning": 300,
+  "n_mc_runs": 100,
+  "artifacts": {
+    "summary_csv": [
+      "tests\\montecarlo\\outputs\\IBR_Harmonics_Large\\ZCD\\IBR_Harmonics_Large__ZCD_summary.csv"
+    ],
+    "signals_csv": [
+      "tests\\montecarlo\\outputs\\IBR_Harmonics_Large\\ZCD\\IBR_Harmonics_Large__ZCD_signals.csv"
+    ],
+    "tracking_plots": [
+      "tests\\montecarlo\\outputs\\IBR_Harmonics_Large\\ZCD\\tracking_ZCD.png"
+    ],
+    "scenario_csv": "tests\\montecarlo\\outputs\\IBR_Harmonics_Large\\IBR_Harmonics_Large_scenario.csv",
+    "scenario_zoom_plot": "tests\\montecarlo\\outputs\\IBR_Harmonics_Large\\IBR_Harmonics_Large_zoom.png"
+  }
+}

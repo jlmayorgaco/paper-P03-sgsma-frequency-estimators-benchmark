@@ -1,14 +1,21 @@
+import importlib.util
 import sys
 import numpy as np
 import pytest
 from pathlib import Path
+
+HAS_TORCH = importlib.util.find_spec("torch") is not None
+pytestmark = pytest.mark.skipif(not HAS_TORCH, reason="torch not installed")
 
 ROOT = Path(__file__).resolve().parents[3]
 SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from estimators.pi_gru import PI_GRU_Estimator
+if HAS_TORCH:
+    from estimators.pi_gru import PI_GRU_Estimator
+else:
+    PI_GRU_Estimator = None
 
 def test_pi_gru_instantiation():
     estimator = PI_GRU_Estimator(nominal_f=60.0, dt=1e-4)
@@ -18,7 +25,8 @@ def test_pi_gru_instantiation():
 
 def test_pi_gru_latency():
     estimator = PI_GRU_Estimator()
-    assert estimator.structural_latency_samples() == 50
+    expected = (estimator.window_len // 2) + (estimator.ma_len // 2)
+    assert estimator.structural_latency_samples() == expected
 
 def test_pi_gru_stationary_tracking():
     fs = 10000.0

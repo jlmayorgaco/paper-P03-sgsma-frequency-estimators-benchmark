@@ -1,0 +1,68 @@
+{
+  "scenario": "IBR_Harmonics_Small",
+  "scenario_class": "IBRHarmonicsSmallScenario",
+  "scenario_meta": {
+    "description": "IBR Harmonics Small: +0.30 Hz step at t=1.0s, THD ≈ 2.5%",
+    "standard": "IEEE 519 compliant (THD < 5 %)",
+    "dynamics": "Small frequency step with low harmonic distortion and white noise only.",
+    "purpose": "Baseline harmonic rejection benchmark under clean IBR conditions.",
+    "parameters": {
+      "freq_nom_hz": 60.0,
+      "freq_step_hz": 0.3,
+      "t_event_s": 1.0,
+      "amp_pu": 1.0,
+      "h5_pct": 0.02,
+      "h7_pct": 0.015,
+      "h11_pct": 0.005
+    },
+    "monte_carlo_space": {
+      "freq_step_hz": {
+        "kind": "uniform",
+        "low": -0.5,
+        "high": 0.5
+      },
+      "h5_pct": {
+        "kind": "uniform",
+        "low": 0.01,
+        "high": 0.03
+      }
+    },
+    "fs_physics_hz": 1000000.0
+  },
+  "estimator": "PLL",
+  "estimator_class": "PLL_Estimator",
+  "family": "Loop-based",
+  "best_params": {
+    "nominal_f": 60.0,
+    "settle_time": 0.08,
+    "amp_alpha": 0.01,
+    "output_smoothing": 0.02,
+    "pd_lpf_alpha": 0.02,
+    "kp_scale": 0.06597686403991232,
+    "ki_scale": 0.0002682966187900812
+  },
+  "defaults": {
+    "nominal_f": 60.0,
+    "settle_time": 0.08,
+    "amp_alpha": 0.01,
+    "output_smoothing": 0.02,
+    "pd_lpf_alpha": 0.02,
+    "kp_scale": 0.15,
+    "ki_scale": 0.05
+  },
+  "n_trials_tuning": 300,
+  "n_mc_runs": 100,
+  "artifacts": {
+    "summary_csv": [
+      "tests\\montecarlo\\outputs\\IBR_Harmonics_Small\\PLL\\IBR_Harmonics_Small__PLL_summary.csv"
+    ],
+    "signals_csv": [
+      "tests\\montecarlo\\outputs\\IBR_Harmonics_Small\\PLL\\IBR_Harmonics_Small__PLL_signals.csv"
+    ],
+    "tracking_plots": [
+      "tests\\montecarlo\\outputs\\IBR_Harmonics_Small\\PLL\\tracking_PLL.png"
+    ],
+    "scenario_csv": "tests\\montecarlo\\outputs\\IBR_Harmonics_Small\\IBR_Harmonics_Small_scenario.csv",
+    "scenario_zoom_plot": "tests\\montecarlo\\outputs\\IBR_Harmonics_Small\\IBR_Harmonics_Small_zoom.png"
+  }
+}
