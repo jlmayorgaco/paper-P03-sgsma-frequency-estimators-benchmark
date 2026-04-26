@@ -1,16 +1,16 @@
 {
   "scenario": "Sweep_FreqRamp_RoCoF_0p25Hzs",
   "rocof_hz_s": 0.25,
-  "estimator": "EKF",
+  "estimator": "LKF2",
   "family": "Model-based",
   "best_params": {
     "nominal_f": 60.0,
-    "q_dc": 1e-06,
-    "q_alpha": 0.0001,
-    "q_beta": 0.0001,
-    "q_omega": 2.247368244124574,
-    "r_meas": 8.334725053837989e-08,
-    "output_smoothing": 0.02
+    "q_dc": 0.0004507244359952831,
+    "q_vc": 1.6004863939932325e-07,
+    "q_vs": 2.658624906132057e-05,
+    "r": 0.023936089657147882,
+    "beta": 64.43704930843597,
+    "lpf_mu": 0.2964915284808609
   },
   "tuning_meta": {
     "mode": "per_scenario_best_tuning",
@@ -19,7 +19,7 @@
     "n_trials_executed": 25,
     "tune_eval_runs": 2,
     "sampler_mode_effective": "tpe",
-    "best_objective": 0.0053280094206384285
+    "best_objective": 0.0034614281102320014
   },
   "n_mc_runs": 2
 }

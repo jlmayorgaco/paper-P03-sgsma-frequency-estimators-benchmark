@@ -1,16 +1,14 @@
 {
   "scenario": "Sweep_FreqRamp_RoCoF_0p2Hzs",
   "rocof_hz_s": 0.2,
-  "estimator": "EKF",
-  "family": "Model-based",
+  "estimator": "Type-3 SOGI-PLL",
+  "family": "Loop-based",
   "best_params": {
     "nominal_f": 60.0,
-    "q_dc": 1e-06,
-    "q_alpha": 0.0001,
-    "q_beta": 0.0001,
-    "q_omega": 0.2941308320566727,
-    "r_meas": 0.0001385926793246646,
-    "output_smoothing": 0.02
+    "k_sogi": 1.414,
+    "kp": 31.2467224898564,
+    "ki": 33.37286088046537,
+    "ki2": 1039.5612603350721
   },
   "tuning_meta": {
     "mode": "per_scenario_best_tuning",
@@ -19,7 +17,7 @@
     "n_trials_executed": 25,
     "tune_eval_runs": 2,
     "sampler_mode_effective": "tpe",
-    "best_objective": 0.004544722615367361
+    "best_objective": 0.034617056805041166
   },
   "n_mc_runs": 2
 }

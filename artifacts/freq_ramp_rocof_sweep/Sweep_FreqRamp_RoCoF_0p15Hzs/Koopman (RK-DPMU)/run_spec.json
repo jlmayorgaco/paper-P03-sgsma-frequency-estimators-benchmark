@@ -1,0 +1,20 @@
+{
+  "scenario": "Sweep_FreqRamp_RoCoF_0p15Hzs",
+  "rocof_hz_s": 0.15,
+  "estimator": "Koopman (RK-DPMU)",
+  "family": "Data-driven",
+  "best_params": {
+    "nominal_f": 60.0,
+    "n_cycles": 1.84096707701317
+  },
+  "tuning_meta": {
+    "mode": "per_scenario_best_tuning",
+    "objective": "minimize_m1_rmse_hz",
+    "n_trials_requested": 25,
+    "n_trials_executed": 25,
+    "tune_eval_runs": 2,
+    "sampler_mode_effective": "tpe",
+    "best_objective": 0.002581819366963724
+  },
+  "n_mc_runs": 2
+}
