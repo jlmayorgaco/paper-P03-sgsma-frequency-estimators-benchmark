@@ -42,24 +42,17 @@ base includes:
 `-- REVIEW.md
 ```
 
-## Canonical execution paths
+## Canonical execution path
 
-There are currently two code universes in the repository:
-
-- `src/main.py`
-  Used by the camera-ready paper workflow described in `AGENTS.md`.
-- `src/pipelines/full_mc_benchmark.py`
-  The reorganized benchmarking pipeline derived from the previous
-  `tests/montecarlo/test_dedicated_smoke_test.py` workflow.
-
-If you are working on the new modular benchmark structure, use:
+The active benchmark flow is the modular pipeline under `src/pipelines/`.
+Use:
 
 ```bash
 cd src
 python -m pipelines.full_mc_benchmark
 ```
 
-Generated dashboard artifacts are written to:
+Generated canonical artifacts are written to:
 
 - `artifacts/full_mc_benchmark/`
 
@@ -80,6 +73,29 @@ debuggable while preserving a single orchestration entry point:
 - `src/plotting/benchmark/generate_mega_dashboards.py`
 - `src/plotting/benchmark/mega_dashboard1.py`
 - `src/plotting/benchmark/mega_dashboard2_p*.py`
+
+## Quickstart (CLI)
+
+```bash
+pip install -r requirements.txt
+pip install -e .
+openfreqbench env doctor
+openfreqbench benchmark run
+openfreqbench benchmark validate
+```
+
+Current CLI domains:
+- `openfreqbench benchmark ...`
+- `openfreqbench andes ...`
+- `openfreqbench stats ...`
+- `openfreqbench report ...`
+- `openfreqbench env doctor`
+- `openfreqbench quality-gate --profile <canonical|legacy|manual-nightly>`
+
+Planned v1 CLI matrix modes (roadmap):
+- run one scenario against all estimators
+- run one estimator against all scenarios
+- run subset x subset matrix batches
 
 ## Python environment
 
@@ -187,9 +203,12 @@ hacks, content must be reduced instead of forcing the template.
 
 The repository now includes a `pyproject.toml` and MIT license.
 
-## Upgrade to v1.0.0
+## Versioning status
 
-The CLI namespace has moved from `sgsma-*` to `openfreqbench`.
+Current package version in `pyproject.toml` is `0.1.0`.
+The target stabilization milestone is `v1.0.0`.
+
+The CLI namespace has moved from `sgsma-*` to `openfreqbench`:
 
 - `sgsma-full-benchmark` -> `openfreqbench benchmark run`
 - `sgsma-sync-paper-artifacts` -> `openfreqbench benchmark sync-paper`
@@ -236,10 +255,14 @@ docker run --rm -v ${PWD}/artifacts:/workspace/artifacts openfreqbench:full ande
 
 ## Artifact policy
 
-Heavy generated outputs under `artifacts/full_mc_benchmark/` and
-`tests/montecarlo/outputs/` are intentionally not versioned. Regenerate them
-from the canonical pipeline and validate with
-`python -m pipelines.validate_canonical_artifacts`.
+Policy for new pull requests:
+- do not add heavy generated outputs under `artifacts/full_mc_benchmark/`
+- do not add heavy generated outputs under `tests/montecarlo/outputs/`
+- regenerate locally from the canonical pipeline and validate with:
+  `python -m pipelines.validate_canonical_artifacts`
+
+Legacy generated outputs may still exist in history and will be cleaned in a
+dedicated repository hygiene pass.
 
 ## Current status
 

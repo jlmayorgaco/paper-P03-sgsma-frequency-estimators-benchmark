@@ -31,7 +31,26 @@ Ship a reproducible, modular, and publication-grade open-source benchmark platfo
 - Acceptance:
   - Canonical CI is stable across repeated runs.
 
-## Phase 4 - OSS Completeness (Day 3-4)
+## Phase 3.5 - CLI Matrix Execution & Product UX (Day 3-4)
+- Extend CLI run modes to support:
+  - one scenario x all estimators
+  - one estimator x all scenarios
+  - subset x subset matrix batches
+- Add run-selection ergonomics:
+  - include/exclude filters
+  - explicit dry-run summary before execution
+- Acceptance:
+  - New run modes are documented and covered by CLI tests.
+  - Users can execute targeted benchmark slices without modifying source code.
+
+## Phase 4 - Reporting/Plotting Professionalization (Day 4-5)
+- Standardize publication plot style profiles and export targets.
+- Expand generated report sections (rankings, robustness, tradeoffs, confidence intervals).
+- Acceptance:
+  - Report + plotting outputs are deterministic and consistent across runs.
+  - Outputs are directly reusable for paper and release notes.
+
+## Phase 5 - OSS Completeness (Day 5-6)
 - Finalize maintainership docs:
   - `CONTRIBUTING.md`
   - `CODE_OF_CONDUCT.md`
@@ -42,7 +61,7 @@ Ship a reproducible, modular, and publication-grade open-source benchmark platfo
 - Acceptance:
   - External collaborator can install, run canonical checks, and open a PR with clear guidance.
 
-## Phase 5 - Release & Archival (Day 4-5)
+## Phase 6 - Release & Archival (Day 6-7)
 - Cut `v1.0.0` tag and release notes.
 - Attach reproducibility notes:
   - commit hash

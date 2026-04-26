@@ -16,6 +16,25 @@ body:
       label: Proposed solution
     validations:
       required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Primary area
+      options:
+        - CLI / Execution modes
+        - Benchmark pipeline
+        - Plotting / Visualization
+        - Statistical analysis / Reports
+        - Docs / Developer UX
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Write concrete pass/fail checks (commands, outputs, files).
+    validations:
+      required: true
   - type: textarea
     id: impact
     attributes:

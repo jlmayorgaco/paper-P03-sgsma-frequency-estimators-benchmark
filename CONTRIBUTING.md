@@ -5,6 +5,9 @@
 2. Install dependencies:
    - `pip install -r requirements.txt`
    - `pip install -e .`
+3. Validate CLI availability:
+   - `openfreqbench --help`
+   - `openfreqbench env doctor`
 
 ## Quality gates
 - Canonical gate (required for PR merge):
@@ -33,3 +36,13 @@
 - [ ] Behavior/doc updates included.
 - [ ] No heavy generated artifacts added.
 - [ ] If benchmark behavior changed, artifact validator command/result provided.
+
+## CLI product direction (v1 target)
+Planned UX for benchmark execution modes:
+- scenario against all estimators
+- estimator against all scenarios
+- subset x subset matrix execution
+
+Planned output upgrades:
+- publication-ready plots (consistent styles and export profiles)
+- richer comparative reports with stronger statistical summaries
