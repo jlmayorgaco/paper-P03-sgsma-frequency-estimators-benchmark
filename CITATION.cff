@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+title: "SGSMA Frequency Estimators Benchmark"
+message: "If you use this software, please cite it using the metadata below."
+type: software
+authors:
+  - family-names: "Lugo"
+    given-names: "Juan"
+repository-code: "https://github.com/jlmayorgaco/paper-P03-sgsma-frequency-estimators-benchmark"
+license: "MIT"
+version: "0.1.0"
+date-released: "2026-04-25"

@@ -1,0 +1,18 @@
+services:
+  openfreqbench:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./artifacts:/workspace/artifacts
+      - ./reports:/workspace/reports
+    command: ["quality-gate", "--profile", "canonical"]
+
+  openfreqbench-full:
+    build:
+      context: .
+      dockerfile: Dockerfile.full
+    volumes:
+      - ./artifacts:/workspace/artifacts
+      - ./reports:/workspace/reports
+    command: ["andes", "run-ieee39"]

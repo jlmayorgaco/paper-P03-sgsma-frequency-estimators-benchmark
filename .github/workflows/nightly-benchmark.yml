@@ -1,0 +1,42 @@
+name: nightly-benchmark
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * *"
+
+jobs:
+  full-benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Manual/nightly gate
+        env:
+          BENCHMARK_N_TRIALS_TUNING: "500"
+          BENCHMARK_N_MC_RUNS: "100"
+        run: |
+          openfreqbench quality-gate --profile manual-nightly
+          openfreqbench andes run-ieee39 --seed 12345
+          openfreqbench stats run --fail-on-blocked
+          openfreqbench report build
+
+      - name: Upload nightly artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-openfreqbench-artifacts
+          path: |
+            artifacts/full_mc_benchmark/**
+            reports/**

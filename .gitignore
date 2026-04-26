@@ -17,6 +17,7 @@ Thumbs.db
 __pycache__/
 *.py[cod]
 *$py.class
+*.egg-info/
 */**/*.nbc
 *.nbc
 *.csv
@@ -49,3 +50,7 @@ temp/*
 # IDE-specific caches
 .vscode/settings.json
 .idea/workspace.xml
+
+# Benchmark artifact policy (do not version heavy generated outputs)
+artifacts/full_mc_benchmark/
+tests/montecarlo/outputs/

@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openfreqbench"
+version = "0.1.0"
+description = "Modular Monte Carlo benchmark for dynamic grid frequency estimators."
+readme = "README.md"
+requires-python = ">=3.13"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Juan Lugo" }
+]
+dependencies = [
+  "numpy>=2.0",
+  "scipy>=1.11",
+  "pandas>=2.2",
+  "matplotlib>=3.8",
+  "optuna>=4.0",
+  "numba>=0.60",
+  "tqdm>=4.66",
+  "scikit-learn>=1.5",
+  "PyYAML>=6.0",
+]
+keywords = ["power-systems", "frequency-estimation", "benchmark", "monte-carlo", "sgsma"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.13",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering",
+]
+
+[project.urls]
+Repository = "https://github.com/jlmayorgaco/paper-P03-sgsma-frequency-estimators-benchmark"
+
+[project.scripts]
+openfreqbench = "pipelines.openfreqbench_cli:main"
+
+[project.optional-dependencies]
+benchmark-full = ["torch>=2.0"]
+andes = ["andes>=1.9"]
+dev = ["pytest>=8.0", "ruff>=0.8"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["analysis*", "estimators*", "pipelines*", "plotting*", "scenarios*", "utils*"]

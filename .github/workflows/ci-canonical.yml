@@ -1,0 +1,32 @@
+name: canonical-ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  canonical-gate:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Canonical quality gate
+        run: |
+          openfreqbench env doctor
+          openfreqbench quality-gate --profile canonical
