@@ -151,6 +151,8 @@ def md2_subplot_30(ax, data_bundle):
     y_span = max(float(np.max(y_log) - np.min(y_log)), 1e-9)
     for i, est in enumerate(ests):
         short = est.replace(" (RK-DPMU)", "").replace("Type-3 ", "T3-")
+        if short == "IPDFT":
+            short = "IpDFT"
         fam = estimator_families.get(est, "Adaptive")
         clr = family_palette.get(fam, "#444444")
         dx, dy = offsets[i]
@@ -220,3 +222,4 @@ def md2_subplot_30(ax, data_bundle):
         labelspacing=0.24,
         columnspacing=0.9,
     )
+

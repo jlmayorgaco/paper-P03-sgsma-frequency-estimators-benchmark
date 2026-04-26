@@ -22,6 +22,7 @@ _FAMILY_PALETTE = {
 _SHORT_EST = {
     "Koopman (RK-DPMU)": "Koopman",
     "Type-3 SOGI-PLL": "T3-SOGI",
+    "IPDFT": "IpDFT",
 }
 
 
@@ -148,3 +149,4 @@ def md2_subplot_20(ax, data_bundle):
         labelspacing=0.22,
         ncol=2,
     )
+

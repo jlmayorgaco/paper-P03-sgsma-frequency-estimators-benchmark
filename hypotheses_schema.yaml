@@ -1,0 +1,24 @@
+schema_version: "1.0"
+required_fields:
+  - id
+  - metric
+  - group_a
+  - group_b
+  - alpha
+  - correction
+  - mode
+  - test
+allowed:
+  correction: [holm, bh]
+  mode: [preregistered, exploratory]
+  test: [mw]
+field_types:
+  id: str
+  title: str
+  metric: str
+  group_a: str
+  group_b: str
+  alpha: float
+  correction: str
+  mode: str
+  test: str

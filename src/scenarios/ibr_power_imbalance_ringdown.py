@@ -36,6 +36,7 @@ class IBRPowerImbalanceRingdownScenario(Scenario):
         
         "t_event_s":        1.0,
         "phase_jump_event_rad": 10.0 * math.pi / 180.0, # Sync error jump at reconn
+        "phase_jump_rad":       10.0 * math.pi / 180.0, # legacy alias -> event jump
         
         "ring_jump_hz":     1.0,
         "ring_freq_hz":     4.0,
@@ -48,6 +49,7 @@ class IBRPowerImbalanceRingdownScenario(Scenario):
         "interharmonic_pu": 0.02,  # 2% interharmonic by default
         
         "white_noise_sigma": 0.005,
+        "noise_sigma":       None,  # legacy alias -> white_noise_sigma
         "brown_noise_sigma": 0.000000001,
         "impulse_prob":      0.001,
         "impulse_mag":       0.2,
@@ -60,10 +62,20 @@ class IBRPowerImbalanceRingdownScenario(Scenario):
             "low":  5.0 * math.pi / 180.0,
             "high": 15.0 * math.pi / 180.0,
         },
+        "phase_jump_rad": {
+            "kind": "uniform",
+            "low":  5.0 * math.pi / 180.0,
+            "high": 15.0 * math.pi / 180.0,
+        },
         "amp_fault_pu": {
             "kind": "uniform",
             "low":  0.4,
             "high": 0.8,
+        },
+        "amp_post_pu": {
+            "kind": "uniform",
+            "low": 0.85,
+            "high": 1.05,
         },
         "ring_tau_s": {
             "kind": "uniform",
@@ -93,6 +105,7 @@ class IBRPowerImbalanceRingdownScenario(Scenario):
         phase_jump_ramp_rad: float = 45.0 * math.pi / 180.0,
         t_event_s:         float = 1.0,
         phase_jump_event_rad: float = 10.0 * math.pi / 180.0,
+        phase_jump_rad:    float | None = None,
         ring_jump_hz:      float = 1.0,
         ring_freq_hz:      float = 4.0,
         ring_tau_s:        float = 0.25,
@@ -101,6 +114,7 @@ class IBRPowerImbalanceRingdownScenario(Scenario):
         interharmonic_hz:  float = 32.5,
         interharmonic_pu:  float = 0.02,
         white_noise_sigma: float = 0.005,
+        noise_sigma:       float | None = None,
         brown_noise_sigma: float = 0.0003,
         impulse_prob:      float = 0.001,
         impulse_mag:       float = 0.2,
@@ -108,6 +122,10 @@ class IBRPowerImbalanceRingdownScenario(Scenario):
     ) -> ScenarioData:
 
         rng = np.random.default_rng(seed)
+        if phase_jump_rad is not None:
+            phase_jump_event_rad = float(phase_jump_rad)
+        if noise_sigma is not None:
+            white_noise_sigma = float(noise_sigma)
         dt  = 1.0 / FS_PHYSICS
         t   = np.arange(0.0, duration_s, dt, dtype=float)
 
@@ -219,6 +237,7 @@ class IBRPowerImbalanceRingdownScenario(Scenario):
                 "phase_jump_ramp_rad": phase_jump_ramp_rad,
                 "t_event_s":         t_event_s,
                 "phase_jump_event_rad": phase_jump_event_rad,
+                "phase_jump_rad":      phase_jump_event_rad,
                 "ring_jump_hz":      ring_jump_hz,
                 "ring_freq_hz":      ring_freq_hz,
                 "ring_tau_s":        ring_tau_s,
@@ -227,6 +246,7 @@ class IBRPowerImbalanceRingdownScenario(Scenario):
                 "interharmonic_hz":  interharmonic_hz,
                 "interharmonic_pu":  interharmonic_pu,
                 "white_noise_sigma": white_noise_sigma,
+                "noise_sigma":       white_noise_sigma,
                 "brown_noise_sigma": brown_noise_sigma,
                 "impulse_prob":      impulse_prob,
                 "impulse_mag":       impulse_mag,

@@ -27,6 +27,7 @@ ESTIMATOR_COLORS = {
 
 SHORT_LABELS = {
     "Koopman (RK-DPMU)": "Koopman",
+    "IPDFT": "IpDFT",
 }
 
 
@@ -253,3 +254,4 @@ def plot_clean_tracking_panel(
         labelspacing=0.22,
     )
     legend.get_frame().set_linewidth(0.7)
+

@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
+from typing import Literal
 
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
@@ -16,6 +18,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 LEGACY_OUTPUT_DIR = ROOT / "tests" / "montecarlo" / "outputs"
 
+from pipelines.benchmark_definition import ESTIMATOR_FAMILIES
 from pipelines.paths import BENCHMARK_OUTPUT_DIR, FIGURE2_BASENAME, JSON_REPORT_NAME
 from plotting.benchmark.mega_dashboard1 import plot_megadashboard1
 from plotting.benchmark.mega_dashboard2_p00 import md2_subplot_00
@@ -29,6 +32,7 @@ from plotting.benchmark.mega_dashboard2_p31 import md2_subplot_31
 
 BASE_RESULTS_DIR = BENCHMARK_OUTPUT_DIR
 DATA_RESULTS_DIR = BENCHMARK_OUTPUT_DIR
+ALLOW_LEGACY_FALLBACK = False
 
 _IEEE_RC = {
     "font.family": "serif",
@@ -47,23 +51,7 @@ _IEEE_RC = {
 
 _IEEE_FULL_W = 7.16
 
-_ESTIMATOR_FAMILIES = {
-    "ZCD": "Loop-based",
-    "PLL": "Loop-based",
-    "SOGI-PLL": "Loop-based",
-    "SOGI-FLL": "Loop-based",
-    "Type-3 SOGI-PLL": "Loop-based",
-    "EKF": "Model-based",
-    "RA-EKF": "Model-based",
-    "UKF": "Model-based",
-    "IPDFT": "Window-based",
-    "TFT": "Window-based",
-    "Prony": "Window-based",
-    "ESPRIT": "Window-based",
-    "TKEO": "Adaptive",
-    "RLS": "Adaptive",
-    "Koopman (RK-DPMU)": "Data-driven",
-}
+_ESTIMATOR_FAMILIES = dict(ESTIMATOR_FAMILIES)
 
 _FAMILY_PALETTE = {
     "Model-based": "#1565C0",
@@ -87,7 +75,7 @@ COLORS_6 = {
 
 def _candidate_roots() -> list[Path]:
     roots = [Path(DATA_RESULTS_DIR)]
-    if LEGACY_OUTPUT_DIR not in roots:
+    if ALLOW_LEGACY_FALLBACK and LEGACY_OUTPUT_DIR not in roots:
         roots.append(LEGACY_OUTPUT_DIR)
     return roots
 
@@ -184,17 +172,34 @@ def orchestrate_dashboard2(
     print(f"[OK] Dashboard saved: {out_png}")
 
 
-def generate_benchmark_figures(base_results_dir: Path | None = None) -> None:
-    global BASE_RESULTS_DIR, DATA_RESULTS_DIR
+def generate_benchmark_figures(
+    base_results_dir: Path | None = None,
+    data_mode: Literal["canonical", "legacy"] = "canonical",
+) -> None:
+    global BASE_RESULTS_DIR, DATA_RESULTS_DIR, ALLOW_LEGACY_FALLBACK
+    if data_mode not in {"canonical", "legacy"}:
+        raise ValueError(f"Unsupported data_mode={data_mode!r}. Use 'canonical' or 'legacy'.")
+
     if base_results_dir is not None:
         BASE_RESULTS_DIR = Path(base_results_dir)
     BASE_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     DATA_RESULTS_DIR = BASE_RESULTS_DIR
+    ALLOW_LEGACY_FALLBACK = data_mode == "legacy"
 
-    plot_megadashboard1(BASE_RESULTS_DIR, _IEEE_RC, _IEEE_FULL_W, 11.0)
+    plot_megadashboard1(
+        BASE_RESULTS_DIR,
+        _IEEE_RC,
+        _IEEE_FULL_W,
+        11.0,
+        allow_legacy_fallback=ALLOW_LEGACY_FALLBACK,
+    )
 
     report_path = DATA_RESULTS_DIR / "global_metrics_report.csv"
-    if not report_path.exists() and (LEGACY_OUTPUT_DIR / "global_metrics_report.csv").exists():
+    if (
+        ALLOW_LEGACY_FALLBACK
+        and not report_path.exists()
+        and (LEGACY_OUTPUT_DIR / "global_metrics_report.csv").exists()
+    ):
         DATA_RESULTS_DIR = LEGACY_OUTPUT_DIR
         report_path = DATA_RESULTS_DIR / "global_metrics_report.csv"
         print(f"[WARN] Canonical benchmark summary missing. Reading dashboard data from legacy outputs: {DATA_RESULTS_DIR}")
@@ -213,11 +218,16 @@ def generate_benchmark_figures(base_results_dir: Path | None = None) -> None:
             if "scenario" not in df_raw.columns and "scenario_name" in df_raw.columns:
                 df_raw = df_raw.rename(columns={"scenario_name": "scenario"})
             print(f"[OK] Loaded {len(df_raw)} raw MC records for boxplot.")
-    else:
+    elif ALLOW_LEGACY_FALLBACK:
         print("[WARN] benchmark_full_report.json not found - boxplot shows placeholder.")
+    else:
+        raise FileNotFoundError(
+            f"[!] Missing benchmark_full_report.json under canonical path: {DATA_RESULTS_DIR}"
+        )
 
     orchestrate_dashboard2(df_global, df_raw)
 
 
 if __name__ == "__main__":
-    generate_benchmark_figures()
+    mode = os.getenv("BENCHMARK_DASHBOARD_MODE", "canonical").strip().lower()
+    generate_benchmark_figures(data_mode=mode)

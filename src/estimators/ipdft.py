@@ -107,7 +107,7 @@ class IPDFT_Estimator(BaseFrequencyEstimator):
     def __init__(self, nominal_f: float = 60.0, cycles: float = 2.0, decim: int = 1) -> None:
         self.nominal_f = float(nominal_f)
         self.cycles = float(cycles)
-        self.decim = int(decim) # Inactivo, mantenido por compatibilidad
+        self.decim = max(1, int(decim))
         self.dt = DT_DSP 
         
         self._update_internals()
@@ -147,7 +147,7 @@ class IPDFT_Estimator(BaseFrequencyEstimator):
         self._last_f    = self.nominal_f
 
     def structural_latency_samples(self) -> int:
-        return self.sz // 2
+        return self.sz * self.decim
 
     @classmethod
     def default_params(cls) -> dict[str, float | int]:
@@ -162,22 +162,35 @@ class IPDFT_Estimator(BaseFrequencyEstimator):
         return float(self.step_vectorized(v_array)[0])
 
     def step_vectorized(self, v_array: np.ndarray) -> np.ndarray:
-        f_hat, clamps, self._buf_idx, self._buf_count, self._last_f = \
-            _ipdft_direct_vectorized(
-                v_array=v_array.astype(np.float64),
-                z_buf=self._z_buf,
-                basis_real=self.basis_real,
-                basis_imag=self.basis_imag,
-                sz=self.sz,
-                k_nom=self.k_nom,
-                res=self.res,
-                f_nom=self.nominal_f,
-                buf_idx=self._buf_idx,
-                buf_count=self._buf_count,
-                last_f=self._last_f,
-            )
+        arr = v_array.astype(np.float64)
+        arr_ds = arr[::self.decim] if self.decim > 1 else arr
+
+        f_hat_ds, clamps, self._buf_idx, self._buf_count, self._last_f = _ipdft_direct_vectorized(
+            v_array=arr_ds,
+            z_buf=self._z_buf,
+            basis_real=self.basis_real,
+            basis_imag=self.basis_imag,
+            sz=self.sz,
+            k_nom=self.k_nom,
+            res=self.res,
+            f_nom=self.nominal_f,
+            buf_idx=self._buf_idx,
+            buf_count=self._buf_count,
+            last_f=self._last_f,
+        )
         self._total_clamps += clamps
-        return f_hat
+        if self.decim == 1:
+            return f_hat_ds
+
+        out = np.empty(len(arr), dtype=np.float64)
+        j = 0
+        hold = self._last_f
+        for i in range(len(arr)):
+            if i % self.decim == 0 and j < len(f_hat_ds):
+                hold = f_hat_ds[j]
+                j += 1
+            out[i] = hold
+        return out
     
     def estimate(self, t: np.ndarray, v: np.ndarray) -> np.ndarray:
         dt_new = float(t[1] - t[0])

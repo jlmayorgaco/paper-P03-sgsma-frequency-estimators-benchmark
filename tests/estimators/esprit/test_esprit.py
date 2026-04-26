@@ -4,6 +4,8 @@ import numpy as np
 import pytest
 from pathlib import Path
 
+pytestmark = pytest.mark.canonical
+
 # Configuración de rutas
 ROOT = Path(__file__).resolve().parents[3]
 SRC = ROOT / "src"

@@ -89,6 +89,7 @@ from pipelines.benchmark_definition import (
 
 # â”€â”€ Project imports â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 from analysis.monte_carlo_engine import MonteCarloEngine
+from analysis.advanced_benchmark_analysis import AdvancedBenchmarkAnalyzer, AdvancedStatsConfig
 from scenarios.ibr_multi_event import IBRMultiEventScenario
 from scenarios.ieee_freq_ramp import IEEEFreqRampScenario
 from scenarios.ieee_freq_step import IEEEFreqStepScenario
@@ -162,6 +163,10 @@ OPTUNA_SAMPLER_MODE = _env_choice(
 OPTUNA_SEED = _env_int("BENCHMARK_OPTUNA_SEED", 42, minimum=0)
 APPLY_TRIAL_OVERRIDES = _env_bool("BENCHMARK_APPLY_TRIAL_OVERRIDES", True)
 EXCLUDED_ESTIMATOR_LABELS = _env_csv_list("BENCHMARK_EXCLUDE_ESTIMATORS")
+INCLUDED_ESTIMATOR_LABELS = _env_csv_list("BENCHMARK_INCLUDE_ESTIMATORS")
+INCLUDED_SCENARIO_NAMES = set(_env_csv_list("BENCHMARK_INCLUDE_SCENARIOS"))
+ADV_BOOTSTRAP_ITERS = _env_int("BENCHMARK_ADV_BOOTSTRAP_ITERS", 2000, minimum=200)
+RUN_ANDES_IEEE39 = _env_bool("BENCHMARK_RUN_ANDES_IEEE39", False)
 
 BASE_RESULTS_DIR = BENCHMARK_OUTPUT_DIR
 # --- Generador de Escenarios DinÃ¡micos ---
@@ -252,6 +257,13 @@ ringdown_variants = [
 
 # Lista final unificada
 SCENARIOS = BASE_SCENARIOS + mag_variants + ramp_variants + ringdown_variants
+if INCLUDED_SCENARIO_NAMES:
+    SCENARIOS = [sc for sc in SCENARIOS if sc.get_name() in INCLUDED_SCENARIO_NAMES]
+    if not SCENARIOS:
+        raise ValueError(
+            "BENCHMARK_INCLUDE_SCENARIOS produced an empty scenario set. "
+            "Check scenario names."
+        )
 
 # Metric columns written by MonteCarloEngine / metrics.py
 METRIC_COLUMNS = [
@@ -272,7 +284,13 @@ METRIC_COLUMNS = [
     "m14_struct_latency_ms",
     "m15_pcb_compliant",
     "m16_heatmap_pass",
-    "m17_hw_class"
+    "m17_hw_class",
+    "m18_mem_peak_kb",
+    "m19_mem_mean_kb",
+    "m20_runtime_jitter_us",
+    "m21_startup_valid_samples",
+    "m22_invalid_output_rate",
+    "m23_memory_key_count",
 ]
 
 METRIC_LABELS: dict[str, str] = {
@@ -293,7 +311,13 @@ METRIC_LABELS: dict[str, str] = {
     "m14_struct_latency_ms": "STRUCT_LATENCY_ms",
     "m15_pcb_compliant": "PCB_COMPLIANT",
     "m16_heatmap_pass": "HEATMAP_PASS",
-    "m17_hw_class": "HW_CLASS"
+    "m17_hw_class": "HW_CLASS",
+    "m18_mem_peak_kb": "MEM_PEAK_kB",
+    "m19_mem_mean_kb": "MEM_MEAN_kB",
+    "m20_runtime_jitter_us": "RUNTIME_JITTER_us",
+    "m21_startup_valid_samples": "STARTUP_VALID_SAMPLES",
+    "m22_invalid_output_rate": "INVALID_OUTPUT_RATE",
+    "m23_memory_key_count": "MEMORY_KEY_COUNT",
 }
 
 # â”€â”€ IEEE publication-quality style â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -441,6 +465,62 @@ SEARCH_SPACES: dict[str, Any] = {
         # Fixed pretrained model. No Optuna hyperparameters in the benchmark.
     },
 }
+
+# Experimental estimators can be promoted with BENCHMARK_INCLUDE_EXPERIMENTAL=1.
+SEARCH_SPACES.update(
+    {
+        "CKF": lambda trial: {
+            "gain": trial.suggest_float("gain", 1e-4, 0.2, log=True),
+            "q": trial.suggest_float("q", 1e-8, 1e-1, log=True),
+            "r": trial.suggest_float("r", 1e-8, 1e-1, log=True),
+        },
+        "SR-UKF": lambda trial: {
+            "gain": trial.suggest_float("gain", 1e-4, 0.2, log=True),
+            "alpha": trial.suggest_float("alpha", 1e-4, 1.0, log=True),
+            "beta": trial.suggest_float("beta", 0.5, 4.0),
+        },
+        "Adaptive-EKF": lambda trial: {
+            "gain": trial.suggest_float("gain", 1e-4, 0.2, log=True),
+            "adapt_rate": trial.suggest_float("adapt_rate", 1e-4, 0.2, log=True),
+        },
+        "IMM-EKF/UKF": lambda trial: {
+            "gain": trial.suggest_float("gain", 1e-4, 0.2, log=True),
+            "mix_prob": trial.suggest_float("mix_prob", 0.01, 0.99),
+        },
+        "Hinf-KF": lambda trial: {
+            "gain": trial.suggest_float("gain", 1e-4, 0.2, log=True),
+            "gamma": trial.suggest_float("gamma", 0.5, 5.0),
+        },
+        "WLS-IpDFT": lambda trial: {
+            "gain": trial.suggest_float("gain", 1e-4, 0.1, log=True),
+            "window_cycles": trial.suggest_float("window_cycles", 0.5, 6.0),
+        },
+        "Quinn-Fernandes": lambda trial: {
+            "gain": trial.suggest_float("gain", 1e-4, 0.1, log=True),
+            "window_cycles": trial.suggest_float("window_cycles", 0.5, 6.0),
+        },
+        "Jacobsen-Interpolated-DFT": lambda trial: {
+            "gain": trial.suggest_float("gain", 1e-4, 0.1, log=True),
+            "window_cycles": trial.suggest_float("window_cycles", 0.5, 6.0),
+        },
+        "Sliding-Least-Squares": lambda trial: {
+            "gain": trial.suggest_float("gain", 1e-4, 0.1, log=True),
+            "window_cycles": trial.suggest_float("window_cycles", 0.5, 8.0),
+        },
+        "MUSIC": lambda trial: {
+            "gain": trial.suggest_float("gain", 1e-4, 0.1, log=True),
+            "subspace_order": trial.suggest_int("subspace_order", 2, 12),
+        },
+        "Matrix-Pencil": lambda trial: {
+            "gain": trial.suggest_float("gain", 1e-4, 0.1, log=True),
+            "order": trial.suggest_int("order", 2, 12),
+        },
+        "Hilbert-Phase-Derivative": lambda trial: {
+            "gain": trial.suggest_float("gain", 1e-4, 0.1, log=True),
+            "phase_smoothing": trial.suggest_float("phase_smoothing", 1e-3, 0.9, log=True),
+        },
+    }
+)
 
 
 # Override trials for computationally heavy estimators
@@ -614,10 +694,27 @@ def _build_optuna_study(space_fn: Any, n_trials: int) -> tuple[optuna.Study, int
 def load_estimators() -> dict[str, type]:
     """Load the canonical active estimator registry for the modular benchmark."""
     estimators = load_active_estimators()
-    if not EXCLUDED_ESTIMATOR_LABELS:
-        return estimators
-
     by_lower = {label.lower(): label for label in estimators}
+    selected_labels = set(estimators.keys())
+
+    if INCLUDED_ESTIMATOR_LABELS:
+        included_hits: set[str] = set()
+        unknown_includes: list[str] = []
+        for raw in INCLUDED_ESTIMATOR_LABELS:
+            hit = by_lower.get(raw.lower())
+            if hit is None:
+                unknown_includes.append(raw)
+                continue
+            included_hits.add(hit)
+        if unknown_includes:
+            print(
+                "[WARN] BENCHMARK_INCLUDE_ESTIMATORS contains unknown labels: "
+                f"{unknown_includes}. Known labels: {sorted(estimators.keys())}"
+            )
+        if not included_hits:
+            raise ValueError("BENCHMARK_INCLUDE_ESTIMATORS did not match any estimator labels.")
+        selected_labels = included_hits
+
     excluded_labels: set[str] = set()
     unknown: list[str] = []
 
@@ -634,7 +731,8 @@ def load_estimators() -> dict[str, type]:
             f"{unknown}. Known labels: {sorted(estimators.keys())}"
         )
 
-    filtered = {label: cls for label, cls in estimators.items() if label not in excluded_labels}
+    selected_labels = {label for label in selected_labels if label not in excluded_labels}
+    filtered = {label: cls for label, cls in estimators.items() if label in selected_labels}
     if not filtered:
         raise ValueError("Estimator filter removed all estimators. Check BENCHMARK_EXCLUDE_ESTIMATORS.")
 
@@ -678,7 +776,13 @@ def validate_search_spaces(estimators: dict[str, type]) -> None:
             continue
         fake = _FakeTrial()
         suggested_params = set(space_fn(fake).keys())
-        valid_params = set(inspect.signature(cls.__init__).parameters) - {"self"}
+        sig = inspect.signature(cls.__init__)
+        has_var_kwargs = any(
+            p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
+        )
+        if has_var_kwargs:
+            continue
+        valid_params = set(sig.parameters) - {"self"}
         unknown = suggested_params - valid_params
         if unknown:
             errors.append(
@@ -1115,6 +1219,8 @@ def run_phase_2(allowed_estimators: set[str] | None = None) -> None:
         if not sc_dir.is_dir():
             continue
         sc_name = sc_dir.name
+        if INCLUDED_SCENARIO_NAMES and sc_name not in INCLUDED_SCENARIO_NAMES:
+            continue
         sc_stats: list[dict[str, Any]] = []
 
         for est_dir in sorted(sc_dir.iterdir()):
@@ -1136,8 +1242,20 @@ def run_phase_2(allowed_estimators: set[str] | None = None) -> None:
                 "family": _ESTIMATOR_FAMILIES.get(est_name, "Unknown"),
             }
             for col in available:
-                row[f"{col}_mean"] = float(df[col].mean())
-                row[f"{col}_std"] = float(df[col].std())
+                series_num = pd.to_numeric(df[col], errors="coerce")
+                if series_num.notna().any():
+                    row[f"{col}_mean"] = float(series_num.mean())
+                    row[f"{col}_std"] = float(series_num.std())
+                else:
+                    # Preserve non-numeric metric aggregates (e.g., class labels) deterministically.
+                    values = [str(v) for v in df[col].dropna().tolist()]
+                    if values:
+                        counts: dict[str, int] = {}
+                        for v in values:
+                            counts[v] = counts.get(v, 0) + 1
+                        row[f"{col}_mode"] = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[0][0]
+                    else:
+                        row[f"{col}_mode"] = "NA"
             sc_stats.append(row)
             all_stats.append(row)
 
@@ -1176,6 +1294,9 @@ def run_phase_3() -> None:
     df_global = pd.read_csv(report_path)
     _plot_per_scenario_dashboards(df_global)
     _plot_global_tradeoff(df_global)
+    if INCLUDED_SCENARIO_NAMES:
+        print("  [i] Skipping mega dashboards due BENCHMARK_INCLUDE_SCENARIOS filtered run.")
+        return
     generate_benchmark_figures(BASE_RESULTS_DIR)
 
 
@@ -1827,10 +1948,16 @@ def _build_aggregated_dataframe(df_long: pd.DataFrame) -> pd.DataFrame:
 
     group_cols = ["scenario", "estimator", "family"]
     agg_map: dict[str, list[str]] = {}
+    non_numeric_metrics: list[str] = []
 
     for metric in METRIC_COLUMNS:
         if metric in df_long.columns:
-            agg_map[metric] = ["mean", "std", "median", "min", "max"]
+            series_num = pd.to_numeric(df_long[metric], errors="coerce")
+            if series_num.notna().any():
+                df_long[metric] = series_num
+                agg_map[metric] = ["mean", "std", "median", "min", "max"]
+            else:
+                non_numeric_metrics.append(metric)
 
     if not agg_map:
         return pd.DataFrame()
@@ -1838,6 +1965,13 @@ def _build_aggregated_dataframe(df_long: pd.DataFrame) -> pd.DataFrame:
     df_agg = df_long.groupby(group_cols, dropna=False).agg(agg_map)
     df_agg.columns = [f"{col}_{stat}" for col, stat in df_agg.columns]
     df_agg = df_agg.reset_index()
+    for metric in non_numeric_metrics:
+        mode_df = (
+            df_long.groupby(group_cols, dropna=False)[metric]
+            .agg(lambda s: sorted({str(v): int((s.astype(str) == str(v)).sum()) for v in s.dropna()}.items(), key=lambda kv: (-kv[1], kv[0]))[0][0] if s.dropna().size else "NA")
+            .reset_index(name=f"{metric}_mode")
+        )
+        df_agg = df_agg.merge(mode_df, on=group_cols, how="left")
     return df_agg
 
 
@@ -2135,7 +2269,7 @@ def _build_family_hypothesis_tests(df_long: pd.DataFrame) -> dict[str, Any]:
         groups = []
         group_names = []
         for fam, df_fam in valid.groupby("family"):
-            vals = df_fam[metric].to_numpy(dtype=float)
+            vals = pd.to_numeric(df_fam[metric], errors="coerce").dropna().to_numpy(dtype=float)
             if len(vals) >= 2:
                 groups.append(vals)
                 group_names.append(str(fam))
@@ -2172,6 +2306,62 @@ def _build_family_hypothesis_tests(df_long: pd.DataFrame) -> dict[str, Any]:
         out["tests"][label] = test_block
 
     return out
+
+
+def _build_robust_statistics(df_long: pd.DataFrame, df_agg: pd.DataFrame) -> dict[str, Any]:
+    analyzer = AdvancedBenchmarkAnalyzer(
+        AdvancedStatsConfig(
+            bootstrap_iters=ADV_BOOTSTRAP_ITERS,
+            alpha=0.05,
+            random_seed=OPTUNA_SEED,
+        )
+    )
+    return {
+        "config": {
+            "bootstrap_iters": int(ADV_BOOTSTRAP_ITERS),
+            "alpha": 0.05,
+            "random_seed": int(OPTUNA_SEED),
+        },
+        "bootstrap_ci_rmse": analyzer.estimator_bootstrap_summary(df_long, "m1_rmse_hz"),
+        "bootstrap_ci_cpu": analyzer.estimator_bootstrap_summary(df_long, "m13_cpu_time_us"),
+        "friedman_rmse": analyzer.friedman_test(df_agg, "m1_rmse_hz_mean"),
+        "friedman_cpu": analyzer.friedman_test(df_agg, "m13_cpu_time_us_mean"),
+        "wilcoxon_vs_best_rmse": analyzer.pairwise_wilcoxon_vs_best(
+            df_agg,
+            "m1_rmse_hz_mean",
+            lower_better=True,
+        ),
+        "win_rate_rmse": analyzer.pairwise_win_rate(
+            df_agg,
+            "m1_rmse_hz_mean",
+            lower_better=True,
+        ),
+        "win_rate_cpu": analyzer.pairwise_win_rate(
+            df_agg,
+            "m13_cpu_time_us_mean",
+            lower_better=True,
+        ),
+        "dominance_score_multi_metric": analyzer.dominance_score(
+            df_agg,
+            metric_cols=[
+                "m1_rmse_hz_mean",
+                "m2_mae_hz_mean",
+                "m5_trip_risk_s_mean",
+                "m13_cpu_time_us_mean",
+            ],
+            lower_better=True,
+        ),
+    }
+
+
+def _load_andes_ieee39_manifest() -> dict[str, Any]:
+    manifest_path = BASE_RESULTS_DIR / "andes_ieee39" / "andes_manifest.json"
+    if not manifest_path.exists():
+        return {}
+    try:
+        return json.loads(manifest_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return {"error": f"failed_to_read_andes_manifest: {exc}", "path": str(manifest_path)}
 
 
 def _export_full_benchmark_json(estimators: dict[str, type]) -> Path:
@@ -2224,7 +2414,9 @@ def _export_full_benchmark_json(estimators: dict[str, type]) -> Path:
             "correlations": _build_correlations(df_agg),
             **_build_pca_kmeans(df_agg),
             "family_hypothesis_tests": _build_family_hypothesis_tests(df_long),
+            "robust_statistics": _build_robust_statistics(df_long, df_agg),
         },
+        "andes_ieee39": _load_andes_ieee39_manifest(),
         "artifacts_manifest": {
             "global_metrics_report_csv": str(BASE_RESULTS_DIR / "global_metrics_report.csv"),
             "figure_1_png": str(BASE_RESULTS_DIR / f"{FIGURE1_BASENAME}.png"),
@@ -2257,6 +2449,9 @@ def test_estimators_load() -> None:
 
 def test_estimator_registry_contains_lkf_and_pi_gru() -> None:
     """The active canonical registry must include both LKF variants and PI-GRU."""
+    if INCLUDED_ESTIMATOR_LABELS:
+        # Filtered runs intentionally override the canonical active set.
+        return
     estimators = load_estimators()
     assert "LKF" in estimators, "LKF must load through the active pipeline"
     assert "LKF2" in estimators, "LKF2 must load through the active pipeline"
@@ -2314,6 +2509,14 @@ def main() -> None:
     run_phase_1(estimators)
     run_phase_2(allowed_estimators=set(estimators.keys()))
     run_phase_3()
+    if RUN_ANDES_IEEE39:
+        try:
+            from pipelines.andes_ieee39 import run_andes_ieee39
+
+            print("Running ANDES IEEE39 dynamic scenarios ...")
+            run_andes_ieee39(seed=OPTUNA_SEED)
+        except Exception as exc:
+            print(f"[WARN] ANDES IEEE39 integration skipped: {exc}")
     _export_full_benchmark_json(estimators)
 
     elapsed = (time.time() - t_start) / 60.0

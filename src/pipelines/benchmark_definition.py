@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import os
 from dataclasses import asdict, dataclass
 
 
@@ -49,7 +50,20 @@ ACTIVE_ESTIMATOR_SPECS: tuple[EstimatorSpec, ...] = (
     EstimatorSpec("pi_gru", "pi_gru", "PI_GRU_Estimator", "PI-GRU", "Data-driven", "active", "Included as the physics-informed neural estimator. Requires torch and pretrained weights."),
 )
 
-EXCLUDED_ESTIMATOR_SPECS: tuple[EstimatorSpec, ...] = ()
+EXCLUDED_ESTIMATOR_SPECS: tuple[EstimatorSpec, ...] = (
+    EstimatorSpec("ckf", "ckf", "CKF_Estimator", "CKF", "Model-based", "experimental", "New Kalman-family candidate pending full tuning/validation."),
+    EstimatorSpec("sr_ukf", "sr_ukf", "SR_UKF_Estimator", "SR-UKF", "Model-based", "experimental", "New Kalman-family candidate pending full tuning/validation."),
+    EstimatorSpec("adaptive_ekf", "adaptive_ekf", "Adaptive_EKF_Estimator", "Adaptive-EKF", "Model-based", "experimental", "New Kalman-family candidate pending full tuning/validation."),
+    EstimatorSpec("imm_ekf_ukf", "imm_ekf_ukf", "IMM_EKF_UKF_Estimator", "IMM-EKF/UKF", "Model-based", "experimental", "New Kalman-family candidate pending full tuning/validation."),
+    EstimatorSpec("hinf_frequency_kf", "hinf_frequency_kf", "Hinf_KF_Estimator", "Hinf-KF", "Model-based", "experimental", "New Kalman-family candidate pending full tuning/validation."),
+    EstimatorSpec("wls_ipdft", "wls_ipdft", "WLS_IPDFT_Estimator", "WLS-IpDFT", "Window-based", "experimental", "New windowed estimator candidate pending full tuning/validation."),
+    EstimatorSpec("quinn_fernandes", "quinn_fernandes", "Quinn_Fernandes_Estimator", "Quinn-Fernandes", "Window-based", "experimental", "New windowed estimator candidate pending full tuning/validation."),
+    EstimatorSpec("jacobsen_interpolated_dft", "jacobsen_interpolated_dft", "Jacobsen_Interpolated_DFT_Estimator", "Jacobsen-Interpolated-DFT", "Window-based", "experimental", "New windowed estimator candidate pending full tuning/validation."),
+    EstimatorSpec("sliding_least_squares", "sliding_least_squares", "Sliding_Least_Squares_Estimator", "Sliding-Least-Squares", "Window-based", "experimental", "New windowed estimator candidate pending full tuning/validation."),
+    EstimatorSpec("music_experimental", "music_experimental", "MUSIC_Experimental_Estimator", "MUSIC", "Exotic", "experimental", "New exotic estimator candidate pending full tuning/validation."),
+    EstimatorSpec("matrix_pencil", "matrix_pencil", "Matrix_Pencil_Estimator", "Matrix-Pencil", "Exotic", "experimental", "New exotic estimator candidate pending full tuning/validation."),
+    EstimatorSpec("hilbert_phase_derivative", "hilbert_phase_derivative", "Hilbert_Phase_Derivative_Estimator", "Hilbert-Phase-Derivative", "Exotic", "experimental", "New exotic estimator candidate pending full tuning/validation."),
+)
 
 ALL_ESTIMATOR_SPECS: tuple[EstimatorSpec, ...] = ACTIVE_ESTIMATOR_SPECS + EXCLUDED_ESTIMATOR_SPECS
 
@@ -59,7 +73,11 @@ ESTIMATOR_FAMILIES: dict[str, str] = {
 
 
 def active_estimator_specs() -> list[EstimatorSpec]:
-    return list(ACTIVE_ESTIMATOR_SPECS)
+    include_experimental = os.getenv("BENCHMARK_INCLUDE_EXPERIMENTAL", "1").strip().lower() in {"1", "true", "yes", "on"}
+    if not include_experimental:
+        return list(ACTIVE_ESTIMATOR_SPECS)
+    experimental = [spec for spec in EXCLUDED_ESTIMATOR_SPECS if spec.status == "experimental"]
+    return list(ACTIVE_ESTIMATOR_SPECS) + experimental
 
 
 def excluded_estimator_specs() -> list[EstimatorSpec]:
@@ -67,20 +85,31 @@ def excluded_estimator_specs() -> list[EstimatorSpec]:
 
 
 def build_estimator_registry_manifest() -> dict[str, object]:
+    active_specs = active_estimator_specs()
+    all_specs = active_specs + list(EXCLUDED_ESTIMATOR_SPECS)
     return {
         "benchmark_identity": BENCHMARK_IDENTITY,
         "benchmark_scope": BENCHMARK_SCOPE,
         "authority_statement": BENCHMARK_AUTHORITY_STATEMENT,
         "paper_alignment_policy": PAPER_ALIGNMENT_POLICY,
-        "active": [spec.to_manifest() for spec in ACTIVE_ESTIMATOR_SPECS],
+        "active": [spec.to_manifest() for spec in active_specs],
         "excluded": [spec.to_manifest() for spec in EXCLUDED_ESTIMATOR_SPECS],
+        "families": {spec.label: spec.family for spec in all_specs},
     }
 
 
 def load_active_estimators() -> dict[str, type]:
     registry: dict[str, type] = {}
-    for spec in ACTIVE_ESTIMATOR_SPECS:
-        module = importlib.import_module(f"estimators.{spec.module_name}")
+    for spec in active_estimator_specs():
+        try:
+            module = importlib.import_module(f"estimators.{spec.module_name}")
+        except ModuleNotFoundError as exc:
+            if spec.key == "pi_gru" and exc.name == "torch":
+                raise RuntimeError(
+                    "PI-GRU is part of the active registry and requires torch. "
+                    "Install dependencies from requirements.txt before running the full benchmark."
+                ) from exc
+            raise
         cls = getattr(module, spec.class_name)
         label = getattr(cls, "name", spec.label)
         if label != spec.label:

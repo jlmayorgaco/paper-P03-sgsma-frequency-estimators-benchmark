@@ -14,14 +14,18 @@ ROOT = Path(__file__).resolve().parents[3]
 LEGACY_OUTPUT_DIR = ROOT / "tests" / "montecarlo" / "outputs"
 
 
-def _candidate_roots(base_results_dir: Path) -> list[Path]:
+def _candidate_roots(base_results_dir: Path, allow_legacy_fallback: bool) -> list[Path]:
     roots = [base_results_dir]
-    if LEGACY_OUTPUT_DIR != base_results_dir:
+    if allow_legacy_fallback and LEGACY_OUTPUT_DIR != base_results_dir:
         roots.append(LEGACY_OUTPUT_DIR)
     return roots
 
 
-def _resolve_scenario_csv(base_results_dir: Path, folder_spec: str | list[str]) -> tuple[Path, str, Path]:
+def _resolve_scenario_csv(
+    base_results_dir: Path,
+    folder_spec: str | list[str],
+    allow_legacy_fallback: bool,
+) -> tuple[Path, str, Path]:
     """
     Resolve the scenario CSV path for the paper-facing overview figure.
 
@@ -31,13 +35,13 @@ def _resolve_scenario_csv(base_results_dir: Path, folder_spec: str | list[str]) 
     reproducible and visually complete.
     """
     folders = [folder_spec] if isinstance(folder_spec, str) else list(folder_spec)
-    for root in _candidate_roots(base_results_dir):
+    for root in _candidate_roots(base_results_dir, allow_legacy_fallback):
         for folder in folders:
             csv_path = root / folder / f"{folder}_scenario.csv"
             if csv_path.exists():
                 return root, folder, csv_path
     tried = ", ".join(folders)
-    searched = ", ".join(str(root) for root in _candidate_roots(base_results_dir))
+    searched = ", ".join(str(root) for root in _candidate_roots(base_results_dir, allow_legacy_fallback))
     raise FileNotFoundError(
         f"[MEGA1] Missing scenario CSV. Tried folders: {tried}. Searched roots: {searched}"
     )
@@ -48,6 +52,7 @@ def plot_megadashboard1(
     ieee_rc: dict,
     ieee_full_w: float,
     ieee_page_h: float,
+    allow_legacy_fallback: bool = False,
 ) -> None:
     """
     Generate Figure 1: ground-truth scenario overview used in the paper.
@@ -221,7 +226,11 @@ def plot_megadashboard1(
                 spec = row_spec[col_key]
                 ax = fig.add_subplot(gs[ridx, cidx])
 
-                root_used, folder_used, csv_path = _resolve_scenario_csv(base_results_dir, spec["folder"])
+                root_used, folder_used, csv_path = _resolve_scenario_csv(
+                    base_results_dir,
+                    spec["folder"],
+                    allow_legacy_fallback=allow_legacy_fallback,
+                )
                 source_roots_used.add(root_used)
 
                 df_scen = pd.read_csv(csv_path)

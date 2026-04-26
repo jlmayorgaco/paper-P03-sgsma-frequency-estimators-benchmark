@@ -14,4 +14,4 @@ from plotting.benchmark.generate_mega_dashboards import generate_benchmark_figur
 
 
 if __name__ == "__main__":
-    generate_benchmark_figures()
+    generate_benchmark_figures(data_mode="legacy")

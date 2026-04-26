@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import math
 from typing import Any, ClassVar
@@ -11,20 +11,20 @@ from estimators.common import FS_PHYSICS, F_NOM
 
 class IBRMultiEventScenario(Scenario):
     """
-    IBR Multi-Event Composite Fault Scenario — IEEE/Journal Stress Test.
+    IBR Multi-Event Composite Fault Scenario â€” IEEE/Journal Stress Test.
 
     Simulates a severely degraded IBR-dominated grid combining seven simultaneous
     disturbances in a single 5-second waveform:
 
-      1. Voltage Sag or Swell       — amplitude step at t_event_s
-      2. Phase Angle Jump           — instantaneous Δφ at t_event_s
-      3. Frequency RoCoF Ramp        — linear frequency ramp for rocof_duration_s,
+      1. Voltage Sag or Swell       â€” amplitude step at t_event_s
+      2. Phase Angle Jump           â€” instantaneous Î”Ï† at t_event_s
+      3. Frequency RoCoF Ramp        â€” linear frequency ramp for rocof_duration_s,
                                        then clamps to f_steady (primary-response nadir)
-      4. Low-frequency Oscillations  — AM (inter-area swing) + PM (angle oscillation)
-      5. Decaying DC Offset          — inductive fault response, τ ≈ 30 ms
-      6. Full IBR Harmonic Spectrum  — 3rd (triplen), 5th, 7th, 11th, 13th, 17th, 19th 
+      4. Low-frequency Oscillations  â€” AM (inter-area swing) + PM (angle oscillation)
+      5. Decaying DC Offset          â€” inductive fault response, Ï„ â‰ˆ 30 ms
+      6. Full IBR Harmonic Spectrum  â€” 3rd (triplen), 5th, 7th, 11th, 13th, 17th, 19th 
                                        and a 75 Hz inter-harmonic (MPPT hunting)
-      7. Multi-spectral Noise        — white AWGN + brown drift + impulsive spikes
+      7. Multi-spectral Noise        â€” white AWGN + brown drift + impulsive spikes
 
     Phase continuity is maintained analytically across all three time regions
     (pre-event, RoCoF ramp, steady nadir) to ensure correct instantaneous frequency.
@@ -38,15 +38,16 @@ class IBRMultiEventScenario(Scenario):
     DEFAULT_PARAMS: ClassVar[dict[str, Any]] = {
         "duration_s":       5.0,
         "freq_pre_hz":      F_NOM,
-        "rocof_hz_s":       -2.0,    # Hz/s — negative = frequency drops
-        "rocof_duration_s": 1.0,     # s    — RoCoF active window; clamps after this
+        "freq_post_hz":     None,
+        "rocof_hz_s":       -2.0,    # Hz/s â€” negative = frequency drops
+        "rocof_duration_s": 1.0,     # s    â€” RoCoF active window; clamps after this
         "amp_pre_pu":       1.0,
         "amp_post_pu":      0.5,     # <1.0 = sag, >1.0 = swell
-        "phase_jump_rad":   math.pi / 4.0,  # +45°
+        "phase_jump_rad":   math.pi / 4.0,  # +45Â°
         "t_event_s":        0.5,
         # Decaying DC (inductive fault response)
         "dc_offset_pu":     0.15,    # peak DC at fault instant
-        "dc_tau_s":         0.03,    # time constant — decays in ~2 fundamental cycles
+        "dc_tau_s":         0.03,    # time constant â€” decays in ~2 fundamental cycles
         # Inter-area oscillations
         "am_mag_pu":        0.05,    # amplitude modulation depth
         "am_freq_hz":       1.5,     # typical inter-area frequency
@@ -54,6 +55,7 @@ class IBRMultiEventScenario(Scenario):
         "pm_freq_hz":       1.0,
         # Multi-spectral noise
         "white_noise_sigma": 0.005,
+        "noise_sigma":       None,
         "brown_noise_sigma": 0.0001,
         "impulse_prob":      0.001,  # probability per sample
         "impulse_mag":       0.2,
@@ -61,6 +63,11 @@ class IBRMultiEventScenario(Scenario):
     }
 
     MONTE_CARLO_SPACE: ClassVar[dict[str, Any]] = {
+        "freq_post_hz": {
+            "kind": "uniform",
+            "low":  55.0,
+            "high": 61.0,
+        },
         "amp_post_pu": {
             "kind": "uniform",
             "low":  0.2,   # deep sag
@@ -68,8 +75,8 @@ class IBRMultiEventScenario(Scenario):
         },
         "phase_jump_rad": {
             "kind": "uniform",
-            "low":  -math.pi / 3.0,  # -60°
-            "high":  math.pi / 3.0,  # +60°
+            "low":  -math.pi / 3.0,  # -60Â°
+            "high":  math.pi / 3.0,  # +60Â°
         },
         "rocof_hz_s": {
             "kind": "uniform",
@@ -85,6 +92,11 @@ class IBRMultiEventScenario(Scenario):
             "kind": "uniform",
             "low":  0.05,
             "high": 0.25,
+        },
+        "t_event_s": {
+            "kind": "uniform",
+            "low": 0.2,
+            "high": 1.5,
         },
     }
 
@@ -106,6 +118,7 @@ class IBRMultiEventScenario(Scenario):
         cls,
         duration_s:        float = 5.0,
         freq_pre_hz:       float = F_NOM,
+        freq_post_hz:      float | None = None,
         rocof_hz_s:        float = -2.0,
         rocof_duration_s:  float = 1.0,
         amp_pre_pu:        float = 1.0,
@@ -119,6 +132,7 @@ class IBRMultiEventScenario(Scenario):
         pm_mag_rad:        float = 0.05,
         pm_freq_hz:        float = 1.0,
         white_noise_sigma: float = 0.005,
+        noise_sigma:       float | None = None,
         brown_noise_sigma: float = 0.000000005,
         impulse_prob:      float = 0.001,
         impulse_mag:       float = 0.2,
@@ -126,37 +140,43 @@ class IBRMultiEventScenario(Scenario):
     ) -> ScenarioData:
 
         rng = np.random.default_rng(seed)
+        if noise_sigma is not None:
+            white_noise_sigma = float(noise_sigma)
         dt  = 1.0 / FS_PHYSICS
         t   = np.arange(0.0, duration_s, dt, dtype=float)
 
         t_ramp_end = t_event_s + rocof_duration_s
         f_steady   = freq_pre_hz + rocof_hz_s * rocof_duration_s
 
-        # ── Region masks ────────────────────────────────────────────────
+        # â”€â”€ Region masks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         pre_mask  = t <  t_event_s
         ramp_mask = (t >= t_event_s) & (t < t_ramp_end)
         hold_mask = t >= t_ramp_end
 
-        # ── 1. Ground-truth frequency profile ───────────────────────────
+        # â”€â”€ 1. Ground-truth frequency profile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         f_true = np.full_like(t, freq_pre_hz, dtype=float)
-        if np.any(ramp_mask):
-            t_r = t[ramp_mask] - t_event_s
-            f_true[ramp_mask] = freq_pre_hz + rocof_hz_s * t_r
-        f_true[hold_mask] = f_steady
+        if freq_post_hz is not None:
+            f_true[~pre_mask] = float(freq_post_hz)
+            f_steady = float(freq_post_hz)
+        else:
+            if np.any(ramp_mask):
+                t_r = t[ramp_mask] - t_event_s
+                f_true[ramp_mask] = freq_pre_hz + rocof_hz_s * t_r
+            f_true[hold_mask] = f_steady
 
-        # ── 2. Amplitude profile (step sag/swell at fault) ───────────────
+        # â”€â”€ 2. Amplitude profile (step sag/swell at fault) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         amp = np.full_like(t, amp_pre_pu, dtype=float)
         amp[ramp_mask] = amp_post_pu
         amp[hold_mask] = amp_post_pu
 
-        # ── 3. Phase — analytically integrated across all three regions ──
+        # â”€â”€ 3. Phase â€” analytically integrated across all three regions â”€â”€
         #
-        #  Region 1 (pre):   φ = 2π f0 t
-        #  Region 2 (ramp):  φ = φ_event + Δφ_jump + 2π(f0·t_r + ½R·t_r²)
-        #  Region 3 (hold):  φ = φ_ramp_end + 2π f_steady · t_s
+        #  Region 1 (pre):   Ï† = 2Ï€ f0 t
+        #  Region 2 (ramp):  Ï† = Ï†_event + Î”Ï†_jump + 2Ï€(f0Â·t_r + Â½RÂ·t_rÂ²)
+        #  Region 3 (hold):  Ï† = Ï†_ramp_end + 2Ï€ f_steady Â· t_s
         #
         #  Continuity is exact at both boundaries.
-        # ─────────────────────────────────────────────────────────────────
+        # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         phi = np.zeros_like(t, dtype=float)
 
         phi[pre_mask] = 2.0 * math.pi * freq_pre_hz * t[pre_mask]
@@ -183,17 +203,17 @@ class IBRMultiEventScenario(Scenario):
             t_s = t[hold_mask] - t_ramp_end
             phi[hold_mask] = phi_at_ramp_end + 2.0 * math.pi * f_steady * t_s
 
-        # ── 4. AM + PM modulation (inter-area oscillations) ─────────────
+        # â”€â”€ 4. AM + PM modulation (inter-area oscillations) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         am_mod = 1.0 + am_mag_pu * np.cos(2.0 * math.pi * am_freq_hz * t)
         pm_mod = pm_mag_rad * np.cos(2.0 * math.pi * pm_freq_hz * t)
         phi   += pm_mod
-        # PM contribution to instantaneous frequency: d(pm_mod)/dt / 2π
+        # PM contribution to instantaneous frequency: d(pm_mod)/dt / 2Ï€
         f_true += -pm_mag_rad * pm_freq_hz * np.sin(2.0 * math.pi * pm_freq_hz * t)
 
-        # ── 5. Fundamental voltage ───────────────────────────────────────
+        # â”€â”€ 5. Fundamental voltage â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         v = amp * am_mod * np.sin(phi)
 
-        # ── 6. Extended IBR Harmonics & Inter-harmonics (The "Boss Fight") ──
+        # â”€â”€ 6. Extended IBR Harmonics & Inter-harmonics (The "Boss Fight") â”€â”€
         
         # A. Triplen Harmonic (3rd) - Represents unbalance during the fault
         h3_phase = rng.uniform(0.0, 2.0 * math.pi)
@@ -221,13 +241,13 @@ class IBRMultiEventScenario(Scenario):
         ih75_phase = rng.uniform(0.0, 2.0 * math.pi)
         v += 0.015 * amp * np.sin(2.0 * math.pi * 75.0 * t + ih75_phase)
 
-        # ── 7. Decaying DC offset (inductive fault response) ─────────────
+        # â”€â”€ 7. Decaying DC offset (inductive fault response) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         if np.any(ramp_mask) or np.any(hold_mask):
             post_mask = ramp_mask | hold_mask
             t_post    = t[post_mask] - t_event_s
             v[post_mask] += dc_offset_pu * np.exp(-t_post / dc_tau_s)
 
-        # ── 8. Multi-spectral noise ──────────────────────────────────────
+        # â”€â”€ 8. Multi-spectral noise â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         noise = rng.normal(0.0, white_noise_sigma, size=t.shape)
 
         if brown_noise_sigma > 0.0:
@@ -242,13 +262,13 @@ class IBRMultiEventScenario(Scenario):
 
         v += noise
 
-        # ── Metadata ─────────────────────────────────────────────────────
+        # â”€â”€ Metadata â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         jump_deg = round(math.degrees(phase_jump_rad), 1)
         meta = {
             "description": (
-                f"IBR Multi-Event: {amp_post_pu} pu sag/swell, Δφ {jump_deg}°, "
+                f"IBR Multi-Event: {amp_post_pu} pu sag/swell, Î”Ï† {jump_deg}Â°, "
                 f"RoCoF {rocof_hz_s} Hz/s for {rocof_duration_s} s "
-                f"→ f_nadir = {f_steady:.3f} Hz"
+                f"â†’ f_nadir = {f_steady:.3f} Hz"
             ),
             "standard":    "Extreme composite dynamic test (beyond IEC 60255-118-1)",
             "dynamics":    (
@@ -275,3 +295,4 @@ class IBRMultiEventScenario(Scenario):
         }
 
         return ScenarioData(name=cls.SCENARIO_NAME, t=t, v=v, f_true=f_true, meta=meta)
+

@@ -12,7 +12,7 @@ def md2_subplot_01(ax, data_bundle):
         base_results_dir=data_bundle["BASE_RESULTS_DIR"],
         scenario="IEEE_Freq_Ramp",
         estimators=_P01_ESTIMATORS,
-        panel_title="(b) Freq. Ramp",
+        panel_title="(b) Frequency Ramp",
         align_col="t_start_s",
         align_value=0.0,
         t_window=(-0.05, 0.20),
@@ -22,3 +22,4 @@ def md2_subplot_01(ax, data_bundle):
         show_ylabel=False,
         min_y_span=0.9,
     )
+

@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 # =====================================================================
 # T-000 SAMPLE-RATE AUDIT (2026-04-12)
@@ -10,9 +10,9 @@ from __future__ import annotations
 #   run()     : N=100001, dt=1.00e-06, fs=1,000,000
 #
 # Signal flow:
-#   Scenario.generate() → 1 MHz  (t step = 1e-6 s)
-#   Scenario.run()      → 1 MHz  (no decimation — just calls generate())
-#   _run_estimator(sc.v)→ 1 MHz  (no decimation here either)
+#   Scenario.generate() -> 1 MHz  (t step = 1e-6 s)
+#   Scenario.run()      -> 1 MHz  (no decimation - just calls generate())
+#   _run_estimator(sc.v)-> 1 MHz  (no decimation here either)
 #   est.step_vectorized(v) receives 1 MHz samples
 #
 # Estimator internal time base:
@@ -28,10 +28,10 @@ from __future__ import annotations
 #   calculate_all_metrics() is called with hardcoded fs_dsp=10000.0
 #   (line ~159) even though the actual signal length corresponds to 1 MHz.
 #   Metric windows (e.g. 150 ms = 1500 samples at 10 kHz) are therefore
-#   computed on 150,000 samples instead — the evaluation window is correct
-#   in time but the sample count is 100× larger than intended.
+#   computed on 150,000 samples instead - the evaluation window is correct
+#   in time but the sample count is 100x larger than intended.
 #
-# Exception — smoke tests DO correctly decimate:
+# Exception - smoke tests DO correctly decimate:
 #   test_dedicated_smoke_no_mc_test.py:127-138 checks dt_real < 1e-5
 #   and decimates by factor 100 before calling step_vectorized().
 #   Smoke-test results are therefore valid; MonteCarloEngine is NOT.
@@ -42,8 +42,8 @@ from __future__ import annotations
 
 import os
 # =====================================================================
-# OPTIMIZACIÓN CRÍTICA: Prevenir Deadlocks de NumPy en CPUs Multi-Core.
-# Obliga a las librerías matemáticas en C a usar 1 hilo por proceso
+# CRITICAL OPTIMIZATION: Prevent NumPy deadlocks on multi-core CPUs.
+# Force math libraries in C to use 1 thread per process
 # para que el ProcessPoolExecutor de Python escale perfectamente.
 # Debe ir ANTES de importar numpy.
 # =====================================================================
@@ -64,8 +64,13 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-# Importamos la nueva arquitectura de métricas IBR-Centric
+# Import new IBR-centric metrics architecture
 from analysis.metrics import calculate_all_metrics
+try:
+    from estimators.base import MemoryStore
+except ModuleNotFoundError:
+    # Fallback for environments where another global `estimators` package shadows this repo.
+    from src.estimators.base import MemoryStore  # type: ignore
 
 
 @dataclass
@@ -85,6 +90,7 @@ class MonteCarloEngine:
     n_runs: int = 30
     base_seed: int = 12345
     n_cost_reps: int = 20
+    enforce_standardized_step: bool = True
 
     @staticmethod
     def _resolve_worker_count(n_runs: int) -> int:
@@ -131,12 +137,13 @@ class MonteCarloEngine:
         params["seed"] = self.base_seed + run_idx
         return params
 
-    def _run_estimator(self, v: np.ndarray, run_idx: int = 0) -> dict[str, Any]:
+    def _run_estimator(self, v: np.ndarray, t: np.ndarray | None = None, run_idx: int = 0) -> dict[str, Any]:
         if self.estimator_cls is None:
             return {}
 
         params = dict(self.estimator_params or {})
         est = self.estimator_cls(**params)
+        mem = MemoryStore()
 
         if hasattr(est, "reset"):
             est.reset()
@@ -146,35 +153,42 @@ class MonteCarloEngine:
         if hasattr(est, "structural_latency_samples"):
             struct_samples = est.structural_latency_samples()
 
-        # T-100 sanity assertion: sc.v must arrive at estimator dt (10 kHz).
-        # Scenario.run() now decimates from FS_PHYSICS to FS_DSP (Option C).
-        if hasattr(est, "dt") and len(v) > 1:
-            # dt is inferred from the caller's sc.t, not passed here directly.
-            # This assertion is a placeholder reminder; the actual dt check lives
-            # in run_once() where sc.t is available.
-            pass
+        has_step = hasattr(est, "step")
+        has_step_vectorized = hasattr(est, "step_vectorized")
 
-        # =========================================================
-        # 1. RUTA RÁPIDA (Fast Path): Soporte para Numba/Vectorizado
-        # =========================================================
-        if hasattr(est, "step_vectorized"):
-            f_hat = est.step_vectorized(v)
-
-        # =========================================================
-        # 2. RUTA GENERAL (Fallback): Python Puro muestra por muestra
-        # =========================================================
-        else:
+        if self.enforce_standardized_step and has_step:
             f_hat = np.empty(len(v), dtype=float)
-            step_func = est.step 
+            step_func = est.step
             for k in range(len(v)):
-                f_hat[k] = float(step_func(float(v[k])))
+                t_k = float(t[k]) if t is not None else None
+                f_hat[k] = float(step_func(float(v[k]), t_k, mem))
+        else:
+            if has_step_vectorized:
+                f_hat = est.step_vectorized(v)
+            elif has_step:
+                f_hat = np.empty(len(v), dtype=float)
+                step_func = est.step
+                for k in range(len(v)):
+                    f_hat[k] = float(step_func(float(v[k])))
+            else:
+                raise AttributeError(
+                    f"Estimator {self.estimator_cls.__name__} must define step(...) or step_vectorized(...)."
+                )
+
+        runtime_metrics: dict[str, Any] = {}
+        if hasattr(est, "runtime_summary"):
+            try:
+                runtime_metrics = dict(est.runtime_summary(mem))
+            except Exception:
+                runtime_metrics = {}
 
         return {
             "f_hat": np.asarray(f_hat, dtype=float),
-            "struct_samples": struct_samples
+            "struct_samples": struct_samples,
+            "runtime_metrics": runtime_metrics,
         }
 
-    def _measure_exec_time(self, v: np.ndarray) -> float:
+    def _measure_exec_time(self, v: np.ndarray, t: np.ndarray | None = None) -> float:
         """
         Mean CPU time for one full estimator pass.
         """
@@ -186,7 +200,7 @@ class MonteCarloEngine:
 
         for _ in range(n_reps):
             start_cpu = time.process_time()
-            self._run_estimator(v)
+            self._run_estimator(v, t=t)
             timings_s.append(time.process_time() - start_cpu)
 
         return float(np.mean(timings_s))
@@ -223,12 +237,12 @@ class MonteCarloEngine:
                     for _z in _warmup_v:
                         _est_warmup.step(float(_z))
             except Exception:
-                pass  # warmup failure is non-fatal — timing may be slightly inflated
+                pass  # warmup failure is non-fatal; timing may be slightly inflated
             del _est_warmup, _warmup_v, _params_warmup
 
-        # Medición del tiempo de CPU (perf_counter es el reloj de más alta resolución)
-        est_out = self._run_estimator(sc.v)
-        exec_time_s = self._measure_exec_time(sc.v)
+        # CPU time measurement
+        est_out = self._run_estimator(sc.v, t=sc.t)
+        exec_time_s = self._measure_exec_time(sc.v, t=sc.t)
 
         row = {
             "run_idx": run_idx,
@@ -245,7 +259,7 @@ class MonteCarloEngine:
         }
 
         # Construimos el diccionario completo en memoria antes de pasarlo a Pandas
-        # para evitar fragmentación de memoria (altamente eficiente)
+        # Build the full dictionary in memory before DataFrame creation
         n_len = len(sc.t)
         signal_dict = {
             "run_idx": np.full(n_len, run_idx, dtype=int),
@@ -254,7 +268,7 @@ class MonteCarloEngine:
             "f_true_hz": sc.f_true,
         }
         
-        # Añadimos parámetros del Monte Carlo a cada muestra de la señal
+        # Add Monte Carlo parameters to each signal sample
         for key, value in params.items():
             signal_dict[key] = np.full(n_len, value)
 
@@ -266,7 +280,7 @@ class MonteCarloEngine:
             noise_sigma = params.get("noise_sigma", 0.0)
 
             # -------------------------------------------------------------
-            # NUEVA ARQUITECTURA DE MÉTRICAS (Integración con metrics.py)
+            # New metrics architecture (integration with metrics.py)
             # -------------------------------------------------------------
             advanced_metrics = calculate_all_metrics(
                 f_hat=f_hat,
@@ -280,6 +294,13 @@ class MonteCarloEngine:
             
             # Agregamos M1 a M17 a la fila de resultados
             row.update(advanced_metrics)
+            rt = est_out.get("runtime_metrics", {})
+            row["m18_mem_peak_kb"] = round(float(rt.get("memory_peak_bytes", 0.0)) / 1024.0, 4)
+            row["m19_mem_mean_kb"] = round(float(rt.get("memory_mean_bytes", 0.0)) / 1024.0, 4)
+            row["m20_runtime_jitter_us"] = round(float(rt.get("runtime_jitter_us", 0.0)), 4)
+            row["m21_startup_valid_samples"] = int(rt.get("startup_valid_samples", 0))
+            row["m22_invalid_output_rate"] = round(float(rt.get("invalid_output_rate", 0.0)), 6)
+            row["m23_memory_key_count"] = int(rt.get("memory_key_count", 0))
 
         # Instanciamos el DataFrame de una sola vez
         signal_df = pd.DataFrame(signal_dict)
@@ -333,4 +354,6 @@ class MonteCarloEngine:
         result.signals_df.to_csv(signals_path, index=False)
 
         return summary_path, signals_path
+
+
 
