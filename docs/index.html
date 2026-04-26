@@ -1,0 +1,85 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpenFreqBench | Frequency Estimator Benchmark</title>
+  <meta name="description" content="OpenFreqBench is a modular benchmark for dynamic grid frequency estimators in low-inertia IBR scenarios." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <header class="hero">
+    <p class="kicker">OpenFreqBench</p>
+    <h1>Benchmarking Dynamic Frequency Estimators for Low-Inertia IBR Grids</h1>
+    <p class="lede">A reproducible, modular framework for scenario-driven Monte Carlo evaluation, publication-grade plots, and scientific reporting.</p>
+    <div class="actions">
+      <a class="btn primary" href="https://github.com/jlmayorgaco/paper-P03-sgsma-frequency-estimators-benchmark">Repository</a>
+      <a class="btn" href="#quickstart">Quickstart</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel metrics">
+      <article><h2>32</h2><p>Scenarios</p></article>
+      <article><h2>18+</h2><p>Estimators</p></article>
+      <article><h2>23</h2><p>Core Metrics</p></article>
+      <article><h2>MC</h2><p>Reproducible pipeline</p></article>
+    </section>
+
+    <section class="panel" id="overview">
+      <h3>Project Scope</h3>
+      <p>OpenFreqBench evaluates frequency estimator behavior under realistic disturbances with a canonical artifact contract. It supports full benchmark runs, targeted estimator/scenario slices, statistical tests, and deterministic report generation.</p>
+      <ul>
+        <li>Pipeline core in <code>src/pipelines/</code></li>
+        <li>Analysis core in <code>src/analysis/</code></li>
+        <li>Benchmark plots in <code>src/plotting/benchmark/</code></li>
+        <li>Paper integration in <code>paper/</code></li>
+      </ul>
+    </section>
+
+    <section class="panel" id="quickstart">
+      <h3>Quickstart</h3>
+      <pre><code>pip install -r requirements.txt
+pip install -e .
+openfreqbench env doctor
+openfreqbench benchmark run
+openfreqbench benchmark validate</code></pre>
+      <h4>Targeted execution modes</h4>
+      <pre><code># one scenario vs all estimators
+openfreqbench benchmark run-scenario --name IEEE_Freq_Step
+
+# one estimator vs all scenarios
+openfreqbench benchmark run-estimator --name EKF
+
+# subset x subset matrix
+openfreqbench benchmark run-matrix --scenario IEEE_Freq_Step,IEEE_Modulation --estimator EKF,UKF
+
+# preview selection without execution
+openfreqbench benchmark run-matrix --scenario IEEE_Freq_Step --estimator EKF --dry-run</code></pre>
+    </section>
+
+    <section class="panel">
+      <h3>Release Quality Gates</h3>
+      <ul>
+        <li><code>openfreqbench quality-gate --profile canonical</code></li>
+        <li><code>openfreqbench quality-gate --profile legacy</code></li>
+        <li><code>openfreqbench quality-gate --profile manual-nightly</code></li>
+      </ul>
+      <p>Canonical output validation: <code>openfreqbench benchmark validate</code></p>
+    </section>
+
+    <section class="panel">
+      <h3>Why this benchmark</h3>
+      <p>Grid dynamics in low-inertia systems require frequency estimators that balance latency, robustness, and numerical stability. OpenFreqBench was built to make those trade-offs auditable, repeatable, and publication-ready.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>MIT Licensed · OpenFreqBench</p>
+  </footer>
+</body>
+</html>

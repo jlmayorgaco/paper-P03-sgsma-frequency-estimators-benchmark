@@ -5,6 +5,11 @@ modules, and LaTeX source for the SGSMA 2026 paper:
 
 `Benchmarking Dynamic Frequency Estimators for Low-Inertia IBR Grids: A Latency-Robustness Trade-off Analysis`
 
+## Project page
+
+- Static overview page (GitHub Pages source): `docs/index.html`
+- Deployment workflow: `.github/workflows/deploy-pages.yml`
+
 ## Scope
 
 The project evaluates dynamic frequency estimators for relay-class and local
