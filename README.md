@@ -92,10 +92,15 @@ Current CLI domains:
 - `openfreqbench env doctor`
 - `openfreqbench quality-gate --profile <canonical|legacy|manual-nightly>`
 
-Planned v1 CLI matrix modes (roadmap):
-- run one scenario against all estimators
-- run one estimator against all scenarios
-- run subset x subset matrix batches
+Targeted benchmark slices:
+- scenario -> all estimators:
+  `openfreqbench benchmark run-scenario --name IEEE_Freq_Step`
+- estimator -> all scenarios:
+  `openfreqbench benchmark run-estimator --name EKF`
+- subset x subset matrix:
+  `openfreqbench benchmark run-matrix --scenario IEEE_Freq_Step,IEEE_Modulation --estimator EKF,UKF`
+- preview filters without running (recommended first):
+  `openfreqbench benchmark run-matrix --scenario IEEE_Freq_Step --estimator EKF --dry-run`
 
 ## Python environment
 

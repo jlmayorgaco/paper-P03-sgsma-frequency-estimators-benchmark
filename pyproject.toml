@@ -45,4 +45,4 @@ dev = ["pytest>=8.0", "ruff>=0.8"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["analysis*", "estimators*", "pipelines*", "plotting*", "scenarios*", "utils*"]
+include = ["analysis*", "estimators*", "openfreqbench*", "pipelines*", "plotting*", "scenarios*", "utils*"]

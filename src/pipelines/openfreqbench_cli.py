@@ -14,17 +14,93 @@ ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "src"
 
 
-def _run_python_module(module_name: str, args: list[str] | None = None) -> int:
+def _csv_items(raw_values: list[str] | None) -> list[str]:
+    items: list[str] = []
+    for raw in raw_values or []:
+        for part in str(raw).split(","):
+            val = part.strip()
+            if val:
+                items.append(val)
+    deduped = list(dict.fromkeys(items))
+    return deduped
+
+
+def _run_python_module(
+    module_name: str,
+    args: list[str] | None = None,
+    extra_env: dict[str, str] | None = None,
+) -> int:
     cmd = [sys.executable, "-m", module_name]
     if args:
         cmd.extend(args)
     env = os.environ.copy()
     env["PYTHONPATH"] = str(SRC) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+    if extra_env:
+        env.update(extra_env)
     return subprocess.run(cmd, cwd=ROOT, check=False, env=env).returncode
 
 
-def _cmd_benchmark_run(_: argparse.Namespace) -> int:
-    return _run_python_module("pipelines.full_mc_benchmark")
+def _run_benchmark_with_filters(
+    scenarios: list[str] | None,
+    estimators: list[str] | None,
+    dry_run: bool,
+) -> int:
+    scenario_items = _csv_items(scenarios)
+    estimator_items = _csv_items(estimators)
+    extra_env: dict[str, str] = {}
+
+    if scenario_items:
+        extra_env["BENCHMARK_INCLUDE_SCENARIOS"] = ",".join(scenario_items)
+    if estimator_items:
+        extra_env["BENCHMARK_INCLUDE_ESTIMATORS"] = ",".join(estimator_items)
+
+    if dry_run:
+        if scenario_items:
+            print(f"BENCHMARK_INCLUDE_SCENARIOS={extra_env['BENCHMARK_INCLUDE_SCENARIOS']}")
+        else:
+            print("BENCHMARK_INCLUDE_SCENARIOS=<all>")
+        if estimator_items:
+            print(f"BENCHMARK_INCLUDE_ESTIMATORS={extra_env['BENCHMARK_INCLUDE_ESTIMATORS']}")
+        else:
+            print("BENCHMARK_INCLUDE_ESTIMATORS=<all>")
+        return 0
+
+    return _run_python_module(
+        "pipelines.full_mc_benchmark",
+        extra_env=extra_env if extra_env else None,
+    )
+
+
+def _cmd_benchmark_run(args: argparse.Namespace) -> int:
+    return _run_benchmark_with_filters(
+        scenarios=getattr(args, "scenario", None),
+        estimators=getattr(args, "estimator", None),
+        dry_run=bool(getattr(args, "dry_run", False)),
+    )
+
+
+def _cmd_benchmark_run_scenario(args: argparse.Namespace) -> int:
+    return _run_benchmark_with_filters(
+        scenarios=[str(v) for v in getattr(args, "name", [])],
+        estimators=None,
+        dry_run=bool(getattr(args, "dry_run", False)),
+    )
+
+
+def _cmd_benchmark_run_estimator(args: argparse.Namespace) -> int:
+    return _run_benchmark_with_filters(
+        scenarios=None,
+        estimators=[str(v) for v in getattr(args, "name", [])],
+        dry_run=bool(getattr(args, "dry_run", False)),
+    )
+
+
+def _cmd_benchmark_run_matrix(args: argparse.Namespace) -> int:
+    return _run_benchmark_with_filters(
+        scenarios=getattr(args, "scenario", None),
+        estimators=getattr(args, "estimator", None),
+        dry_run=bool(getattr(args, "dry_run", False)),
+    )
 
 
 def _cmd_benchmark_validate(_: argparse.Namespace) -> int:
@@ -138,8 +214,69 @@ def build_parser() -> argparse.ArgumentParser:
     benchmark = sub.add_parser("benchmark", help="Run and validate benchmark flows.")
     benchmark_sub = benchmark.add_subparsers(dest="benchmark_cmd", required=True)
 
-    bench_run = benchmark_sub.add_parser("run", help="Run canonical full benchmark.")
+    bench_run = benchmark_sub.add_parser(
+        "run",
+        help="Run benchmark over the selected scenario/estimator slice (defaults to full matrix).",
+    )
+    bench_run.add_argument(
+        "--scenario",
+        action="append",
+        default=[],
+        help="Scenario name(s) to include. Repeat flag or pass comma-separated values.",
+    )
+    bench_run.add_argument(
+        "--estimator",
+        action="append",
+        default=[],
+        help="Estimator label(s) to include. Repeat flag or pass comma-separated values.",
+    )
+    bench_run.add_argument("--dry-run", action="store_true", help="Print resolved filters and exit without running.")
     bench_run.set_defaults(handler=_cmd_benchmark_run)
+
+    bench_run_scenario = benchmark_sub.add_parser(
+        "run-scenario",
+        help="Run one or more scenarios against all estimators.",
+    )
+    bench_run_scenario.add_argument(
+        "--name",
+        required=True,
+        action="append",
+        help="Scenario name. Repeat flag or pass comma-separated names.",
+    )
+    bench_run_scenario.add_argument("--dry-run", action="store_true", help="Print resolved filters and exit.")
+    bench_run_scenario.set_defaults(handler=_cmd_benchmark_run_scenario)
+
+    bench_run_estimator = benchmark_sub.add_parser(
+        "run-estimator",
+        help="Run one or more estimators against all scenarios.",
+    )
+    bench_run_estimator.add_argument(
+        "--name",
+        required=True,
+        action="append",
+        help="Estimator label. Repeat flag or pass comma-separated labels.",
+    )
+    bench_run_estimator.add_argument("--dry-run", action="store_true", help="Print resolved filters and exit.")
+    bench_run_estimator.set_defaults(handler=_cmd_benchmark_run_estimator)
+
+    bench_run_matrix = benchmark_sub.add_parser(
+        "run-matrix",
+        help="Run a subset x subset matrix selection.",
+    )
+    bench_run_matrix.add_argument(
+        "--scenario",
+        action="append",
+        default=[],
+        help="Scenario name(s) to include. Repeat flag or pass comma-separated values.",
+    )
+    bench_run_matrix.add_argument(
+        "--estimator",
+        action="append",
+        default=[],
+        help="Estimator label(s) to include. Repeat flag or pass comma-separated values.",
+    )
+    bench_run_matrix.add_argument("--dry-run", action="store_true", help="Print resolved filters and exit.")
+    bench_run_matrix.set_defaults(handler=_cmd_benchmark_run_matrix)
 
     bench_validate = benchmark_sub.add_parser("validate", help="Validate canonical artifacts.")
     bench_validate.set_defaults(handler=_cmd_benchmark_validate)
