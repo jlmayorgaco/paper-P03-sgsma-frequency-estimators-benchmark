@@ -1,0 +1,216 @@
+﻿\section{Simulation Results and Benchmarking}
+\label{sec:results}
+
+\begin{table*}[t]
+  \centering
+  \caption{Core disturbance-family comparison for the benchmark study.
+    RMSE values are reported in mHz and computed as family means of
+    scenario means. The uncertainty term is the mean within-scenario Monte
+    Carlo standard deviation for the winning estimator. $\Delta$ is the RMSE gap
+    between the winner and the runner-up.}
+  \label{tab:family_summary}
+  \scriptsize
+  \setlength{\tabcolsep}{2.8pt}
+  \renewcommand{\arraystretch}{1.1}
+  \begin{tabular}{l c l c l c l}
+    \toprule
+    Family & Count & RMSE winner & RMSE [mHz] & Runner-up & $\Delta$ [mHz] & Lowest $T_{\mathrm{trip}}$ [s] \\
+    \midrule
+    IEEE ramps & 9 & SOGI-PLL & $19.4 \pm 6.4$ & Koopman & 2.7 & 0 (multiple) \\
+    Mag.\ steps & 7 & EKF & $0.388 \pm 0.143$ & RA-EKF & 1.45 & 0 (multiple) \\
+    Modulation & 3 & RA-EKF & $17.8 \pm 21.4$ & Koopman & 13.7 & 0 (multiple) \\
+    Phase jumps & 3 & SOGI-FLL & $174 \pm 67.5$ & PLL & 4.03 & ZCD: 0.0194 \\
+    OOB interf. & 1 & EKF & $13.6 \pm 11.1$ & RA-EKF & 7.35 & EKF, RA-EKF: 0 \\
+    IBR harmonics & 3 & EKF & $70.5 \pm 27.3$ & TFT & 4.13 & TFT, Prony: 0.00947 \\
+    IBR ringdown & 5 & UKF & $313 \pm 23.2$ & EKF & 6.67 & ESPRIT: 0.0989 \\
+    IBR multi-event & 1 & PLL & $173.5 \pm 66.7$ & UKF & 2.74 & IpDFT: 0.0439 \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+\subsection{No Single Estimator Dominates the Standard Scenario Families}
+
+The standard disturbance families do not yield a single ranking
+(Table~\ref{tab:family_summary}). SOGI-PLL gives the lowest mean RMSE on IEEE
+ramp cases (19.4\,mHz). EKF dominates the magnitude-step family
+(0.388\,mHz) and out-of-band interference (13.6\,mHz), and RA-EKF leads the
+modulation family (17.8\,mHz). Zero-trip-risk ties are common in ramps,
+magnitude steps, and
+modulation, which means those families separate the estimators mainly by
+accuracy rather than by protection-oriented risk. The margins are often small:
+the ramp-family gap between SOGI-PLL and Koopman is only 2.7\,mHz, while the
+gap between EKF and RA-EKF in magnitude steps is 1.45\,mHz.
+
+The scenario-level winners show the same fragmentation. Across the 34
+benchmark scenarios, nine different estimators win at least one scenario on
+RMSE, and no estimator wins more than 10 of them. Even inside the ramp
+family, SOGI-PLL wins six of the nine RMSE scenarios while RA-EKF takes the
+other three. The magnitude-step family is the clearest exception: EKF wins all
+seven magnitude-step scenarios and the family mean as well.
+
+Table~\ref{tab:family_summary} also distinguishes a winner from a decisive
+winner. In the magnitude-step family, EKF's 1.45\,mHz lead over RA-EKF is about
+one order of magnitude larger than the winner's mean within-scenario spread
+(0.143\,mHz), so the aggregate advantage is meaningful. By contrast, the ramp,
+modulation, phase-jump, harmonic, ringdown, and out-of-band families all have
+family-level margins that are smaller than or comparable to the same spread.
+Those families should therefore be read as closely contested rather than
+dominated by a single method.
+
+Trip-risk is even less discriminating in the clean standard cases. In 23 of the
+34 scenarios, the minimum trip-risk is zero, often
+shared by 10 to 13 estimators in the ramp and magnitude-step families. In those
+cases, trip-risk is useful mainly as a pass/fail screen, while RMSE and peak
+error carry most of the ranking information.
+
+Phase jumps behave differently. SOGI-FLL gives the lowest mean RMSE across the
+phase-jump family (174\,mHz), but ZCD gives the lowest mean trip-risk
+($0.0194$\,s). The protection and accuracy metrics therefore point to
+different designs. In the $60^\circ$ phase-jump case, ZCD keeps trip-risk below
+the leading low-RMSE methods, but only with much larger error excursions. Even
+within the standard test set, RMSE and trip-risk are not interchangeable
+objectives.
+
+\subsection{Composite IBR Stress Reorders the Ranking}
+
+The broadest change appears when the disturbance becomes composite. The hardest
+benchmark scenarios, measured by median RMSE across estimators, are the IBR
+multi-event sequence (826\,mHz), the IEEE and NERC $60^\circ$ phase jumps
+(675\,mHz and 637\,mHz), and the noisy IBR ringdown scenarios
+(474--528\,mHz). These are precisely the cases where the usual standard test
+intuition starts to fail.
+
+The scale change is itself important. The easiest family in
+Table~\ref{tab:family_summary}, magnitude steps, stays below 1\,mHz, whereas
+the IBR multi-event scenario reaches 826\,mHz median RMSE across estimators and
+the noisy ringdown family sits near half a hertz. The benchmark therefore spans
+roughly three orders of magnitude in error severity: the median RMSE of the
+IBR multi-event case is about $1.55 \times 10^3$~times that of the single-tone
+case. That spread explains why rankings inferred from clean standard tests do
+not transfer directly to composite IBR stress.
+
+The IBR multi-event sequence is the clearest example. PLL gives the lowest RMSE
+of 173.5\,mHz. UKF trails by only 2.74\,mHz on the family mean. EKF remains
+nearly tied in the scenario readout at 176.4\,mHz while reducing trip-risk to
+$0.0874$\,s. IpDFT yields the lowest trip-risk ($0.0439$\,s) but at the cost
+of a much larger peak error (2550\,mHz). The
+ranking therefore depends on the deployment objective: minimizing average error,
+minimizing time above the trip threshold, or bounding transient severity.
+
+The same pattern appears in the other IBR-specific families. EKF gives the
+lowest mean RMSE across the harmonic family (70.5\,mHz), but TFT and Prony
+give the lowest mean trip-risk there ($0.00947$\,s). In the ringdown and noise
+family, UKF gives the lowest mean RMSE (313\,mHz), whereas ESPRIT gives the
+lowest mean trip-risk ($0.0989$\,s) at a far higher computational cost. These
+results argue against a single global ranking. Scenario family is part of
+the problem definition, not a \textit{post hoc} qualifier.
+
+The scenario-level results make that split sharper. Among the 12 scenarios with a unique
+trip-risk winner, nine differ from the RMSE leader. Those
+disagreements concentrate in the $60^\circ$ phase jumps and in the harmonic,
+ringdown, and multi-event IBR cases. The harmonic family is especially
+instructive: TFT wins two of the three individual harmonic scenarios, and
+RA-EKF wins the third. Yet EKF still achieves the best family-average RMSE
+because it stays consistently close to the scenario leaders across all three
+stress levels.
+
+Composite stress also changes which metric carries the practical decision. In
+magnitude steps and clean ramps, many leading estimators already tie at zero
+trip-risk, so RMSE is the useful separator. In the multi-event, phase-jump, and
+ringdown families, RMSE, trip-risk, and peak excursion split across different
+estimators. That metric split, not just the change in rank order, is the core
+reason a single scalar ranking fails to describe protection-relevant
+behavior.
+
+\subsection{Global Rankings Are Useful Only as Secondary Evidence}
+
+Family-by-family reading is the main analysis, but the global summaries still
+help when they are interpreted carefully. The interpretation depends on the
+aggregation rule. Mean-rank summaries across the 34 benchmark scenarios favor
+TFT on RMSE ($4.38$) and peak error
+($4.32$), with RA-EKF close behind on both ($4.62$ and $4.59$). Simple
+averaging over the 34 benchmark scenarios instead favors RA-EKF and EKF,
+with mean RMSE values of 116\,mHz and 123\,mHz, followed by UKF at 131\,mHz.
+That difference is informative rather than contradictory: mean rank rewards
+repeated near-front finishes, whereas raw averaging is driven more strongly by
+the hardest disturbance families.
+
+Consistency statistics make that distinction concrete. EKF is the most frequent
+accuracy leader, with 10 outright RMSE wins, 19 RMSE top-three finishes, and
+20 peak-error top-three finishes across the 34 benchmark scenarios. TFT wins
+only two RMSE scenarios, yet it reaches the RMSE top three in 16 scenarios and
+the peak-error top three in 17, which explains its strong mean-rank position.
+Trip-risk favors a different group again: IpDFT and ESPRIT enter the trip-risk
+top three in 25 and 24 scenarios, respectively. Global summaries are therefore
+best read as screening tools, not as substitutes for family-level evidence.
+
+The MAE versus CPU Pareto front contains EKF, RA-EKF, SOGI-FLL, SOGI-PLL, and
+ZCD, indicating that neither accuracy nor cost alone determines the admissible
+set. As secondary evidence, the study
+also includes ANOVA and Kruskal-Wallis tests at the family level on RMSE, MAE, peak error,
+trip-risk, settling time, and CPU time; both tests reject the null hypothesis
+of equal family-level distributions for all six metrics (all $p<10^{-16}$).
+These tests are coarse
+and do not replace the scenario-family analysis, but they support the claim
+that the observed ranking differences are not confined to one metric.
+
+ZCD remains on the MAE versus CPU Pareto front because its cost is negligible,
+not because its transient accuracy remains competitive under phase jumps or
+multi-event stress. The practically relevant low-cost region is therefore
+narrower than the raw Pareto set suggests.
+
+For deployment decisions, the recommendation remains scenario-dependent.
+SOGI-PLL is the strongest
+choice when ramp RMSE is the main objective, EKF is strongest on magnitude-step
+and out-of-band families, RA-EKF is strongest on modulation, and PLL is the
+lowest-RMSE option in the composite IBR event. None of those statements can be
+promoted to a universal recommendation, because the lowest trip-risk in the
+same family may belong to a different method. That conditional reading is
+stronger than a flat ranked list because it keeps both the disturbance family
+and the operating objective in view.
+
+\subsection{Cost Keeps Fast Embedded Methods in the Discussion}
+
+CPU cost changes the ranking again. Figure~\ref{fig:dashboard_mega} gathers
+representative time-domain cases together with the global summaries. EKF and
+RA-EKF occupy the best global accuracy region with mean CPU costs of
+$0.813\,\mu$s and $1.61\,\mu$s per sample. SOGI-PLL and SOGI-FLL remain much
+cheaper ($0.0867\,\mu$s and $0.0348\,\mu$s) and therefore stay relevant for
+embedded protection even when they lose some accuracy. Window-based methods
+such as TFT and IpDFT improve global trip-risk relative to some loop methods,
+but they do so at about $3$--$4\,\mu$s per sample. ESPRIT reaches the
+trip-risk top three almost as often as IpDFT, but at $2838\,\mu$s per sample
+instead of $3.68\,\mu$s. Koopman and ESPRIT therefore occupy a substantially
+higher-cost region, with mean costs of $390\,\mu$s and $2838\,\mu$s, without a matching
+global RMSE gain. The time-domain panels illustrate the same point: the estimator that performs best in the ramp case is not the one that best
+manages the multi-event or ringdown case.
+
+Taken together, the results suggest two practically relevant operating
+regions. EKF and RA-EKF define the low-error middle-cost region: they are not
+the cheapest estimators, but they remain competitive across the widest range of
+families and give the strongest aggregate balance once composite IBR stress is
+included. SOGI-PLL and SOGI-FLL define the low-cost embedded region: they keep
+sub-microsecond cost while remaining credible on ramps and selected phase-jump
+conditions. Window-based methods such as TFT and IpDFT remain useful when lower
+trip-risk justifies extra compute, but the more expensive reduced-order methods
+do not show a broad enough error advantage in this benchmark to justify routine
+deployment.
+
+\begin{figure*}[!t]
+  \centering
+  \includegraphics[width=\textwidth,height=0.835\textheight,keepaspectratio]{Fig2_Mega_Dashboard.pdf}
+  \caption{Representative benchmark views from the study.
+    Panels (a)--(d) and (f) show single-scenario responses, each summarized
+    over the same 60 Monte Carlo runs used throughout the paper; panels (e),
+    (g), and (h) summarize all 34 benchmark scenarios. (a) Phase-jump
+    response. (b) Ramp response. (c) IBR multi-event response. (d) Ringdown
+    response. (e) RMSE distributions by estimator family. (f) Harmonic-stress
+    response. (g) Global mean MAE versus CPU time. (h) Global mean trip-risk
+    versus CPU time. Together the panels show why the benchmark should be
+    interpreted by disturbance family and operating objective rather than by a
+    single scalar score.}
+  \label{fig:dashboard_mega}
+\end{figure*}
+
+
+

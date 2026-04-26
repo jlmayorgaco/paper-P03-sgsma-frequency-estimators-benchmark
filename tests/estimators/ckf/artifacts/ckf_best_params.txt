@@ -1,0 +1,5 @@
+estimator=CKF_Estimator
+baseline_gain=0.02
+best_gain=-0.02
+baseline_rmse=0.39993382
+best_rmse=0.39993382

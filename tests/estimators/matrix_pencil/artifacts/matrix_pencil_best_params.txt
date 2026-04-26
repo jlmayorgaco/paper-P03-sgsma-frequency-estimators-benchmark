@@ -1,0 +1,5 @@
+estimator=Matrix_Pencil_Estimator
+baseline_gain=0.014
+best_gain=0.021
+baseline_rmse=0.43191159
+best_rmse=0.39839614

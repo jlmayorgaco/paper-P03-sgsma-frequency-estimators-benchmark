@@ -1,0 +1,48 @@
+\begin{longtable}{L{3.2cm} L{1.9cm} L{6.8cm} c}
+\caption{Scenario catalog for the benchmark suite. Difficulty is the median scenario RMSE across estimators in mHz.}\label{tab:scenario_catalog}\\
+\scriptsize\\
+\toprule
+Scenario ID & Family & Benchmark purpose & Median RMSE [mHz] \\
+\midrule
+\endfirsthead
+\toprule
+Scenario ID & Family & Benchmark purpose & Median RMSE [mHz] \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\texttt{IEEE\allowbreak\_Freq\allowbreak\_Ramp} & IEEE ramps & Default IEEE frequency ramp benchmark. & 66.15 \\
+\texttt{IEEE\allowbreak\_Freq\allowbreak\_Ramp\allowbreak\_0.25Hzs} & IEEE ramps & 0.25 Hz/s sustained RoCoF. & 42.34 \\
+\texttt{IEEE\allowbreak\_Freq\allowbreak\_Ramp\allowbreak\_0.5Hzs} & IEEE ramps & 0.5 Hz/s sustained RoCoF. & 35.24 \\
+\texttt{IEEE\allowbreak\_Freq\allowbreak\_Ramp\allowbreak\_10Hzs} & IEEE ramps & 10 Hz/s sustained RoCoF. & 98.02 \\
+\texttt{IEEE\allowbreak\_Freq\allowbreak\_Ramp\allowbreak\_15Hzs} & IEEE ramps & 15 Hz/s sustained RoCoF. & 60.69 \\
+\texttt{IEEE\allowbreak\_Freq\allowbreak\_Ramp\allowbreak\_1Hzs} & IEEE ramps & 1 Hz/s sustained RoCoF. & 39.56 \\
+\texttt{IEEE\allowbreak\_Freq\allowbreak\_Ramp\allowbreak\_20Hzs} & IEEE ramps & 20 Hz/s sustained RoCoF. & 70.31 \\
+\texttt{IEEE\allowbreak\_Freq\allowbreak\_Ramp\allowbreak\_2Hzs} & IEEE ramps & 2 Hz/s sustained RoCoF. & 63.67 \\
+\texttt{IEEE\allowbreak\_Freq\allowbreak\_Ramp\allowbreak\_5Hzs} & IEEE ramps & 5 Hz/s sustained RoCoF. & 81.90 \\
+\texttt{IEEE\allowbreak\_Mag\allowbreak\_Step} & Magnitude steps & Default IEEE magnitude-step benchmark. & 12.93 \\
+\texttt{IEEE\allowbreak\_Mag\allowbreak\_Step\allowbreak\_10pct} & Magnitude steps & 10 percent magnitude change. & 11.59 \\
+\texttt{IEEE\allowbreak\_Mag\allowbreak\_Step\allowbreak\_15pct} & Magnitude steps & 15 percent magnitude change. & 12.93 \\
+\texttt{IEEE\allowbreak\_Mag\allowbreak\_Step\allowbreak\_1pct} & Magnitude steps & 1 percent magnitude change. & 11.29 \\
+\texttt{IEEE\allowbreak\_Mag\allowbreak\_Step\allowbreak\_25pct} & Magnitude steps & 25 percent magnitude change. & 11.40 \\
+\texttt{IEEE\allowbreak\_Mag\allowbreak\_Step\allowbreak\_50pct} & Magnitude steps & 50 percent magnitude change. & 11.29 \\
+\texttt{IEEE\allowbreak\_Mag\allowbreak\_Step\allowbreak\_5pct} & Magnitude steps & 5 percent magnitude change. & 12.93 \\
+\texttt{IEEE\allowbreak\_Modulation} & Modulation & Combined amplitude and phase modulation benchmark for measurement bandwidth. & 63.26 \\
+\texttt{IEEE\allowbreak\_Modulation\allowbreak\_AM} & Modulation & Pure amplitude modulation benchmark. & 5.13 \\
+\texttt{IEEE\allowbreak\_Modulation\allowbreak\_FM} & Modulation & Pure phase/frequency modulation benchmark. & 66.67 \\
+\texttt{IEEE\allowbreak\_Phase\allowbreak\_Jump\allowbreak\_20} & Phase jumps & Moderate 20 degree phase discontinuity aligned with IEEE anti-islanding limits. & 224.87 \\
+\texttt{IEEE\allowbreak\_Phase\allowbreak\_Jump\allowbreak\_60} & Phase jumps & Large 60 degree phase discontinuity stress test. & 675.14 \\
+\texttt{NERC\allowbreak\_Phase\allowbreak\_Jump\allowbreak\_60} & Phase jumps & Extreme 60 degree islanding jump with additional harmonic stress. & 637.49 \\
+\texttt{IEEE\allowbreak\_OOB\allowbreak\_Interference} & OOB interference & Out-of-band interference rejection test. & 269.66 \\
+\texttt{IEEE\allowbreak\_Single\allowbreak\_SinWave} & Single-tone & Clean steady-state sinusoid used as a deterministic baseline. & 0.53 \\
+\texttt{IBR\allowbreak\_Harmonics\allowbreak\_Large} & IBR harmonics & Severe harmonic pollution representative of stressed IBR operation. & 398.59 \\
+\texttt{IBR\allowbreak\_Harmonics\allowbreak\_Medium} & IBR harmonics & Medium harmonic content representative of realistic grid-edge distortion. & 152.96 \\
+\texttt{IBR\allowbreak\_Harmonics\allowbreak\_Small} & IBR harmonics & Small harmonic pollution representative of IEEE 519 compliant conditions. & 32.44 \\
+\texttt{IBR\allowbreak\_Power\allowbreak\_Imbalance\allowbreak\_Ringdown} & IBR ringdown & Nominal IBR power-imbalance ringdown with oscillatory recovery. & 499.75 \\
+\texttt{IBR\allowbreak\_Power\allowbreak\_Imbalance\allowbreak\_Ringdown\allowbreak\_Low\allowbreak\_Noise} & IBR ringdown & Low-noise ringdown variant with mild interharmonic contamination. & 501.38 \\
+\texttt{IBR\allowbreak\_Power\allowbreak\_Imbalance\allowbreak\_Ringdown\allowbreak\_Medium\allowbreak\_Noise} & IBR ringdown & Medium-noise ringdown variant designed to stress loop robustness. & 474.29 \\
+\texttt{IBR\allowbreak\_Power\allowbreak\_Imbalance\allowbreak\_Ringdown\allowbreak\_Normal\allowbreak\_Noise} & IBR ringdown & Normal-noise ringdown variant close to the default operating point. & 486.90 \\
+\texttt{IBR\allowbreak\_Power\allowbreak\_Imbalance\allowbreak\_Ringdown\allowbreak\_Severe\allowbreak\_Noise} & IBR ringdown & Severe-noise ringdown variant with the strongest interharmonic stress. & 528.32 \\
+\texttt{IBR\allowbreak\_Multi\allowbreak\_Event} & IBR multi-event & Composite IBR stress sequence combining phase jump, ramp, harmonics, and oscillatory recovery. & 825.86 \\
+\texttt{IEEE\allowbreak\_Freq\allowbreak\_Step} & Frequency step & IEC/IEEE frequency step benchmark for abrupt nominal-frequency change. & 150.43 \\
+\end{longtable}

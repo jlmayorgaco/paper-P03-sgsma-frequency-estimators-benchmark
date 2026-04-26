@@ -1,0 +1,5 @@
+estimator=Hilbert_Phase_Derivative_Estimator
+baseline_gain=0.016
+best_gain=-0.016
+baseline_rmse=0.42006856
+best_rmse=0.42006856

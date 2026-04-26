@@ -1,0 +1,36 @@
+﻿\subsection{Related Work}
+\label{sec:related}
+
+Standards and many published benchmark studies still center on isolated
+disturbance classes. IEEE C37.118.1 and IEC/IEEE 60255-118-1 define dynamic
+tests around ramps, magnitude steps, modulation, and a limited set of phase
+events~\cite{IEEE_C37_118,IEC_IEEE_60255_118_1_2018}. Ting et al. extend that
+logic to low-inertia frequency measurement methods and show clear trade-offs
+between tracking speed and disturbance rejection even under a carefully chosen
+set of simulated events~\cite{Ting2022}. Wright et al. further show that phase
+steps can produce false ROCOF signatures, which is precisely the kind of
+measurement ambiguity that simple compliance views do not resolve~\cite{Wright2019}.
+
+Recent IBR-focused studies widen rather than close this gap.
+Low-inertia surveys and system studies show that converter penetration changes
+both the spatial distribution and the time scale of frequency dynamics~\cite{Milano2018LowInertia,
+Pinheiro2025,Ponce2025}. Related benchmark proposals for hybrid islanded or
+grid-forming systems emphasize interaction-driven behavior, but they do not
+provide a broad estimator comparison over standard PMU tests, composite IBR
+stress, trip-risk, and compute cost in one frame~\cite{Bernal2025,Zoghby2024}.
+That is the limitation this paper addresses. A method that performs well on a
+clean standard test may fail under conditions that the test never probes.
+
+The estimator families themselves are not the missing piece. Window-based
+methods trade harmonic rejection against observation delay~\cite{Belega2014,
+PlatasGarza2011}. PLL variants are cheap enough for embedded deployment but can
+lose phase alignment under abrupt discontinuities~\cite{Golestan2017,Wright2019}.
+Kalman-filter variants can improve transient tracking when their state model
+matches the event~\cite{Ferrero2020EKF,Chamorro2021}. Reduced-order and
+data-driven methods add further cost-accuracy trade-offs~\cite{Netto2018KoopmanKF}.
+What is missing is not the estimator families but the comparison protocol: a broad benchmark
+that keeps
+scenario family, trip-risk, and compute cost in view at the same time. The
+contribution of this paper is therefore not a new estimator but a benchmark
+study that preserves standard families, adds composite IBR stress, and compares
+accuracy, transient risk, and compute cost within one reporting framework.

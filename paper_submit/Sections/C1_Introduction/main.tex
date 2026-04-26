@@ -1,0 +1,42 @@
+﻿\section{Introduction}\label{sec:introduction}
+
+Frequency estimation sits on the critical path of relaying, under-frequency
+load shedding, disturbance monitoring, and converter supervision in
+low-inertia grids. In inverter-based resource (IBR) systems, the problem is
+not limited to slow electromechanical drift. Harmonics, abrupt phase jumps,
+out-of-band components, and short ringdown segments can arrive on the same
+timescale as the protection decision itself~\cite{Milano2018LowInertia,
+Pinheiro2025,Ponce2025}. Recent IBR-focused studies also show that converter
+control interactions and mixed disturbances can reshape the observable
+frequency response itself~\cite{Bernal2025,Zoghby2024}. An estimator that
+performs well in a textbook sinusoidal test can still generate large transient
+error or non-negligible trip-risk when these effects overlap.
+
+The estimator families used in practice already reveal a tension between
+accuracy, latency, and disturbance tolerance. Windowed spectral methods reject
+steady harmonic content but pay observation delay~\cite{Belega2014,
+PlatasGarza2011}. PLL variants are light enough for embedded deployment but can
+slip under abrupt phase discontinuities~\cite{Golestan2017,Wright2019}.
+Kalman-filter variants can track fast transients when the state model remains
+valid~\cite{Ferrero2020EKF,Chamorro2021}. Reduced-order and data-driven methods
+offer another point on the cost-accuracy curve, but their behavior under
+relay-oriented composite stress is even less standardized~\cite{Netto2018KoopmanKF,
+Ting2022}. What remains unclear is how the ranking of these families changes once the
+benchmark moves beyond isolated standard tests.
+
+This paper treats that question as the main result. Rather than forcing a
+single winner across all conditions, we ask three practical questions: which
+estimators lead the standard disturbance families, which IBR stress cases
+reorder the ranking, and which methods remain attractive once CPU cost and
+trip-risk are considered alongside RMSE.
+
+The benchmark analyzed here covers 16 estimators and a broad scenario set
+that mixes IEEE- and NERC-style disturbances with IBR-specific harmonics,
+ringdown, and multi-event stress. The dominant
+estimator changes with the disturbance family: the second-order
+generalized-integrator PLL (SOGI-PLL) leads ramps, the extended Kalman filter
+(EKF) leads magnitude steps and out-of-band interference, the robust adaptive
+EKF (RA-EKF) leads modulation, and the IBR multi-event case splits RMSE and
+trip-risk leadership between the phase-locked loop (PLL) and interpolated DFT
+(IpDFT). That scenario dependence, rather than any single ranking, is the
+main message of the paper.

@@ -1,0 +1,47 @@
+{
+  "benchmark_identity": "parametric_family_sweeps_active_pipeline",
+  "benchmark_scope": "Dense 30-point family sweeps built on the modular Monte Carlo benchmark.",
+  "authority_statement": "This run reuses the active modular estimator registry but replaces the canonical scenario catalog with dense parametric sweeps to study estimator degradation against one dominant variable per family.",
+  "paper_alignment_policy": "paper_follows_parametric_family_sweeps",
+  "output_dir": "C:\\Users\\walla\\Documents\\Github\\paper-P03-sgsma-frequency-estimators-benchmark\\artifacts\\parametric_family_sweeps",
+  "family_count": 1,
+  "scenario_count": 2,
+  "families": [
+    {
+      "key": "phase_jump",
+      "display_name": "Phase Jump Magnitude",
+      "base_scenario_name": "IEEE_Phase_Jump_60",
+      "sweep_key": "phase_jump_deg",
+      "sweep_label": "Phase jump",
+      "unit": "deg",
+      "xscale": "linear",
+      "description": "Clean phase-step sweep from 2° to 180°.",
+      "anchor_scenario": "Sweep_Phase_Jump_02_180deg",
+      "scenario_count": 2,
+      "scenarios": [
+        {
+          "scenario_name": "Sweep_Phase_Jump_01_2deg",
+          "sweep_value": 2.0,
+          "sweep_value_label": "2",
+          "overrides": {
+            "phase_jump_rad": 0.03490658503988659,
+            "noise_sigma": 0.001,
+            "t_jump_s": 0.7
+          },
+          "is_anchor": false
+        },
+        {
+          "scenario_name": "Sweep_Phase_Jump_02_180deg",
+          "sweep_value": 180.0,
+          "sweep_value_label": "180",
+          "overrides": {
+            "phase_jump_rad": 3.141592653589793,
+            "noise_sigma": 0.001,
+            "t_jump_s": 0.7
+          },
+          "is_anchor": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "timestamp_utc": "2026-04-25T15:07:47.783882+00:00",
+  "source_input_json": "C:\\Users\\walla\\Documents\\Github\\paper-P03-sgsma-frequency-estimators-benchmark\\artifacts\\full_mc_benchmark\\benchmark_full_report.json",
+  "source_stats_json": "C:\\Users\\walla\\Documents\\Github\\paper-P03-sgsma-frequency-estimators-benchmark\\artifacts\\full_mc_benchmark\\statistical_tests_report.json",
+  "output_dir": "C:\\Users\\walla\\Documents\\Github\\paper-P03-sgsma-frequency-estimators-benchmark\\reports",
+  "files": [
+    {
+      "path": "C:\\Users\\walla\\Documents\\Github\\paper-P03-sgsma-frequency-estimators-benchmark\\artifacts\\full_mc_benchmark\\benchmark_full_report.json",
+      "sha256": "abee7366d339c219fa7b3a5a8ec75a7c8b7a682fb81d696f1ee0d97e82672a19",
+      "size_bytes": 118072
+    },
+    {
+      "path": "C:\\Users\\walla\\Documents\\Github\\paper-P03-sgsma-frequency-estimators-benchmark\\artifacts\\full_mc_benchmark\\statistical_tests_report.json",
+      "sha256": "0ebab165e13ffe94aac6ba52b4d82bc15d972e2f04d175c6a1a816e2685fc5bc",
+      "size_bytes": 8631
+    },
+    {
+      "path": "C:\\Users\\walla\\Documents\\Github\\paper-P03-sgsma-frequency-estimators-benchmark\\reports\\benchmark_report.md",
+      "sha256": "4d3303a7f6240d349bb5b8dd044149d6086d7a36cbc266b7bb7354fd53891272",
+      "size_bytes": 820
+    },
+    {
+      "path": "C:\\Users\\walla\\Documents\\Github\\paper-P03-sgsma-frequency-estimators-benchmark\\reports\\benchmark_report.html",
+      "sha256": "e560ad116d9d4a4ac243c20976089628559902b07cd60ab741dcf445c1a65e5a",
+      "size_bytes": 855
+    },
+    {
+      "path": "C:\\Users\\walla\\Documents\\Github\\paper-P03-sgsma-frequency-estimators-benchmark\\reports\\benchmark_appendix_tables.csv",
+      "sha256": "b4ce82467dcd093cdd7c0fcb811414beefd5c1088605d5791a40e2906e2e7d82",
+      "size_bytes": 4683
+    }
+  ]
+}

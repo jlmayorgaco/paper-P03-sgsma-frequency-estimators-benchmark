@@ -1,0 +1,5 @@
+estimator=MUSIC_Experimental_Estimator
+baseline_gain=0.013
+best_gain=0.0195
+baseline_rmse=0.43520495
+best_rmse=0.40840511

@@ -1,0 +1,30 @@
+\begin{longtable}{L{2.25cm} L{1.55cm} L{3.2cm} L{3.6cm} L{3.8cm} c}
+\caption{Estimator catalog for the benchmark. RMSE wins count exact scenario-level wins in the 34-scenario suite.}\label{tab:estimator_catalog}\\
+\scriptsize\\
+\toprule
+Estimator & Family & Principle & Where it helps & Main trade-off & RMSE wins \\
+\midrule
+\endfirsthead
+\toprule
+Estimator & Family & Principle & Where it helps & Main trade-off & RMSE wins \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+EKF & Model-based & Extended Kalman filter for single-phase dynamic frequency tracking. & Most RMSE wins and strongest overall balance of error and cost. & Model mismatch can still hurt under severe composite stress. & 10 \\
+ESPRIT & Window-based & Subspace rotational-invariance spectral estimator. & Frequent trip-risk leader in difficult scenarios. & By far the most expensive routine in the benchmark. & 1 \\
+IPDFT & Window-based & Interpolated DFT around the dominant spectral bin. & Good steady-state selectivity and low trip-risk in several hard cases. & Observation-window latency and transient smearing. & 0 \\
+Koopman (RK-DPMU) & Data-driven & Reduced-order data-driven estimator inspired by robust Koopman models. & Occasional scenario wins and competitive ramp behavior. & High compute without broad global RMSE dominance. & 2 \\
+LKF2 & Model-based & Linear Kalman filtering with a reduced sinusoidal state model. & Low compute for a state-space estimator. & Less robust than EKF/UKF/RA-EKF on the hardest nonlinear events. & 0 \\
+PLL & Loop-based & Single-phase phase-locked loop tracking instantaneous phase. & Good composite-event RMSE and low embedded cost. & Can slip or overshoot under large phase discontinuities. & 2 \\
+Prony & Window-based & Parametric modal fit from short signal windows. & Useful harmonic and trip-risk behavior in selected cases. & Heavy compute and fragile numerical conditioning. & 1 \\
+RA-EKF & Model-based & RoCoF-augmented and robustness-tuned extended Kalman filter. & Best modulation-family RMSE and strong global trade-off profile. & Higher cost than the cheapest loop methods. & 6 \\
+RLS & Adaptive & Recursive least-squares fit of an AR(2) sinusoidal model. & Online adaptation with low nominal compute. & Unstable under the hardest composite disturbances in this study. & 0 \\
+SOGI-FLL & Loop-based & SOGI front-end with frequency-locked loop update law. & Very low compute and strong phase-jump behavior. & Less competitive than the best model-based filters on clean families. & 3 \\
+SOGI-PLL & Loop-based & Second-order generalized integrator front-end plus PLL. & Best ramp-family RMSE with sub-microsecond cost. & Not universally best under IBR ringdown or multi-event stress. & 6 \\
+TFT & Window-based & Taylor-Fourier expansion for dynamic phasor estimation. & Strong global mean-rank behavior across error metrics. & Higher compute than loop methods and window dependence. & 2 \\
+TKEO & Adaptive & Teager-Kaiser energy operator for instantaneous frequency cues. & Fast lightweight adaptive baseline. & Limited robustness across difficult benchmark families. & 0 \\
+Type-3 SOGI-PLL & Loop-based & Type-3 SOGI-PLL variant tuned for low-inertia operation. & Cheap embedded implementation with improved loop shaping. & Rarely reaches the front of the benchmark on accuracy. & 0 \\
+UKF & Model-based & Unscented Kalman filter with nonlinear sigma-point propagation. & Best RMSE in the ringdown-noise family. & More compute than EKF with no universal advantage. & 3 \\
+ZCD & Loop-based & Zero-crossing frequency readout from waveform sign changes. & Minimum compute and transparent implementation. & Sensitive to discontinuities, noise, and harmonics. & 0 \\
+\end{longtable}

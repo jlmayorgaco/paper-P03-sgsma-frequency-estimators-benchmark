@@ -1,0 +1,52 @@
+\section{Metrics and Statistical Analysis}
+\label{sec:metrics_and_hypotheses}
+
+The central methodological choice in this paper is to keep the metric contract explicit. A benchmark with heterogeneous disturbances and heterogeneous estimators cannot be summarized responsibly unless the reader can see what is being measured, how it is aggregated, and what kind of inference is being claimed.
+
+\subsection{Notation and Aggregation}
+
+For scenario $s$, estimator $j$, Monte Carlo realization $r$, and evaluation sample $n \in \mathcal{I}_s$, let
+\begin{equation}
+e_{s,j,r}[n] = \hat{f}_{s,j,r}[n] - f^{\star}_{s}[n]
+\label{eq:error_signal}
+\end{equation}
+denote the frequency-estimation error in hertz over the benchmark-defined evaluation window $\mathcal{I}_s$. The benchmark first computes metrics per estimator-scenario-realization tuple, then averages across Monte Carlo realizations, and only then aggregates across scenarios. That ordering matters because it preserves scenario identity before any family-level summary is formed.
+
+For any metric $m_q$, the scenario-level Monte Carlo aggregate is
+\begin{equation}
+\bar{m}_{q,s,j} = \frac{1}{R} \sum_{r=1}^{R} m_{q,s,j,r},
+\label{eq:mc_aggregate}
+\end{equation}
+where $R=\ArchivalMonteCarloRuns{}$ in this study. For a disturbance family $\mathcal{F}$ with scenario set $\mathcal{S}_{\mathcal{F}}$, the family summary used in the main results table is
+\begin{equation}
+M_{q,\mathcal{F},j} = \frac{1}{|\mathcal{S}_{\mathcal{F}}|} \sum_{s \in \mathcal{S}_{\mathcal{F}}} \bar{m}_{q,s,j}.
+\label{eq:family_aggregate}
+\end{equation}
+Equation~\eqref{eq:family_aggregate} gives each archived scenario equal weight within its family. This prevents broad but easy families from obscuring smaller and more stressful ones through raw record count alone.
+
+\subsection{Headline Metrics}
+
+The benchmark tracks six headline metrics. They are intentionally heterogeneous: RMSE and MAE describe aggregate accuracy, peak error captures the worst transient excursion, trip-risk duration translates error into a relay-oriented risk quantity, settling time captures recovery behavior, and CPU time represents relative computational cost. None of these metrics dominates the others in general, and several of the benchmark's most important findings arise precisely from their disagreement.
+
+The three basic error metrics are
+\begin{align}
+\mathrm{RMSE}_{s,j,r} &= \sqrt{\frac{1}{|\mathcal{I}_s|} \sum_{n \in \mathcal{I}_s} e_{s,j,r}[n]^2}, \label{eq:rmse} \\
+\mathrm{MAE}_{s,j,r} &= \frac{1}{|\mathcal{I}_s|} \sum_{n \in \mathcal{I}_s} |e_{s,j,r}[n]|, \label{eq:mae} \\
+\mathrm{Peak}_{s,j,r} &= \max_{n \in \mathcal{I}_s} |e_{s,j,r}[n]|. \label{eq:peak}
+\end{align}
+The relay-oriented trip-risk metric is the total time for which the absolute frequency error exceeds the benchmark deadband of \SI{0.5}{Hz},
+\begin{equation}
+T^{\mathrm{trip}}_{s,j,r} = \Delta t \sum_{n \in \mathcal{I}_s} \mathbb{I}\!\left(|e_{s,j,r}[n]| > 0.5\right),
+\label{eq:trip_risk}
+\end{equation}
+where $\Delta t$ is the decimated sampling interval. Settling time is defined as the first post-event time after which the estimate remains inside the benchmark tolerance band for the remainder of the evaluation window. CPU time is a repeated \texttt{process\_time()} measurement and should therefore be read as a relative software-cost index, not as a device-certified latency bound.
+
+\input{generated/metric_catalog}
+
+\subsection{Family-Level Statistical Comparison}
+
+For each headline metric, the estimators are relabeled under the estimator taxonomy and tested under the null hypothesis that the estimator-family distributions are equal once the scenario summaries are pooled. We report both one-way ANOVA and Kruskal-Wallis statistics because the benchmark contains heavy-tailed and highly skewed behaviors, especially in trip-risk and severe IBR stress.
+
+\input{generated/auto_hypotheses}
+
+Table~\ref{tab:auto_hypotheses} shows that the estimator-family label is not cosmetic. All six null hypotheses are rejected under both ANOVA and Kruskal-Wallis tests, with Kruskal-Wallis $p$-values below $10^{-16}$ for every metric. These omnibus tests do not prove the scenario-family winner turnover that is reported later; they answer a different question. They reject the stronger null that estimator-family labels are irrelevant to the observed distributions of error, risk, settling, and cost. That result supports the paper's broader claim that flat rankings erase meaningful benchmark structure rather than merely simplifying it.

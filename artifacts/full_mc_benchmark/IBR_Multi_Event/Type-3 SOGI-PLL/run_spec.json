@@ -53,9 +53,9 @@
   "best_params": {
     "nominal_f": 60.0,
     "k_sogi": 1.414,
-    "kp": 31.622776601683793,
-    "ki": 10.0,
-    "ki2": 100.0
+    "kp": 90.0,
+    "ki": 2700.0,
+    "ki2": 27000.0
   },
   "defaults": {
     "nominal_f": 60.0,
@@ -65,18 +65,18 @@
     "ki2": 27000.0
   },
   "tuning_meta": {
-    "sampler_mode_requested": "grid",
-    "sampler_mode_effective": "grid",
-    "n_trials_requested": 30,
-    "n_trials_executed": 27,
+    "sampler_mode_requested": "tpe",
+    "sampler_mode_effective": "tpe",
+    "n_trials_requested": 1,
+    "n_trials_executed": 1,
     "n_trials_override_applied": false
   },
-  "n_trials_tuning": 27,
-  "n_trials_tuning_requested": 30,
-  "tuning_sampler_requested": "grid",
-  "tuning_sampler_effective": "grid",
+  "n_trials_tuning": 1,
+  "n_trials_tuning_requested": 1,
+  "tuning_sampler_requested": "tpe",
+  "tuning_sampler_effective": "tpe",
   "tuning_trials_override_applied": false,
-  "n_mc_runs": 3,
+  "n_mc_runs": 1,
   "artifacts": {
     "summary_csv": [
       "artifacts\\full_mc_benchmark\\IBR_Multi_Event\\Type-3 SOGI-PLL\\IBR_Multi_Event__Type-3 SOGI-PLL_summary.csv"

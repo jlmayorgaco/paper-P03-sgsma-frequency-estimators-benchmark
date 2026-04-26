@@ -1,0 +1,62 @@
+\section{Benchmark Design}
+\label{sec:benchmark_scope}
+
+The benchmark evaluates \ArchivalScenarioCount{} scenarios and \ArchivalEstimatorCount{} estimators, producing \ArchivalPairCount{} tuned estimator-scenario configurations and \ArchivalTotalRecords{} Monte Carlo records. Each configuration is tuned with \ArchivalTuningTrials{} search trials and then evaluated over \ArchivalMonteCarloRuns{} realizations. Scenarios are synthesized as physics-rate waveforms at \SI{1}{MHz} and consumed by the estimators on decimated \SI{10}{kHz} outputs. CPU cost is measured through repeated \texttt{process\_time()} runs and is interpreted throughout the paper as a relative software-cost indicator rather than as a guaranteed hardware latency.
+
+Two physical facts motivate this design. First, in low-inertia grids the initial post-disturbance frequency slope scales inversely with inertia. A compact aggregate model is
+\begin{equation}
+\frac{df}{dt} = \frac{f_s}{2H}\left(\Delta P - D\left(f-f_s\right)\right),
+\label{eq:swing_compact}
+\end{equation}
+where $f_s$ is nominal frequency, $H$ is aggregate inertia, $D$ is damping, and $\Delta P$ is the active-power imbalance~\cite{Milano2018LowInertia}. Smaller $H$ compresses the time window available to protection and control. Second, the estimator does not observe frequency directly; it infers it from the measured waveform phase,
+\begin{equation}
+f(t) \approx \frac{1}{2\pi}\frac{d\theta(t)}{dt},
+\label{eq:phase_to_frequency}
+\end{equation}
+which makes the estimate sensitive to phase discontinuities, harmonics, interharmonics, amplitude modulation, and measurement noise. The benchmark is therefore designed to stress both the grid-side dynamics and the signal-side inference problem.
+
+\begin{figure*}[t]
+\centering
+\resizebox{0.98\textwidth}{!}{%
+\begin{tikzpicture}[
+  node distance=1.25cm and 0.9cm,
+  box/.style={draw, rounded corners, thick, align=center, minimum width=2.75cm, minimum height=1.15cm, fill=blue!6},
+  box2/.style={draw, rounded corners, thick, align=center, minimum width=2.75cm, minimum height=1.15cm, fill=green!7},
+  box3/.style={draw, rounded corners, thick, align=center, minimum width=2.75cm, minimum height=1.15cm, fill=orange!9},
+  arr/.style={-{Latex[length=2.5mm]}, thick}
+]
+  \node[box] (archive) {Scenario suite + estimator suite\\\ArchivalScenarioCount{} scenarios, \ArchivalEstimatorCount{} estimators};
+  \node[box, right=of archive] (tuning) {Per-pair tuning\\\ArchivalTuningTrials{} search trials};
+  \node[box, right=of tuning] (mc) {Monte Carlo evaluation\\\ArchivalMonteCarloRuns{} runs per tuned pair};
+  \node[box2, below=of tuning] (metrics) {Headline metrics\\RMSE, MAE, peak, trip-risk, settling, CPU};
+  \node[box2, left=of metrics] (taxonomy) {Taxonomy layer\\estimator families + scenario families};
+  \node[box2, right=of metrics] (tests) {Statistical comparisons\\ANOVA + Kruskal across families};
+  \node[box3, below=of metrics] (paper) {Comparative interpretation\\family evidence, trade-offs, appendices};
+
+\draw[arr] (archive) -- (tuning);
+\draw[arr] (tuning) -- (mc);
+\draw[arr] (mc) -- (tests);
+\draw[arr] (archive) -- (taxonomy);
+\draw[arr] (mc) -- (metrics);
+\draw[arr] (taxonomy) -- (paper);
+\draw[arr] (metrics) -- (paper);
+\draw[arr] (tests) -- (paper);
+\end{tikzpicture}
+}
+\caption{Benchmark workflow used in the study. The analysis proceeds from the scenario and estimator suites through tuning, Monte Carlo evaluation, metric extraction, taxonomy-based aggregation, and statistical comparison before the final comparative interpretation is formed.}
+\label{fig:traceability_pipeline}
+\end{figure*}
+
+The benchmark is organized so that scenario identity is preserved before any global summary is formed. Each estimator-scenario pair is tuned separately, evaluated separately, and only then aggregated at the family level. That ordering matters because it prevents broad but easy families from dominating the interpretation through sheer count.
+
+\subsection{Design Principles}
+
+Four design rules follow from the gaps identified in Section~\ref{sec:related_work}.
+\begin{enumerate}[leftmargin=1.8em]
+\item Standards-style IEEE and IEC/IEEE scenarios remain in the benchmark because they define the common compliance baseline.
+\item Composite IBR stressors are added explicitly because realistic inverter-driven events couple discontinuities, spectral pollution, oscillatory recovery, and low-inertia transients in ways that isolated standard tests do not capture.
+\item Accuracy, trip-risk, recovery, and computational cost are reported jointly because a method that is excellent on one axis can still be unusable on another.
+\item Aggregation is performed by disturbance family before global ranking so that the benchmark answers a deployment question rather than merely producing a catalog-wide score.
+\end{enumerate}
+
+One methodological point deserves emphasis. This paper is written as a benchmark study, not as a leaderboard note. The experimental design is meaningful only because disturbance family, metric definition, and deployment objective remain visible all the way from per-scenario evaluation to the final synthesis. The remainder of the paper follows that ordering explicitly.

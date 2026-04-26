@@ -1,0 +1,42 @@
+{
+  "scenario": "Sweep_Phase_Jump_01_2deg",
+  "scenario_class": "Sweep_Phase_JumpScenario01",
+  "sweep_family_key": "phase_jump",
+  "sweep_family_display": "Phase Jump Magnitude",
+  "sweep_key": "phase_jump_deg",
+  "sweep_label": "Phase jump",
+  "sweep_unit": "deg",
+  "sweep_value": 2.0,
+  "is_anchor_scenario": false,
+  "estimator": "EKF",
+  "estimator_class": "EKF_Estimator",
+  "family": "Model-based",
+  "best_params": {
+    "nominal_f": 60.0,
+    "q_dc": 1e-06,
+    "q_alpha": 0.0001,
+    "q_beta": 0.0001,
+    "q_omega": 1.7521111923192077e-07,
+    "r_meas": 2561.9560600751506,
+    "output_smoothing": 0.02
+  },
+  "tuning_meta": {
+    "strategy": "family_anchor_reuse",
+    "anchor_scenario": "Sweep_Phase_Jump_02_180deg",
+    "sampler_mode_requested": "tpe",
+    "sampler_mode_effective": "tpe",
+    "n_trials_requested": 1,
+    "n_trials_executed": 1
+  },
+  "n_trials_tuning": 1,
+  "n_trials_tuning_requested": 1,
+  "n_mc_runs": 1,
+  "artifacts": {
+    "summary_csv": "artifacts\\parametric_family_sweeps\\Sweep_Phase_Jump_01_2deg\\EKF\\Sweep_Phase_Jump_01_2deg__EKF_summary.csv",
+    "signals_csv": [],
+    "tracking_plots": [],
+    "scenario_csv": "artifacts\\parametric_family_sweeps\\Sweep_Phase_Jump_01_2deg\\Sweep_Phase_Jump_01_2deg_scenario.csv",
+    "scenario_plot": null,
+    "scenario_zoom_plot": null
+  }
+}

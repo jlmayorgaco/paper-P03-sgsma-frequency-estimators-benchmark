@@ -1,0 +1,20 @@
+\begin{table*}[t]
+\centering
+\caption{Omnibus family-comparison tests computed from the scenario summaries after relabeling estimators with the study taxonomy. The null hypothesis for every row is that estimator-family distributions are equal for the reported metric.}
+\label{tab:auto_hypotheses}
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{l c c c c c}
+\toprule
+Metric & Families & ANOVA $F$ & $p$ & Kruskal $H$ & $p$ \\
+\midrule
+RMSE & 5 & 12.13 & 1.89e-09 & 157.02 & $<10^{-16}$ \\
+MAE & 5 & 16.04 & 2.05e-12 & 174.72 & $<10^{-16}$ \\
+Peak error & 5 & 5.49 & 2.43e-04 & 125.19 & $<10^{-16}$ \\
+Trip-risk & 5 & 89.56 & $<10^{-16}$ & 170.87 & $<10^{-16}$ \\
+Settling time & 5 & 17.25 & 2.52e-13 & 92.21 & $<10^{-16}$ \\
+CPU time & 5 & 71.31 & $<10^{-16}$ & 442.87 & $<10^{-16}$ \\
+\bottomrule
+\end{tabular}
+\end{table*}

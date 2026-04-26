@@ -1,0 +1,93 @@
+{
+  "n_scenarios": 34,
+  "n_estimators": 16,
+  "n_pairs": 544,
+  "n_mc_runs": 60,
+  "n_trials_tuning": 100,
+  "raw_run_records": 32640,
+  "pareto_estimators": [
+    "EKF",
+    "RA-EKF",
+    "SOGI-FLL",
+    "SOGI-PLL",
+    "ZCD"
+  ],
+  "top_rmse_mean_rank": [
+    {
+      "estimator": "TFT",
+      "mean_rank": 4.382352941176471
+    },
+    {
+      "estimator": "RA-EKF",
+      "mean_rank": 4.617647058823529
+    },
+    {
+      "estimator": "EKF",
+      "mean_rank": 5.470588235294118
+    },
+    {
+      "estimator": "IPDFT",
+      "mean_rank": 6.470588235294118
+    },
+    {
+      "estimator": "SOGI-PLL",
+      "mean_rank": 6.5588235294117645
+    }
+  ],
+  "hardest_scenarios_by_median_rmse": [
+    {
+      "scenario": "IBR_Multi_Event",
+      "median_rmse_hz": 0.8258622416666666
+    },
+    {
+      "scenario": "IEEE_Phase_Jump_60",
+      "median_rmse_hz": 0.6751443749999999
+    },
+    {
+      "scenario": "NERC_Phase_Jump_60",
+      "median_rmse_hz": 0.6374859500000001
+    },
+    {
+      "scenario": "IBR_Power_Imbalance_Ringdown_Severe_Noise",
+      "median_rmse_hz": 0.5283183250000001
+    },
+    {
+      "scenario": "IBR_Power_Imbalance_Ringdown_Low_Noise",
+      "median_rmse_hz": 0.5013842833333333
+    },
+    {
+      "scenario": "IBR_Power_Imbalance_Ringdown",
+      "median_rmse_hz": 0.49975243333333336
+    },
+    {
+      "scenario": "IBR_Power_Imbalance_Ringdown_Normal_Noise",
+      "median_rmse_hz": 0.48690324166666665
+    },
+    {
+      "scenario": "IBR_Power_Imbalance_Ringdown_Medium_Noise",
+      "median_rmse_hz": 0.47428893333333333
+    }
+  ],
+  "fastest_estimators_cpu": [
+    {
+      "estimator": "ZCD",
+      "cpu_time_us_mean": 0.017288823529411766
+    },
+    {
+      "estimator": "SOGI-FLL",
+      "cpu_time_us_mean": 0.03480754901960784
+    },
+    {
+      "estimator": "TKEO",
+      "cpu_time_us_mean": 0.06296941176470587
+    },
+    {
+      "estimator": "PLL",
+      "cpu_time_us_mean": 0.0662632843137255
+    },
+    {
+      "estimator": "Type-3 SOGI-PLL",
+      "cpu_time_us_mean": 0.07081225490196079
+    }
+  ]
+}

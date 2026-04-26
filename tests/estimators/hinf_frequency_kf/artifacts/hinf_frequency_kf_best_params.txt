@@ -1,0 +1,5 @@
+estimator=Hinf_KF_Estimator
+baseline_gain=0.017
+best_gain=0.025500000000000002
+baseline_rmse=0.41174738
+best_rmse=0.38064056

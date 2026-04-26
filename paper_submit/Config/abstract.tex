@@ -1,0 +1,17 @@
+﻿\begin{abstract}
+Frequency estimation for relay and monitoring functions is more demanding in
+inverter-based resource (IBR) grids than in classical synchronous systems
+because phase jumps, harmonics, ringdown, and out-of-band components may occur
+in the same event. This paper benchmarks 16 estimators over 34 scenarios with
+60 Monte Carlo runs per estimator--scenario pair, covering IEEE-style ramps,
+magnitude steps, modulation, phase jumps, out-of-band interference, and
+IBR-specific composite stress. No single estimator dominates all disturbance
+families. The second-order generalized-integrator PLL (SOGI-PLL) leads ramps,
+the extended Kalman filter (EKF) leads magnitude steps and out-of-band cases,
+and the robust adaptive EKF (RA-EKF) leads modulation. The IBR multi-event case
+splits RMSE and trip-risk leadership between the phase-locked loop (PLL) and
+the interpolated DFT (IpDFT). The hardest cases are the IBR multi-event
+sequence, 60-degree phase jumps, and noisy ringdown scenarios. These results
+show that isolated compliance tests miss disturbance dependence that matters
+for protection design.
+\end{abstract}

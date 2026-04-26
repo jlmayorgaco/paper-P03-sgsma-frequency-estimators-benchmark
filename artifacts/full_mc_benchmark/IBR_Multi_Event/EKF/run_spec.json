@@ -55,8 +55,8 @@
     "q_dc": 1e-06,
     "q_alpha": 0.0001,
     "q_beta": 0.0001,
-    "q_omega": 0.03162277660168379,
-    "r_meas": 0.01,
+    "q_omega": 0.0001,
+    "r_meas": 0.001,
     "output_smoothing": 0.02
   },
   "defaults": {
@@ -69,18 +69,18 @@
     "output_smoothing": 0.02
   },
   "tuning_meta": {
-    "sampler_mode_requested": "grid",
-    "sampler_mode_effective": "grid",
-    "n_trials_requested": 30,
-    "n_trials_executed": 25,
+    "sampler_mode_requested": "tpe",
+    "sampler_mode_effective": "tpe",
+    "n_trials_requested": 1,
+    "n_trials_executed": 1,
     "n_trials_override_applied": false
   },
-  "n_trials_tuning": 25,
-  "n_trials_tuning_requested": 30,
-  "tuning_sampler_requested": "grid",
-  "tuning_sampler_effective": "grid",
+  "n_trials_tuning": 1,
+  "n_trials_tuning_requested": 1,
+  "tuning_sampler_requested": "tpe",
+  "tuning_sampler_effective": "tpe",
   "tuning_trials_override_applied": false,
-  "n_mc_runs": 3,
+  "n_mc_runs": 1,
   "artifacts": {
     "summary_csv": [
       "artifacts\\full_mc_benchmark\\IBR_Multi_Event\\EKF\\IBR_Multi_Event__EKF_summary.csv"

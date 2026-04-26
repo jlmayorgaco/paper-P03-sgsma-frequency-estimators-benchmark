@@ -1,0 +1,5 @@
+estimator=IMM_EKF_UKF_Estimator
+baseline_gain=0.021
+best_gain=0.0315
+baseline_rmse=0.39728147
+best_rmse=0.38748468

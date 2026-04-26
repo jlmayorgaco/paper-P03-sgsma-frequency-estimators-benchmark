@@ -1,0 +1,5 @@
+estimator=Quinn_Fernandes_Estimator
+baseline_gain=0.011
+best_gain=0.022
+baseline_rmse=0.45212384
+best_rmse=0.39193615

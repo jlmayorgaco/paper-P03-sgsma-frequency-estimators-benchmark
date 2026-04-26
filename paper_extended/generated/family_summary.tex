@@ -1,0 +1,24 @@
+\begin{table*}[t]
+\centering
+\caption{Family-level RMSE and trip-risk summary from the 34-scenario benchmark suite. RMSE values are family means of scenario means and are reported in mHz. The uncertainty term is the winner's mean within-scenario Monte Carlo standard deviation across the family.}
+\label{tab:family_summary_extended}
+\scriptsize
+\setlength{\tabcolsep}{2.8pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular}{l c l c l c l}
+\toprule
+Family & Count & RMSE winner & RMSE [mHz] & Runner-up & $\Delta$ [mHz] & Lowest $T_{\mathrm{trip}}$ [s] \\
+\midrule
+IEEE ramps & 9 & SOGI-PLL & $19.412 \pm 6.367$ & Koopman (RK-DPMU) & 2.677 & 0 (11-way tie) \\
+Magnitude steps & 7 & EKF & $0.388 \pm 0.143$ & RA-EKF & 1.451 & 0 (10-way tie) \\
+Modulation & 3 & RA-EKF & $17.781 \pm 21.411$ & Koopman (RK-DPMU) & 13.659 & 0 (8-way tie) \\
+Phase jumps & 3 & SOGI-FLL & $174.052 \pm 67.466$ & PLL & 4.031 & ZCD: 0.0194 \\
+OOB interference & 1 & EKF & $13.641 \pm 11.132$ & RA-EKF & 7.352 & 0 (2-way tie) \\
+Single-tone & 1 & ESPRIT & $0 \pm 0$ & Koopman (RK-DPMU) & 0 & 0 (13-way tie) \\
+IBR harmonics & 3 & EKF & $70.464 \pm 27.297$ & TFT & 4.126 & TFT: 0.0095 \\
+IBR ringdown & 5 & UKF & $313.127 \pm 23.247$ & EKF & 6.667 & ESPRIT: 0.0989 \\
+IBR multi-event & 1 & PLL & $173.495 \pm 66.708$ & UKF & 2.737 & IPDFT: 0.0439 \\
+Frequency step & 1 & Koopman (RK-DPMU) & $89.865 \pm 58.051$ & LKF2 & 5.291 & Koopman (RK-DPMU): 0.0099 \\
+\bottomrule
+\end{tabular}
+\end{table*}

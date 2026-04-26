@@ -1,0 +1,21 @@
+{
+  "scenario": "Sweep_FreqRamp_RoCoF_0p15Hzs",
+  "rocof_hz_s": 0.15,
+  "estimator": "IPDFT",
+  "family": "Window-based",
+  "best_params": {
+    "nominal_f": 60.0,
+    "cycles": 3.836344155035005,
+    "decim": 1
+  },
+  "tuning_meta": {
+    "mode": "per_scenario_best_tuning",
+    "objective": "minimize_m1_rmse_hz",
+    "n_trials_requested": 25,
+    "n_trials_executed": 25,
+    "tune_eval_runs": 2,
+    "sampler_mode_effective": "tpe",
+    "best_objective": 0.003543270926364301
+  },
+  "n_mc_runs": 2
+}

@@ -1,0 +1,33 @@
+﻿\documentclass[conference,letterpaper]{IEEEtran}
+\input{Config/packages}
+
+\graphicspath{{./}{Figures/Plots_And_Graphs/}}
+\DeclareGraphicsExtensions{.pdf,.jpeg,.png}
+
+\hyphenation{op-tical net-works semi-conduc-tor}
+
+\begin{document}
+
+    \input{Config/title}
+    \input{Config/authors}
+    \input{Config/header}
+
+    \maketitle
+
+    \input{Config/abstract}
+    \input{Config/keywords}
+
+    \input{Sections/C1_Introduction/main}
+    \input{Sections/C2_Related_Work/main}
+    \input{Sections/C3_Methods/main}
+    \input{Sections/C4_Simulation_Results/main}
+    \input{Sections/C5_Conclusions/main}
+
+    \ifCLASSOPTIONcaptionsoff
+      \newpage
+    \fi
+
+    \bibliographystyle{IEEEtran}
+    \bibliography{bibtex/bib/references}
+
+\end{document}

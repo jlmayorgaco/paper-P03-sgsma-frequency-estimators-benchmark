@@ -1,0 +1,5 @@
+estimator=SR_UKF_Estimator
+baseline_gain=0.018
+best_gain=0.026999999999999996
+baseline_rmse=0.40885301
+best_rmse=0.38563866

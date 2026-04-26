@@ -1,0 +1,5 @@
+estimator=Adaptive_EKF_Estimator
+baseline_gain=0.022
+best_gain=-0.022
+baseline_rmse=0.39203990
+best_rmse=0.39203990

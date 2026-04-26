@@ -1,0 +1,5 @@
+estimator=Sliding_Least_Squares_Estimator
+baseline_gain=0.009
+best_gain=0.018
+baseline_rmse=0.47128713
+best_rmse=0.41138975

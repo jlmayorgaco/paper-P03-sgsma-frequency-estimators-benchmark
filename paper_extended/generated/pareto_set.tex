@@ -1,0 +1,19 @@
+\begin{table}[t]
+\centering
+\caption{Global RMSE-versus-CPU Pareto set extracted from the benchmark.}
+\label{tab:pareto_set}
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular}{l l c c}
+\toprule
+Estimator & Family & RMSE [mHz] & CPU [$\mu$s] \\
+\midrule
+RA-EKF & Model-based & 116.19 & 1.610 \\
+EKF & Model-based & 123.20 & 0.813 \\
+SOGI-PLL & Loop-based & 188.94 & 0.087 \\
+SOGI-FLL & Loop-based & 307.87 & 0.035 \\
+ZCD & Loop-based & 1.69e+05 & 0.017 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,24 @@
+{
+  "scenario": "Sweep_FreqRamp_RoCoF_0p1Hzs",
+  "rocof_hz_s": 0.1,
+  "estimator": "LKF",
+  "family": "Model-based",
+  "best_params": {
+    "nominal_f": 60.0,
+    "q": 0.05162757737736402,
+    "r": 0.02618714749199501,
+    "rho": 0.999460946641191,
+    "output_smoothing": 0.0005492832510422716,
+    "phase_lag_samples": 0
+  },
+  "tuning_meta": {
+    "mode": "per_scenario_best_tuning",
+    "objective": "minimize_m1_rmse_hz",
+    "n_trials_requested": 25,
+    "n_trials_executed": 25,
+    "tune_eval_runs": 2,
+    "sampler_mode_effective": "tpe",
+    "best_objective": 0.014797777027368845
+  },
+  "n_mc_runs": 2
+}

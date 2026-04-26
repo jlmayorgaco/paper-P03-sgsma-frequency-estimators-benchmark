@@ -61,18 +61,18 @@
     "gamma": 50.0
   },
   "tuning_meta": {
-    "sampler_mode_requested": "grid",
-    "sampler_mode_effective": "grid",
-    "n_trials_requested": 30,
-    "n_trials_executed": 25,
+    "sampler_mode_requested": "tpe",
+    "sampler_mode_effective": "tpe",
+    "n_trials_requested": 1,
+    "n_trials_executed": 1,
     "n_trials_override_applied": false
   },
-  "n_trials_tuning": 25,
-  "n_trials_tuning_requested": 30,
-  "tuning_sampler_requested": "grid",
-  "tuning_sampler_effective": "grid",
+  "n_trials_tuning": 1,
+  "n_trials_tuning_requested": 1,
+  "tuning_sampler_requested": "tpe",
+  "tuning_sampler_effective": "tpe",
   "tuning_trials_override_applied": false,
-  "n_mc_runs": 3,
+  "n_mc_runs": 1,
   "artifacts": {
     "summary_csv": [
       "artifacts\\full_mc_benchmark\\IBR_Multi_Event\\SOGI-FLL\\IBR_Multi_Event__SOGI-FLL_summary.csv"

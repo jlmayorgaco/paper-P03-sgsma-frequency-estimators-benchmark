@@ -1,0 +1,20 @@
+\begin{table*}[t]
+\centering
+\caption{Headline metrics analyzed in the benchmark.}
+\label{tab:metric_catalog}
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{l l L{5.1cm} L{3.2cm}}
+\toprule
+Code & Name & What it measures & Interpretation \\
+\midrule
+m1\_rmse\_hz & RMSE & Global accuracy over the evaluation window. & Lower is better. \\
+m2\_mae\_hz & MAE & Average absolute error without squaring large excursions. & Lower is better. \\
+m3\_max\_peak\_hz & Peak error & Worst instantaneous frequency error. & Lower is better. \\
+m5\_trip\_risk\_s & Trip-risk duration & Total time above the 0.5 Hz relay deadband. & Lower is better. \\
+m8\_settling\_time\_s & Settling time & Time until the estimate stays within the tolerance band. & Lower is better. \\
+m13\_cpu\_time\_us & CPU time & Average per-sample process-time cost. & Lower is better. \\
+\bottomrule
+\end{tabular}
+\end{table*}

@@ -1,0 +1,20 @@
+\section{Estimator Catalog}
+\label{app:estimators}
+
+Table~\ref{tab:estimator_catalog} provides a compact explanation of every estimator included in the benchmark. The point of the table is not to claim that one-line descriptions replace a full implementation description, but to keep the manuscript self-contained: a reader should be able to understand what each method assumes, where it helps, and what trade-off it carries without leaving the paper.
+
+\input{generated/estimator_catalog}
+
+\section{Scenario Catalog}
+\label{app:scenarios}
+
+Table~\ref{tab:scenario_catalog} lists every scenario contained in the benchmark suite. The generic IEEE ramp and magnitude-step cases are kept alongside their parameterized variants because the study treats them as separate scenario IDs.
+
+\input{generated/scenario_catalog}
+
+\section{Family RMSE Atlas}
+\label{app:family-atlas}
+
+Figures~\ref{fig:family_dashboard_page_1} and~\ref{fig:family_dashboard_page_2} provide the family-resolved view requested by the benchmark story in the main text. Each family keeps its own scenario axis, the three small baseline families are not merged, and every panel shows the five best RMSE estimators inside that family rather than a global top-five list.
+
+\input{generated/family_dashboard_pages}

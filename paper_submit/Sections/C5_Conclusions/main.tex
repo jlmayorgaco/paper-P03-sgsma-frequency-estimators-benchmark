@@ -1,0 +1,26 @@
+﻿\section{Conclusion}
+\label{sec:conclusion}
+
+This paper examined frequency estimation for low-inertia IBR grids through a
+broad Monte Carlo benchmark rather than a small set of isolated tests. The
+main finding is clear: estimator rankings move with the disturbance family.
+SOGI-PLL is strongest on ramps, EKF on magnitude steps and out-of-band
+interference, RA-EKF on modulation, and the IBR multi-event case splits RMSE
+and trip-risk winners between PLL and IpDFT. The hardest scenarios are the IBR
+multi-event sequence, the $60^\circ$ phase jumps, and the noisy ringdown
+variants, which expose error patterns that do not appear in cleaner standard
+tests. More broadly, nine different estimators win at least one RMSE scenario,
+and among the 12 scenarios with a unique trip-risk winner, nine have a trip-risk
+winner that differs from the RMSE winner.
+
+For practice, estimator choice should be tied to the protection objective.
+Fast loop-based methods remain attractive under tight computational budgets. EKF and
+RA-EKF offer the best overall balance across disturbance families in this
+benchmark. Selected window-based methods still matter when lower trip-risk
+under composite stress justifies higher cost.
+
+The study is limited to the disturbance set and relative computational-cost
+measurements presented here. Hardware-in-the-loop validation and wider
+coverage of converter control interactions are the natural next steps.
+
+

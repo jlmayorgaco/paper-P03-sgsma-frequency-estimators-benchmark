@@ -1,0 +1,5 @@
+estimator=Jacobsen_Interpolated_DFT_Estimator
+baseline_gain=0.012
+best_gain=0.024
+baseline_rmse=0.44449009
+best_rmse=0.38944651

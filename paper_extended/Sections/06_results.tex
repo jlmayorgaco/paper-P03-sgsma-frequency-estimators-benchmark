@@ -1,0 +1,44 @@
+\section{Results}
+\label{sec:results}
+
+\subsection{No Single Estimator Dominates the Disturbance Families}
+
+\input{generated/family_summary}
+
+Table~\ref{tab:family_summary_extended} is the primary empirical object of the paper because it preserves disturbance family before any global compression takes place. The winner changes with the family. SOGI-PLL leads the nine IEEE ramp scenarios with a family-average RMSE of \SI{19.4}{mHz}. EKF leads the seven magnitude-step scenarios with \SI{0.388}{mHz} and the out-of-band interference test with \SI{13.6}{mHz}. RA-EKF leads modulation at \SI{17.8}{mHz}. SOGI-FLL gives the lowest family-average RMSE on phase jumps, UKF leads the IBR ringdown family, and PLL gives the lowest RMSE on the composite IBR multi-event case. Across the ten disturbance families, eight distinct estimators become RMSE winners. That turnover is too strong to be dismissed as noise around one latent global champion.
+
+The clean standard families are also less informative than they first appear. IEEE ramps, magnitude steps, modulation, and the single-tone case contain many exact zero trip-risk ties. In those families, trip-risk acts mostly as a feasibility screen while RMSE carries the ranking burden. The IBR families behave differently. In IBR harmonics, IBR ringdown, and IBR multi-event stress, the lowest trip-risk method is often different from the lowest-RMSE method. The phase-jump family is the clearest example: SOGI-FLL leads RMSE, but ZCD yields the lowest mean trip-risk. Accuracy and protection risk are therefore coupled, but they are not interchangeable design objectives.
+
+\subsection{The Hardest Cases Are Composite IBR Events and Large Phase Jumps}
+
+The scenario-level difficulty ordering sharpens the family view. The hardest scenario in the study is the IBR multi-event case, with a median across-estimator RMSE of about \SI{825.9}{mHz}. It is followed by the IEEE and NERC \SI{60}{\degree} phase-jump cases at about \SI{675.1}{mHz} and \SI{637.5}{mHz}, then by the severe IBR ringdown-noise variants, all near or above half a hertz. These cases sit orders of magnitude above the clean single-tone and magnitude-step scenarios. The benchmark is therefore spanning distinct operating regimes rather than merely repeating one test under different random seeds.
+
+The fragmentation of winners reinforces that point. Across the \ArchivalScenarioCount{} scenarios, ten estimators win at least one RMSE scenario outright or through exact ties. EKF is the most frequent RMSE leader with ten wins, but it is not dominant everywhere. RA-EKF and SOGI-PLL each win six scenarios, UKF and SOGI-FLL win three each, and even Koopman (RK-DPMU), ESPRIT, and Prony enter the winner set in selected cases. Scenario identity continues to matter even after family aggregation, which is exactly what a journal benchmark should surface rather than smooth away.
+
+\begin{figure*}[!t]
+  \centering
+  \includegraphics[width=\textwidth,height=0.72\textheight,keepaspectratio]{archival_json_panels.pdf}
+  \caption{Additional benchmark views. Top left: the hardest scenarios concentrate in composite IBR stress and large phase jumps. Top right: scenario-family difficulty spans more than three orders of magnitude. Bottom left: low RMSE and low trip-risk do not identify the same estimators. Bottom right: mean-rank consistency and compute cost define separate deployment regions.}
+  \label{fig:archival_json_panels}
+\end{figure*}
+
+Figure~\ref{fig:archival_json_panels} makes those relationships more explicit. The hardest-scenario panel shows that benchmark difficulty is not spread uniformly across the catalog; it is concentrated in a small set of phase-jump and IBR stress cases. The family boxplot shows the same effect structurally: clean standard families occupy the low-error region, whereas IBR ringdown and multi-event stress define the upper tail. The lower panels show why the final recommendation cannot come from one metric alone. Estimators that look attractive on RMSE versus trip-risk are not the same estimators that dominate the mean-rank versus CPU view.
+
+The appendix extends that compact picture into a family-resolved atlas. Figures~\ref{fig:family_dashboard_page_1} and~\ref{fig:family_dashboard_page_2} keep OOB interference, single-tone, and frequency-step baselines in separate panels rather than collapsing them into a single control bucket, and they plot the five lowest-RMSE estimators within each family across the benchmark scenarios.
+
+\subsection{Global Summaries Help Only When Read as Secondary Evidence}
+
+Global summaries are still useful, but only as secondary evidence. On mean rank across scenarios, TFT is the best RMSE method in the study, followed by RA-EKF and EKF. That is a different story from the family winner map because mean rank rewards repeated near-front finishes rather than dominance in the hardest families. The difference is not a contradiction; it shows that consistency and absolute error severity are different quantities.
+
+\input{generated/pareto_set}
+
+The Pareto set in Table~\ref{tab:pareto_set} reveals the same distinction from a cost perspective. EKF and RA-EKF occupy the low-error middle-cost region. SOGI-PLL and SOGI-FLL remain attractive because their compute cost is at least an order of magnitude smaller. ZCD survives on the Pareto set only because its CPU cost is nearly negligible; its global error is far too large for that Pareto membership to be read as a practical recommendation. The mathematical Pareto frontier is therefore broader than the operationally credible frontier.
+
+\begin{figure*}[!t]
+  \centering
+  \includegraphics[width=\textwidth,height=0.835\textheight,keepaspectratio]{Fig2_Mega_Dashboard.pdf}
+  \caption{Representative views from the benchmark. The time-domain panels show why scenario family matters, while the global panels expose trade-offs between accuracy, risk, and cost that cannot be captured by a single scalar score.}
+  \label{fig:dashboard_mega}
+\end{figure*}
+
+Figure~\ref{fig:dashboard_mega} is best read in that conditional way. The estimator that looks strongest in the ramp case is not the one that best handles the multi-event sequence or the noisy ringdown family, and the estimator that minimizes trip-risk is not always the one that minimizes RMSE. Once those panels are placed beside the family table and the omnibus tests, the benchmark's main claim becomes difficult to dismiss: scenario family and operating objective jointly determine what ``best'' means.

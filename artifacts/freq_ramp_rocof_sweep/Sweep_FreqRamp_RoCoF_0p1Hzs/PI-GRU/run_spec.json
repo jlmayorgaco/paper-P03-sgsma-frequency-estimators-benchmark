@@ -1,0 +1,27 @@
+{
+  "scenario": "Sweep_FreqRamp_RoCoF_0p1Hzs",
+  "rocof_hz_s": 0.1,
+  "estimator": "PI-GRU",
+  "family": "Data-driven",
+  "best_params": {
+    "nominal_f": 60.0,
+    "dt": 0.0001,
+    "weights_filename": "pi_gru_weights_hybrid.pt",
+    "show_progress": false,
+    "batch_size": 2048,
+    "output_ma_samples": null,
+    "window_len": 100,
+    "warmup_cycles": 3.0
+  },
+  "tuning_meta": {
+    "mode": "per_scenario_best_tuning",
+    "objective": "minimize_m1_rmse_hz",
+    "n_trials_requested": 25,
+    "n_trials_executed": 0,
+    "tune_eval_runs": 2,
+    "sampler_mode_effective": null,
+    "best_objective": null,
+    "reason": "empty_search_space"
+  },
+  "n_mc_runs": 2
+}

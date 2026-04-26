@@ -1,0 +1,28 @@
+{
+  "timestamp_utc": "2026-04-25T17:10:02.865726+00:00",
+  "source_input_json": "C:\\Users\\walla\\Documents\\Github\\paper-P03-sgsma-frequency-estimators-benchmark\\artifacts\\parametric_family_sweeps\\parametric_family_sweeps_report.json",
+  "source_stats_json": null,
+  "output_dir": "C:\\Users\\walla\\Documents\\Github\\paper-P03-sgsma-frequency-estimators-benchmark\\artifacts\\parametric_family_sweeps\\report_bundle",
+  "files": [
+    {
+      "path": "C:\\Users\\walla\\Documents\\Github\\paper-P03-sgsma-frequency-estimators-benchmark\\artifacts\\parametric_family_sweeps\\parametric_family_sweeps_report.json",
+      "sha256": "7e6a5e02a8da888b0a3f864be3fa6cd50e00bfdeecfb66eb494b73882ffbe34d",
+      "size_bytes": 86580
+    },
+    {
+      "path": "C:\\Users\\walla\\Documents\\Github\\paper-P03-sgsma-frequency-estimators-benchmark\\artifacts\\parametric_family_sweeps\\report_bundle\\benchmark_report.md",
+      "sha256": "247b711448c6831be2fe0d1053a38c16a1e21ebfe62057967cda959966207a46",
+      "size_bytes": 752
+    },
+    {
+      "path": "C:\\Users\\walla\\Documents\\Github\\paper-P03-sgsma-frequency-estimators-benchmark\\artifacts\\parametric_family_sweeps\\report_bundle\\benchmark_report.html",
+      "sha256": "60f5bb075e19234a38fb0b4b12baa4bf16175a1ec2bc705c68e95fe55038a0c6",
+      "size_bytes": 787
+    },
+    {
+      "path": "C:\\Users\\walla\\Documents\\Github\\paper-P03-sgsma-frequency-estimators-benchmark\\artifacts\\parametric_family_sweeps\\report_bundle\\benchmark_appendix_tables.csv",
+      "sha256": "95b817c12f795b3744dca073e0f2cedb83d484d7bea61cdc3dea30d3bc0a0e5a",
+      "size_bytes": 3908
+    }
+  ]
+}

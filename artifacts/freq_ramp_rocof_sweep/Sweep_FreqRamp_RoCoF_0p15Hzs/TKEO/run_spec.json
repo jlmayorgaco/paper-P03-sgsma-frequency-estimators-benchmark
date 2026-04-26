@@ -1,0 +1,20 @@
+{
+  "scenario": "Sweep_FreqRamp_RoCoF_0p15Hzs",
+  "rocof_hz_s": 0.15,
+  "estimator": "TKEO",
+  "family": "Adaptive",
+  "best_params": {
+    "nominal_f": 60.0,
+    "output_smoothing": 7.747213989694432e-06
+  },
+  "tuning_meta": {
+    "mode": "per_scenario_best_tuning",
+    "objective": "minimize_m1_rmse_hz",
+    "n_trials_requested": 25,
+    "n_trials_executed": 25,
+    "tune_eval_runs": 2,
+    "sampler_mode_effective": "tpe",
+    "best_objective": 0.02055839216038651
+  },
+  "n_mc_runs": 2
+}
