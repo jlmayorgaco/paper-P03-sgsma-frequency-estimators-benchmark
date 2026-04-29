@@ -1,0 +1,595 @@
+% Flat single-file source generated from index.tex
+\documentclass[conference,letterpaper]{IEEEtran}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{cite}
+
+\usepackage[pdftex]{graphicx}
+
+\usepackage[caption=false,font=footnotesize]{subfig}
+
+\usepackage{array}
+\usepackage{booktabs}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\usepackage[hidelinks,hypertexnames=false]{hyperref}
+
+\graphicspath{{./}{Figures/Plots_And_Graphs/}}
+\DeclareGraphicsExtensions{.pdf,.jpeg,.png}
+
+\hyphenation{op-tical net-works semi-conduc-tor}
+
+\begin{document}
+
+\title{Benchmarking Dynamic Frequency Estimators for Low-Inertia IBR Grids: A Latency--Robustness Trade-off Analysis}
+\author{
+\IEEEauthorblockN{Jorge Luis Mayorga Taborda,\; Yessica Africano Rodriguez,\; Fernando Jimenez}
+\IEEEauthorblockA{
+Department of Electrical and Electronics Engineering\\
+Universidad de los Andes\\
+Bogot\'a, Colombia\\
+jl.mayorga236@uniandes.edu.co, ya.africano1030@uniandes.edu.co,\\
+fjimenez@uniandes.edu.co
+}
+}
+\markboth{5th International Conference on Smart Grid Synchronized Measurements and Analytics (SGSMA 2026), Santiago, Chile, June 1--4, 2026}%
+{Mayorga \MakeLowercase{\textit{et al.}}: Benchmarking Dynamic Frequency Estimators for Low-Inertia IBR Grids}
+
+\hypersetup{
+  pdftitle={Benchmarking Dynamic Frequency Estimators for Low-Inertia IBR Grids: A Latency-Robustness Trade-off Analysis},
+  pdfauthor={Jorge Luis Mayorga Taborda, Yessica Africano Rodriguez, Fernando Jimenez},
+  pdfsubject={SGSMA 2026 conference paper},
+  pdfkeywords={frequency estimation, low-inertia power systems, inverter-based resources, Monte Carlo benchmark, relay protection, trip-risk assessment}
+}
+
+\maketitle
+
+\begin{abstract}
+Frequency estimation in inverter-based resource (IBR) grids must contend with
+fast ramps, phase jumps, harmonics, ringdown, and out-of-band components that
+can overlap within a single local event. This paper presents a comparative
+benchmark of 16 dynamic frequency estimators across 34 test scenarios grouped
+into 10 disturbance families in a local relay measurement setting. The test set
+combines compliance-style dynamic tests, including magnitude steps, ramps,
+modulation, and phase jumps, with IBR-specific stress conditions such as
+harmonic injection, power-imbalance ringdown, out-of-band interference, and
+composite multi-event sequences. Each estimator is tuned via scenario-specific
+parameter tuning and evaluated using RMSE, peak error, trip-risk duration,
+settling time, and CPU cost. Rankings vary by disturbance family and
+performance metric: SOGI-PLL achieves the lowest error on ramps, EKF on
+magnitude steps and out-of-band interference, and RA-EKF on modulation, while
+the composite IBR event splits RMSE leadership (PLL) from trip-risk leadership
+(IpDFT). The hardest cases are the multi-event IBR sequence, $60^\circ$ phase
+jumps, and noisy ringdown variants. The benchmark shows that compliance-style
+dynamic tests provide necessary but insufficient validation for
+protection-oriented frequency measurement in IBR-dominated grids.
+\end{abstract}
+\begin{IEEEkeywords}
+Frequency estimation, inverter-based resources, low-inertia systems, relay
+protection, signal processing, trip-risk assessment.
+\end{IEEEkeywords}
+
+\section{Introduction}\label{sec:introduction}
+
+Frequency estimation affects relaying, under-frequency load shedding,
+disturbance monitoring, and converter supervision in low-inertia grids. In
+inverter-based-resource (IBR) systems, the estimation problem is not limited
+to slow electromechanical drift. Converter-dominated dynamics compress the
+disturbance timescale and can combine fast RoCoF segments, abrupt phase jumps,
+harmonics, out-of-band components, and short ringdown intervals within the
+same protection decision window~\cite{Milano2018LowInertia,Pinheiro2025,Ponce2025}.
+Recent IBR studies also show that converter interactions can reshape the
+observable frequency response itself~\cite{Bernal2025,Zoghby2024}.
+
+These effects stress estimators through different failure modes. Phase
+discontinuities can be interpreted by loop-based methods as large frequency
+excursions or cycle slips. Sustained ramps stress the tracking bandwidth of
+multi-cycle spectral methods. Harmonic and interharmonic content increases
+spectral leakage and can bias estimators whose signal model assumes a single
+dominant sinusoid. Ringdown adds a transient-recovery problem in which average
+error, peak error, and trip-risk duration need not favor the same method.
+
+The estimator families used in practice reflect this latency--robustness
+tension. Windowed spectral methods such as IpDFT and Taylor--Fourier variants
+reject steady harmonic content but pay observation delay~\cite{Belega2014,PlatasGarza2011}.
+PLL and SOGI-based trackers are light enough for embedded deployment but can
+lose phase alignment under abrupt discontinuities~\cite{Golestan2017,Wright2019}.
+Kalman-filter variants can track fast transients when the state model remains
+valid~\cite{Ferrero2020EKF,Chamorro2021}. Reduced-order and data-driven methods
+add further cost--accuracy trade-offs, but their behavior under
+relay-oriented composite stress remains less standardized~\cite{Netto2018KoopmanKF,Ting2022}.
+
+This paper frames the contribution as a benchmark study rather than as a
+single-estimator paper. The benchmark extends standard dynamic-test families
+with IBR-specific harmonic, out-of-band, ringdown, and multi-event stress in a
+local, non-time-synchronized setting. The study compares 16 estimators over 34
+scenarios using RMSE, peak error, trip-risk duration, settling behavior, and
+relative CPU cost. The contribution is therefore the disturbance-family
+comparison protocol and the resulting map of trade-offs; no new estimator
+family is proposed.
+
+\section{Related Work and Algorithmic Landscape}
+\label{sec:related}
+
+This paper addresses local frequency measurement for relay and monitoring
+functions, not PMU time-stamp quality. IEC/IEEE 60255-118-1 and the earlier
+IEEE C37.118.1 define dynamic tests around ramps, magnitude steps, modulation,
+and selected phase events~\cite{IEEE_C37_118,IEC_IEEE_60255_118_1_2018}. These
+tests are necessary reference cases, but they do not by themselves describe
+how estimators behave when phase discontinuities, harmonics, ramps, and
+ringdown occur in the same local record.
+
+Windowed spectral methods, PLL variants, Kalman filters, and reduced-order or
+data-driven estimators each occupy a different point on the latency--robustness
+plane. IpDFT and TFT are not interchangeable. IpDFT uses a stationary spectral
+model with a Hanning window and parabolic interpolation around the dominant bin
+~\cite{Belega2014}. TFT uses a second-order Taylor-series expansion of the
+fundamental component only, also under Hanning weighting, which gives explicit
+phasor-derivative tracking at the cost of higher noise sensitivity
+~\cite{PlatasGarza2011}.
+PLL variants are computationally light but can misread abrupt phase
+steps~\cite{Golestan2017,Wright2019}. EKF- and UKF-based approaches can improve
+transient tracking when the state model matches the event, and RoCoF
+augmentation in EKF-type estimators has been studied previously~\cite{Ferrero2020EKF,Chamorro2021}.
+Reduced-order and data-driven methods add further cost trade-offs~\cite{Netto2018KoopmanKF,Ting2022}.
+
+Prior low-inertia and IBR studies show why this gap matters~\cite{Milano2018LowInertia,Pinheiro2025,Ponce2025,Bernal2025,Zoghby2024}.
+The remaining need is a comparison that reports standard dynamic tests,
+composite IBR stress, trip-risk, and compute cost in the same frame. The
+benchmark used here keeps the standard disturbance families, adds IBR-specific
+harmonic, ringdown, out-of-band, and multi-event stress, and reports
+family-level summaries rather than a single global winner. This framing
+targets protection-oriented estimator selection, not synchrophasor compliance
+certification.
+
+\section{Methodology and Test Framework}
+\label{sec:methodology}
+
+The benchmark compares 16 frequency estimators on a common dynamic test set in
+a local, non-time-synchronized measurement setting, using waveform generation
+at $1$\,MHz and estimator outputs at $10$\,kHz. The scenario set extends the
+same protection-oriented stress modes used in standard dynamic
+testing--magnitude steps, ramps, modulation, and phase jumps--with
+IBR-specific harmonic, out-of-band, ringdown, and multi-event stress. This
+expansion does not change the measurement setting: all methods are evaluated as
+local relay-class frequency trackers from the same decimated $10$\,kHz data
+stream.
+
+The estimator pool spans six practical groups: zero-crossing and energy
+baselines (ZCD, TKEO), windowed spectral methods (IpDFT, TFT), PLL/SOGI-based
+trackers (PLL, SOGI-PLL, SOGI-FLL, Type-3 SOGI-PLL), Kalman-filter methods
+(LKF2, EKF, UKF, RA-EKF), parametric/subspace methods (Prony, ESPRIT), and
+reduced-order or adaptive/data-driven designs (RLS, Koopman/RK-DPMU). This mix
+is intended to expose trade-offs relevant to protection and monitoring:
+accuracy, transient risk, settling behavior, and computational burden. Within
+the Kalman-filter group, EKF and UKF use a single-tone state over phase,
+frequency, and amplitude, whereas RA-EKF adds an explicit RoCoF state,
+innovation-scaled process noise, and a soft phase reset under large
+innovations. RoCoF augmentation in EKF-type filters has prior literature
+antecedents~\cite{Ferrero2020EKF,Chamorro2021}; the benchmark treats RA-EKF as
+one Kalman-family variant, not as a new estimator family.
+
+The study contains 34 benchmark scenarios. Rather than read the benchmark as a
+flat scenario list, we group the scenarios by disturbance family.
+Table~\ref{tab:benchmark_scope} summarizes the resulting ten-family structure,
+and Fig.~\ref{fig:scenario_overview} shows representative ground-truth signals
+for six of those families.
+
+\begin{table}[t]
+  \centering
+  \caption{Benchmark scope. Counts refer to benchmark scenarios. OOB denotes
+    out-of-band interference. The phase-jump family includes $20^\circ$ and
+    $60^\circ$ re-lock tests.}
+  \label{tab:benchmark_scope}
+  \scriptsize
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{1.08}
+  \begin{tabular}{L{1.7cm} c L{3.95cm}}
+    \toprule
+    Family & Count & Stress tested \\
+    \midrule
+    IEEE ramps & 9 & Sustained RoCoF from 0.25 to 20\,Hz/s \\
+    Mag.\ steps & 7 & 1\% to 50\% magnitude changes \\
+    Modulation & 3 & Nominal, AM, and FM tracking \\
+    Phase jumps & 3 & $20^\circ$ and $60^\circ$ phase-jump re-lock tests \\
+    OOB interference & 1 & Spectral rejection under off-nominal content \\
+    Single-tone & 1 & Deterministic steady-state control case \\
+    IBR harmonics & 3 & Small, medium, and large harmonic stress \\
+    IBR ringdown & 5 & Power-imbalance ringdown with noise sweep \\
+    IBR multi-event & 1 & Composite phase jump, ramp, harmonics, and ringdown \\
+    Freq.\ step & 1 & Isolated frequency-step control case \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The family structure reflects distinct physical stress modes. Ramps probe
+sustained RoCoF tracking. Magnitude steps and modulation probe
+frequency-amplitude decoupling. Phase jumps probe re-lock behavior and
+transient overshoot. Out-of-band interference and IBR harmonics probe spectral
+leakage. Ringdown and multi-event cases combine these effects under changing
+noise and transient recovery, which makes them the strongest stress tests in
+the benchmark. Two records drive the sharpest separations: a NERC-type
+$+60^\circ$ phase-jump case at $t=0.7$\,s with 4\% 5th, 2\% 7th, and 0.5\%
+32.5-Hz interharmonic content, and an IBR multi-event case with a 0.5-pu
+sag/swell, a $+45^\circ$ phase jump, a $-2$\,Hz/s RoCoF ramp clamped at
+58\,Hz, decaying DC, AM/PM oscillations, a full IBR harmonic spectrum, and
+compound noise. Figure~\ref{fig:scenario_overview} illustrates that
+difference directly: some benchmark families are isolated compliance-style
+events, whereas others stack abrupt discontinuities, ramps, and oscillatory
+recovery inside the same record.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.98\textwidth,height=0.45\textheight,keepaspectratio]{Fig1_Scenarios_Final.pdf}
+  \caption{Representative benchmark scenarios. Each row shows the voltage
+    waveform and true frequency trajectory for six disturbance families:
+    10\% magnitude step, frequency ramp, modulation, $60^\circ$ phase jump,
+    IBR multi-event sequence, and IBR power-imbalance ringdown. Dashed lines
+    mark disturbance onset. The figure illustrates why the benchmark is read by
+    disturbance family: some cases isolate standard dynamic stress, whereas
+    others combine discontinuities, ramps, harmonics, and oscillatory recovery
+    in one record. Panel (E) shows the dominant frequency profile of the
+    multi-event sequence; the full scenario also includes a 0.5-pu sag/swell,
+    AM/PM modulation, a full IBR harmonic spectrum, and compound noise.}
+  \label{fig:scenario_overview}
+\end{figure*}
+
+All estimators are evaluated as local relay-class frequency trackers from the
+same decimated $10$\,kHz data stream; the study does not assess PMU
+time-stamping or synchrophasor compliance. Each estimator--scenario pair is
+tuned via scenario-wise parameter search across 100 trials and then evaluated
+over 60 Monte Carlo runs. The reported values therefore approximate
+best-in-range performance within the tested search space, not untuned default
+settings. The study contains 544
+estimator--scenario summaries derived from 32,640 Monte Carlo records. Let
+$e[k]=\hat{f}[k]-f_{\mathrm{true}}[k]$. We report
+$\mathrm{RMSE}=\sqrt{N^{-1}\sum_k e[k]^2}$, maximum peak error
+$\max_k |e[k]|$, trip-risk duration
+$T_{\mathrm{trip}}=\Delta t\sum_k \mathbf{1}\{|e[k]|>0.5\,\mathrm{Hz}\}$, settling time,
+and CPU time per sample. The 0.5-Hz threshold is used as a
+protection-oriented risk proxy rather than as a universal trip criterion. CPU
+time is interpreted as a relative computational-cost indicator measured in one
+software environment, not as hardware latency. For any metric $m$, the family
+summary is $\bar{m}_F=|F|^{-1}\sum_{s\in F}\bar{m}_s$, where $\bar{m}_s$ is
+the scenario mean over the 60 realizations. This prevents dense families from
+dominating the comparison. Unless stated otherwise, frequency errors are
+reported in mHz in the tables and discussion.
+
+\section{Simulation Results and Benchmarking}
+\label{sec:results}
+
+\begin{table*}[t]
+  \centering
+  \caption{Core disturbance-family comparison for the benchmark study.
+    RMSE values are reported in mHz and computed as family means of
+    scenario means. The uncertainty term is the mean within-scenario Monte
+    Carlo standard deviation for the winning estimator. $\Delta$ is the RMSE gap
+    between the winner and the runner-up.}
+  \label{tab:family_summary}
+  \scriptsize
+  \setlength{\tabcolsep}{2.8pt}
+  \renewcommand{\arraystretch}{1.1}
+  \begin{tabular}{l c l c l c l}
+    \toprule
+    Family & Count & RMSE winner & RMSE [mHz] & Runner-up & $\Delta$ [mHz] & Lowest $T_{\mathrm{trip}}$ [s] \\
+    \midrule
+    IEEE ramps & 9 & SOGI-PLL & $19.4 \pm 6.4$ & Koopman & 2.7 & 0 (multiple) \\
+    Mag.\ steps & 7 & EKF & $0.388 \pm 0.143$ & RA-EKF & 1.45 & 0 (multiple) \\
+    Modulation & 3 & RA-EKF & $17.8 \pm 21.4$ & Koopman & 13.7 & 0 (multiple) \\
+    Phase jumps & 3 & SOGI-FLL & $174 \pm 67.5$ & PLL & 4.03 & ZCD: 0.0194 \\
+    OOB interf. & 1 & EKF & $13.6 \pm 11.1$ & RA-EKF & 7.35 & EKF, RA-EKF: 0 \\
+    IBR harmonics & 3 & EKF & $70.5 \pm 27.3$ & TFT & 4.13 & TFT, Prony: 0.00947 \\
+    IBR ringdown & 5 & UKF & $313 \pm 23.2$ & EKF & 6.67 & ESPRIT: 0.0989 \\
+    IBR multi-event & 1 & PLL & $173.5 \pm 66.7$ & UKF & 2.74 & IpDFT: 0.0439 \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+\subsection{Family-Level Accuracy and Trip-Risk}
+
+Table~\ref{tab:family_summary} summarizes family-level RMSE and trip-risk
+results. The ranking changes across disturbance families. SOGI-PLL gives the
+lowest mean RMSE on IEEE ramp cases (19.4\,mHz). EKF leads magnitude steps
+(0.388\,mHz) and out-of-band interference (13.6\,mHz), and RA-EKF leads the
+modulation family (17.8\,mHz). Zero-trip-risk ties are common in ramps,
+magnitude steps, and modulation, so those families are separated mainly by
+accuracy rather than by protection-oriented risk.
+
+Across the 34 benchmark scenarios, nine different estimators win at least one
+RMSE scenario, and no estimator wins more than 10 of them. The
+magnitude-step family is the clearest exception: EKF wins all seven
+magnitude-step scenarios and the family mean as well. This is also the family
+with the clearest aggregate margin: EKF leads RA-EKF by 1.45\,mHz, while the
+winner's mean within-scenario spread is 0.143\,mHz.
+
+Most other families are tighter. In ramps, modulation, phase jumps, harmonics,
+ringdown, and out-of-band interference, the family-level margin is smaller than
+or comparable to the same spread. For those families, the winner should be
+interpreted as a near-front method rather than as a decisive leader.
+
+Trip-risk is less discriminating in the clean standard cases. In 23 of the 34
+scenarios, the minimum trip-risk is zero, often shared by 10 to 13 estimators.
+Phase jumps are the main exception. SOGI-FLL gives the lowest mean RMSE across
+the phase-jump family (174\,mHz), but ZCD gives the lowest mean trip-risk
+($0.0194$\,s). Even inside the standard test set, RMSE and trip-risk are not
+interchangeable objectives.
+
+\subsection{Composite IBR Stress Cases}
+
+The largest ranking changes appear under composite stress. The hardest
+benchmark scenarios, measured by median RMSE across estimators, are the IBR
+multi-event sequence (826\,mHz), the two $60^\circ$ phase-jump cases
+(675\,mHz and 637\,mHz), and the noisy IBR ringdown variants
+(474--528\,mHz). Median RMSE in these cases exceeds the magnitude-step family
+by roughly three orders of magnitude.
+
+The IBR multi-event sequence is the clearest example. PLL gives the lowest
+RMSE at 173.5\,mHz. UKF trails by only 2.74\,mHz on the family mean. EKF
+remains close at 176.4\,mHz while reducing trip-risk to $0.0874$\,s. IpDFT
+gives the lowest trip-risk ($0.0439$\,s) but at the cost of a much larger peak
+error (2550\,mHz). The ranking therefore depends on the deployment objective:
+minimizing average error, minimizing time above the trip threshold, or bounding
+transient severity.
+
+The same metric split appears in the other IBR-specific families. EKF gives the
+lowest mean RMSE across the harmonic family (70.5\,mHz), but TFT and Prony
+give the lowest mean trip-risk there ($0.00947$\,s). In the ringdown family,
+UKF gives the lowest mean RMSE (313\,mHz), whereas ESPRIT gives the lowest
+mean trip-risk ($0.0989$\,s) at a much higher computational cost.
+
+Among the 12 scenarios with a unique trip-risk winner, nine differ from the
+RMSE leader. Those disagreements concentrate in the $60^\circ$ phase-jump
+cases and in the harmonic, ringdown, and multi-event IBR cases. This metric
+split is why a single scalar ranking is insufficient for
+protection-oriented selection.
+
+\subsection{Global Aggregation and Metric Dependence}
+
+Family-level reading remains the primary analysis, but global summaries still
+help as secondary evidence. Their interpretation depends on the aggregation
+rule. Mean-rank summaries across the 34 benchmark scenarios favor TFT on RMSE
+($4.38$) and peak error ($4.32$), with RA-EKF close behind on both ($4.62$
+and $4.59$). Simple averaging over the 34 scenarios instead favors RA-EKF and
+EKF, with mean RMSE values of 116\,mHz and 123\,mHz, followed by UKF at
+131\,mHz. The difference is informative: mean rank rewards repeated near-front
+finishes, whereas raw averaging is driven more strongly by the hardest
+families.
+
+Consistency statistics make that distinction concrete. EKF is the most frequent
+accuracy leader, with 10 outright RMSE wins, 19 RMSE top-three finishes, and
+20 peak-error top-three finishes across the 34 scenarios. TFT wins only two
+RMSE scenarios, yet it reaches the RMSE top three in 16 scenarios and the
+peak-error top three in 17. Trip-risk favors a different group again: IpDFT
+and ESPRIT enter the trip-risk top three in 25 and 24 scenarios, respectively.
+Global summaries are therefore screening tools rather than replacements for
+family-level evidence.
+
+\begin{table}[t]
+  \centering
+  \caption{Compact global screening indicators across the 34 benchmark
+    scenarios. These statistics summarize different aggregation rules and are
+    intended as screening aids rather than as a universal ranking.}
+  \label{tab:global_screening}
+  \scriptsize
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{1.08}
+  \begin{tabular}{L{1.85cm} L{2.1cm} c}
+    \toprule
+    Global view & Best estimator & Value \\
+    \midrule
+    Mean RMSE & RA-EKF & 116\,mHz \\
+    Mean-rank RMSE & TFT & 4.38 \\
+    RMSE wins & EKF & 10 / 34 \\
+    RMSE top-three & EKF & 19 / 34 \\
+    Peak-error top-three & EKF & 20 / 34 \\
+    Trip-risk top-three & IpDFT & 25 / 34 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Table~\ref{tab:global_screening} makes the aggregation split explicit. The
+rank-based view favors repeated near-front finishes, the mean-RMSE view is more
+sensitive to the hardest families, and the hit-count view rewards broad
+coverage. No estimator leads all three views at once. Across the 544
+estimator--scenario summaries, RMSE correlates strongly with trip-risk
+($\rho=0.890$) and settling time ($\rho=0.867$), but only weakly and
+negatively with CPU cost ($\rho=-0.202$).
+
+\subsection{Computational Cost}
+
+CPU cost changes the practical ranking again. Figure~\ref{fig:dashboard_mega}
+gathers representative time-domain cases together with the global summaries.
+EKF and RA-EKF occupy the low-error middle-cost region with mean CPU costs of
+$0.813\,\mu$s and $1.61\,\mu$s per sample. SOGI-PLL and SOGI-FLL remain much
+cheaper ($0.0867\,\mu$s and $0.0348\,\mu$s) and therefore stay relevant for
+embedded protection even when they lose some accuracy. Window-based methods
+such as TFT and IpDFT improve trip-risk in some composite cases at about
+$3$--$4\,\mu$s per sample. Koopman and ESPRIT occupy a much higher-cost
+region, with mean costs of $390\,\mu$s and $2838\,\mu$s, without a matching
+global RMSE gain. On the RMSE--CPU plane, EKF, RA-EKF, SOGI-FLL, SOGI-PLL, and
+ZCD are Pareto-optimal; in practice, the protection-relevant subset is
+\{SOGI-FLL, SOGI-PLL, EKF, RA-EKF\}, since ZCD reaches the front only by
+near-zero cost and not by usable composite-stress accuracy.
+
+For deployment screening within this benchmark, estimator choice remains tied
+to disturbance family, operating objective, and compute budget. SOGI-PLL is
+strongest on ramps, EKF on magnitude steps and out-of-band interference,
+RA-EKF on modulation, and PLL on the composite IBR event. Figure~\ref{fig:dashboard_mega}(g)
+keeps SOGI-FLL, SOGI-PLL, EKF, and RA-EKF in the main low-cost cluster below
+$2\,\mu$s per sample, whereas TFT and IpDFT move rightward in cost but improve
+trip-risk behavior in the composite cases. Those are conditional results, not a
+universal hierarchy.
+
+\begin{figure*}[!t]
+  \centering
+  \includegraphics[width=\textwidth,height=0.80\textheight,keepaspectratio]{Fig2_Mega_Dashboard.pdf}
+  \caption{Representative benchmark views. Panels (a)--(d) show single-scenario
+    responses summarized over the same 60 Monte Carlo runs used throughout the
+    study. Panel (e) gives a disturbance scorecard across benchmark families.
+    Panel (f) shows the scenario-level RMSE distribution grouped by estimator
+    family. Panels (g) and (h) show global cost-versus-accuracy and
+    cost-versus-trip-risk views; the dashed vertical line in both panels marks
+    the 100-$\mu$s/sample real-time budget implied by the 10-kHz acquisition
+    rate. The dashboard shows that estimator selection depends on disturbance
+    family, risk metric, and compute budget.}
+  \label{fig:dashboard_mega}
+\end{figure*}
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+This paper compares 16 frequency estimators over 34 scenarios in a local
+relay-class measurement setting that combines standard dynamic tests with
+IBR-specific composite stress. The results show disturbance dependence:
+estimator rankings move with both the disturbance family and the metric used to
+read them. Standard compliance-style tests remain necessary reference cases,
+but they are not sufficient by themselves for protection-oriented evaluation in
+IBR-dominated grids.
+
+We highlight three findings. First, the latency--robustness trade-off is
+structural: nine estimators win at least one RMSE scenario, and no estimator
+wins more than 10 of the 34. Windowed spectral methods reduce steady harmonic
+error but pay observation delay, while low-cost loop-based methods remain
+attractive under tight computational budgets. Second, Kalman-family methods,
+especially EKF and RA-EKF in this dataset, remain competitive across the
+widest range of families. RA-EKF is evaluated here as one Kalman-family
+variant rather than as a new estimator family. Third, the hardest cases are
+the IBR multi-event sequence, the $60^\circ$ phase-jump cases, and the noisy
+ringdown variants; these are also the cases in which RMSE, peak error, and
+trip-risk select different estimators.
+
+The study is limited to the scenario set and relative computational-cost
+measurements reported here. CPU time is used as a software-level cost indicator,
+not as hardware latency, and the study remains simulation-only. Hardware-in-the-loop
+validation, wider coverage of converter-control interactions, and sensitivity
+analysis of the tuning protocol are the natural next steps.
+
+From a deployment standpoint, the benchmark identifies a small practical core.
+SOGI-PLL is the strongest low-cost choice for ramp-dominated operation. EKF is
+the most consistent model-based baseline for magnitude steps, out-of-band
+interference, and balanced composite-event behavior. RA-EKF earns its place not
+as a universal winner but as a higher-cost Pareto point with the best mean RMSE
+and the strongest modulation-family results. IpDFT and TFT remain relevant when
+limiting trip-risk matters more than minimizing average error, provided their
+observation delay is acceptable.
+
+In practice, the benchmark does not support a single default estimator for all
+low-inertia IBR conditions. It supports a screening workflow: narrow
+candidates by disturbance family and compute budget, then resolve the final
+choice with the metric aligned to the protection objective. In that workflow,
+ramps mostly test tracking bandwidth, jumps test recovery after
+discontinuities, and harmonic-rich cases test robustness to leakage and
+interharmonics.
+
+\ifCLASSOPTIONcaptionsoff
+  \newpage
+\fi
+
+% Generated by IEEEtran.bst, version: 1.14 (2015/08/26)
+\begin{thebibliography}{10}
+\providecommand{\url}[1]{#1}
+\csname url@samestyle\endcsname
+\providecommand{\newblock}{\relax}
+\providecommand{\bibinfo}[2]{#2}
+\providecommand{\BIBentrySTDinterwordspacing}{\spaceskip=0pt\relax}
+\providecommand{\BIBentryALTinterwordstretchfactor}{4}
+\providecommand{\BIBentryALTinterwordspacing}{\spaceskip=\fontdimen2\font plus
+\BIBentryALTinterwordstretchfactor\fontdimen3\font minus
+  \fontdimen4\font\relax}
+\providecommand{\BIBforeignlanguage}[2]{{%
+\expandafter\ifx\csname l@#1\endcsname\relax
+\typeout{** WARNING: IEEEtran.bst: No hyphenation pattern has been}%
+\typeout{** loaded for the language `#1'. Using the pattern for}%
+\typeout{** the default language instead.}%
+\else
+\language=\csname l@#1\endcsname
+\fi
+#2}}
+\providecommand{\BIBdecl}{\relax}
+\BIBdecl
+
+\bibitem{Milano2018LowInertia}
+F.~Milano, F.~D{\"o}rfler, G.~Hug, D.~J. Hill, and G.~Verbi{\v{c}},
+  ``Foundations and challenges of low-inertia systems (invited paper),'' in
+  \emph{2018 Power Systems Computation Conference (PSCC)}, 2018, pp. 1--25.
+
+\bibitem{Pinheiro2025}
+B.~Pinheiro, M.~C. Llerena~Velasquez, G.~Faria, A.~F.~C. Aquino, D.~Issicaba,
+  and D.~Dotta, ``Evaluation of the impact of {IBR} on the frequency dynamics
+  in the {Brazilian Power System},'' \emph{Sustainable Energy, Grids and
+  Networks}, vol.~43, p. 101827, 2025.
+
+\bibitem{Ponce2025}
+I.~Ponce, C.~Rahmann, and P.~Pourbeik, ``Identification of weak frequency areas
+  in low inertia systems,'' \emph{IEEE Access}, vol.~13, pp. 90\,262--90\,272,
+  2025.
+
+\bibitem{Bernal2025}
+R.~Bernal and F.~Milano, ``A complex frequency-based control for inverter-based
+  resources,'' \emph{Journal of Modern Power Systems and Clean Energy},
+  vol.~13, no.~5, pp. 1630--1641, 2025.
+
+\bibitem{Zoghby2024}
+P.~Zoghby, B.~Marinescu, and A.~Ross{\'e}, ``A new benchmarking method for the
+  study of dynamic interactions in island power systems with hybrid
+  conventional and inverter-based resources controlled in grid-forming mode,''
+  in \emph{2024 International Conference on Renewable Energies and Smart
+  Technologies (REST)}, Prishtina, Kosovo, 2024.
+
+\bibitem{Belega2014}
+D.~Belega and D.~Dallet, ``An improved {DFT}-based method for the accurate
+  measurement of frequency, amplitude, and phase of power system signals,''
+  \emph{IEEE Transactions on Instrumentation and Measurement}, vol.~63, no.~2,
+  pp. 364--371, 2014.
+
+\bibitem{PlatasGarza2011}
+F.~J. Platas-Garc{\'i}a and J.~A. de~la O~Serna, ``Dynamic phasor estimation
+  using a {Taylor--Fourier} multisignal model,'' \emph{IEEE Transactions on
+  Instrumentation and Measurement}, vol.~60, no.~6, pp. 2112--2121, 2011.
+
+\bibitem{Golestan2017}
+S.~Golestan, J.~M. Guerrero, and J.~C. Vasquez, ``Three-phase {PLL}s: A review
+  of recent advances,'' \emph{IEEE Transactions on Power Electronics}, vol.~32,
+  no.~3, pp. 1894--1907, 2017.
+
+\bibitem{Wright2019}
+P.~S. Wright, P.~N. Davis, K.~Johnstone, G.~Rietveld, and A.~J. Roscoe, ``Field
+  measurement of frequency and {RoCoF} in the presence of phase steps,''
+  \emph{IEEE Transactions on Instrumentation and Measurement}, vol.~68, no.~6,
+  pp. 1688--1695, 2019.
+
+\bibitem{Ferrero2020EKF}
+R.~Ferrero, P.~A. Pegoraro, and S.~Toscani, ``Dynamic synchrophasor estimation
+  by extended {Kalman} filter,'' \emph{IEEE Transactions on Instrumentation and
+  Measurement}, vol.~69, no.~7, pp. 4818--4826, 2020.
+
+\bibitem{Chamorro2021}
+H.~R. Chamorro, A.-J. Guel-Cortez, Y.~Africano, F.~Jimenez, R.~Tonkoski, and
+  W.~Martinez, ``Grid frequency estimation based on extended {Kalman} filter in
+  connected {AC} microgrids,'' in \emph{2021 IEEE 30th Int. Symp. on Industrial
+  Electronics (ISIE)}, 2021, pp. 1--6.
+
+\bibitem{Netto2018KoopmanKF}
+M.~Netto and L.~Mili, ``A robust data-driven {Koopman Kalman} filter for power
+  systems dynamic state estimation,'' \emph{IEEE Transactions on Power
+  Systems}, vol.~33, no.~6, pp. 7228--7237, 2018.
+
+\bibitem{Ting2022}
+J.~Ting, B.~Wang, R.~W. Kenyon, and A.~Hoke, ``Evaluating methods for measuring
+  grid frequency in low-inertia power systems,'' in \emph{2022 IEEE Kansas
+  Power and Energy Conference (KPEC)}, 2022, {NREL}/CP-6A40-83784.
+
+\bibitem{IEEE_C37_118}
+{IEEE Power and Energy Society}, ``{IEEE} standard for synchrophasor
+  measurements for power systems ({C37.118.1-2011}, amendment
+  {C37.118.1a-2014}),'' IEEE Std C37.118.1, 2011.
+
+\bibitem{IEC_IEEE_60255_118_1_2018}
+{IEC and IEEE}, ``{IEC/IEEE} international standard 60255-118-1: Synchrophasor
+  measurements for power systems,'' IEC/IEEE 60255-118-1:2018, 2018.
+
+\end{thebibliography}
+
+\end{document}

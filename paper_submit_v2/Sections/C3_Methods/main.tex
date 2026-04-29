@@ -1,0 +1,112 @@
+\section{Methodology and Test Framework}
+\label{sec:methodology}
+
+The benchmark compares 16 frequency estimators on a common dynamic test set in
+a local, non-time-synchronized measurement setting, using waveform generation
+at $1$\,MHz and estimator outputs at $10$\,kHz. The scenario set extends the
+same protection-oriented stress modes used in standard dynamic
+testing--magnitude steps, ramps, modulation, and phase jumps--with
+IBR-specific harmonic, out-of-band, ringdown, and multi-event stress. This
+expansion does not change the measurement setting: all methods are evaluated as
+local relay-class frequency trackers from the same decimated $10$\,kHz data
+stream.
+
+The estimator pool spans six practical groups: zero-crossing and energy
+baselines (ZCD, TKEO), windowed spectral methods (IpDFT, TFT), PLL/SOGI-based
+trackers (PLL, SOGI-PLL, SOGI-FLL, Type-3 SOGI-PLL), Kalman-filter methods
+(LKF2, EKF, UKF, RA-EKF), parametric/subspace methods (Prony, ESPRIT), and
+reduced-order or adaptive/data-driven designs (RLS, Koopman/RK-DPMU). This mix
+is intended to expose trade-offs relevant to protection and monitoring:
+accuracy, transient risk, settling behavior, and computational burden. Within
+the Kalman-filter group, EKF and UKF use a single-tone state over phase,
+frequency, and amplitude, whereas RA-EKF adds an explicit RoCoF state,
+innovation-scaled process noise, and a soft phase reset under large
+innovations. RoCoF augmentation in EKF-type filters has prior literature
+antecedents~\cite{Ferrero2020EKF,Chamorro2021}; the benchmark treats RA-EKF as
+one Kalman-family variant, not as a new estimator family.
+
+The study contains 34 benchmark scenarios. Rather than read the benchmark as a
+flat scenario list, we group the scenarios by disturbance family.
+Table~\ref{tab:benchmark_scope} summarizes the resulting ten-family structure,
+and Fig.~\ref{fig:scenario_overview} shows representative ground-truth signals
+for six of those families.
+
+\begin{table}[t]
+  \centering
+  \caption{Benchmark scope. Counts refer to benchmark scenarios. OOB denotes
+    out-of-band interference. The phase-jump family includes $20^\circ$ and
+    $60^\circ$ re-lock tests.}
+  \label{tab:benchmark_scope}
+  \scriptsize
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{1.08}
+  \begin{tabular}{L{1.7cm} c L{3.95cm}}
+    \toprule
+    Family & Count & Stress tested \\
+    \midrule
+    IEEE ramps & 9 & Sustained RoCoF from 0.25 to 20\,Hz/s \\
+    Mag.\ steps & 7 & 1\% to 50\% magnitude changes \\
+    Modulation & 3 & Nominal, AM, and FM tracking \\
+    Phase jumps & 3 & $20^\circ$ and $60^\circ$ phase-jump re-lock tests \\
+    OOB interference & 1 & Spectral rejection under off-nominal content \\
+    Single-tone & 1 & Deterministic steady-state control case \\
+    IBR harmonics & 3 & Small, medium, and large harmonic stress \\
+    IBR ringdown & 5 & Power-imbalance ringdown with noise sweep \\
+    IBR multi-event & 1 & Composite phase jump, ramp, harmonics, and ringdown \\
+    Freq.\ step & 1 & Isolated frequency-step control case \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The family structure reflects distinct physical stress modes. Ramps probe
+sustained RoCoF tracking. Magnitude steps and modulation probe
+frequency-amplitude decoupling. Phase jumps probe re-lock behavior and
+transient overshoot. Out-of-band interference and IBR harmonics probe spectral
+leakage. Ringdown and multi-event cases combine these effects under changing
+noise and transient recovery, which makes them the strongest stress tests in
+the benchmark. Two records drive the sharpest separations: a NERC-type
+$+60^\circ$ phase-jump case at $t=0.7$\,s with 4\% 5th, 2\% 7th, and 0.5\%
+32.5-Hz interharmonic content, and an IBR multi-event case with a 0.5-pu
+sag/swell, a $+45^\circ$ phase jump, a $-2$\,Hz/s RoCoF ramp clamped at
+58\,Hz, decaying DC, AM/PM oscillations, a full IBR harmonic spectrum, and
+compound noise. Figure~\ref{fig:scenario_overview} illustrates that
+difference directly: some benchmark families are isolated compliance-style
+events, whereas others stack abrupt discontinuities, ramps, and oscillatory
+recovery inside the same record.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.98\textwidth,height=0.45\textheight,keepaspectratio]{Fig1_Scenarios_Final.pdf}
+  \caption{Representative benchmark scenarios. Each row shows the voltage
+    waveform and true frequency trajectory for six disturbance families:
+    10\% magnitude step, frequency ramp, modulation, $60^\circ$ phase jump,
+    IBR multi-event sequence, and IBR power-imbalance ringdown. Dashed lines
+    mark disturbance onset. The figure illustrates why the benchmark is read by
+    disturbance family: some cases isolate standard dynamic stress, whereas
+    others combine discontinuities, ramps, harmonics, and oscillatory recovery
+    in one record. Panel (E) shows the dominant frequency profile of the
+    multi-event sequence; the full scenario also includes a 0.5-pu sag/swell,
+    AM/PM modulation, a full IBR harmonic spectrum, and compound noise.}
+  \label{fig:scenario_overview}
+\end{figure*}
+
+All estimators are evaluated as local relay-class frequency trackers from the
+same decimated $10$\,kHz data stream; the study does not assess PMU
+time-stamping or synchrophasor compliance. Each estimator--scenario pair is
+tuned via scenario-wise parameter search across 100 trials and then evaluated
+over 60 Monte Carlo runs. The reported values therefore approximate
+best-in-range performance within the tested search space, not untuned default
+settings. The study contains 544
+estimator--scenario summaries derived from 32,640 Monte Carlo records. Let
+$e[k]=\hat{f}[k]-f_{\mathrm{true}}[k]$. We report
+$\mathrm{RMSE}=\sqrt{N^{-1}\sum_k e[k]^2}$, maximum peak error
+$\max_k |e[k]|$, trip-risk duration
+$T_{\mathrm{trip}}=\Delta t\sum_k \mathbf{1}\{|e[k]|>0.5\,\mathrm{Hz}\}$, settling time,
+and CPU time per sample. The 0.5-Hz threshold is used as a
+protection-oriented risk proxy rather than as a universal trip criterion. CPU
+time is interpreted as a relative computational-cost indicator measured in one
+software environment, not as hardware latency. For any metric $m$, the family
+summary is $\bar{m}_F=|F|^{-1}\sum_{s\in F}\bar{m}_s$, where $\bar{m}_s$ is
+the scenario mean over the 60 realizations. This prevents dense families from
+dominating the comparison. Unless stated otherwise, frequency errors are
+reported in mHz in the tables and discussion.

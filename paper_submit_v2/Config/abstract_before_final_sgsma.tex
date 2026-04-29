@@ -1,0 +1,20 @@
+\begin{abstract}
+Frequency estimation for relay and monitoring functions is more demanding in
+inverter-based resource (IBR) grids than in classical synchronous systems
+because fast ramps, phase jumps, harmonics, ringdown, and out-of-band
+components may overlap within the same local event. This paper presents a Monte
+Carlo benchmark of 16 estimators over 34 scenarios with 60 runs per
+estimator--scenario pair in a local, non-time-synchronized measurement
+setting. The scenario set covers IEEE-style ramps, magnitude steps,
+modulation, phase jumps, out-of-band interference, and IBR-specific composite
+stress. No single estimator dominates all disturbance families. The
+second-order generalized-integrator PLL (SOGI-PLL) leads ramps, the extended
+Kalman filter (EKF) leads magnitude steps and out-of-band cases, and the
+robust adaptive EKF (RA-EKF) leads modulation. The IBR multi-event case splits
+RMSE and trip-risk leadership between the phase-locked loop (PLL) and the
+interpolated DFT (IpDFT). The hardest cases are the IBR multi-event sequence,
+the $60^\circ$ phase jumps, and the noisy ringdown variants. The benchmark
+therefore shows that isolated compliance-style tests do not fully capture the
+disturbance dependence that matters for protection-oriented frequency
+measurement in IBR-dominated grids.
+\end{abstract}

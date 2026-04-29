@@ -1,0 +1,38 @@
+\section{Introduction}\label{sec:introduction}
+
+Frequency estimation affects relaying, under-frequency load shedding,
+disturbance monitoring, and converter supervision in low-inertia grids. In
+inverter-based-resource (IBR) systems, the estimation problem is not limited
+to slow electromechanical drift. Converter-dominated dynamics compress the
+disturbance timescale and can combine fast RoCoF segments, abrupt phase jumps,
+harmonics, out-of-band components, and short ringdown intervals within the
+same protection decision window~\cite{Milano2018LowInertia,Pinheiro2025,Ponce2025}.
+Recent IBR studies also show that converter interactions can reshape the
+observable frequency response itself~\cite{Bernal2025,Zoghby2024}.
+
+These effects stress estimators through different failure modes. Phase
+discontinuities can be interpreted by loop-based methods as large frequency
+excursions or cycle slips. Sustained ramps stress the tracking bandwidth of
+multi-cycle spectral methods. Harmonic and interharmonic content increases
+spectral leakage and can bias estimators whose signal model assumes a single
+dominant sinusoid. Ringdown adds a transient-recovery problem in which average
+error, peak error, and trip-risk duration need not favor the same method.
+
+The estimator families used in practice reflect this latency--robustness
+tension. Windowed spectral methods such as IpDFT and Taylor--Fourier variants
+reject steady harmonic content but pay observation delay~\cite{Belega2014,PlatasGarza2011}.
+PLL and SOGI-based trackers are light enough for embedded deployment but can
+lose phase alignment under abrupt discontinuities~\cite{Golestan2017,Wright2019}.
+Kalman-filter variants can track fast transients when the state model remains
+valid~\cite{Ferrero2020EKF,Chamorro2021}. Reduced-order and data-driven methods
+add further cost--accuracy trade-offs, but their behavior under
+relay-oriented composite stress remains less standardized~\cite{Netto2018KoopmanKF,Ting2022}.
+
+This paper frames the contribution as a benchmark study rather than as a
+single-estimator paper. The benchmark extends standard dynamic-test families
+with IBR-specific harmonic, out-of-band, ringdown, and multi-event stress in a
+local, non-time-synchronized setting. The study compares 16 estimators over 34
+scenarios using RMSE, peak error, trip-risk duration, settling behavior, and
+relative CPU cost. The contribution is therefore the disturbance-family
+comparison protocol and the resulting map of trade-offs; no new estimator
+family is proposed.

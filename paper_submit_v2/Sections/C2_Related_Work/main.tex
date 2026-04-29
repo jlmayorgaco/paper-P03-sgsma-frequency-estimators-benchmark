@@ -1,0 +1,33 @@
+\section{Related Work and Algorithmic Landscape}
+\label{sec:related}
+
+This paper addresses local frequency measurement for relay and monitoring
+functions, not PMU time-stamp quality. IEC/IEEE 60255-118-1 and the earlier
+IEEE C37.118.1 define dynamic tests around ramps, magnitude steps, modulation,
+and selected phase events~\cite{IEEE_C37_118,IEC_IEEE_60255_118_1_2018}. These
+tests are necessary reference cases, but they do not by themselves describe
+how estimators behave when phase discontinuities, harmonics, ramps, and
+ringdown occur in the same local record.
+
+Windowed spectral methods, PLL variants, Kalman filters, and reduced-order or
+data-driven estimators each occupy a different point on the latency--robustness
+plane. IpDFT and TFT are not interchangeable. IpDFT uses a stationary spectral
+model with a Hanning window and parabolic interpolation around the dominant bin
+~\cite{Belega2014}. TFT uses a second-order Taylor-series expansion of the
+fundamental component only, also under Hanning weighting, which gives explicit
+phasor-derivative tracking at the cost of higher noise sensitivity
+~\cite{PlatasGarza2011}.
+PLL variants are computationally light but can misread abrupt phase
+steps~\cite{Golestan2017,Wright2019}. EKF- and UKF-based approaches can improve
+transient tracking when the state model matches the event, and RoCoF
+augmentation in EKF-type estimators has been studied previously~\cite{Ferrero2020EKF,Chamorro2021}.
+Reduced-order and data-driven methods add further cost trade-offs~\cite{Netto2018KoopmanKF,Ting2022}.
+
+Prior low-inertia and IBR studies show why this gap matters~\cite{Milano2018LowInertia,Pinheiro2025,Ponce2025,Bernal2025,Zoghby2024}.
+The remaining need is a comparison that reports standard dynamic tests,
+composite IBR stress, trip-risk, and compute cost in the same frame. The
+benchmark used here keeps the standard disturbance families, adds IBR-specific
+harmonic, ringdown, out-of-band, and multi-event stress, and reports
+family-level summaries rather than a single global winner. This framing
+targets protection-oriented estimator selection, not synchrophasor compliance
+certification.

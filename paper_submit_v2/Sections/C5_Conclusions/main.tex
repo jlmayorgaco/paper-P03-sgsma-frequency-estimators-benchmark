@@ -1,0 +1,45 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+This paper compares 16 frequency estimators over 34 scenarios in a local
+relay-class measurement setting that combines standard dynamic tests with
+IBR-specific composite stress. The results show disturbance dependence:
+estimator rankings move with both the disturbance family and the metric used to
+read them. Standard compliance-style tests remain necessary reference cases,
+but they are not sufficient by themselves for protection-oriented evaluation in
+IBR-dominated grids.
+
+We highlight three findings. First, the latency--robustness trade-off is
+structural: nine estimators win at least one RMSE scenario, and no estimator
+wins more than 10 of the 34. Windowed spectral methods reduce steady harmonic
+error but pay observation delay, while low-cost loop-based methods remain
+attractive under tight computational budgets. Second, Kalman-family methods,
+especially EKF and RA-EKF in this dataset, remain competitive across the
+widest range of families. RA-EKF is evaluated here as one Kalman-family
+variant rather than as a new estimator family. Third, the hardest cases are
+the IBR multi-event sequence, the $60^\circ$ phase-jump cases, and the noisy
+ringdown variants; these are also the cases in which RMSE, peak error, and
+trip-risk select different estimators.
+
+The study is limited to the scenario set and relative computational-cost
+measurements reported here. CPU time is used as a software-level cost indicator,
+not as hardware latency, and the study remains simulation-only. Hardware-in-the-loop
+validation, wider coverage of converter-control interactions, and sensitivity
+analysis of the tuning protocol are the natural next steps.
+
+From a deployment standpoint, the benchmark identifies a small practical core.
+SOGI-PLL is the strongest low-cost choice for ramp-dominated operation. EKF is
+the most consistent model-based baseline for magnitude steps, out-of-band
+interference, and balanced composite-event behavior. RA-EKF earns its place not
+as a universal winner but as a higher-cost Pareto point with the best mean RMSE
+and the strongest modulation-family results. IpDFT and TFT remain relevant when
+limiting trip-risk matters more than minimizing average error, provided their
+observation delay is acceptable.
+
+In practice, the benchmark does not support a single default estimator for all
+low-inertia IBR conditions. It supports a screening workflow: narrow
+candidates by disturbance family and compute budget, then resolve the final
+choice with the metric aligned to the protection objective. In that workflow,
+ramps mostly test tracking bandwidth, jumps test recovery after
+discontinuities, and harmonic-rich cases test robustness to leakage and
+interharmonics.

@@ -1,0 +1,20 @@
+\begin{abstract}
+Frequency estimation in inverter-based resource (IBR) grids must contend with
+fast ramps, phase jumps, harmonics, ringdown, and out-of-band components that
+can overlap within a single local event. This paper presents a comparative
+benchmark of 16 dynamic frequency estimators across 34 test scenarios grouped
+into 10 disturbance families in a local relay measurement setting. The test set
+combines compliance-style dynamic tests, including magnitude steps, ramps,
+modulation, and phase jumps, with IBR-specific stress conditions such as
+harmonic injection, power-imbalance ringdown, out-of-band interference, and
+composite multi-event sequences. Each estimator is tuned via scenario-specific
+parameter tuning and evaluated using RMSE, peak error, trip-risk duration,
+settling time, and CPU cost. Rankings vary by disturbance family and
+performance metric: SOGI-PLL achieves the lowest error on ramps, EKF on
+magnitude steps and out-of-band interference, and RA-EKF on modulation, while
+the composite IBR event splits RMSE leadership (PLL) from trip-risk leadership
+(IpDFT). The hardest cases are the multi-event IBR sequence, $60^\circ$ phase
+jumps, and noisy ringdown variants. The benchmark shows that compliance-style
+dynamic tests provide necessary but insufficient validation for
+protection-oriented frequency measurement in IBR-dominated grids.
+\end{abstract}
