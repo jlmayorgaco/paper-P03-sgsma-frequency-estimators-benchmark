@@ -467,7 +467,7 @@ def _plot_metric_by_family_page(*, df_global: pd.DataFrame, metric_col: str, met
             ax.set_ylim(-2, 2)
             ax.set_title("Reference Voltage Step", loc="left", fontweight="bold")
             ax.set_xlabel("Time [s]")
-            ax.set_ylabel("Voltage [pu]")
+            ax.set_ylabel("Input signal x(t) [pu]")
             ax.grid(True, which="both", alpha=0.25)
             ax.legend(loc="best", fontsize=7, frameon=True)
             continue
@@ -504,7 +504,7 @@ def _plot_metric_by_family_page(*, df_global: pd.DataFrame, metric_col: str, met
             ax.grid(True, which="both", alpha=0.25)
             ax.set_title(f"{family} (no data)", loc="left", fontweight="bold")
             ax.set_ylabel(metric_label)
-            ax.set_xlabel("Voltage step [%]")
+            ax.set_xlabel("Signal amplitude step [%]")
             continue
 
         for estimator, df_est in df_family.groupby("estimator", sort=True):
@@ -547,7 +547,7 @@ def _plot_metric_by_family_page(*, df_global: pd.DataFrame, metric_col: str, met
         ax.grid(True, which="both", alpha=0.25)
         ax.set_title(f"{family}", loc="left", fontweight="bold")
         ax.set_ylabel(metric_label)
-        ax.set_xlabel("Voltage step [%]")
+        ax.set_xlabel("Signal amplitude step [%]")
         ax.tick_params(axis="x", labelrotation=0, labelsize=7)
         ax.legend(loc="best", fontsize=6.4, frameon=True, ncol=1)
 
@@ -555,7 +555,16 @@ def _plot_metric_by_family_page(*, df_global: pd.DataFrame, metric_col: str, met
         axes_arr[j].set_visible(False)
 
     fig.suptitle(f"{title_prefix}: by estimator family", fontsize=13, y=0.995)
-    fig.tight_layout(rect=[0.02, 0.02, 0.98, 0.97])
+    fig.text(
+        0.5,
+        0.006,
+        "Note: Input signal x(t) is generic and can represent voltage, current, power, or similar measured waveforms.",
+        ha="center",
+        va="bottom",
+        fontsize=7,
+        color="#37474F",
+    )
+    fig.tight_layout(rect=[0.02, 0.03, 0.98, 0.97])
     return fig, color_map
 
 
