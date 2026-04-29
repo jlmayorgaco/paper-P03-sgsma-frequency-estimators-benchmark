@@ -270,6 +270,21 @@ Policy for new pull requests:
 - do not add heavy generated outputs under `tests/montecarlo/outputs/`
 - regenerate locally from the canonical pipeline and validate with:
   `python -m pipelines.validate_canonical_artifacts`
+- do not commit generated outputs under:
+  - `artifacts/freq_ramp_rocof_sweep/`
+  - `artifacts/voltage_step_sweep/`
+  - `paper_submit_v2/outputs/`
+  - `paper_submit_v2/support/`
+
+Git cannot ignore files by size using only `.gitignore`. This repository includes
+an optional pre-commit hook at `.githooks/pre-commit` that blocks staged files
+larger than 100 MB.
+
+Enable it once per local clone:
+
+```bash
+git config core.hooksPath .githooks
+```
 
 Legacy generated outputs may still exist in history and will be cleaned in a
 dedicated repository hygiene pass.

@@ -54,3 +54,7 @@ temp/*
 # Benchmark artifact policy (do not version heavy generated outputs)
 artifacts/full_mc_benchmark/
 tests/montecarlo/outputs/
+artifacts/freq_ramp_rocof_sweep/
+artifacts/voltage_step_sweep/
+paper_submit_v2/outputs/
+paper_submit_v2/support/
