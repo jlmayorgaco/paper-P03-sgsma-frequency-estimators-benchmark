@@ -12,9 +12,11 @@ from typing import Any
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 import optuna
 import pandas as pd
+from itertools import product
 
 # Keep runtime stable for multiprocessing + BLAS backends.
 os.environ.setdefault("OMP_NUM_THREADS", "1")
@@ -46,6 +48,7 @@ GLOBAL_CSV_NAME = "global_metrics_report.csv"
 RMSE_EST_CSV_NAME = "rmse_by_estimator.csv"
 RMSE_FAM_CSV_NAME = "rmse_by_family.csv"
 PLOT_NAME = "rmse_deterioration_by_family"
+MULTIPAGE_PDF_NAME = "metrics_dashboard_multipage.pdf"
 LEGEND_MAP_CSV_NAME = "rmse_plot_method_legend.csv"
 
 ROCOF_MIN_HZ_S = 0.10
@@ -126,6 +129,13 @@ def _env_bool(name: str, default: bool) -> bool:
     return raw.strip().lower() not in {"0", "false", "no", "off"}
 
 
+def _env_csv(name: str) -> list[str]:
+    raw = os.getenv(name)
+    if not raw:
+        return []
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
+
 def _sanitize_token(value: float) -> str:
     token = f"{value:g}".replace(".", "p")
     return token.replace("-", "m")
@@ -170,7 +180,11 @@ def _build_rocof_levels() -> list[float]:
 
 
 def _build_scenarios() -> list[SweepScenario]:
-    return [_create_rocof_variant(v) for v in _build_rocof_levels()]
+    scenarios = [_create_rocof_variant(v) for v in _build_rocof_levels()]
+    include_names = set(_env_csv("FREQRAMP_SWEEP_INCLUDE_SCENARIOS"))
+    if include_names:
+        scenarios = [sc for sc in scenarios if sc.scenario_name in include_names]
+    return scenarios
 
 
 def _select_estimators() -> dict[str, type]:
@@ -214,8 +228,12 @@ def _aggregate_summary(summary_df: pd.DataFrame) -> dict[str, Any]:
         valid = series.dropna()
         if valid.empty:
             continue
+        valid_f = valid.astype(float)
         row[f"{metric}_mean"] = float(valid.mean())
-        row[f"{metric}_std"] = float(valid.std(ddof=1)) if len(valid) > 1 else 0.0
+        row[f"{metric}_median"] = float(valid.median())
+        row[f"{metric}_p10"] = float(np.percentile(valid_f, 10))
+        row[f"{metric}_p90"] = float(np.percentile(valid_f, 90))
+        row[f"{metric}_std"] = float(valid_f.std(ddof=1)) if len(valid_f) > 1 else 0.0
     return row
 
 
@@ -244,6 +262,78 @@ def _run_engine_local(engine: MonteCarloEngine) -> MonteCarloResult:
             "execution_mode": "local_sequential",
         },
     )
+
+
+def _can_reuse_existing_run(
+    summary_csv: Path,
+    run_spec_path: Path,
+    *,
+    requested_n_mc_runs: int,
+    requested_tune_trials: int,
+    requested_tune_eval_runs: int,
+) -> bool:
+    if not summary_csv.exists() or not run_spec_path.exists():
+        return False
+    try:
+        spec = json.loads(run_spec_path.read_text(encoding="utf-8"))
+    except Exception:
+        return False
+    try:
+        n_mc_saved = int(spec.get("n_mc_runs", -1))
+    except Exception:
+        return False
+    if n_mc_saved != int(requested_n_mc_runs):
+        return False
+    tune_meta = spec.get("tuning_meta", {}) if isinstance(spec.get("tuning_meta", {}), dict) else {}
+    try:
+        trials_saved = int(tune_meta.get("n_trials_requested", -1))
+    except Exception:
+        trials_saved = -1
+    if trials_saved != int(requested_tune_trials):
+        return False
+    try:
+        eval_saved = int(tune_meta.get("tune_eval_runs", -1))
+    except Exception:
+        eval_saved = -1
+    if eval_saved != int(requested_tune_eval_runs):
+        return False
+    return True
+
+
+def _evaluate_params_rmse(
+    est_cls: type,
+    params: dict[str, Any],
+    scenarios_eval: list[Any],
+    eval_start: int,
+) -> float:
+    try:
+        rmses: list[float] = []
+        for sc in scenarios_eval:
+            est = est_cls(**params)
+            f_hat = benchmark._run_estimator(est, sc.v)
+            error = f_hat[eval_start:] - sc.f_true[eval_start:]
+            rmse = float(np.sqrt(np.mean(error ** 2)))
+            if not np.isfinite(rmse):
+                return 1e6
+            rmses.append(rmse)
+        return float(np.mean(rmses)) if rmses else 1e6
+    except Exception:
+        return 1e6
+
+
+def _small_grid_candidates(est_name: str) -> list[dict[str, Any]]:
+    if est_name == "Prony":
+        orders = [2, 4, 6, 8, 10]
+        n_cycles = [0.5, 1.0, 2.0, 4.0, 8.0]
+        return [{"order": o, "n_cycles": c} for o, c in product(orders, n_cycles)]
+    if est_name == "ESPRIT":
+        n_cycles = [0.5, 1.0, 2.0, 4.0, 8.0]
+        return [{"n_cycles": c} for c in n_cycles]
+    if est_name == "MUSIC":
+        gains = [1e-4, 5e-4, 1e-3, 5e-3, 1e-2]
+        orders = [2, 4, 6, 8, 10]
+        return [{"gain": g, "subspace_order": o} for g, o in product(gains, orders)]
+    return []
 
 
 def _tune_estimator_for_scenario(
@@ -286,22 +376,30 @@ def _tune_estimator_for_scenario(
     fs_dsp = 1.0 / float(scenarios_eval[0].t[1] - scenarios_eval[0].t[0])
     eval_start = int(0.15 * fs_dsp)
 
+    grid_candidates = _small_grid_candidates(est_name)
+    if grid_candidates:
+        best_params = defaults
+        best_loss = 1e6
+        for cand in grid_candidates:
+            params = {**defaults, **cand}
+            loss = _evaluate_params_rmse(est_cls, params, scenarios_eval, eval_start)
+            if loss < best_loss:
+                best_loss = loss
+                best_params = params
+        tuning_meta["mode"] = "discrete_small_grid"
+        tuning_meta["sampler_mode_effective"] = "manual_grid"
+        tuning_meta["n_trials_executed"] = len(grid_candidates)
+        tuning_meta["best_objective"] = float(best_loss)
+        tuning_meta["grid_candidates"] = len(grid_candidates)
+        if best_loss >= 1e6:
+            tuning_meta["reason"] = "all_trials_failed"
+            return defaults, tuning_meta
+        return best_params, tuning_meta
+
     def objective(trial: optuna.Trial) -> float:
         suggested = space_fn(trial)
         params = {**defaults, **suggested}
-        try:
-            rmses: list[float] = []
-            for sc in scenarios_eval:
-                est = est_cls(**params)
-                f_hat = benchmark._run_estimator(est, sc.v)
-                error = f_hat[eval_start:] - sc.f_true[eval_start:]
-                rmse = float(np.sqrt(np.mean(error ** 2)))
-                if not np.isfinite(rmse):
-                    return 1e6
-                rmses.append(rmse)
-            return float(np.mean(rmses)) if rmses else 1e6
-        except Exception:
-            return 1e6
+        return _evaluate_params_rmse(est_cls, params, scenarios_eval, eval_start)
 
     study, n_trials_exec, sampler_mode_effective = benchmark._build_optuna_study(
         space_fn=space_fn,
@@ -320,17 +418,32 @@ def _tune_estimator_for_scenario(
     return {**defaults, **best_suggested}, tuning_meta
 
 
-def _plot_rmse_by_family(df_rmse: pd.DataFrame, out_dir: Path) -> tuple[list[Path], dict[str, tuple[float, float, float, float]]]:
-    if df_rmse.empty:
-        return [], {}
+def _plot_metric_by_family_page(
+    *,
+    df_global: pd.DataFrame,
+    metric_col: str,
+    metric_label: str,
+    title_prefix: str,
+    yscale: str,
+    ieee_line: float | None,
+    iec_line: float | None,
+) -> tuple[plt.Figure, dict[str, tuple[float, float, float, float]]]:
+    if df_global.empty or metric_col not in df_global.columns:
+        fig, _ = plt.subplots(1, 1, figsize=(8, 4))
+        return fig, {}
+
+    df_metric = df_global[
+        ["scenario", "rocof_hz_s", "estimator", "family", metric_col]
+    ].copy()
+    df_metric = df_metric.rename(columns={metric_col: "metric_value"})
+    df_metric = df_metric.dropna(subset=["metric_value"])
+    if df_metric.empty:
+        fig, _ = plt.subplots(1, 1, figsize=(8, 4))
+        return fig, {}
+
     families = ["Loop-based", "Model-based", "Window-based", "Adaptive", "Data-driven"]
     panels = ["Reference Ramp"] + families
-    rocof_ticks = sorted(df_rmse["rocof_hz_s"].dropna().astype(float).unique().tolist())
-
-    ieee_normal = _env_float("FREQRAMP_LINE_IEEE_NORMAL", IEEE_STANDARD_NORMAL_ROCOF_HZ_S, minimum=0.0)
-    ieee_ibr = _env_float("FREQRAMP_LINE_IEEE_IBR", IEEE_STANDARD_IBR_ROCOF_HZ_S, minimum=0.0)
-    proposed_ibr = _env_float("FREQRAMP_LINE_PROPOSED_IBR", PROPOSED_IBR_ROCOF_HZ_S, minimum=0.0)
-    reference_ramp = _env_float("FREQRAMP_REFERENCE_ROCOF", ieee_normal, minimum=0.0)
+    rocof_ticks = sorted(df_metric["rocof_hz_s"].dropna().astype(float).unique().tolist())
 
     ncols = 2
     nrows = int(math.ceil(len(panels) / ncols))
@@ -338,8 +451,12 @@ def _plot_rmse_by_family(df_rmse: pd.DataFrame, out_dir: Path) -> tuple[list[Pat
     axes_arr = np.atleast_1d(axes).ravel()
 
     cmap = matplotlib.colormaps["tab20"]
-    est_labels = sorted(df_rmse["estimator"].unique().tolist())
+    est_labels = sorted(df_metric["estimator"].unique().tolist())
     color_map = {label: cmap(i % cmap.N) for i, label in enumerate(est_labels)}
+
+    ieee_normal = _env_float("FREQRAMP_LINE_IEEE_NORMAL", IEEE_STANDARD_NORMAL_ROCOF_HZ_S, minimum=0.0)
+    ieee_ibr = _env_float("FREQRAMP_LINE_IEEE_IBR", IEEE_STANDARD_IBR_ROCOF_HZ_S, minimum=0.0)
+    reference_ramp = _env_float("FREQRAMP_REFERENCE_ROCOF", ieee_normal, minimum=0.0)
 
     for idx, panel in enumerate(panels):
         ax = axes_arr[idx]
@@ -361,13 +478,12 @@ def _plot_rmse_by_family(df_rmse: pd.DataFrame, out_dir: Path) -> tuple[list[Pat
             continue
 
         family = panel
-        df_family = df_rmse[df_rmse["family"] == family].sort_values(["estimator", "rocof_hz_s"])
+        df_family = df_metric[df_metric["family"] == family].sort_values(["estimator", "rocof_hz_s"])
         if df_family.empty:
             ax.set_xscale("log")
-            ax.set_yscale("log")
             ax.grid(True, which="both", alpha=0.25)
-            ax.set_title(f"{family} (sin datos)", loc="left", fontweight="bold")
-            ax.set_ylabel("RMSE [Hz]")
+            ax.set_title(f"{family} (no data)", loc="left", fontweight="bold")
+            ax.set_ylabel(metric_label)
             ax.set_xlabel("RoCoF [Hz/s]")
             if rocof_ticks:
                 ax.set_xticks(rocof_ticks)
@@ -375,9 +491,29 @@ def _plot_rmse_by_family(df_rmse: pd.DataFrame, out_dir: Path) -> tuple[list[Pat
             continue
 
         for estimator, df_est in df_family.groupby("estimator", sort=True):
+            y_med = df_est["metric_value"].to_numpy(dtype=float)
+            p10_col = metric_col.replace("_mean", "_p10")
+            p90_col = metric_col.replace("_mean", "_p90")
+            has_band = p10_col in df_est.columns and p90_col in df_est.columns
+            y_p10 = df_est[p10_col].to_numpy(dtype=float) if has_band else y_med
+            y_p90 = df_est[p90_col].to_numpy(dtype=float) if has_band else y_med
+            if yscale == "log":
+                y_med = np.maximum(y_med, 1e-9)
+                y_p10 = np.maximum(y_p10, 1e-9)
+                y_p90 = np.maximum(y_p90, 1e-9)
+            x_vals = df_est["rocof_hz_s"].to_numpy(dtype=float)
+            if has_band:
+                ax.fill_between(
+                    x_vals,
+                    y_p10,
+                    y_p90,
+                    alpha=0.10,
+                    color=color_map[str(estimator)],
+                    linewidth=0,
+                )
             ax.plot(
-                df_est["rocof_hz_s"].to_numpy(dtype=float),
-                df_est["m1_rmse_hz_mean"].to_numpy(dtype=float),
+                x_vals,
+                y_med,
                 marker="o",
                 markersize=2.8,
                 linewidth=1.0,
@@ -386,19 +522,119 @@ def _plot_rmse_by_family(df_rmse: pd.DataFrame, out_dir: Path) -> tuple[list[Pat
                 label=str(estimator),
             )
 
-        ax.axvline(ieee_normal, color="#303F9F", linestyle=":", linewidth=1.0, label=f"IEEE normal ({ieee_normal:g})")
-        ax.axvline(ieee_ibr, color="#00897B", linestyle=":", linewidth=1.0, label=f"IEEE IBR ({ieee_ibr:g})")
-        ax.axvline(proposed_ibr, color="#E65100", linestyle=":", linewidth=1.0, label=f"Propuesta IBR ({proposed_ibr:g})")
+        # Visual story in X: expected-normal, expected-severe-IBR, and extreme stress.
+        if rocof_ticks:
+            x_min = float(min(rocof_ticks))
+            x_max = float(max(rocof_ticks))
+            n_ref = float(np.clip(ieee_normal, x_min, x_max))
+            ibr_ref = float(np.clip(ieee_ibr, x_min, x_max))
+            ax.axvspan(x_min, n_ref, color="#66BB6A", alpha=0.08, zorder=0)
+            ax.axvspan(n_ref, ibr_ref, color="#FDD835", alpha=0.08, zorder=0)
+            ax.axvspan(ibr_ref, x_max, color="#EF5350", alpha=0.06, zorder=0)
+            def _geo_mid(a: float, b: float) -> float:
+                a = max(a, 1e-9)
+                b = max(b, 1e-9)
+                return float(np.sqrt(a * b))
+
+            x_mid_normal = _geo_mid(x_min, n_ref)
+            x_mid_ibr = _geo_mid(n_ref, ibr_ref) if ibr_ref > n_ref else n_ref
+            x_mid_extreme = _geo_mid(ibr_ref, x_max) if x_max > ibr_ref else ibr_ref
+
+            ax.text(
+                x_mid_normal, 0.985, "Normal",
+                transform=ax.get_xaxis_transform(), va="top", ha="center", fontsize=6.6, color="#1B5E20",
+                bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.65),
+            )
+            ax.text(
+                x_mid_ibr, 0.945, "IBR severe",
+                transform=ax.get_xaxis_transform(), va="top", ha="center", fontsize=6.6, color="#8D6E00",
+                bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.65),
+            )
+            ax.text(
+                x_mid_extreme, 0.905, "Extreme stress",
+                transform=ax.get_xaxis_transform(), va="top", ha="center", fontsize=6.6, color="#B71C1C",
+                bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.65),
+            )
+
+        if ieee_line is not None:
+            y_ieee = max(ieee_line, 1e-9) if yscale == "log" else ieee_line
+            ax.axhline(y_ieee, color="#303F9F", linestyle="--", linewidth=1.0, label=f"IEEE 1547 ({ieee_line:g})")
+        if iec_line is not None:
+            y_iec = max(iec_line, 1e-9) if yscale == "log" else iec_line
+            ax.axhline(y_iec, color="#00897B", linestyle="--", linewidth=1.0, label=f"IEC 60255 ({iec_line:g})")
+        ax.axvline(ieee_normal, color="#7B1FA2", linestyle=":", linewidth=0.9, label=f"RoCoF std ref ({ieee_normal:g})")
+        ax.axvline(ieee_ibr, color="#E65100", linestyle=":", linewidth=0.9, label=f"RoCoF IBR ref ({ieee_ibr:g})")
 
         ax.set_xscale("log")
-        ax.set_yscale("log")
+        if yscale == "log":
+            ax.set_yscale("log")
         ax.grid(True, which="both", alpha=0.25)
         ax.set_title(family, loc="left", fontweight="bold")
-        ax.set_ylabel("RMSE [Hz]")
+        ax.set_ylabel(metric_label)
         if rocof_ticks:
             ax.set_xticks(rocof_ticks)
             ax.set_xticklabels([f"{v:g}" for v in rocof_ticks], rotation=70, ha="right", fontsize=6)
-        ax.legend(loc="best", fontsize=6.7, frameon=True, ncol=1)
+
+        # Visual story in Y: compliance band vs non-compliance.
+        y_lo, y_hi = ax.get_ylim()
+        if ieee_line is not None:
+            y_ieee = max(float(ieee_line), 1e-9) if yscale == "log" else float(ieee_line)
+            low_band_start = max(y_lo, 1e-9) if yscale == "log" else y_lo
+            if y_ieee > low_band_start:
+                ax.axhspan(low_band_start, min(y_ieee, y_hi), color="#66BB6A", alpha=0.06, zorder=0)
+            if y_hi > y_ieee:
+                ax.axhspan(max(y_ieee, y_lo), y_hi, color="#EF5350", alpha=0.04, zorder=0)
+            ax.text(0.995, 0.03, "Compliant", transform=ax.transAxes, ha="right", va="bottom", fontsize=6.3, color="#1B5E20")
+            ax.text(0.995, 0.11, "At risk", transform=ax.transAxes, ha="right", va="bottom", fontsize=6.3, color="#B71C1C")
+
+        # Knee-point annotation from family-mean trend.
+        fam_mean = (
+            df_family.groupby("rocof_hz_s", as_index=False)["metric_value"]
+            .mean()
+            .sort_values("rocof_hz_s")
+        )
+        if len(fam_mean) >= 4:
+            x_vals = fam_mean["rocof_hz_s"].to_numpy(dtype=float)
+            y_vals = fam_mean["metric_value"].to_numpy(dtype=float)
+            y_for_grad = np.log10(np.maximum(y_vals, 1e-9)) if yscale == "log" else y_vals
+            dy = np.diff(y_for_grad)
+            dx = np.diff(np.log10(np.maximum(x_vals, 1e-9)))
+            slope = np.divide(dy, np.maximum(dx, 1e-12))
+            k_idx = int(np.argmax(slope)) + 1
+            x_k = float(x_vals[k_idx])
+            y_k = float(max(y_vals[k_idx], 1e-9) if yscale == "log" else y_vals[k_idx])
+            ax.annotate(
+                "Knee",
+                xy=(x_k, y_k),
+                xytext=(8, 10),
+                textcoords="offset points",
+                fontsize=6.5,
+                arrowprops=dict(arrowstyle="->", lw=0.8, color="#424242"),
+                color="#424242",
+            )
+
+        # RoCoF* annotation where best family curve crosses IEEE limit.
+        if ieee_line is not None:
+            fam_best = (
+                df_family.groupby("rocof_hz_s", as_index=False)["metric_value"]
+                .min()
+                .sort_values("rocof_hz_s")
+            )
+            cross = fam_best[fam_best["metric_value"] > float(ieee_line)]
+            if not cross.empty:
+                x_cross = float(cross.iloc[0]["rocof_hz_s"])
+                y_cross = float(cross.iloc[0]["metric_value"])
+                y_cross = max(y_cross, 1e-9) if yscale == "log" else y_cross
+                ax.scatter([x_cross], [y_cross], s=14, color="#212121", zorder=7)
+                ax.annotate(
+                    f"RoCoF*={x_cross:g}",
+                    xy=(x_cross, y_cross),
+                    xytext=(6, -14),
+                    textcoords="offset points",
+                    fontsize=6.2,
+                    color="#212121",
+                )
+        ax.legend(loc="best", fontsize=6.4, frameon=True, ncol=1)
 
     for j in range(len(panels), len(axes_arr)):
         axes_arr[j].set_visible(False)
@@ -406,8 +642,24 @@ def _plot_rmse_by_family(df_rmse: pd.DataFrame, out_dir: Path) -> tuple[list[Pat
     for ax in axes_arr[1:len(panels)]:
         ax.set_xlabel("RoCoF [Hz/s]")
 
-    fig.suptitle("FreqRamp RoCoF sweep: RMSE deterioration by estimator family", fontsize=13, y=0.995)
+    fig.suptitle(f"{title_prefix}: by estimator family", fontsize=13, y=0.995)
     fig.tight_layout(rect=[0.02, 0.02, 0.98, 0.97])
+    return fig, color_map
+
+
+def _plot_rmse_by_family(df_rmse: pd.DataFrame, out_dir: Path) -> tuple[list[Path], dict[str, tuple[float, float, float, float]]]:
+    if df_rmse.empty:
+        return [], {}
+    df_for_plot = df_rmse.rename(columns={"m1_rmse_hz_mean": "m1_rmse_hz_mean"}).copy()
+    fig, color_map = _plot_metric_by_family_page(
+        df_global=df_for_plot.rename(columns={"m1_rmse_hz_mean": "m1_rmse_hz_mean"}),
+        metric_col="m1_rmse_hz_mean",
+        metric_label="RMSE [Hz]",
+        title_prefix="RMSE",
+        yscale="log",
+        ieee_line=_env_float("FREQRAMP_LIMIT_RMSE_IEEE", 0.05, minimum=0.0),
+        iec_line=_env_float("FREQRAMP_LIMIT_RMSE_IEC", 0.01, minimum=0.0),
+    )
 
     png_path = out_dir / f"{PLOT_NAME}.png"
     pdf_path = out_dir / f"{PLOT_NAME}.pdf"
@@ -415,6 +667,58 @@ def _plot_rmse_by_family(df_rmse: pd.DataFrame, out_dir: Path) -> tuple[list[Pat
     fig.savefig(pdf_path)
     plt.close(fig)
     return [png_path, pdf_path], color_map
+
+
+def _save_multipage_metrics_dashboard(df_global: pd.DataFrame, out_dir: Path) -> Path:
+    pdf_path = out_dir / MULTIPAGE_PDF_NAME
+    pages = [
+        (
+            "m1_rmse_hz_mean",
+            "RMSE [Hz]",
+            "RMSE",
+            "log",
+            _env_float("FREQRAMP_LIMIT_RMSE_IEEE", 0.05, minimum=0.0),
+            _env_float("FREQRAMP_LIMIT_RMSE_IEC", 0.01, minimum=0.0),
+        ),
+        (
+            "m3_max_peak_hz_mean",
+            "FE max per test [Hz]",
+            "FE max per test",
+            "log",
+            _env_float("FREQRAMP_LIMIT_FE_MAX_IEEE", 0.5, minimum=0.0),
+            _env_float("FREQRAMP_LIMIT_FE_MAX_IEC", 0.01, minimum=0.0),
+        ),
+        (
+            "m9_rfe_max_hz_s_mean",
+            "RFE max [Hz/s]",
+            "RFE",
+            "log",
+            _env_float("FREQRAMP_LIMIT_RFE_IEEE", 3.0, minimum=0.0),
+            _env_float("FREQRAMP_LIMIT_RFE_IEC", 0.4, minimum=0.0),
+        ),
+        (
+            "m5_trip_risk_s_mean",
+            "Time out of band [s]",
+            "Time out of band",
+            "linear",
+            _env_float("FREQRAMP_LIMIT_TOB_IEEE", 0.1, minimum=0.0),
+            _env_float("FREQRAMP_LIMIT_TOB_IEC", 0.02, minimum=0.0),
+        ),
+    ]
+    with PdfPages(pdf_path) as pdf:
+        for metric_col, metric_label, title_prefix, yscale, ieee_line, iec_line in pages:
+            fig, _ = _plot_metric_by_family_page(
+                df_global=df_global,
+                metric_col=metric_col,
+                metric_label=metric_label,
+                title_prefix=title_prefix,
+                yscale=yscale,
+                ieee_line=ieee_line,
+                iec_line=iec_line,
+            )
+            pdf.savefig(fig)
+            plt.close(fig)
+    return pdf_path
 
 
 def _write_manifest(out_dir: Path, scenarios: list[SweepScenario], estimators: dict[str, type], n_mc_runs: int) -> Path:
@@ -434,6 +738,7 @@ def _write_manifest(out_dir: Path, scenarios: list[SweepScenario], estimators: d
             "rmse_by_family": RMSE_FAM_CSV_NAME,
             "plot_png": f"{PLOT_NAME}.png",
             "plot_pdf": f"{PLOT_NAME}.pdf",
+            "metrics_multipage_pdf": MULTIPAGE_PDF_NAME,
         },
     }
     path = out_dir / MANIFEST_NAME
@@ -475,7 +780,13 @@ def main() -> None:
 
             summary_csv = out_dir / f"{sc.scenario_name}__{est_name}_summary.csv"
             run_spec_path = out_dir / "run_spec.json"
-            if resume_run and summary_csv.exists() and run_spec_path.exists():
+            if resume_run and _can_reuse_existing_run(
+                summary_csv,
+                run_spec_path,
+                requested_n_mc_runs=n_mc_runs,
+                requested_tune_trials=tune_trials,
+                requested_tune_eval_runs=tune_eval_runs,
+            ):
                 summary_df = pd.read_csv(summary_csv)
             else:
                 print(f"  - {est_name}", flush=True)
@@ -525,10 +836,18 @@ def main() -> None:
             )
 
     df_global = pd.DataFrame(rows_agg).sort_values(["rocof_hz_s", "family", "estimator"])
+    # Homogeneity flags to catch mixed runs in reused artifacts
+    if "n_mc_runs" in df_global.columns:
+        n_unique_runs = df_global["n_mc_runs"].nunique()
+        if n_unique_runs > 1:
+            print(f"[WARN] Mixed n_mc_runs detected in aggregated output: {sorted(df_global['n_mc_runs'].unique().tolist())}")
     global_csv = OUTPUT_DIR / GLOBAL_CSV_NAME
     df_global.to_csv(global_csv, index=False)
 
-    keep_cols = ["scenario", "rocof_hz_s", "estimator", "family", "n_mc_runs", "m1_rmse_hz_mean", "m1_rmse_hz_std"]
+    keep_cols = [
+        "scenario", "rocof_hz_s", "estimator", "family", "n_mc_runs",
+        "m1_rmse_hz_mean", "m1_rmse_hz_median", "m1_rmse_hz_p10", "m1_rmse_hz_p90", "m1_rmse_hz_std",
+    ]
     rmse_cols = [col for col in keep_cols if col in df_global.columns]
     df_rmse = df_global[rmse_cols].copy()
     rmse_est_csv = OUTPUT_DIR / RMSE_EST_CSV_NAME
@@ -547,6 +866,7 @@ def main() -> None:
     df_rmse_family.to_csv(rmse_family_csv, index=False)
 
     generated_plots, color_map = _plot_rmse_by_family(df_rmse=df_rmse, out_dir=OUTPUT_DIR)
+    multipage_pdf_path = _save_multipage_metrics_dashboard(df_global=df_global, out_dir=OUTPUT_DIR)
     legend_rows = []
     for estimator in sorted(color_map):
         rgba = color_map[estimator]
@@ -568,6 +888,7 @@ def main() -> None:
     print(f"  - {rmse_family_csv.relative_to(ROOT)}")
     for path in generated_plots:
         print(f"  - {path.relative_to(ROOT)}")
+    print(f"  - {multipage_pdf_path.relative_to(ROOT)}")
     print(f"  - {legend_map_path.relative_to(ROOT)}")
     print(f"  - {manifest_path.relative_to(ROOT)}")
     print(f"\n[DONE] FreqRamp RoCoF sweep completed in {elapsed:.1f} min.")
