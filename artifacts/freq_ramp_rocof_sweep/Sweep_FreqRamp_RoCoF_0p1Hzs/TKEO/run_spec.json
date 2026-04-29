@@ -5,16 +5,16 @@
   "family": "Adaptive",
   "best_params": {
     "nominal_f": 60.0,
-    "output_smoothing": 5.349116907944118e-06
+    "output_smoothing": 5.725581052953119e-06
   },
   "tuning_meta": {
     "mode": "per_scenario_best_tuning",
     "objective": "minimize_m1_rmse_hz",
-    "n_trials_requested": 25,
-    "n_trials_executed": 25,
-    "tune_eval_runs": 2,
+    "n_trials_requested": 1000,
+    "n_trials_executed": 1000,
+    "tune_eval_runs": 30,
     "sampler_mode_effective": "tpe",
-    "best_objective": 0.012319455788215972
+    "best_objective": 0.011287941195907595
   },
-  "n_mc_runs": 2
+  "n_mc_runs": 60
 }

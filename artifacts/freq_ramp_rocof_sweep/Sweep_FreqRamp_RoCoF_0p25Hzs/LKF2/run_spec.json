@@ -5,21 +5,21 @@
   "family": "Model-based",
   "best_params": {
     "nominal_f": 60.0,
-    "q_dc": 0.0004507244359952831,
-    "q_vc": 1.6004863939932325e-07,
-    "q_vs": 2.658624906132057e-05,
-    "r": 0.023936089657147882,
-    "beta": 64.43704930843597,
-    "lpf_mu": 0.2964915284808609
+    "q_dc": 3.837031296322405e-08,
+    "q_vc": 8.40025349696948e-05,
+    "q_vs": 1.7695254433872936e-08,
+    "r": 0.0005412490796349981,
+    "beta": 98.67606230684098,
+    "lpf_mu": 0.08972764757938233
   },
   "tuning_meta": {
     "mode": "per_scenario_best_tuning",
     "objective": "minimize_m1_rmse_hz",
-    "n_trials_requested": 25,
-    "n_trials_executed": 25,
-    "tune_eval_runs": 2,
+    "n_trials_requested": 50,
+    "n_trials_executed": 50,
+    "tune_eval_runs": 1,
     "sampler_mode_effective": "tpe",
-    "best_objective": 0.0034614281102320014
+    "best_objective": 0.002588386173240993
   },
-  "n_mc_runs": 2
+  "n_mc_runs": 30
 }

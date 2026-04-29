@@ -5,17 +5,17 @@
   "family": "Loop-based",
   "best_params": {
     "nominal_f": 60.0,
-    "k_sogi": 0.5625547426432659,
-    "gamma": 89.75267671618094
+    "k_sogi": 0.44954084672178674,
+    "gamma": 66.18836738927499
   },
   "tuning_meta": {
     "mode": "per_scenario_best_tuning",
     "objective": "minimize_m1_rmse_hz",
-    "n_trials_requested": 25,
-    "n_trials_executed": 25,
-    "tune_eval_runs": 2,
+    "n_trials_requested": 1000,
+    "n_trials_executed": 1000,
+    "tune_eval_runs": 30,
     "sampler_mode_effective": "tpe",
-    "best_objective": 0.00499003782603378
+    "best_objective": 0.004855570456005602
   },
-  "n_mc_runs": 2
+  "n_mc_runs": 60
 }

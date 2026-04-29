@@ -8,18 +8,18 @@
     "q_dc": 1e-06,
     "q_alpha": 0.0001,
     "q_beta": 0.0001,
-    "q_omega": 0.2941308320566727,
-    "r_meas": 0.0001385926793246646,
+    "q_omega": 99.7822660024659,
+    "r_meas": 11.027266710342532,
     "output_smoothing": 0.02
   },
   "tuning_meta": {
     "mode": "per_scenario_best_tuning",
     "objective": "minimize_m1_rmse_hz",
-    "n_trials_requested": 25,
-    "n_trials_executed": 25,
-    "tune_eval_runs": 2,
+    "n_trials_requested": 1000,
+    "n_trials_executed": 1000,
+    "tune_eval_runs": 30,
     "sampler_mode_effective": "tpe",
-    "best_objective": 0.0035158507703203197
+    "best_objective": 0.0023887032033174105
   },
-  "n_mc_runs": 2
+  "n_mc_runs": 60
 }

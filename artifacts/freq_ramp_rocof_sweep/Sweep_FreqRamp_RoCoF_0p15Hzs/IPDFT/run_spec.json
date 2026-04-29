@@ -5,17 +5,17 @@
   "family": "Window-based",
   "best_params": {
     "nominal_f": 60.0,
-    "cycles": 3.836344155035005,
+    "cycles": 3.900809253268219,
     "decim": 1
   },
   "tuning_meta": {
     "mode": "per_scenario_best_tuning",
     "objective": "minimize_m1_rmse_hz",
-    "n_trials_requested": 25,
-    "n_trials_executed": 25,
-    "tune_eval_runs": 2,
+    "n_trials_requested": 1000,
+    "n_trials_executed": 1000,
+    "tune_eval_runs": 30,
     "sampler_mode_effective": "tpe",
-    "best_objective": 0.003543270926364301
+    "best_objective": 0.0026408903750292324
   },
-  "n_mc_runs": 2
+  "n_mc_runs": 60
 }

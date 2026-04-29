@@ -5,17 +5,18 @@
   "family": "Window-based",
   "best_params": {
     "nominal_f": 60.0,
-    "n_cycles": 2.11189262768959,
+    "n_cycles": 2.0,
     "execution_stride": 10.0
   },
   "tuning_meta": {
-    "mode": "per_scenario_best_tuning",
+    "mode": "discrete_small_grid",
     "objective": "minimize_m1_rmse_hz",
-    "n_trials_requested": 25,
-    "n_trials_executed": 25,
-    "tune_eval_runs": 2,
-    "sampler_mode_effective": "tpe",
-    "best_objective": 0.0020182178717204815
+    "n_trials_requested": 50,
+    "n_trials_executed": 5,
+    "tune_eval_runs": 1,
+    "sampler_mode_effective": "manual_grid",
+    "best_objective": 0.0020465573072791106,
+    "grid_candidates": 5
   },
-  "n_mc_runs": 2
+  "n_mc_runs": 30
 }

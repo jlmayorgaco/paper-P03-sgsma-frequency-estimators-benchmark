@@ -9,17 +9,17 @@
     "amp_alpha": 0.01,
     "output_smoothing": 0.02,
     "pd_lpf_alpha": 0.02,
-    "kp_scale": 0.028949542497167552,
-    "ki_scale": 0.005589524205217926
+    "kp_scale": 0.0007747213989694434,
+    "ki_scale": 0.0008629132190071859
   },
   "tuning_meta": {
     "mode": "per_scenario_best_tuning",
     "objective": "minimize_m1_rmse_hz",
-    "n_trials_requested": 25,
-    "n_trials_executed": 25,
-    "tune_eval_runs": 2,
+    "n_trials_requested": 5,
+    "n_trials_executed": 5,
+    "tune_eval_runs": 1,
     "sampler_mode_effective": "tpe",
-    "best_objective": 0.03239172152860316
+    "best_objective": 0.09565040353649835
   },
-  "n_mc_runs": 2
+  "n_mc_runs": 5
 }

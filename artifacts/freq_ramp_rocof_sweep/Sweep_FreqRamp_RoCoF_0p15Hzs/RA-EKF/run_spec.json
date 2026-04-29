@@ -5,24 +5,24 @@
   "family": "Model-based",
   "best_params": {
     "nominal_f": 60.0,
-    "q_theta": 1.2890150254352416e-10,
-    "q_omega": 4.865406700319446e-07,
-    "q_A": 6.437647312311374e-09,
-    "q_rocof": 1.293734448455439,
-    "r_meas": 0.003669613882144342,
-    "sigma_v": 1.3279482203164694,
-    "gamma": 8.754010427428735,
-    "deriv_lpf_alpha": 0.3505035061129612,
-    "tau_rocof": 0.2960420617335957
+    "q_theta": 5.560228114907868e-11,
+    "q_omega": 6.862771530990633e-09,
+    "q_A": 2.47254878099028e-09,
+    "q_rocof": 0.0023950549000563586,
+    "r_meas": 1.7754348852507516e-05,
+    "sigma_v": 6.500828969758415,
+    "gamma": 76.67605696324979,
+    "deriv_lpf_alpha": 0.43895887095245356,
+    "tau_rocof": 1.2834955315901857
   },
   "tuning_meta": {
     "mode": "per_scenario_best_tuning",
     "objective": "minimize_m1_rmse_hz",
-    "n_trials_requested": 25,
-    "n_trials_executed": 25,
-    "tune_eval_runs": 2,
+    "n_trials_requested": 1000,
+    "n_trials_executed": 1000,
+    "tune_eval_runs": 30,
     "sampler_mode_effective": "tpe",
-    "best_objective": 0.0030853779937505743
+    "best_objective": 0.001050761534350367
   },
-  "n_mc_runs": 2
+  "n_mc_runs": 60
 }

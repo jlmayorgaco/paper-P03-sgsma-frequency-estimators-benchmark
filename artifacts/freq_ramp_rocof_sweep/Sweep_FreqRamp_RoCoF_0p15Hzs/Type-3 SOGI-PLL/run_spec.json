@@ -6,18 +6,18 @@
   "best_params": {
     "nominal_f": 60.0,
     "k_sogi": 1.414,
-    "kp": 31.2467224898564,
-    "ki": 33.37286088046537,
-    "ki2": 1039.5612603350721
+    "kp": 9.116221046407452,
+    "ki": 50.3577478626269,
+    "ki2": 100.17981086149847
   },
   "tuning_meta": {
     "mode": "per_scenario_best_tuning",
     "objective": "minimize_m1_rmse_hz",
-    "n_trials_requested": 25,
-    "n_trials_executed": 25,
-    "tune_eval_runs": 2,
+    "n_trials_requested": 1000,
+    "n_trials_executed": 1000,
+    "tune_eval_runs": 30,
     "sampler_mode_effective": "tpe",
-    "best_objective": 0.034406752115010555
+    "best_objective": 0.013675989863246703
   },
-  "n_mc_runs": 2
+  "n_mc_runs": 60
 }

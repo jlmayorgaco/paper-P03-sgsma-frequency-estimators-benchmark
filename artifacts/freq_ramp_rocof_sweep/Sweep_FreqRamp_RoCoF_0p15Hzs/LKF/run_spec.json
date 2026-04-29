@@ -5,20 +5,20 @@
   "family": "Model-based",
   "best_params": {
     "nominal_f": 60.0,
-    "q": 0.05162757737736402,
-    "r": 0.02618714749199501,
-    "rho": 0.999460946641191,
-    "output_smoothing": 0.0005492832510422716,
+    "q": 0.23260441550362715,
+    "r": 0.00045306056202477397,
+    "rho": 0.9999984444216746,
+    "output_smoothing": 0.004193497717847859,
     "phase_lag_samples": 0
   },
   "tuning_meta": {
     "mode": "per_scenario_best_tuning",
     "objective": "minimize_m1_rmse_hz",
-    "n_trials_requested": 25,
-    "n_trials_executed": 25,
-    "tune_eval_runs": 2,
+    "n_trials_requested": 1000,
+    "n_trials_executed": 1000,
+    "tune_eval_runs": 30,
     "sampler_mode_effective": "tpe",
-    "best_objective": 0.02198090406815484
+    "best_objective": 0.00464126568085941
   },
-  "n_mc_runs": 2
+  "n_mc_runs": 60
 }

@@ -19,11 +19,11 @@
   "tuning_meta": {
     "mode": "per_scenario_best_tuning",
     "objective": "minimize_m1_rmse_hz",
-    "n_trials_requested": 25,
-    "n_trials_executed": 25,
-    "tune_eval_runs": 2,
+    "n_trials_requested": 1000,
+    "n_trials_executed": 1000,
+    "tune_eval_runs": 30,
     "sampler_mode_effective": "tpe",
-    "best_objective": 0.06178555166273822
+    "best_objective": 0.061894730646567274
   },
-  "n_mc_runs": 2
+  "n_mc_runs": 60
 }
