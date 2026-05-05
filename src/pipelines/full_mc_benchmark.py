@@ -391,6 +391,9 @@ SEARCH_SPACES: dict[str, Any] = {
         "r": trial.suggest_float("r", 1e-8, 1e4, log=True),
         "rho": trial.suggest_float("rho", 0.90, 1.0),
         "output_smoothing": trial.suggest_float("output_smoothing", 1e-4, 0.5, log=True),
+        "phase_lag_samples": trial.suggest_int("phase_lag_samples", 1, 120),
+        "p_x1": trial.suggest_float("p_x1", 1e-4, 1e4, log=True),
+        "p_x2": trial.suggest_float("p_x2", 1e-4, 1e4, log=True),
     },
     "LKF2": lambda trial: {
         # Alineado con lkf2.py (Ahmed-style 3-state)
@@ -400,11 +403,23 @@ SEARCH_SPACES: dict[str, Any] = {
         "r": trial.suggest_float("r", 1e-8, 1e4, log=True),
         "beta": trial.suggest_float("beta", 1.0, 1000.0, log=True),
         "lpf_mu": trial.suggest_float("lpf_mu", 0.01, 1.0),
+        "p0": trial.suggest_float("p0", 1e-4, 1e5, log=True),
+        "x0_init": trial.suggest_float("x0_init", -0.25, 0.25),
+        "x1_init": trial.suggest_float("x1_init", -2.0, 2.0),
+        "x2_init": trial.suggest_float("x2_init", -2.0, 2.0),
     },
     "EKF": lambda trial: {
         # Asumiendo parÃ¡metros estÃ¡ndar de ekf.py
+        "q_dc": trial.suggest_float("q_dc", 1e-12, 1e-1, log=True),
+        "q_alpha": trial.suggest_float("q_alpha", 1e-12, 1e1, log=True),
+        "q_beta": trial.suggest_float("q_beta", 1e-12, 1e1, log=True),
         "q_omega": trial.suggest_float("q_omega", 1e-12, 1e2, log=True),
         "r_meas": trial.suggest_float("r_meas", 1e-8, 1e4, log=True),
+        "output_smoothing": trial.suggest_float("output_smoothing", 1e-5, 0.7, log=True),
+        "p_dc": trial.suggest_float("p_dc", 1e-4, 1e3, log=True),
+        "p_alpha": trial.suggest_float("p_alpha", 1e-4, 1e3, log=True),
+        "p_beta": trial.suggest_float("p_beta", 1e-4, 1e3, log=True),
+        "p_omega_hz": trial.suggest_float("p_omega_hz", 0.01, 25.0, log=True),
     },
     "UKF": lambda trial: {
         # Alineado con ukf.py (4-state nonlinear)
@@ -414,6 +429,13 @@ SEARCH_SPACES: dict[str, Any] = {
         "q_omega": trial.suggest_float("q_omega", 1e-12, 1e3, log=True),
         "r_meas": trial.suggest_float("r_meas", 1e-8, 1e4, log=True),
         "output_smoothing": trial.suggest_float("output_smoothing", 1e-4, 0.5, log=True),
+        "alpha_ut": trial.suggest_float("alpha_ut", 0.05, 1.0, log=True),
+        "beta_ut": trial.suggest_float("beta_ut", 1.0, 4.0),
+        "kappa_ut": trial.suggest_float("kappa_ut", -1.0, 3.0),
+        "p_dc": trial.suggest_float("p_dc", 1e-4, 1e3, log=True),
+        "p_alpha": trial.suggest_float("p_alpha", 1e-4, 1e3, log=True),
+        "p_beta": trial.suggest_float("p_beta", 1e-4, 1e3, log=True),
+        "p_omega_hz": trial.suggest_float("p_omega_hz", 0.01, 25.0, log=True),
     },
     "RA-EKF": lambda trial: {
         # Con 300 trials, podemos exprimir la matriz de covarianza completa
@@ -426,6 +448,15 @@ SEARCH_SPACES: dict[str, Any] = {
         "gamma": trial.suggest_float("gamma", 0.5, 100.0, log=True),
         "deriv_lpf_alpha": trial.suggest_float("deriv_lpf_alpha", 0.001, 0.9),
         "tau_rocof": trial.suggest_float("tau_rocof", 0.005, 2.0, log=True),
+        "freq_min_hz": trial.suggest_float("freq_min_hz", 20.0, 55.0),
+        "freq_max_hz": trial.suggest_float("freq_max_hz", 65.0, 120.0),
+        "amp_min": trial.suggest_float("amp_min", 1e-4, 0.25, log=True),
+        "amp_max": trial.suggest_float("amp_max", 2.0, 25.0, log=True),
+        "rocof_limit_hz_s": trial.suggest_float("rocof_limit_hz_s", 1.0, 200.0, log=True),
+        "p_theta": trial.suggest_float("p_theta", 1e-4, 10.0, log=True),
+        "p_omega_hz": trial.suggest_float("p_omega_hz", 0.01, 25.0, log=True),
+        "p_amp": trial.suggest_float("p_amp", 1e-4, 25.0, log=True),
+        "p_rocof_hz_s": trial.suggest_float("p_rocof_hz_s", 0.01, 100.0, log=True),
     },
 
     # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•

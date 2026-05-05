@@ -239,6 +239,10 @@ class LKF2_Estimator(BaseFrequencyEstimator):
         r: float = 1.0,
         beta: float = 50.0,
         lpf_mu: float = 1.0,
+        p0: float = 1000.0,
+        x0_init: float = 0.0,
+        x1_init: float = 0.5,
+        x2_init: float = 0.0,
         dt: float = DT_DSP,
     ) -> None:
         self.nominal_f = float(nominal_f)
@@ -248,6 +252,10 @@ class LKF2_Estimator(BaseFrequencyEstimator):
         self.r = float(r)
         self.beta = float(beta)
         self.lpf_mu = float(lpf_mu)
+        self.p0 = float(p0)
+        self.x0_init = float(x0_init)
+        self.x1_init = float(x1_init)
+        self.x2_init = float(x2_init)
         self.dt = float(dt)
 
         self.w_nom = 2.0 * math.pi * self.nominal_f
@@ -255,11 +263,11 @@ class LKF2_Estimator(BaseFrequencyEstimator):
 
     def reset(self) -> None:
         # Paper-inspired initialization
-        self.x0 = 0.0   # V0
-        self.x1 = 0.5   # V*cos(theta)
-        self.x2 = 0.0   # V*sin(theta)
+        self.x0 = self.x0_init   # V0
+        self.x1 = self.x1_init   # V*cos(theta)
+        self.x2 = self.x2_init   # V*sin(theta)
 
-        p0 = 1000.0
+        p0 = max(self.p0, 1e-15)
         self.p00 = p0
         self.p01 = 0.0
         self.p02 = 0.0
@@ -288,6 +296,10 @@ class LKF2_Estimator(BaseFrequencyEstimator):
             "r": 1.0,
             "beta": 50.0,
             "lpf_mu": 1.0,
+            "p0": 1000.0,
+            "x0_init": 0.0,
+            "x1_init": 0.5,
+            "x2_init": 0.0,
         }
 
     @staticmethod
@@ -298,7 +310,8 @@ class LKF2_Estimator(BaseFrequencyEstimator):
             f"{params.get('q_vc', 0.05)}, "
             f"{params.get('q_vs', 0.05)}]), "
             f"R={params.get('r', 1.0)}, "
-            f"beta={params.get('beta', 50.0)}"
+            f"beta={params.get('beta', 50.0)}, "
+            f"p0={params.get('p0', 1000.0)}"
         )
 
     def structural_latency_samples(self) -> int:

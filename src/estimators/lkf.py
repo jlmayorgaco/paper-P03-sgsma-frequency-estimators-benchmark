@@ -216,6 +216,8 @@ class LKF_Estimator(BaseFrequencyEstimator):
         rho: float = 1.0,
         output_smoothing: float = 0.02,
         phase_lag_samples: int = 0,
+        p_x1: float = 10.0,
+        p_x2: float = 10.0,
         dt: float = DT_DSP,
     ) -> None:
         self.nominal_f = float(nominal_f)
@@ -224,6 +226,8 @@ class LKF_Estimator(BaseFrequencyEstimator):
         self.rho = float(rho)
         self.output_smoothing = float(output_smoothing)
         self.phase_lag_samples = int(phase_lag_samples)
+        self.p_x1 = float(p_x1)
+        self.p_x2 = float(p_x2)
         self.dt = float(dt)
 
         self._lag_samples = 1
@@ -253,11 +257,10 @@ class LKF_Estimator(BaseFrequencyEstimator):
         self.x1 = 0.0   # sin(theta)
         self.x2 = 1.0   # cos(theta)
 
-        # Large initial uncertainty
-        self.p11 = 10.0
+        self.p11 = max(self.p_x1, 1e-15)
         self.p12 = 0.0
         self.p21 = 0.0
-        self.p22 = 10.0
+        self.p22 = max(self.p_x2, 1e-15)
 
         self.f_out = self.nominal_f
         self._configure_buffers()
@@ -271,6 +274,8 @@ class LKF_Estimator(BaseFrequencyEstimator):
             "rho": 1.0,
             "output_smoothing": 0.02,
             "phase_lag_samples": 0,
+            "p_x1": 10.0,
+            "p_x2": 10.0,
         }
 
     @staticmethod
@@ -279,7 +284,8 @@ class LKF_Estimator(BaseFrequencyEstimator):
             f"f_nom={params.get('nominal_f', 50.0)}Hz, "
             f"q={params.get('q', 1e-5):.1e}, "
             f"r={params.get('r', 1e-3):.1e}, "
-            f"rho={params.get('rho', 1.0):.4f}"
+            f"rho={params.get('rho', 1.0):.4f}, "
+            f"lag={params.get('phase_lag_samples', 0)}"
         )
 
     def structural_latency_samples(self) -> int:

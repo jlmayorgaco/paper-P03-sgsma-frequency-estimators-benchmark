@@ -288,6 +288,10 @@ class UKF_Estimator(BaseFrequencyEstimator):
         alpha_ut: float = 0.1,
         beta_ut: float = 2.0,
         kappa_ut: float = 0.0,
+        p_dc: float = 100.0,
+        p_alpha: float = 10.0,
+        p_beta: float = 10.0,
+        p_omega_hz: float = 5.0,
         dt: float = DT_DSP,
     ) -> None:
         self.nominal_f = float(nominal_f)
@@ -301,6 +305,10 @@ class UKF_Estimator(BaseFrequencyEstimator):
         self.alpha_ut = float(alpha_ut)
         self.beta_ut = float(beta_ut)
         self.kappa_ut = float(kappa_ut)
+        self.p_dc = float(p_dc)
+        self.p_alpha = float(p_alpha)
+        self.p_beta = float(p_beta)
+        self.p_omega_hz = float(p_omega_hz)
 
         self.dt = float(dt)
         self.w_nom = 2.0 * math.pi * self.nominal_f
@@ -332,7 +340,12 @@ class UKF_Estimator(BaseFrequencyEstimator):
 
         self.P = np.diag(
             np.array(
-                [100.0, 10.0, 10.0, (2.0 * math.pi * 5.0) ** 2],
+                [
+                    max(self.p_dc, 1e-15),
+                    max(self.p_alpha, 1e-15),
+                    max(self.p_beta, 1e-15),
+                    (2.0 * math.pi * max(self.p_omega_hz, 1e-9)) ** 2,
+                ],
                 dtype=np.float64,
             )
         )
@@ -352,16 +365,21 @@ class UKF_Estimator(BaseFrequencyEstimator):
             "alpha_ut": 0.1,
             "beta_ut": 2.0,
             "kappa_ut": 0.0,
+            "p_dc": 100.0,
+            "p_alpha": 10.0,
+            "p_beta": 10.0,
+            "p_omega_hz": 5.0,
         }
 
     @staticmethod
     def describe_params(params: dict[str, float]) -> str:
         return (
             f"f_nom={params.get('nominal_f', 50.0)}Hz, "
-            f"qω={params.get('q_omega', 5e-2):.1e}, "
+            f"q_omega={params.get('q_omega', 5e-2):.1e}, "
             f"R={params.get('r_meas', 1e-3):.1e}, "
-            f"α={params.get('alpha_ut', 0.1)}, "
-            f"β={params.get('beta_ut', 2.0)}"
+            f"alpha_ut={params.get('alpha_ut', 0.1)}, "
+            f"beta_ut={params.get('beta_ut', 2.0)}, "
+            f"P_omega={params.get('p_omega_hz', 5.0):g}Hz"
         )
 
     def structural_latency_samples(self) -> int:

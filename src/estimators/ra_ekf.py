@@ -22,6 +22,19 @@ def _ra_ekf_plus_core(
     gamma: float,
     deriv_lpf_alpha: float,
     rho_rocof: float,
+    freq_min_hz: float,
+    freq_max_hz: float,
+    amp_min: float,
+    amp_max: float,
+    rocof_limit_hz_s: float,
+    x_theta_init: float,
+    x_freq_init_hz: float,
+    x_amp_init: float,
+    x_rocof_init_hz_s: float,
+    p_theta: float,
+    p_omega_hz: float,
+    p_amp: float,
+    p_rocof_hz_s: float,
     x: np.ndarray,
     P: np.ndarray,
     dv_filt: float,
@@ -45,11 +58,11 @@ def _ra_ekf_plus_core(
     two_pi = 2.0 * math.pi
     dt2_half = 0.5 * dt * dt
 
-    w_min = two_pi * 40.0
-    w_max = two_pi * 80.0
-    a_min = 0.05
-    a_max = 2.0
-    rocof_max = two_pi * 20.0  # 20 Hz/s equivalent
+    w_min = two_pi * freq_min_hz
+    w_max = two_pi * freq_max_hz
+    a_min = amp_min
+    a_max = amp_max
+    rocof_max = two_pi * rocof_limit_hz_s
 
     # derivative channel is noisier than raw voltage
     r_dv = max(4.0 * r_meas, 0.25 * sigma_v * sigma_v, 1e-8)
@@ -335,17 +348,17 @@ def _ra_ekf_plus_core(
         )
 
         if (not state_ok) or (not cov_ok):
-            x[0] = 0.0
-            x[1] = w_nom
-            x[2] = 1.0
-            x[3] = 0.0
+            x[0] = x_theta_init
+            x[1] = two_pi * x_freq_init_hz
+            x[2] = x_amp_init
+            x[3] = two_pi * x_rocof_init_hz_s
             for rr in range(4):
                 for cc in range(4):
                     P[rr, cc] = 0.0
-            P[0, 0] = 0.5
-            P[1, 1] = (2.0 * math.pi * 1.0) ** 2
-            P[2, 2] = 0.1
-            P[3, 3] = (2.0 * math.pi * 5.0) ** 2
+            P[0, 0] = max(p_theta, 1e-15)
+            P[1, 1] = (two_pi * max(p_omega_hz, 1e-9)) ** 2
+            P[2, 2] = max(p_amp, 1e-15)
+            P[3, 3] = (two_pi * max(p_rocof_hz_s, 1e-9)) ** 2
         else:
             x[:] = x_new
 
@@ -381,6 +394,19 @@ class RAEKF_Estimator(BaseFrequencyEstimator):
         dt: float = DT_DSP,
         deriv_lpf_alpha: float = 0.08,
         tau_rocof: float = 0.15,
+        freq_min_hz: float = 40.0,
+        freq_max_hz: float = 80.0,
+        amp_min: float = 0.01,
+        amp_max: float = 20.0,
+        rocof_limit_hz_s: float = 20.0,
+        x_theta_init: float = 0.0,
+        x_freq_init_hz: float | None = None,
+        x_amp_init: float = 1.0,
+        x_rocof_init_hz_s: float = 0.0,
+        p_theta: float = 0.5,
+        p_omega_hz: float = 1.0,
+        p_amp: float = 0.1,
+        p_rocof_hz_s: float = 5.0,
     ) -> None:
         self.nominal_f = float(nominal_f)
         self.w_nom = 2.0 * math.pi * self.nominal_f
@@ -397,20 +423,42 @@ class RAEKF_Estimator(BaseFrequencyEstimator):
 
         self.deriv_lpf_alpha = float(deriv_lpf_alpha)
         self.tau_rocof = float(tau_rocof)
+        self.freq_min_hz = float(freq_min_hz)
+        self.freq_max_hz = float(freq_max_hz)
+        if self.freq_max_hz < self.freq_min_hz:
+            self.freq_min_hz, self.freq_max_hz = self.freq_max_hz, self.freq_min_hz
+        self.amp_min = float(amp_min)
+        self.amp_max = float(amp_max)
+        if self.amp_max < self.amp_min:
+            self.amp_min, self.amp_max = self.amp_max, self.amp_min
+        self.rocof_limit_hz_s = float(rocof_limit_hz_s)
+        self.x_theta_init = float(x_theta_init)
+        self.x_freq_init_hz = float(self.nominal_f if x_freq_init_hz is None else x_freq_init_hz)
+        self.x_amp_init = float(x_amp_init)
+        self.x_rocof_init_hz_s = float(x_rocof_init_hz_s)
+        self.p_theta = float(p_theta)
+        self.p_omega_hz = float(p_omega_hz)
+        self.p_amp = float(p_amp)
+        self.p_rocof_hz_s = float(p_rocof_hz_s)
 
         self.reset()
 
     def reset(self) -> None:
         self.x = np.array(
-            [0.0, self.w_nom, 1.0, 0.0],
+            [
+                self.x_theta_init,
+                2.0 * math.pi * self.x_freq_init_hz,
+                self.x_amp_init,
+                2.0 * math.pi * self.x_rocof_init_hz_s,
+            ],
             dtype=np.float64,
         )
 
         self.P = np.diag([
-            0.5,
-            (2.0 * math.pi * 1.0) ** 2,
-            0.1,
-            (2.0 * math.pi * 5.0) ** 2,
+            max(self.p_theta, 1e-15),
+            (2.0 * math.pi * max(self.p_omega_hz, 1e-9)) ** 2,
+            max(self.p_amp, 1e-15),
+            (2.0 * math.pi * max(self.p_rocof_hz_s, 1e-9)) ** 2,
         ]).astype(np.float64)
 
         self.dv_filt = 0.0
@@ -430,6 +478,19 @@ class RAEKF_Estimator(BaseFrequencyEstimator):
             "gamma": 8.0,
             "deriv_lpf_alpha": 0.08,
             "tau_rocof": 0.15,
+            "freq_min_hz": 40.0,
+            "freq_max_hz": 80.0,
+            "amp_min": 0.01,
+            "amp_max": 20.0,
+            "rocof_limit_hz_s": 20.0,
+            "x_theta_init": 0.0,
+            "x_freq_init_hz": 60.0,
+            "x_amp_init": 1.0,
+            "x_rocof_init_hz_s": 0.0,
+            "p_theta": 0.5,
+            "p_omega_hz": 1.0,
+            "p_amp": 0.1,
+            "p_rocof_hz_s": 5.0,
         }
 
     @staticmethod
@@ -439,7 +500,8 @@ class RAEKF_Estimator(BaseFrequencyEstimator):
             f"q_rocof={params.get('q_rocof', 5e-3):.1e}, "
             f"r_meas={params.get('r_meas', 1e-4):.1e}, "
             f"sigma_v={params.get('sigma_v', 0.05):.3f}, "
-            f"gamma={params.get('gamma', 8.0):.1f}"
+            f"gamma={params.get('gamma', 8.0):.1f}, "
+            f"amp_max={params.get('amp_max', 20.0):g}pu"
         )
 
     def structural_latency_samples(self) -> int:
@@ -471,6 +533,19 @@ class RAEKF_Estimator(BaseFrequencyEstimator):
             gamma=self.gamma,
             deriv_lpf_alpha=self.deriv_lpf_alpha,
             rho_rocof=rho_rocof,
+            freq_min_hz=self.freq_min_hz,
+            freq_max_hz=self.freq_max_hz,
+            amp_min=self.amp_min,
+            amp_max=self.amp_max,
+            rocof_limit_hz_s=self.rocof_limit_hz_s,
+            x_theta_init=self.x_theta_init,
+            x_freq_init_hz=self.x_freq_init_hz,
+            x_amp_init=self.x_amp_init,
+            x_rocof_init_hz_s=self.x_rocof_init_hz_s,
+            p_theta=self.p_theta,
+            p_omega_hz=self.p_omega_hz,
+            p_amp=self.p_amp,
+            p_rocof_hz_s=self.p_rocof_hz_s,
             x=self.x,
             P=self.P,
             dv_filt=self.dv_filt,

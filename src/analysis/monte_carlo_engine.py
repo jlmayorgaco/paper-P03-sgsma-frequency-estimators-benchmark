@@ -91,6 +91,7 @@ class MonteCarloEngine:
     base_seed: int = 12345
     n_cost_reps: int = 20
     enforce_standardized_step: bool = True
+    capture_signals: bool = True
 
     @staticmethod
     def _resolve_worker_count(n_runs: int) -> int:
@@ -258,23 +259,25 @@ class MonteCarloEngine:
             "f_true_std": float(np.std(sc.f_true)),
         }
 
-        # Construimos el diccionario completo en memoria antes de pasarlo a Pandas
-        # Build the full dictionary in memory before DataFrame creation
         n_len = len(sc.t)
-        signal_dict = {
-            "run_idx": np.full(n_len, run_idx, dtype=int),
-            "t_s": sc.t,
-            "v_pu": sc.v,
-            "f_true_hz": sc.f_true,
-        }
-        
-        # Add Monte Carlo parameters to each signal sample
-        for key, value in params.items():
-            signal_dict[key] = np.full(n_len, value)
+        signal_dict: dict[str, Any] | None = None
+        if self.capture_signals:
+            # Build the full dictionary in memory before DataFrame creation.
+            signal_dict = {
+                "run_idx": np.full(n_len, run_idx, dtype=int),
+                "t_s": sc.t,
+                "v_pu": sc.v,
+                "f_true_hz": sc.f_true,
+            }
+
+            # Add Monte Carlo parameters to each signal sample.
+            for key, value in params.items():
+                signal_dict[key] = np.full(n_len, value)
 
         if "f_hat" in est_out:
             f_hat = est_out["f_hat"]
-            signal_dict["f_hat_hz"] = f_hat
+            if signal_dict is not None:
+                signal_dict["f_hat_hz"] = f_hat
 
             struct_samples = est_out.get("struct_samples", 0)
             noise_sigma = params.get("noise_sigma", 0.0)
@@ -302,8 +305,10 @@ class MonteCarloEngine:
             row["m22_invalid_output_rate"] = round(float(rt.get("invalid_output_rate", 0.0)), 6)
             row["m23_memory_key_count"] = int(rt.get("memory_key_count", 0))
 
-        # Instanciamos el DataFrame de una sola vez
-        signal_df = pd.DataFrame(signal_dict)
+        if signal_dict is not None:
+            signal_df = pd.DataFrame(signal_dict)
+        else:
+            signal_df = pd.DataFrame()
 
         return row, signal_df
 
