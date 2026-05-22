@@ -28,6 +28,8 @@ def _lkf2_vectorized_core(
     r: float,
     beta: float,
     mu: float,
+    omega_leak: float,
+    freq_dev_limit_hz: float,
     x0: float,
     x1: float,
     x2: float,
@@ -179,9 +181,14 @@ def _lkf2_vectorized_core(
             # mu=1.0 => no filtering
             dtheta_lp = mu * dtheta + (1.0 - mu) * dtheta_lp
 
-            # Discrete interpretation of the paper's phase-based loop:
-            # delta_w_hat[k] = delta_w_hat[k-1] + beta * dtheta_lp[k]
-            delta_w_hat = delta_w_hat + beta * dtheta_lp
+            # Leaky phase-based loop. Pure integration is brittle under
+            # amplitude steps because small phase transients can accumulate.
+            delta_w_hat = omega_leak * delta_w_hat + beta * dtheta_lp
+            delta_w_limit = two_pi * max(freq_dev_limit_hz, 1e-9)
+            if delta_w_hat > delta_w_limit:
+                delta_w_hat = delta_w_limit
+            elif delta_w_hat < -delta_w_limit:
+                delta_w_hat = -delta_w_limit
         else:
             have_prev_theta = True
             dtheta_lp = 0.0
@@ -239,6 +246,8 @@ class LKF2_Estimator(BaseFrequencyEstimator):
         r: float = 1.0,
         beta: float = 50.0,
         lpf_mu: float = 1.0,
+        omega_leak: float = 0.995,
+        freq_dev_limit_hz: float = 5.0,
         p0: float = 1000.0,
         x0_init: float = 0.0,
         x1_init: float = 0.5,
@@ -252,6 +261,8 @@ class LKF2_Estimator(BaseFrequencyEstimator):
         self.r = float(r)
         self.beta = float(beta)
         self.lpf_mu = float(lpf_mu)
+        self.omega_leak = float(omega_leak)
+        self.freq_dev_limit_hz = float(freq_dev_limit_hz)
         self.p0 = float(p0)
         self.x0_init = float(x0_init)
         self.x1_init = float(x1_init)
@@ -296,6 +307,8 @@ class LKF2_Estimator(BaseFrequencyEstimator):
             "r": 1.0,
             "beta": 50.0,
             "lpf_mu": 1.0,
+            "omega_leak": 0.995,
+            "freq_dev_limit_hz": 5.0,
             "p0": 1000.0,
             "x0_init": 0.0,
             "x1_init": 0.5,
@@ -346,6 +359,8 @@ class LKF2_Estimator(BaseFrequencyEstimator):
             r=self.r,
             beta=self.beta,
             mu=self.lpf_mu,
+            omega_leak=self.omega_leak,
+            freq_dev_limit_hz=self.freq_dev_limit_hz,
             x0=self.x0,
             x1=self.x1,
             x2=self.x2,

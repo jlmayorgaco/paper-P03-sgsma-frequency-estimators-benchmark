@@ -56,5 +56,12 @@ artifacts/full_mc_benchmark/
 tests/montecarlo/outputs/
 artifacts/freq_ramp_rocof_sweep/
 artifacts/voltage_step_sweep/
+artifacts/pdf_previews/
+artifacts/run_logs/
+artifacts/voltage_mag_step_v13_clean_fast14/
+artifacts/voltage_mag_step_v14*/
+artifacts/voltage_mag_step_v15_classic_rls_rls_tmp/
+artifacts/voltage_mag_step_v15_classic_rls_fixed_policy_fast14/Sweep_AmplitudeStep_*/
+artifacts/voltage_mag_step_v15_classic_rls_fixed_policy_fast14/_fixed_policy_tuning/
 paper_submit_v2/outputs/
 paper_submit_v2/support/

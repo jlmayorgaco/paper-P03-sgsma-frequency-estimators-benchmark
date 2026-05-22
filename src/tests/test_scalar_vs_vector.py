@@ -34,6 +34,7 @@ from estimators.ekf      import EKF_Estimator
 from estimators.ra_ekf   import RAEKF_Estimator
 from estimators.ukf      import UKF_Estimator
 from estimators.pll      import PLL_Estimator
+from estimators.sogi_pll import SOGIPLLEstimator
 from estimators.sogi_fll import SOGI_FLL_Estimator
 from estimators.ipdft    import IPDFT_Estimator
 from estimators.tft      import TFT_Estimator
@@ -80,6 +81,14 @@ def generate_test_signal(n_samples: int = 3000) -> np.ndarray:
     return np.sin(2.0 * math.pi * F_NOM * t)
 
 
+def generate_amplitude_step_signal(n_samples: int = 5000, step_idx: int = 2500) -> np.ndarray:
+    """Clean 60 Hz sine with an amplitude step; catches state-counter bugs."""
+    t = np.arange(n_samples) * DT_ACTUAL
+    amp = np.ones(n_samples, dtype=float)
+    amp[step_idx:] = 2.0
+    return amp * np.sin(2.0 * math.pi * F_NOM * t + 0.37)
+
+
 @pytest.mark.parametrize("name,cls,extra", ESTIMATOR_CONFIGS,
                          ids=[c[0] for c in ESTIMATOR_CONFIGS])
 def test_step_equals_step_vectorized(name, cls, extra):
@@ -112,6 +121,46 @@ def test_step_equals_step_vectorized(name, cls, extra):
     assert max_diff <= ATOL, (
         f"{name}: max |step_vectorized - step| = {max_diff:.6g} Hz > atol={ATOL} Hz"
     )
+
+
+def test_tkeo_step_equals_step_vectorized_on_amplitude_step():
+    """TKEO must keep sample history when driven through scalar step()."""
+    v = generate_amplitude_step_signal()
+
+    est_vec = make_estimator(TKEO_Estimator, {})
+    f_hat_vec = np.asarray(est_vec.step_vectorized(v), dtype=float)
+
+    est_step = make_estimator(TKEO_Estimator, {})
+    f_hat_step = np.array([est_step.step(float(z)) for z in v], dtype=float)
+
+    diff = np.abs(f_hat_vec - f_hat_step)
+    max_diff = float(np.nanmax(diff)) if len(diff) else 0.0
+    assert max_diff <= ATOL, (
+        f"TKEO amplitude-step scalar/vectorized mismatch: {max_diff:.6g} Hz > {ATOL} Hz"
+    )
+
+
+def test_ra_ekf_clean_sine_is_not_derivative_biased():
+    """RA-EKF derivative pseudo-measurement must not dominate a clean sine."""
+    n_samples = 6000
+    warm = int(0.15 * FS_DSP)
+    t = np.arange(n_samples) * DT_ACTUAL
+    rmses = []
+
+    for phase in np.linspace(0.0, 2.0 * math.pi, 8, endpoint=False):
+        v = np.sin(2.0 * math.pi * F_NOM * t + phase)
+        est = make_estimator(RAEKF_Estimator, {})
+        f_hat = np.asarray(est.step_vectorized(v), dtype=float)
+        err = f_hat[warm:] - F_NOM
+        rmses.append(float(np.sqrt(np.mean(err * err))))
+
+    assert max(rmses) < 0.08, f"RA-EKF clean-sine RMSE too high across phase: {rmses}"
+
+
+def test_pll_structural_latency_is_not_tunable_settle_time():
+    """Recursive PLLs should not hide response by exporting settle_time as latency."""
+    assert make_estimator(PLL_Estimator, {"settle_time": 0.5}).structural_latency_samples() == 0
+    assert make_estimator(SOGIPLLEstimator, {"settle_time": 0.5}).structural_latency_samples() == 0
 
 
 # ── Standalone runner ──────────────────────────────────────────────────────

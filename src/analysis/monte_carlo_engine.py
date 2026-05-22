@@ -136,6 +136,16 @@ class MonteCarloEngine:
             params[key] = self.sample_from_space(rng, spec)
 
         params["seed"] = self.base_seed + run_idx
+        override_fn = getattr(self.scenario_cls, "apply_run_index_overrides", None)
+        if callable(override_fn):
+            overridden = override_fn(
+                params=dict(params),
+                run_idx=int(run_idx),
+                n_runs=int(self.n_runs),
+                base_seed=int(self.base_seed),
+            )
+            if overridden is not None:
+                params = dict(overridden)
         return params
 
     def _run_estimator(self, v: np.ndarray, t: np.ndarray | None = None, run_idx: int = 0) -> dict[str, Any]:
@@ -292,8 +302,34 @@ class MonteCarloEngine:
                 exec_time_s=exec_time_s,
                 structural_samples=struct_samples,
                 noise_sigma=noise_sigma,
-                interharmonic_hz=32.5
+                interharmonic_hz=32.5,
+                event_time_s=params.get("t_step_s"),
             )
+            est_params_for_bounds = dict(self.estimator_params or {})
+            freq_min = est_params_for_bounds.get("f_min_hz", est_params_for_bounds.get("freq_min_hz"))
+            freq_max = est_params_for_bounds.get("f_max_hz", est_params_for_bounds.get("freq_max_hz"))
+            if freq_min is not None or freq_max is not None:
+                tol = float(os.getenv("BENCHMARK_FREQ_BOUND_HIT_TOL_HZ", "0.02"))
+                finite_hat = np.asarray(f_hat, dtype=float)
+                finite_hat = finite_hat[np.isfinite(finite_hat)]
+                if len(finite_hat):
+                    lower_hits = np.zeros(len(finite_hat), dtype=bool)
+                    upper_hits = np.zeros(len(finite_hat), dtype=bool)
+                    if freq_min is not None:
+                        lower_hits = np.abs(finite_hat - float(freq_min)) <= tol
+                    if freq_max is not None:
+                        upper_hits = np.abs(finite_hat - float(freq_max)) <= tol
+                    advanced_metrics["m31_freq_bound_hit_rate"] = float(np.mean(lower_hits | upper_hits))
+                    advanced_metrics["m32_freq_lower_bound_hit_rate"] = float(np.mean(lower_hits))
+                    advanced_metrics["m33_freq_upper_bound_hit_rate"] = float(np.mean(upper_hits))
+                else:
+                    advanced_metrics["m31_freq_bound_hit_rate"] = 1.0
+                    advanced_metrics["m32_freq_lower_bound_hit_rate"] = 1.0 if freq_min is not None else 0.0
+                    advanced_metrics["m33_freq_upper_bound_hit_rate"] = 1.0 if freq_max is not None else 0.0
+            else:
+                advanced_metrics["m31_freq_bound_hit_rate"] = 0.0
+                advanced_metrics["m32_freq_lower_bound_hit_rate"] = 0.0
+                advanced_metrics["m33_freq_upper_bound_hit_rate"] = 0.0
             
             # Agregamos M1 a M17 a la fila de resultados
             row.update(advanced_metrics)

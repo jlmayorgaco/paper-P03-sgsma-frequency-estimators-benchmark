@@ -88,7 +88,7 @@ class ExperimentalFrequencyEstimator:
         self._sample_idx += 1
         return self._last
 
-    def step(self, x: float) -> float:
+    def step(self, x: float, *args: object, **kwargs: object) -> float:
         return self._estimate_scalar(float(x))
 
     def step_vectorized(self, x: np.ndarray) -> np.ndarray:

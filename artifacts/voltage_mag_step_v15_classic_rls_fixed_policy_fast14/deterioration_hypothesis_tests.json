@@ -1,0 +1,26 @@
+{
+  "artifact": "C:\\Users\\walla\\Documents\\Github\\paper-P03-sgsma-frequency-estimators-benchmark\\artifacts\\voltage_mag_step_v15_classic_rls_fixed_policy_fast14",
+  "method_version": "amplitude_step_v14_fixed_policy_oracle_audit_2026_05_17",
+  "current_pipeline_method_version": "amplitude_step_v14_fixed_policy_oracle_audit_2026_05_17",
+  "max_step_percent": 1000.0,
+  "metric": "m1_rmse_hz",
+  "regime_counts": {
+    "Power-law-like": 5,
+    "Monotone growth": 3,
+    "Saturation/plateau": 3,
+    "Insensitive/flat": 2,
+    "SNR-improving": 1
+  },
+  "claim_status_counts": {
+    "claim_ready_fixed_policy": 14
+  },
+  "hypotheses": {
+    "Insensitive/flat": "Practical-equivalence test: total RMSE ratio and log-log slope stay below configured thresholds.",
+    "SNR-improving": "Negative log-log slope and lower high-step RMSE than low-step RMSE.",
+    "Power-law-like": "Positive log-log slope with high log-log R2 and no saturation/erratic flags.",
+    "Monotone growth": "Mostly monotone positive deterioration with acceptable, but not strict, log-log support.",
+    "Saturation/plateau": "High-step plateau and/or frequency-bound hit rate exceeds threshold.",
+    "Erratic": "Multiple large reversals or weak smooth-model support; do not claim a law."
+  },
+  "csv": "deterioration_hypothesis_tests.csv"
+}

@@ -20,6 +20,10 @@ def _ipdft_direct_vectorized(
     k_nom: int,
     res: float,
     f_nom: float,
+    f_min_hz: float,
+    f_max_hz: float,
+    delta_limit_bins: float,
+    smooth_alpha: float,
     buf_idx: int,
     buf_count: int,
     last_f: float,
@@ -72,19 +76,22 @@ def _ipdft_direct_vectorized(
                 
                 # Mantenemos un clamp holgado (±3.0 bines) para que la fórmula 
                 # matemática no colapse antes de llegar al Sanity Check.
-                if delta > 3.0: 
-                    delta = 3.0
+                if delta > delta_limit_bins:
+                    delta = delta_limit_bins
                     clamp_count += 1
-                elif delta < -3.0: 
-                    delta = -3.0
+                elif delta < -delta_limit_bins:
+                    delta = -delta_limit_bins
                     clamp_count += 1
                 
                 f_candidate = (k_nom + delta) * res
                 
                 # Filtro de Cordura Eléctrica (Sanity Check)
                 # Restringido explícitamente de 40 Hz a 90 Hz.
-                if 40.0 <= f_candidate <= 90.0:
-                    last_f = f_candidate
+                if f_min_hz <= f_candidate <= f_max_hz:
+                    if smooth_alpha > 0.0:
+                        last_f = (1.0 - smooth_alpha) * last_f + smooth_alpha * f_candidate
+                    else:
+                        last_f = f_candidate
                 else:
                     clamp_count += 1
                     
@@ -104,10 +111,29 @@ class IPDFT_Estimator(BaseFrequencyEstimator):
     """
     name = "IPDFT"
 
-    def __init__(self, nominal_f: float = 60.0, cycles: float = 2.0, decim: int = 1) -> None:
+    def __init__(
+        self,
+        nominal_f: float = 60.0,
+        cycles: float = 2.0,
+        decim: int = 1,
+        window: str = "hann",
+        f_min_hz: float = 40.0,
+        f_max_hz: float = 90.0,
+        delta_limit_bins: float = 3.0,
+        output_smoothing: float = 0.0,
+        verbose: bool = False,
+    ) -> None:
         self.nominal_f = float(nominal_f)
         self.cycles = float(cycles)
         self.decim = max(1, int(decim))
+        self.window = str(window).lower()
+        self.f_min_hz = float(f_min_hz)
+        self.f_max_hz = float(f_max_hz)
+        if self.f_min_hz >= self.f_max_hz:
+            raise ValueError("f_min_hz must be lower than f_max_hz.")
+        self.delta_limit_bins = float(delta_limit_bins)
+        self.output_smoothing = float(output_smoothing)
+        self.verbose = bool(verbose)
         self.dt = DT_DSP 
         
         self._update_internals()
@@ -115,7 +141,7 @@ class IPDFT_Estimator(BaseFrequencyEstimator):
 
     def _update_internals(self) -> None:
         """Recalcula las bases de Fourier dinámicamente si el dt cambia"""
-        fs_dsp = 1.0 / self.dt
+        fs_dsp = 1.0 / (self.dt * self.decim)
         
         # Tamaño de la ventana ajustado a la frecuencia nominal y tasa de muestreo real
         self.sz = int(round((fs_dsp / self.nominal_f) * self.cycles))
@@ -125,8 +151,13 @@ class IPDFT_Estimator(BaseFrequencyEstimator):
         self.res = fs_dsp / self.sz
         self.k_nom = int(round(self.cycles))
 
-        # Ventana de Hann
-        self.win = np.hanning(self.sz)
+        if self.window == "boxcar":
+            self.win = np.ones(self.sz, dtype=np.float64)
+        elif self.window == "blackman":
+            self.win = np.blackman(self.sz)
+        else:
+            self.window = "hann"
+            self.win = np.hanning(self.sz)
         
         # Vectores base pre-multiplicados
         self.basis_real = np.empty((3, self.sz), dtype=np.float64)
@@ -150,12 +181,27 @@ class IPDFT_Estimator(BaseFrequencyEstimator):
         return self.sz * self.decim
 
     @classmethod
-    def default_params(cls) -> dict[str, float | int]:
-        return {"nominal_f": 60.0, "cycles": 2.0, "decim": 1}
+    def default_params(cls) -> dict[str, float | int | str | bool]:
+        return {
+            "nominal_f": 60.0,
+            "cycles": 2.0,
+            "decim": 1,
+            "window": "hann",
+            "f_min_hz": 40.0,
+            "f_max_hz": 90.0,
+            "delta_limit_bins": 3.0,
+            "output_smoothing": 0.0,
+            "verbose": False,
+        }
 
     @staticmethod
-    def describe_params(params: dict[str, float | int]) -> str:
-        return f"f_nom={params.get('nominal_f', 60.0)}Hz, Cycles={params.get('cycles', 2.0)}"
+    def describe_params(params: dict[str, float | int | str | bool]) -> str:
+        return (
+            f"f_nom={params.get('nominal_f', 60.0)}Hz, "
+            f"Cycles={params.get('cycles', 2.0)}, "
+            f"decim={params.get('decim', 1)}, "
+            f"window={params.get('window', 'hann')}"
+        )
 
     def step(self, z: float) -> float:
         v_array = np.array([z], dtype=np.float64)
@@ -174,6 +220,10 @@ class IPDFT_Estimator(BaseFrequencyEstimator):
             k_nom=self.k_nom,
             res=self.res,
             f_nom=self.nominal_f,
+            f_min_hz=self.f_min_hz,
+            f_max_hz=self.f_max_hz,
+            delta_limit_bins=self.delta_limit_bins,
+            smooth_alpha=self.output_smoothing,
             buf_idx=self._buf_idx,
             buf_count=self._buf_count,
             last_f=self._last_f,
@@ -198,12 +248,11 @@ class IPDFT_Estimator(BaseFrequencyEstimator):
         if abs(self.dt - dt_new) > 1e-10:
             self.dt = dt_new
             self._update_internals()
-        else:
-            self.reset()
+        self.reset()
             
         res = self.step_vectorized(v)
         
-        if self._total_clamps > 0:
+        if self.verbose and self._total_clamps > 0:
             print(f"      [!] IPDFT Info: Sanity Check limit hit {self._total_clamps} times. Transient or out-of-bounds frequency detected.")
             
         return res

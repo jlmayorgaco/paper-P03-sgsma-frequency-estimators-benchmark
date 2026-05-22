@@ -53,6 +53,41 @@ def _prepare_steady_state_vectors(f_hat: np.ndarray, f_true: np.ndarray, fs_dsp:
     return f_hat_steady, f_true_steady
 
 
+def _window_error(
+    f_hat: np.ndarray,
+    f_true: np.ndarray,
+    fs_dsp: float,
+    start_s: float,
+    end_s: float,
+) -> np.ndarray:
+    """Return error samples in a time window, clamped to the available signal."""
+    n_signal = min(len(f_hat), len(f_true))
+    start_idx = max(0, min(n_signal, int(round(start_s * fs_dsp))))
+    end_idx = max(start_idx + 1, min(n_signal, int(round(end_s * fs_dsp))))
+    if start_idx >= n_signal:
+        return np.zeros(1)
+    return f_hat[start_idx:end_idx] - f_true[start_idx:end_idx]
+
+
+def _settling_time_from_event_s(
+    f_hat: np.ndarray,
+    f_true: np.ndarray,
+    fs_dsp: float,
+    event_time_s: float,
+    threshold: float = 0.2,
+) -> float:
+    """Time after the event until the frequency error stays within threshold."""
+    n_signal = min(len(f_hat), len(f_true))
+    event_idx = max(0, min(n_signal - 1, int(round(event_time_s * fs_dsp))))
+    error = f_hat[event_idx:n_signal] - f_true[event_idx:n_signal]
+    if len(error) == 0:
+        return 0.0
+    breach = np.abs(error) > threshold
+    if np.any(breach):
+        return float((np.where(breach)[0][-1] + 1) / fs_dsp)
+    return 0.0
+
+
 # =====================================================================
 # Bloque 1: Precisión Clásica (IEC/IEEE Baseline)
 # =====================================================================
@@ -187,7 +222,8 @@ def calculate_all_metrics(
     exec_time_s: float, 
     structural_samples: int, 
     noise_sigma: float = 0.0,
-    interharmonic_hz: float = 32.5
+    interharmonic_hz: float = 32.5,
+    event_time_s: float | None = None,
 ) -> dict:
     """
     Calcula el set completo de métricas llamando a las funciones individuales (m1 -> m17).
@@ -225,30 +261,53 @@ def calculate_all_metrics(
     hmap_pass  = m16_heatmap_pass(rmse, max_peak, trip_risk)
     hw_class   = m17_hw_class(cpu_us)
 
+    event_metrics: dict[str, float] = {}
+    if event_time_s is not None:
+        try:
+            event_s = float(event_time_s)
+            pre_error = _window_error(f_hat, f_true, fs_dsp, max(0.0, event_s - 0.10), event_s)
+            post_1cy_error = _window_error(f_hat, f_true, fs_dsp, event_s, event_s + (1.0 / 60.0))
+            post_3cy_error = _window_error(f_hat, f_true, fs_dsp, event_s, event_s + (3.0 / 60.0))
+            post_100ms_error = _window_error(f_hat, f_true, fs_dsp, event_s, event_s + 0.10)
+            post_late_error = _window_error(f_hat, f_true, fs_dsp, event_s + 0.15, event_s + 0.50)
+            event_metrics = {
+                "m24_pre_event_rmse_hz": m1_rmse_hz(pre_error),
+                "m25_post_1cy_rmse_hz": m1_rmse_hz(post_1cy_error),
+                "m26_post_3cy_rmse_hz": m1_rmse_hz(post_3cy_error),
+                "m27_post_100ms_rmse_hz": m1_rmse_hz(post_100ms_error),
+                "m28_post_event_peak_hz": m3_max_peak_hz(post_100ms_error),
+                "m29_late_event_rmse_hz": m1_rmse_hz(post_late_error),
+                "m30_event_settling_time_s": _settling_time_from_event_s(f_hat, f_true, fs_dsp, event_s),
+            }
+        except Exception:
+            event_metrics = {}
+
     # Retorno consolidado
-    return {
-        "m1_rmse_hz":           round(rmse, 6),
-        "m2_mae_hz":            round(mae, 6),
-        "m3_max_peak_hz":       round(max_peak, 6),
-        "m4_std_error_hz":      round(std_error, 6),
+    metrics = {
+        "m1_rmse_hz":           rmse,
+        "m2_mae_hz":            mae,
+        "m3_max_peak_hz":       max_peak,
+        "m4_std_error_hz":      std_error,
         
-        "m5_trip_risk_s":       round(trip_risk, 6),
+        "m5_trip_risk_s":       trip_risk,
         # T-201: quantization resolution of m5 (dt = 0.1 ms at 10 kHz).
         # Differences below ~1 ms should be interpreted as within measurement resolution.
-        "m5_trip_risk_resolution_s": round(dt, 6),
-        "m6_max_contig_trip_s": round(max_contig, 6),
-        "m7_pcb_hz":            round(pcb, 6),
-        "m8_settling_time_s":   round(settling, 6),
+        "m5_trip_risk_resolution_s": dt,
+        "m6_max_contig_trip_s": max_contig,
+        "m7_pcb_hz":            pcb,
+        "m8_settling_time_s":   settling,
         
-        "m9_rfe_max_hz_s":      round(rfe_max, 4),
-        "m10_rfe_rms_hz_s":     round(rfe_rms, 4),
-        "m11_rnaf_db":          round(rnaf_db, 4),
-        "m12_isi_pu":           round(isi_pu, 6),
+        "m9_rfe_max_hz_s":      rfe_max,
+        "m10_rfe_rms_hz_s":     rfe_rms,
+        "m11_rnaf_db":          rnaf_db,
+        "m12_isi_pu":           isi_pu,
         
-        "m13_cpu_time_us":      round(cpu_us, 4),
-        "m14_struct_latency_ms":round(struct_ms, 3),
+        "m13_cpu_time_us":      cpu_us,
+        "m14_struct_latency_ms":struct_ms,
         "m15_pcb_compliant":    compliant,
         
         "m16_heatmap_pass":     hmap_pass,
         "m17_hw_class":         hw_class
     }
+    metrics.update(event_metrics)
+    return metrics

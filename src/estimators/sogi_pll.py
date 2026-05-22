@@ -135,12 +135,18 @@ class SOGIPLLEstimator(BaseFrequencyEstimator):
         k_sogi: float = 1.414,
         settle_time: float = 0.06,
         output_smoothing: float = 0.015,
+        kp_scale: float = 1.0,
+        ki_scale: float = 1.0,
+        f_min_hz: float | None = None,
+        f_max_hz: float | None = None,
         dt: float = DT_DSP,
     ) -> None:
         self.nominal_f = float(nominal_f)
         self.k = float(k_sogi)
         self.settle_time = float(settle_time)
         self.output_smoothing = float(output_smoothing)
+        self.kp_scale = float(kp_scale)
+        self.ki_scale = float(ki_scale)
         self.dt = float(dt)
 
         self.w_nom = 2.0 * math.pi * self.nominal_f
@@ -149,11 +155,16 @@ class SOGIPLLEstimator(BaseFrequencyEstimator):
         zeta = 1.0 / math.sqrt(2.0)
         wn = 4.0 / (zeta * self.settle_time)
 
-        self.kp = 2.0 * zeta * wn
-        self.ki = wn * wn
+        self.kp = (2.0 * zeta * wn) * self.kp_scale
+        self.ki = (wn * wn) * self.ki_scale
 
-        self.w_min = 2.0 * math.pi * (self.nominal_f - 10.0)
-        self.w_max = 2.0 * math.pi * (self.nominal_f + 10.0)
+        self.f_min_hz = float(self.nominal_f - 10.0 if f_min_hz is None else f_min_hz)
+        self.f_max_hz = float(self.nominal_f + 10.0 if f_max_hz is None else f_max_hz)
+        if self.f_min_hz >= self.f_max_hz:
+            raise ValueError("f_min_hz must be lower than f_max_hz.")
+
+        self.w_min = 2.0 * math.pi * self.f_min_hz
+        self.w_max = 2.0 * math.pi * self.f_max_hz
 
         self.reset()
 
@@ -177,6 +188,10 @@ class SOGIPLLEstimator(BaseFrequencyEstimator):
             "k_sogi": 1.414,
             "settle_time": 0.06,
             "output_smoothing": 0.015,
+            "kp_scale": 1.0,
+            "ki_scale": 1.0,
+            "f_min_hz": 50.0,
+            "f_max_hz": 70.0,
         }
 
     @staticmethod
@@ -184,16 +199,20 @@ class SOGIPLLEstimator(BaseFrequencyEstimator):
         return (
             f"f_nom={params.get('nominal_f', 60.0)}Hz, " # FIX: Unificado a 60 Hz
             f"k_sogi={params.get('k_sogi', 1.414)}, "
-            f"Ts={params.get('settle_time', 0.06)}s"
+            f"Ts={params.get('settle_time', 0.06)}s, "
+            f"kp_scale={params.get('kp_scale', 1.0)}, "
+            f"ki_scale={params.get('ki_scale', 1.0)}"
         )
 
     def structural_latency_samples(self) -> int:
         """
-        T-104: SOGI-PLL settling time defines the transient window.
-        Return 2x settle_time in samples so metric windows exclude the transient.
-        Factor 2 is standard for 'settled to within ~2% of final value'.
+        Recursive PLL/SOGI dynamics are not a fixed window delay.
+
+        Cold-start transients are part of the estimator response and should be
+        handled by the benchmark's common warm-up, not hidden by a tunable
+        settle_time-dependent latency.
         """
-        return int(round(2.0 * self.settle_time / self.dt))
+        return 0
 
     def step(self, z: float) -> float:
         v_array = np.array([z], dtype=np.float64)

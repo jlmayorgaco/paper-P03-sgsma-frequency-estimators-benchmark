@@ -14,6 +14,10 @@ def _type3_sogi_pll_vectorized_core(
     kp: float,
     ki: float,
     ki2: float,
+    err_clip: float,
+    int1_limit: float,
+    int2_limit: float,
+    smooth_alpha: float,
     w_nom: float,
     f_min: float,
     f_max: float,
@@ -23,7 +27,8 @@ def _type3_sogi_pll_vectorized_core(
     w_hat: float,
     err_int1: float,
     err_int2: float,
-) -> tuple[np.ndarray, float, float, float, float, float, float]:
+    f_out: float,
+) -> tuple[np.ndarray, float, float, float, float, float, float, float]:
     """
     Núcleo del Type-3 SOGI-PLL.
     Utiliza un filtro de lazo PI-I (Proporcional + Doble Integral) para 
@@ -52,10 +57,23 @@ def _type3_sogi_pll_vectorized_core(
         amp_sq = v_alpha * v_alpha + v_beta * v_beta
         amp = math.sqrt(amp_sq) if amp_sq > 1e-4 else 1e-2
         e_pd = v_q / amp
+        if e_pd > err_clip:
+            e_pd = err_clip
+        elif e_pd < -err_clip:
+            e_pd = -err_clip
 
         # 3. Type-3 Loop Filter (PI-I)
         err_int1 += e_pd * dt
+        if err_int1 > int1_limit:
+            err_int1 = int1_limit
+        elif err_int1 < -int1_limit:
+            err_int1 = -int1_limit
+
         err_int2 += err_int1 * dt
+        if err_int2 > int2_limit:
+            err_int2 = int2_limit
+        elif err_int2 < -int2_limit:
+            err_int2 = -int2_limit
 
         dw = kp * e_pd + ki * err_int1 + ki2 * err_int2
         w_hat = w_nom + dw
@@ -63,8 +81,16 @@ def _type3_sogi_pll_vectorized_core(
         # Anti-windup básico
         if w_hat < w_min:
             w_hat = w_min
+            if err_int1 < 0.0:
+                err_int1 *= 0.95
+            if err_int2 < 0.0:
+                err_int2 *= 0.95
         elif w_hat > w_max:
             w_hat = w_max
+            if err_int1 > 0.0:
+                err_int1 *= 0.95
+            if err_int2 > 0.0:
+                err_int2 *= 0.95
 
         # 4. Integración de Fase (VCO)
         theta_hat += w_hat * dt
@@ -74,9 +100,15 @@ def _type3_sogi_pll_vectorized_core(
         while theta_hat < -math.pi:
             theta_hat += two_pi
 
-        f_est[i] = w_hat / two_pi
+        f_raw = w_hat / two_pi
+        if smooth_alpha > 0.0:
+            f_out = (1.0 - smooth_alpha) * f_out + smooth_alpha * f_raw
+        else:
+            f_out = f_raw
 
-    return f_est, v_alpha, v_beta, theta_hat, w_hat, err_int1, err_int2
+        f_est[i] = f_out
+
+    return f_est, v_alpha, v_beta, theta_hat, w_hat, err_int1, err_int2, f_out
 
 class Type3_SOGI_PLL_Estimator(BaseFrequencyEstimator):
     """
@@ -97,6 +129,12 @@ class Type3_SOGI_PLL_Estimator(BaseFrequencyEstimator):
         kp: float = 90.0,
         ki: float = 2700.0,
         ki2: float = 27000.0,
+        err_clip: float = 1.0,
+        int1_limit: float = 1.0,
+        int2_limit: float = 1.0,
+        output_smoothing: float = 0.0,
+        f_min_hz: float | None = None,
+        f_max_hz: float | None = None,
         dt: float = DT_DSP,
     ) -> None:
         self.nominal_f = float(nominal_f)
@@ -104,11 +142,17 @@ class Type3_SOGI_PLL_Estimator(BaseFrequencyEstimator):
         self.kp = float(kp)
         self.ki = float(ki)
         self.ki2 = float(ki2)
+        self.err_clip = float(err_clip)
+        self.int1_limit = float(int1_limit)
+        self.int2_limit = float(int2_limit)
+        self.output_smoothing = float(output_smoothing)
         self.dt = float(dt)
 
         self.w_nom = 2.0 * math.pi * self.nominal_f
-        self.f_min = self.nominal_f - 20.0
-        self.f_max = self.nominal_f + 20.0
+        self.f_min = float(self.nominal_f - 20.0 if f_min_hz is None else f_min_hz)
+        self.f_max = float(self.nominal_f + 20.0 if f_max_hz is None else f_max_hz)
+        if self.f_min >= self.f_max:
+            raise ValueError("f_min_hz must be lower than f_max_hz.")
 
         self.reset()
 
@@ -119,6 +163,7 @@ class Type3_SOGI_PLL_Estimator(BaseFrequencyEstimator):
         self.w_hat = self.w_nom
         self.err_int1 = 0.0
         self.err_int2 = 0.0
+        self.f_out = self.nominal_f
 
     @classmethod
     def default_params(cls) -> dict[str, float]:
@@ -128,6 +173,12 @@ class Type3_SOGI_PLL_Estimator(BaseFrequencyEstimator):
             "kp": 90.0,
             "ki": 2700.0,
             "ki2": 27000.0,
+            "err_clip": 1.0,
+            "int1_limit": 1.0,
+            "int2_limit": 1.0,
+            "output_smoothing": 0.0,
+            "f_min_hz": 40.0,
+            "f_max_hz": 80.0,
         }
 
     @staticmethod
@@ -136,7 +187,8 @@ class Type3_SOGI_PLL_Estimator(BaseFrequencyEstimator):
             f"f_nom={params.get('nominal_f', 60.0)}Hz, "
             f"kp={params.get('kp', 90.0)}, "
             f"ki={params.get('ki', 2700.0)}, "
-            f"ki2={params.get('ki2', 27000.0)}"
+            f"ki2={params.get('ki2', 27000.0)}, "
+            f"err_clip={params.get('err_clip', 1.0)}"
         )
 
     def structural_latency_samples(self) -> int:
@@ -159,6 +211,7 @@ class Type3_SOGI_PLL_Estimator(BaseFrequencyEstimator):
             self.w_hat,
             self.err_int1,
             self.err_int2,
+            self.f_out,
         ) = _type3_sogi_pll_vectorized_core(
             v_array=v_array,
             dt=self.dt,
@@ -166,6 +219,10 @@ class Type3_SOGI_PLL_Estimator(BaseFrequencyEstimator):
             kp=self.kp,
             ki=self.ki,
             ki2=self.ki2,
+            err_clip=self.err_clip,
+            int1_limit=self.int1_limit,
+            int2_limit=self.int2_limit,
+            smooth_alpha=self.output_smoothing,
             w_nom=self.w_nom,
             f_min=self.f_min,
             f_max=self.f_max,
@@ -175,6 +232,7 @@ class Type3_SOGI_PLL_Estimator(BaseFrequencyEstimator):
             w_hat=self.w_hat,
             err_int1=self.err_int1,
             err_int2=self.err_int2,
+            f_out=self.f_out,
         )
         return f_est
 

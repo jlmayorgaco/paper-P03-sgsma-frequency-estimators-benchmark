@@ -60,7 +60,7 @@ EXCLUDED_ESTIMATOR_SPECS: tuple[EstimatorSpec, ...] = (
     EstimatorSpec("quinn_fernandes", "quinn_fernandes", "Quinn_Fernandes_Estimator", "Quinn-Fernandes", "Window-based", "experimental", "New windowed estimator candidate pending full tuning/validation."),
     EstimatorSpec("jacobsen_interpolated_dft", "jacobsen_interpolated_dft", "Jacobsen_Interpolated_DFT_Estimator", "Jacobsen-Interpolated-DFT", "Window-based", "experimental", "New windowed estimator candidate pending full tuning/validation."),
     EstimatorSpec("sliding_least_squares", "sliding_least_squares", "Sliding_Least_Squares_Estimator", "Sliding-Least-Squares", "Window-based", "experimental", "New windowed estimator candidate pending full tuning/validation."),
-    EstimatorSpec("music_experimental", "music_experimental", "MUSIC_Experimental_Estimator", "MUSIC", "Exotic", "experimental", "New exotic estimator candidate pending full tuning/validation."),
+    EstimatorSpec("music", "music", "MUSIC_Estimator", "MUSIC", "Exotic", "experimental", "Spectral MUSIC estimator; slow exotic candidate pending full tuning/validation."),
     EstimatorSpec("matrix_pencil", "matrix_pencil", "Matrix_Pencil_Estimator", "Matrix-Pencil", "Exotic", "experimental", "New exotic estimator candidate pending full tuning/validation."),
     EstimatorSpec("hilbert_phase_derivative", "hilbert_phase_derivative", "Hilbert_Phase_Derivative_Estimator", "Hilbert-Phase-Derivative", "Exotic", "experimental", "New exotic estimator candidate pending full tuning/validation."),
 )
