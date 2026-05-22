@@ -303,7 +303,7 @@ class MonteCarloEngine:
                 structural_samples=struct_samples,
                 noise_sigma=noise_sigma,
                 interharmonic_hz=32.5,
-                event_time_s=params.get("t_step_s"),
+                event_time_s=params.get("t_step_s", params.get("t_start_s")),
             )
             est_params_for_bounds = dict(self.estimator_params or {})
             freq_min = est_params_for_bounds.get("f_min_hz", est_params_for_bounds.get("freq_min_hz"))

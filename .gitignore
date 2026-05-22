@@ -42,6 +42,7 @@ data/*.csv  # Adjust path as needed
 .DS_Store
 Downloads/
 temp/*
+outputs/
 
 # Environment variables
 .env
@@ -55,6 +56,8 @@ temp/*
 artifacts/full_mc_benchmark/
 tests/montecarlo/outputs/
 artifacts/freq_ramp_rocof_sweep/
+artifacts/freq_ramp_rocof_v*_smoke/
+artifacts/freq_ramp_rocof_v*/Sweep_FreqRamp_RoCoF_*/
 artifacts/voltage_step_sweep/
 artifacts/pdf_previews/
 artifacts/run_logs/
