@@ -1,41 +1,61 @@
 # OpenFreqBench
 
-OpenFreqBench is an open source benchmark platform for grid frequency estimators.
-MVP 2.0.0 starts with the single-phase benchmark from the SGSMA paper codebase
-and wraps it in a public CLI, YAML configs, fixed metric guardrails,
-reproducible manifests, reports, and plots.
+<p align="center">
+  <a href="https://github.com/jlmayorgaco/paper-P03-sgsma-frequency-estimators-benchmark/actions/workflows/ci.yml">
+    <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/jlmayorgaco/paper-P03-sgsma-frequency-estimators-benchmark/ci.yml?branch=MVP2.0.0&label=CI&color=2563eb">
+  </a>
+  <img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-111827">
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-16a34a">
+  <img alt="Metric profile" src="https://img.shields.io/badge/metrics-locked-b91c1c">
+  <img alt="Release" src="https://img.shields.io/badge/MVP-2.0.0-7c3aed">
+</p>
 
-The design goal is simple: researchers can change estimators and scenarios, but
-the benchmark method and metric formulas stay locked by the platform profile
-`canonical-single-phase-v1`.
+OpenFreqBench is a benchmark CLI for grid-frequency estimators. It runs
+single-phase scenarios, compares estimators, writes reproducible artifacts, and
+keeps the canonical metric formulas locked.
+
+You can change the estimator, scenario, run config, and hypotheses. You cannot
+rewrite the benchmark metrics from YAML. That is the point.
+
+| Layer | Status | What changes |
+| --- | --- | --- |
+| Single-phase benchmark | Active | 32 scenarios, 18 canonical estimators |
+| Metric profile | Locked | `canonical-single-phase-v1` |
+| Research workflow | Active | Monte Carlo, reports, plots, hypotheses, manifests |
+| Three-phase / WAMS | Planned | future profiles: `three-phase-v1`, `wams-v1` |
 
 ## Install
 
-From a local checkout:
+Use Python 3.10 or newer.
 
 ```bash
+git clone https://github.com/jlmayorgaco/paper-P03-sgsma-frequency-estimators-benchmark.git
+cd paper-P03-sgsma-frequency-estimators-benchmark
+git checkout MVP2.0.0
 python -m pip install -e ".[dev]"
 ```
 
-From the public branch:
+Install directly from the branch:
 
 ```bash
 python -m pip install "openfreqbench @ git+https://github.com/jlmayorgaco/paper-P03-sgsma-frequency-estimators-benchmark.git@MVP2.0.0"
 ```
 
-For PI-GRU:
+PI-GRU needs PyTorch:
 
 ```bash
 python -m pip install -e ".[benchmark-full]"
 ```
 
-For future WAMS/dynamic-system extensions:
+Optional future backends:
 
 ```bash
 python -m pip install -e ".[andes,opendss]"
 ```
 
-## First commands
+## First run
+
+Check the environment and see what is registered:
 
 ```bash
 openfreqbench doctor
@@ -44,126 +64,177 @@ openfreqbench list estimators
 openfreqbench list metrics
 ```
 
-Run one estimator in one scenario:
+Run the smallest smoke test:
 
 ```bash
-openfreqbench quick-test --scenario IEEE_Single_SinWave --estimator ZCD --n-runs 1
+openfreqbench quick-test \
+  --scenario IEEE_Single_SinWave \
+  --estimator ZCD \
+  --n-runs 1
 ```
 
 Compare two estimators:
 
 ```bash
-openfreqbench compare --scenario IEEE_Freq_Step --estimator ZCD --estimator IPDFT --n-runs 3
+openfreqbench compare \
+  --scenario IEEE_Freq_Step \
+  --estimator ZCD \
+  --estimator IPDFT \
+  --n-runs 3
 ```
 
-Run from YAML:
-
-```bash
-openfreqbench run --config configs/quick.yaml
-openfreqbench run --config configs/compare.yaml
-openfreqbench run --config configs/montecarlo.yaml
-openfreqbench run --config configs/tuned-artifacts.yaml
-```
-
-Replay the paper-style tuned matrix through the 2.0.0 artifact contract:
-
-```bash
-openfreqbench run --config configs/journal-paper-replay.yaml
-```
-
-Install `.[benchmark-full]` first if the run includes PI-GRU.
-
-Validate without running:
-
-```bash
-openfreqbench run --config configs/montecarlo.yaml --dry-run
-openfreqbench validate-artifacts --config configs/journal-paper-replay.yaml
-openfreqbench quality-gate
-```
-
-Freeze a paper-grade run:
-
-```bash
-openfreqbench doctor --output artifacts/openfreqbench/journal-paper-replay-v2/environment_report.json
-openfreqbench report build \
-  --input-json artifacts/openfreqbench/journal-paper-replay-v2/benchmark_report.json
-openfreqbench hypotheses run \
-  --hypotheses configs/hypotheses_preregistered.yaml \
-  --schema hypotheses_schema.yaml \
-  --input-json artifacts/openfreqbench/journal-paper-replay-v2/benchmark_report.json \
-  --output-dir artifacts/openfreqbench/journal-paper-replay-v2/stats
-openfreqbench archive \
-  --run-root artifacts/openfreqbench/journal-paper-replay-v2 \
-  --config configs/journal-paper-replay.yaml
-```
-
-## Output contract
-
-Each run writes to `artifacts/openfreqbench/<run_id>/` by default:
-
-- `benchmark_report.json`: machine-readable report with raw run records.
-- `raw_run_records.csv`: one row per Monte Carlo run.
-- `aggregated_metrics.csv`: grouped estimator/scenario summaries.
-- per-scenario/per-estimator summary, signal, and run-spec files.
-
-Hypotheses run against `benchmark_report.json`:
-
-```bash
-openfreqbench hypotheses generate --scope canonical --output hypotheses.generated.yaml
-openfreqbench hypotheses run \
-  --hypotheses hypotheses.generated.yaml \
-  --schema hypotheses_schema.yaml \
-  --input-json artifacts/openfreqbench/compare-zcd-ipdft/benchmark_report.json \
-  --output-dir artifacts/openfreqbench/compare-zcd-ipdft/stats
-```
-
-Generate analysis tables and plots from any OpenFreqBench run:
+Build the plots and tables:
 
 ```bash
 openfreqbench report build \
   --input-json artifacts/openfreqbench/compare-zcd-ipdft/benchmark_report.json
 ```
 
-This creates `analysis_summary.md`, `analysis_summary.json`, CSV tables, and
-PNG plots such as RMSE/CPU bars with bootstrap confidence intervals,
-RMSE-vs-CPU Pareto, scenario heatmaps, family RMSE boxplots, and time traces
-when signal CSVs are available. Journal tables include metric confidence
-intervals, failure analysis, ranking sensitivity, IBR robustness,
-PI-GRU generalization, classical competitiveness, Pareto recommendations,
-`paper_traceability.csv`, `artifact_index.csv`, and `evidence_manifest.json`.
+## YAML workflows
 
-Public schemas are available from the CLI:
+Most runs should live in YAML. Start from a template:
+
+```bash
+openfreqbench init --template quick --output my-quick.yaml
+openfreqbench run --config my-quick.yaml --dry-run
+openfreqbench run --config my-quick.yaml
+```
+
+Ready-to-run configs:
+
+| Config | Use |
+| --- | --- |
+| `configs/quick.yaml` | one estimator, one scenario |
+| `configs/compare.yaml` | two estimators in one scenario |
+| `configs/montecarlo.yaml` | small Monte Carlo benchmark |
+| `configs/custom-estimator.yaml` | custom estimator smoke test |
+| `configs/tuned-artifacts.yaml` | replay tuned estimator parameters |
+| `configs/journal-paper-replay.yaml` | 32-scenario paper replay contract |
+
+Journal replay uses `parameter_policy: artifact_tuned`. It expects tuned
+`run_spec.json` files under `artifacts/full_mc_benchmark/`.
+
+```bash
+openfreqbench validate-artifacts --config configs/journal-paper-replay.yaml
+openfreqbench run --config configs/journal-paper-replay.yaml
+```
+
+## Output files
+
+By default, runs write to:
+
+```text
+artifacts/openfreqbench/<run_id>/
+```
+
+Key files:
+
+| File | Purpose |
+| --- | --- |
+| `benchmark_report.json` | full machine-readable run report |
+| `raw_run_records.csv` | one row per Monte Carlo run |
+| `aggregated_metrics.csv` | grouped metric summary |
+| `analysis_summary.md` | readable report from `report build` |
+| `hypothesis_results.csv` | preregistered hypothesis results |
+| `manifest.json` | hashes, runtime info, config hash |
+| `artifact_index.csv` | file index for archive and paper tracing |
+| `paper_traceability.csv` | claim-to-artifact map |
+
+Public schemas are included:
 
 ```bash
 openfreqbench schema --name benchmark-report
 openfreqbench schema --name manifest --output schemas/manifest.generated.schema.json
 openfreqbench schema --name benchmark-report \
-  --validate artifacts/openfreqbench/journal-paper-replay-v2/benchmark_report.json
+  --validate artifacts/openfreqbench/<run_id>/benchmark_report.json
 ```
+
+## Hypotheses
+
+Generate starter hypotheses:
+
+```bash
+openfreqbench hypotheses generate \
+  --scope canonical \
+  --output hypotheses.generated.yaml
+```
+
+Run them against a benchmark report:
+
+```bash
+openfreqbench hypotheses run \
+  --hypotheses hypotheses.generated.yaml \
+  --schema hypotheses_schema.yaml \
+  --input-json artifacts/openfreqbench/<run_id>/benchmark_report.json \
+  --output-dir artifacts/openfreqbench/<run_id>/stats
+```
+
+## Freeze a paper run
+
+Use this sequence when a result will enter a paper, supplement, release, or DOI
+archive:
+
+```bash
+openfreqbench doctor \
+  --output artifacts/openfreqbench/journal-paper-replay-v2/environment_report.json
+
+openfreqbench run --config configs/journal-paper-replay.yaml
+
+openfreqbench report build \
+  --input-json artifacts/openfreqbench/journal-paper-replay-v2/benchmark_report.json
+
+openfreqbench hypotheses run \
+  --hypotheses configs/hypotheses_preregistered.yaml \
+  --schema hypotheses_schema.yaml \
+  --input-json artifacts/openfreqbench/journal-paper-replay-v2/benchmark_report.json \
+  --output-dir artifacts/openfreqbench/journal-paper-replay-v2/stats
+
+openfreqbench archive \
+  --run-root artifacts/openfreqbench/journal-paper-replay-v2 \
+  --config configs/journal-paper-replay.yaml
+```
+
+No paper number should be copied by hand. Point each claim to an artifact path,
+hash, command, and commit.
 
 ## Researcher contract
 
-OpenFreqBench intentionally separates user-modifiable code from benchmark
-method code:
+| You may change | You may not change from YAML |
+| --- | --- |
+| estimator code | canonical metric formulas |
+| scenario code | metric windows inside a locked profile |
+| run matrix | metric names outside the registered profile |
+| hypotheses | artifact hashes after archive |
 
-- Estimators: researchers may add a class with `step(...)` or `step_vectorized(...)`.
-- Scenarios: researchers may add scenario classes that return validated 10 kHz data.
-- Metrics: researchers may select canonical metrics, but may not define formulas in YAML.
-- Hypotheses: researchers may add preregistered or exploratory YAML hypotheses.
+The CLI rejects config files that try to redefine canonical metrics.
 
-If a YAML file tries to define metric formulas, the CLI rejects it.
+## Docs
 
-## Roadmap
+Start here:
 
-1. Single-phase public release: current MVP 2.0.0 scope.
-2. Three-phase extension: phasor/vector scenarios and per-phase metric adapters.
-3. WAMS extension: OpenDSS/ANDES dynamic cases, multi-bus events, and network-aware
-   estimator stress tests.
+- [Tutorials](docs/TUTORIALS.md): first estimator, two-estimator comparison, Monte Carlo, custom hypotheses.
+- [User guide](docs/USER_GUIDE.md): CLI and YAML usage.
+- [Methods](docs/METHODS.md): scenarios, metrics, seeds, timing, tuning policy.
+- [Output schema](docs/OUTPUT_SCHEMA.md): stable JSON/CSV contract.
+- [Researcher contract](docs/RESEARCHER_CONTRACT.md): what stays locked.
+- [Journal protocol](docs/JOURNAL_RESULTS_PROTOCOL.md): artifact rules for paper-grade runs.
+- [Weights](docs/WEIGHTS.md): PI-GRU checkpoint notes.
 
-See `docs/ARCHITECTURE.md` and `docs/RESEARCHER_CONTRACT.md`.
-For scientific use, also read `docs/METHODS.md`,
-`docs/VALIDATION.md`, `docs/SCIENTIFIC_READINESS.md`,
-`docs/ARCHITECTURE_REVIEW.md`, `docs/JOURNAL_RESULTS_PROTOCOL.md`, and
-`docs/MVP2_RELEASE_NOTES.md`. Start with `docs/TUTORIALS.md` for the
-10-minute estimator, two-estimator comparison, Monte Carlo, and custom
-hypothesis workflows.
+## Project layout
+
+```text
+configs/        YAML runs and preregistered hypotheses
+docs/           public method, tutorial, release, and schema notes
+examples/       custom estimator examples
+schemas/        JSON schemas for public artifacts
+scripts/        local and release verification scripts
+src/            package source, estimators, scenarios, pipelines
+tests/          CLI, schema, contract, and reproducibility tests
+```
+
+## Current scope
+
+MVP 2.0.0 is public-package cleanup plus the single-phase benchmark platform.
+The full journal replay still needs the tuned artifacts in
+`artifacts/full_mc_benchmark/` before the complete paper matrix can be rerun
+from a fresh clone.
