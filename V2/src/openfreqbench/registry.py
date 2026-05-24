@@ -4,6 +4,8 @@ import importlib
 from dataclasses import asdict, dataclass
 from typing import Any
 
+from .contracts import MetricProfile, RESERVED_METRIC_PROFILES, validate_estimator_contract, validate_metric_profile, validate_scenario_contract
+
 from pipelines.benchmark_definition import (
     ACTIVE_ESTIMATOR_SPECS,
     BENCHMARK_AUTHORITY_STATEMENT,
@@ -166,10 +168,22 @@ METRIC_SPECS: tuple[MetricSpec, ...] = (
 
 METRIC_LABELS: dict[str, str] = {spec.metric_id: spec.label for spec in METRIC_SPECS}
 CANONICAL_METRIC_IDS: tuple[str, ...] = tuple(spec.metric_id for spec in METRIC_SPECS)
+CANONICAL_PROFILE = MetricProfile(
+    profile_id=CANONICAL_METRIC_PROFILE,
+    scope="single-phase",
+    metric_ids=CANONICAL_METRIC_IDS,
+    locked=True,
+    status="active",
+)
+validate_metric_profile(CANONICAL_PROFILE, set(CANONICAL_METRIC_IDS))
 
 
 def scenario_registry() -> dict[str, type]:
-    return {cls.get_name(): cls for cls in SCENARIO_CLASSES}
+    out: dict[str, type] = {}
+    for cls in SCENARIO_CLASSES:
+        validate_scenario_contract(cls)
+        out[cls.get_name()] = cls
+    return out
 
 
 def estimator_specs(include_experimental: bool = False) -> list[EstimatorSpec]:
@@ -205,6 +219,7 @@ def load_estimators(labels: list[str] | None = None, include_experimental: bool 
         actual_label = getattr(cls, "name", label)
         if actual_label != label:
             raise ValueError(f"Estimator label mismatch: expected {label!r}, got {actual_label!r}")
+        validate_estimator_contract(cls, label=label)
         out[label] = cls
     return out
 
@@ -231,6 +246,19 @@ def platform_manifest() -> dict[str, object]:
         "authority_statement": BENCHMARK_AUTHORITY_STATEMENT,
         "paper_alignment_policy": PAPER_ALIGNMENT_POLICY,
         "metric_profile": CANONICAL_METRIC_PROFILE,
+        "metric_profiles": [
+            CANONICAL_PROFILE.to_manifest(),
+            *[
+                {
+                    "profile_id": profile_id,
+                    "scope": "reserved",
+                    "metric_ids": [],
+                    "locked": True,
+                    "status": "reserved",
+                }
+                for profile_id in RESERVED_METRIC_PROFILES
+            ],
+        ],
         "scenarios": sorted(scenario_registry()),
         "estimators": [spec.to_manifest() for spec in estimator_specs(include_experimental=True)],
         "canonical_estimators": [spec.label for spec in estimator_specs(include_experimental=False)],

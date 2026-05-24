@@ -11,9 +11,10 @@ from typing import Any
 
 from pipelines.stats_hypotheses import run_hypotheses
 
+from .artifacts import freeze_artifacts, validate_tuned_artifacts, write_environment_report
 from .config import load_config, parse_config
 from .hypotheses import write_hypothesis_bank
-from .paths import PACKAGE_ROOT, PROJECT_ROOT
+from .paths import PACKAGE_ROOT, PROJECT_ROOT, SOURCE_ROOT
 from .quality import run_quality_gate
 from .reports import build_report_outputs
 from .registry import (
@@ -25,6 +26,7 @@ from .registry import (
     scenario_registry,
 )
 from .runner import run_benchmark_config
+from .schemas import get_schema, schema_names, validate_payload
 
 ROOT = PROJECT_ROOT
 PACKAGE_TEMPLATE_DIR = PACKAGE_ROOT / "templates"
@@ -35,7 +37,7 @@ def _print_json(payload: Any) -> None:
     print(json.dumps(payload, indent=2, ensure_ascii=False))
 
 
-def _cmd_doctor(_: argparse.Namespace) -> int:
+def _cmd_doctor(args: argparse.Namespace) -> int:
     required = ["numpy", "scipy", "pandas", "matplotlib", "yaml"]
     optional = ["optuna", "numba", "sklearn", "torch", "andes"]
     rows = []
@@ -60,6 +62,10 @@ def _cmd_doctor(_: argparse.Namespace) -> int:
         "canonical_estimators": len(estimator_specs()),
         "checks": rows,
     }
+    if getattr(args, "output", None):
+        output = Path(args.output)
+        write_environment_report(ROOT, output, source_root=SOURCE_ROOT)
+        payload["environment_report"] = str(output)
     _print_json(payload)
     return 1 if any(row["required"] and row["status"] != "ok" for row in rows) else 0
 
@@ -203,6 +209,62 @@ def _cmd_report_build(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_validate_artifacts(args: argparse.Namespace) -> int:
+    config = load_config(Path(args.config))
+    result = validate_tuned_artifacts(config)
+    if args.output:
+        out = Path(args.output)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(result, indent=2), encoding="utf-8")
+    display = result
+    if not bool(args.full):
+        display = dict(result)
+        display["present_preview"] = result["present"][:10]
+        display["missing_preview"] = result["missing"][:10]
+        display.pop("present", None)
+        display.pop("missing", None)
+        if result["n_missing_pairs"]:
+            display["hint"] = (
+                "Run the canonical tuning pipeline first or pass a tuned_artifacts_dir "
+                "that contains <scenario>/<estimator>/run_spec.json files. "
+                "Use --full or --output for the complete pair list."
+            )
+    _print_json(display)
+    return 0 if result["status"] == "pass" else 1
+
+
+def _cmd_archive(args: argparse.Namespace) -> int:
+    config_path = Path(args.config).resolve() if args.config else None
+    result = freeze_artifacts(
+        Path(args.run_root),
+        package_root=ROOT,
+        source_root=SOURCE_ROOT,
+        config_path=config_path,
+        make_zip=bool(args.zip),
+    )
+    _print_json(result)
+    return 0
+
+
+def _cmd_schema(args: argparse.Namespace) -> int:
+    payload = get_schema(str(args.name))
+    if args.validate:
+        target = Path(args.validate)
+        data = json.loads(target.read_text(encoding="utf-8"))
+        errors = validate_payload(str(args.name), data)
+        result = {"schema": args.name, "target": str(target), "status": "pass" if not errors else "fail", "errors": errors}
+        _print_json(result)
+        return 0 if not errors else 1
+    if args.output:
+        output = Path(args.output)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        print(output)
+    else:
+        _print_json(payload)
+    return 0
+
+
 def _cmd_canonical_full(args: argparse.Namespace) -> int:
     cmd = [sys.executable, "-m", "pipelines.full_mc_benchmark"]
     env = None
@@ -235,6 +297,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     doctor = sub.add_parser("doctor", help="Check local runtime and platform registry.")
+    doctor.add_argument("--output", default=None, help="Write environment_report.json to this path.")
     doctor.set_defaults(handler=_cmd_doctor)
 
     manifest = sub.add_parser("manifest", help="Print the platform manifest.")
@@ -244,6 +307,12 @@ def build_parser() -> argparse.ArgumentParser:
     list_cmd.add_argument("kind", choices=["scenarios", "estimators", "metrics"])
     list_cmd.add_argument("--include-experimental", action="store_true", help="Show experimental estimator candidates too.")
     list_cmd.set_defaults(handler=_cmd_list)
+
+    list_scenarios = sub.add_parser("list-scenarios", help="List canonical scenarios.")
+    list_scenarios.set_defaults(kind="scenarios", include_experimental=False, handler=_cmd_list)
+    list_estimators = sub.add_parser("list-estimators", help="List canonical estimators.")
+    list_estimators.add_argument("--include-experimental", action="store_true")
+    list_estimators.set_defaults(kind="estimators", handler=_cmd_list)
 
     init = sub.add_parser("init", help="Create a starter YAML config.")
     init.add_argument(
@@ -301,6 +370,27 @@ def build_parser() -> argparse.ArgumentParser:
     report_build.add_argument("--input-json", required=True)
     report_build.add_argument("--output-dir", default=None)
     report_build.set_defaults(handler=_cmd_report_build)
+
+    validate_artifacts = sub.add_parser(
+        "validate-artifacts",
+        help="Validate an artifact_tuned config against its tuned run_spec.json sources.",
+    )
+    validate_artifacts.add_argument("--config", required=True)
+    validate_artifacts.add_argument("--output", default=None)
+    validate_artifacts.add_argument("--full", action="store_true", help="Print every present/missing pair.")
+    validate_artifacts.set_defaults(handler=_cmd_validate_artifacts)
+
+    archive = sub.add_parser("archive", help="Freeze a run directory with hashes and paper traceability.")
+    archive.add_argument("--run-root", required=True)
+    archive.add_argument("--config", default=None)
+    archive.add_argument("--zip", action="store_true", help="Also create a zip archive beside the run directory.")
+    archive.set_defaults(handler=_cmd_archive)
+
+    schema_cmd = sub.add_parser("schema", help="Print, write, or validate public JSON schemas.")
+    schema_cmd.add_argument("--name", choices=schema_names(), default="benchmark-report")
+    schema_cmd.add_argument("--output", default=None)
+    schema_cmd.add_argument("--validate", default=None, help="Validate a JSON file using lightweight built-in checks.")
+    schema_cmd.set_defaults(handler=_cmd_schema)
 
     plots = sub.add_parser("plots", help="Generate plots from a V2 benchmark report.")
     plots_sub = plots.add_subparsers(dest="plots_cmd", required=True)

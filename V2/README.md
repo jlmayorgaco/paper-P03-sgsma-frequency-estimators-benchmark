@@ -77,7 +77,24 @@ Validate without running:
 
 ```bash
 openfreqbench run --config configs/montecarlo.yaml --dry-run
+openfreqbench validate-artifacts --config configs/journal-paper-replay.yaml
 openfreqbench quality-gate
+```
+
+Freeze a paper-grade run:
+
+```bash
+openfreqbench doctor --output artifacts/openfreqbench/journal-paper-replay-v2/environment_report.json
+openfreqbench report build \
+  --input-json artifacts/openfreqbench/journal-paper-replay-v2/benchmark_report.json
+openfreqbench hypotheses run \
+  --hypotheses configs/hypotheses_preregistered.yaml \
+  --schema hypotheses_schema.yaml \
+  --input-json artifacts/openfreqbench/journal-paper-replay-v2/benchmark_report.json \
+  --output-dir artifacts/openfreqbench/journal-paper-replay-v2/stats
+openfreqbench archive \
+  --run-root artifacts/openfreqbench/journal-paper-replay-v2 \
+  --config configs/journal-paper-replay.yaml
 ```
 
 ## Output contract
@@ -110,7 +127,19 @@ openfreqbench report build \
 This creates `analysis_summary.md`, `analysis_summary.json`, CSV tables, and
 PNG plots such as RMSE/CPU bars with bootstrap confidence intervals,
 RMSE-vs-CPU Pareto, scenario heatmaps, family RMSE boxplots, and time traces
-when signal CSVs are available.
+when signal CSVs are available. Journal tables include metric confidence
+intervals, failure analysis, ranking sensitivity, IBR robustness,
+PI-GRU generalization, classical competitiveness, Pareto recommendations,
+`paper_traceability.csv`, `artifact_index.csv`, and `evidence_manifest.json`.
+
+Public schemas are available from the CLI:
+
+```bash
+openfreqbench schema --name benchmark-report
+openfreqbench schema --name manifest --output schemas/manifest.generated.schema.json
+openfreqbench schema --name benchmark-report \
+  --validate artifacts/openfreqbench/journal-paper-replay-v2/benchmark_report.json
+```
 
 ## Researcher contract
 
@@ -135,4 +164,6 @@ See `docs/ARCHITECTURE.md` and `docs/RESEARCHER_CONTRACT.md`.
 For scientific use, also read `docs/METHODS.md`,
 `docs/VALIDATION.md`, `docs/SCIENTIFIC_READINESS.md`,
 `docs/ARCHITECTURE_REVIEW.md`, `docs/JOURNAL_RESULTS_PROTOCOL.md`, and
-`docs/MVP2_RELEASE_NOTES.md`.
+`docs/MVP2_RELEASE_NOTES.md`. Start with `docs/TUTORIALS.md` for the
+10-minute estimator, two-estimator comparison, Monte Carlo, and custom
+hypothesis workflows.

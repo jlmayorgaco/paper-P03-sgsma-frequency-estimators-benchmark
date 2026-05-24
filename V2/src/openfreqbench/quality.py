@@ -43,7 +43,12 @@ def run_quality_gate(root: Path, *, run_tests: bool = True, release: bool = Fals
         root / "docs" / "SCIENTIFIC_READINESS.md",
         root / "docs" / "RELEASE.md",
         root / "docs" / "MVP2_RELEASE_NOTES.md",
+        root / "docs" / "TUTORIALS.md",
+        root / "docs" / "OUTPUT_SCHEMA.md",
         root / "docs" / "WEIGHTS.md",
+        root / "schemas" / "benchmark_report.schema.json",
+        root / "schemas" / "manifest.schema.json",
+        root / "schemas" / "run_config.schema.json",
         root / "examples" / "README.md",
         root / ".github" / "workflows" / "ci.yml",
         root / "scripts" / "verify_local.ps1",
@@ -57,7 +62,7 @@ def run_quality_gate(root: Path, *, run_tests: bool = True, release: bool = Fals
     file_checks = [_check_file(path) for path in required_files]
     config_checks = []
     for cfg in sorted((root / "configs").glob("*.yaml")):
-        if cfg.name == "hypotheses.yaml":
+        if cfg.name.startswith("hypotheses"):
             continue
         try:
             parsed = load_config(cfg)

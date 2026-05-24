@@ -14,6 +14,13 @@ import pandas as pd
 
 from analysis.monte_carlo_engine import MonteCarloEngine
 
+from .artifacts import (
+    validate_tuned_artifacts,
+    write_artifact_index,
+    write_environment_report,
+    write_evidence_manifest,
+    write_paper_traceability,
+)
 from .config import BenchmarkRunConfig, CustomEstimatorSelection, EstimatorSelection
 from .paths import PROJECT_ROOT, SOURCE_ROOT
 from .registry import (
@@ -202,6 +209,14 @@ def run_benchmark_config(config: BenchmarkRunConfig, *, dry_run: bool = False) -
         return dry_run_manifest(config)
 
     _validate_selection(config)
+    if config.parameter_policy == "artifact_tuned":
+        validation = validate_tuned_artifacts(config)
+        if validation["status"] != "pass":
+            missing_preview = validation["missing"][:10]
+            raise FileNotFoundError(
+                "artifact_tuned replay is incomplete. "
+                f"Missing pairs: {validation['n_missing_pairs']}; preview={missing_preview}"
+            )
     scenarios = scenario_registry()
     estimators = _resolve_estimator_classes(config)
 
@@ -326,11 +341,24 @@ def run_benchmark_config(config: BenchmarkRunConfig, *, dry_run: bool = False) -
     }
     report_json = run_root / "benchmark_report.json"
     report_json.write_text(json.dumps(_json_safe(payload), indent=2, allow_nan=False), encoding="utf-8")
+    environment_json = write_environment_report(
+        ROOT,
+        run_root / "environment_report.json",
+        config_path=config.source_path,
+        source_root=SOURCE_ROOT,
+    )
+    trace_csv = write_paper_traceability(report_json)
+    artifact_index_csv = write_artifact_index(run_root)
+    evidence_manifest_json = write_evidence_manifest(run_root, source_report=report_json)
     return {
         "run_root": str(run_root),
         "report_json": str(report_json),
         "raw_csv": str(raw_csv),
         "aggregated_csv": str(agg_csv),
+        "environment_report": str(environment_json),
+        "artifact_index": str(artifact_index_csv),
+        "paper_traceability": str(trace_csv),
+        "evidence_manifest": str(evidence_manifest_json),
         "n_records": int(len(raw)),
         "n_pairs": int(len(artifacts)),
     }

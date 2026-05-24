@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openfreqbench.org/schemas/manifest-v1.json",
+  "title": "OpenFreqBench manifest",
+  "type": "object",
+  "properties": {
+    "timestamp_utc": { "type": "string" },
+    "created_utc": { "type": "string" },
+    "git": { "type": "object" },
+    "source_hashes": { "type": "object" },
+    "checkpoints": { "type": "object" },
+    "manifest_sha256": { "type": "string" }
+  }
+}

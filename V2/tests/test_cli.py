@@ -48,3 +48,25 @@ def test_quality_gate_parses() -> None:
     assert args.command == "quality-gate"
     assert args.skip_tests is True
     assert args.release is True
+
+
+def test_validate_artifacts_command_parses() -> None:
+    parser = build_parser()
+    args = parser.parse_args(["validate-artifacts", "--config", "configs/journal-paper-replay.yaml"])
+    assert args.command == "validate-artifacts"
+    assert args.config == "configs/journal-paper-replay.yaml"
+
+
+def test_archive_command_parses() -> None:
+    parser = build_parser()
+    args = parser.parse_args(["archive", "--run-root", "artifacts/openfreqbench/run", "--zip"])
+    assert args.command == "archive"
+    assert args.run_root == "artifacts/openfreqbench/run"
+    assert args.zip is True
+
+
+def test_schema_command_parses() -> None:
+    parser = build_parser()
+    args = parser.parse_args(["schema", "--name", "benchmark-report"])
+    assert args.command == "schema"
+    assert args.name == "benchmark-report"

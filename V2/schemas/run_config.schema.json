@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openfreqbench.org/schemas/run-config-v1.json",
+  "title": "OpenFreqBench YAML run config",
+  "type": "object",
+  "required": ["run", "benchmark", "metrics"],
+  "properties": {
+    "run": { "type": "object" },
+    "benchmark": { "type": "object" },
+    "metrics": { "type": "object" }
+  }
+}

@@ -12,6 +12,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from .artifacts import write_artifact_index, write_evidence_manifest, write_paper_traceability
+from .scientific import write_scientific_tables
+
 
 def _json_safe(value: Any) -> Any:
     if isinstance(value, dict):
@@ -234,10 +237,73 @@ def _save_family_boxplot(raw: pd.DataFrame, output_path: Path) -> None:
     if not groups:
         return
     fig, ax = plt.subplots(figsize=(7.0, 4.8), constrained_layout=True)
-    ax.boxplot([arr for _, arr in groups], labels=[name for name, _ in groups], showfliers=False)
+    ax.boxplot([arr for _, arr in groups], tick_labels=[name for name, _ in groups], showfliers=False)
     ax.set_title("RMSE Distribution by Estimator Family")
     ax.set_ylabel("RMSE (Hz)")
     ax.tick_params(axis="x", rotation=30, labelsize=8)
+    ax.grid(axis="y", alpha=0.25)
+    fig.savefig(output_path, dpi=220)
+    plt.close(fig)
+
+
+def _save_failure_plot(failure: pd.DataFrame, output_path: Path) -> None:
+    if failure.empty or "collapse_rate" not in failure.columns:
+        return
+    work = (
+        failure.groupby("estimator", as_index=False)["collapse_rate"]
+        .mean()
+        .sort_values("collapse_rate", ascending=False)
+    )
+    if work.empty:
+        return
+    fig_w = max(7.0, min(12.0, 0.45 * len(work) + 4.0))
+    fig, ax = plt.subplots(figsize=(fig_w, 4.8), constrained_layout=True)
+    ax.bar(work["estimator"], work["collapse_rate"], color="#8A1C1C")
+    ax.set_title("Failure and Collapse Rate by Estimator")
+    ax.set_ylabel("Mean rate")
+    ax.set_xlabel("Estimator")
+    ax.tick_params(axis="x", rotation=45, labelsize=8)
+    ax.set_ylim(0.0, min(1.0, max(0.05, float(work["collapse_rate"].max()) * 1.2)))
+    ax.grid(axis="y", alpha=0.25)
+    fig.savefig(output_path, dpi=220)
+    plt.close(fig)
+
+
+def _save_ranking_sensitivity_plot(ranking: pd.DataFrame, output_path: Path) -> None:
+    if ranking.empty or not {"metric", "rank", "estimator"}.issubset(ranking.columns):
+        return
+    top = ranking[ranking["rank"] <= 5].copy()
+    if top.empty:
+        return
+    pivot = top.pivot_table(index="estimator", columns="metric", values="rank", aggfunc="min")
+    if pivot.empty:
+        return
+    values = pivot.to_numpy(dtype=float)
+    fig_w = max(6.5, min(12.0, 0.75 * len(pivot.columns) + 4.0))
+    fig_h = max(4.8, min(10.0, 0.4 * len(pivot.index) + 2.0))
+    fig, ax = plt.subplots(figsize=(fig_w, fig_h), constrained_layout=True)
+    im = ax.imshow(values, aspect="auto", cmap="magma_r", vmin=1, vmax=5)
+    ax.set_title("Top-5 Ranking Sensitivity by Metric")
+    ax.set_xticks(np.arange(len(pivot.columns)), labels=pivot.columns, rotation=45, ha="right", fontsize=8)
+    ax.set_yticks(np.arange(len(pivot.index)), labels=pivot.index, fontsize=8)
+    fig.colorbar(im, ax=ax, label="Rank")
+    fig.savefig(output_path, dpi=220)
+    plt.close(fig)
+
+
+def _save_ibr_robustness_plot(ibr: pd.DataFrame, output_path: Path) -> None:
+    if ibr.empty or "relative_delta" not in ibr.columns:
+        return
+    work = ibr.sort_values("relative_delta").copy()
+    if work.empty:
+        return
+    fig_w = max(7.0, min(12.0, 0.45 * len(work) + 4.0))
+    fig, ax = plt.subplots(figsize=(fig_w, 4.8), constrained_layout=True)
+    ax.bar(work["estimator"], work["relative_delta"], color="#2F6B8F")
+    ax.set_title("IBR RMSE Degradation Relative to Nominal/Frequency-Step Baseline")
+    ax.set_ylabel("Relative delta")
+    ax.set_xlabel("Estimator")
+    ax.tick_params(axis="x", rotation=45, labelsize=8)
     ax.grid(axis="y", alpha=0.25)
     fig.savefig(output_path, dpi=220)
     plt.close(fig)
@@ -357,6 +423,21 @@ def build_report_outputs(input_json: Path, output_dir: Path | None = None) -> di
         _save_ci_bar(cpu_summary, plots_dir / "cpu_by_estimator_ci.png", "Mean CPU Time by Estimator (95% CI)", "us/sample")
     elif cpu_col:
         _save_bar(agg, cpu_col, plots_dir / "cpu_by_estimator.png", "Mean CPU Time by Estimator", "us/sample")
+
+    scientific_tables = write_scientific_tables(report, raw, output_dir)
+    def _read_table(path: str) -> pd.DataFrame:
+        try:
+            return pd.read_csv(path)
+        except (pd.errors.EmptyDataError, FileNotFoundError):
+            return pd.DataFrame()
+
+    failure_df = _read_table(scientific_tables["failure_analysis"])
+    ranking_df = _read_table(scientific_tables["ranking_sensitivity"])
+    ibr_df = _read_table(scientific_tables["ibr_robustness"])
+    _save_failure_plot(failure_df, plots_dir / "failure_rate_by_estimator.png")
+    _save_ranking_sensitivity_plot(ranking_df, plots_dir / "ranking_sensitivity_top5.png")
+    _save_ibr_robustness_plot(ibr_df, plots_dir / "ibr_robustness_delta.png")
+
     _save_pareto(agg, plots_dir / "pareto_rmse_cpu.png")
     _save_heatmap(agg, plots_dir / "scenario_rmse_heatmap.png")
     _save_family_boxplot(raw, plots_dir / "family_rmse_boxplot.png")
@@ -375,7 +456,14 @@ def build_report_outputs(input_json: Path, output_dir: Path | None = None) -> di
         "plots": plot_paths,
         "trace_plots": trace_paths,
         "statistical_tables": statistical_tables,
+        "scientific_tables": scientific_tables,
         "confidence_interval_method": "nonparametric bootstrap of per-run estimator means; fixed seed=12345",
+        "failure_thresholds": {
+            "rmse_hz": 0.5,
+            "peak_error_hz": 1.0,
+            "latency_ms": 100.0,
+            "cpu_time_us": 1000.0,
+        },
     }
 
     summary_json = output_dir / "analysis_summary.json"
@@ -417,8 +505,17 @@ def build_report_outputs(input_json: Path, output_dir: Path | None = None) -> di
         lines.extend(["", "## Statistical Tables"])
         for path in statistical_tables:
             lines.append(f"- `{path}`")
+    lines.extend(["", "## Journal Tables"])
+    for name, path in scientific_tables.items():
+        lines.append(f"- `{name}`: `{path}`")
     summary_md = output_dir / "analysis_summary.md"
     summary_md.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    paper_traceability = ""
+    if input_json.exists():
+        paper_traceability = str(write_paper_traceability(input_json, output_dir / "paper_traceability.csv"))
+    artifact_index = str(write_artifact_index(output_dir))
+    evidence_manifest = str(write_evidence_manifest(output_dir, source_report=input_json))
 
     return {
         "summary_json": str(summary_json),
@@ -426,5 +523,9 @@ def build_report_outputs(input_json: Path, output_dir: Path | None = None) -> di
         "raw_csv": str(raw_out) if raw_out.exists() else "",
         "aggregated_csv": str(agg_out) if agg_out.exists() else "",
         "statistical_tables": statistical_tables,
+        "scientific_tables": scientific_tables,
+        "paper_traceability": paper_traceability,
+        "artifact_index": artifact_index,
+        "evidence_manifest": evidence_manifest,
         "plots": plot_paths,
     }
