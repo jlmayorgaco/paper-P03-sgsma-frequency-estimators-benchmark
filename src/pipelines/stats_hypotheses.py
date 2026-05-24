@@ -290,6 +290,7 @@ def run_hypotheses(
     output_dir.mkdir(parents=True, exist_ok=True)
     json_path = output_dir / "statistical_tests_report.json"
     csv_path = output_dir / "statistical_tests_report.csv"
+    alias_csv_path = output_dir / "hypothesis_results.csv"
     md_path = output_dir / "statistical_tests_report.md"
 
     payload = {
@@ -307,6 +308,11 @@ def run_hypotheses(
 
     fieldnames = sorted({k for row in results for k in row.keys()})
     with csv_path.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in results:
+            writer.writerow(row)
+    with alias_csv_path.open("w", encoding="utf-8", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=fieldnames)
         writer.writeheader()
         for row in results:
@@ -346,6 +352,7 @@ def run_hypotheses(
     return {
         "json_path": str(json_path),
         "csv_path": str(csv_path),
+        "hypothesis_results_csv": str(alias_csv_path),
         "md_path": str(md_path),
         "n_results": len(results),
     }

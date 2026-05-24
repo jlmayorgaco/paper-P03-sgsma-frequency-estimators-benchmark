@@ -1,299 +1,169 @@
-# Benchmarking Dynamic Frequency Estimators for Low-Inertia IBR Grids
+# OpenFreqBench
 
-This repository contains the simulation code, benchmarking pipeline, plotting
-modules, and LaTeX source for the SGSMA 2026 paper:
+OpenFreqBench is an open source benchmark platform for grid frequency estimators.
+MVP 2.0.0 starts with the single-phase benchmark from the SGSMA paper codebase
+and wraps it in a public CLI, YAML configs, fixed metric guardrails,
+reproducible manifests, reports, and plots.
 
-`Benchmarking Dynamic Frequency Estimators for Low-Inertia IBR Grids: A Latency-Robustness Trade-off Analysis`
+The design goal is simple: researchers can change estimators and scenarios, but
+the benchmark method and metric formulas stay locked by the platform profile
+`canonical-single-phase-v1`.
 
-## Project page
+## Install
 
-- Static overview page (GitHub Pages source): `docs/index.html`
-- Deployment workflow: `.github/workflows/deploy-pages.yml`
-
-## Scope
-
-The project evaluates dynamic frequency estimators for relay-class and local
-measurement use in low-inertia, inverter-based-resource (IBR) grids. The code
-base includes:
-
-- estimator implementations under `src/estimators/`
-- disturbance scenarios under `src/scenarios/`
-- metric and Monte Carlo logic under `src/analysis/`
-- the reorganized benchmark pipeline under `src/pipelines/`
-- modular dashboard plotting under `src/plotting/benchmark/`
-- the paper source under `paper/`
-
-## Repository layout
-
-```text
-.
-|-- src/
-|   |-- analysis/
-|   |-- estimators/
-|   |-- pipelines/
-|   |-- plotting/
-|   |   `-- benchmark/
-|   |-- scenarios/
-|   `-- tests/
-|-- tests/
-|   |-- estimators/
-|   `-- montecarlo/
-|-- paper/
-|   |-- Config/
-|   |-- Figures/
-|   `-- Sections/
-|-- artifacts/
-|   `-- full_mc_benchmark/
-`-- REVIEW.md
-```
-
-## Canonical execution path
-
-The active benchmark flow is the modular pipeline under `src/pipelines/`.
-Use:
+From a local checkout:
 
 ```bash
-cd src
-python -m pipelines.full_mc_benchmark
+python -m pip install -e ".[dev]"
 ```
 
-Generated canonical artifacts are written to:
-
-- `artifacts/full_mc_benchmark/`
-
-To copy the canonical paper figures into the LaTeX figure directory with the
-expected names, run:
+From the public branch:
 
 ```bash
-cd src
-python -m pipelines.sync_paper_artifacts
+python -m pip install "openfreqbench @ git+https://github.com/jlmayorgaco/paper-P03-sgsma-frequency-estimators-benchmark.git@MVP2.0.0"
 ```
 
-## Plotting structure
-
-Dashboard generation is split into modular subplot builders under
-`src/plotting/benchmark/`. The intent is to keep each subplot independently
-debuggable while preserving a single orchestration entry point:
-
-- `src/plotting/benchmark/generate_mega_dashboards.py`
-- `src/plotting/benchmark/mega_dashboard1.py`
-- `src/plotting/benchmark/mega_dashboard2_p*.py`
-
-## Quickstart (CLI)
+For PI-GRU:
 
 ```bash
-pip install -r requirements.txt
-pip install -e .
-openfreqbench env doctor
-openfreqbench benchmark run
-openfreqbench benchmark validate
+python -m pip install -e ".[benchmark-full]"
 ```
 
-Current CLI domains:
-- `openfreqbench benchmark ...`
-- `openfreqbench andes ...`
-- `openfreqbench stats ...`
-- `openfreqbench report ...`
-- `openfreqbench env doctor`
-- `openfreqbench quality-gate --profile <canonical|legacy|manual-nightly>`
-
-Targeted benchmark slices:
-- scenario -> all estimators:
-  `openfreqbench benchmark run-scenario --name IEEE_Freq_Step`
-- estimator -> all scenarios:
-  `openfreqbench benchmark run-estimator --name EKF`
-- subset x subset matrix:
-  `openfreqbench benchmark run-matrix --scenario IEEE_Freq_Step,IEEE_Modulation --estimator EKF,UKF`
-- preview filters without running (recommended first):
-  `openfreqbench benchmark run-matrix --scenario IEEE_Freq_Step --estimator EKF --dry-run`
-
-## Python environment
-
-Install the project dependencies in your active environment before running the
-benchmark or the paper build support scripts.
-
-Typical scientific stack required by the repository:
-
-- `numpy`
-- `scipy`
-- `pandas`
-- `matplotlib`
-- `numba`
-- `optuna`
-- `pytest`
-- `tqdm`
-
-Optional dependency:
-
-- `torch`
-  Required only for the PI-GRU estimator and its dedicated tests. If `torch` is
-  not installed, PI-GRU-specific tests are skipped.
-
-## Testing
-
-Useful focused checks:
+For future WAMS/dynamic-system extensions:
 
 ```bash
-pytest src/tests/test_scalar_vs_vector.py -v
-pytest tests/estimators/esprit/test_esprit.py -v
-pytest tests/estimators/prony/test_prony.py -v
-pytest tests/estimators/pi_gru -q
+python -m pip install -e ".[andes,opendss]"
 ```
 
-Layered quality gates:
+## First commands
 
 ```bash
-# Canonical (submit gate)
-cd src && python -m pipelines.run_quality_gate --profile canonical
-
-# Legacy compatibility (kept, but outside submit gate)
-cd src && python -m pipelines.run_quality_gate --profile legacy
-
-# Expensive full run for manual/nightly
-cd src && python -m pipelines.run_quality_gate --profile manual-nightly
+openfreqbench doctor
+openfreqbench list scenarios
+openfreqbench list estimators
+openfreqbench list metrics
 ```
 
-Canonical artifact contract check:
+Run one estimator in one scenario:
 
 ```bash
-cd src && python -m pipelines.validate_canonical_artifacts
+openfreqbench quick-test --scenario IEEE_Single_SinWave --estimator ZCD --n-runs 1
 ```
 
-The canonical dashboard path is strict by default. `generate_mega_dashboards`
-fails if canonical reports are missing. Legacy fallback is only enabled in
-legacy mode (`data_mode="legacy"` or `BENCHMARK_DASHBOARD_MODE=legacy`).
-
-## Advanced analysis output
-
-The benchmark JSON now includes a `robust_statistics` block with:
-- bootstrap confidence intervals for RMSE and CPU metrics
-- Friedman omnibus tests across estimators
-- pairwise Wilcoxon tests versus the current best estimator
-- pairwise scenario win-rate matrices
-- multi-metric dominance score ranking
-
-Optional environment control:
-- `BENCHMARK_ADV_BOOTSTRAP_ITERS` (default: `2000`)
-
-## Hypotheses and auto-reports
-
-Preregistered hypotheses are defined in `hypotheses.yaml`. Generate inferential
-outputs and deterministic report artifacts with:
+Compare two estimators:
 
 ```bash
-openfreqbench stats run
-openfreqbench report build
+openfreqbench compare --scenario IEEE_Freq_Step --estimator ZCD --estimator IPDFT --n-runs 3
 ```
 
-Outputs include:
-- `artifacts/full_mc_benchmark/statistical_tests_report.json`
-- `artifacts/full_mc_benchmark/statistical_tests_report.csv`
-- `artifacts/full_mc_benchmark/statistical_tests_report.md`
-- `reports/benchmark_report.md`
-- `reports/benchmark_report.html`
-- `reports/benchmark_appendix_tables.csv`
-- `reports/benchmark_run_manifest.json`
-
-## Paper build
-
-Build from `paper/`:
+Run from YAML:
 
 ```bash
-pdflatex index
-bibtex index
-pdflatex index
-pdflatex index
+openfreqbench run --config configs/quick.yaml
+openfreqbench run --config configs/compare.yaml
+openfreqbench run --config configs/montecarlo.yaml
+openfreqbench run --config configs/tuned-artifacts.yaml
 ```
 
-The LaTeX source now targets the IEEEtran conference template more directly.
-If the manuscript exceeds the page limit after removing layout compression
-hacks, content must be reduced instead of forcing the template.
-
-## Open-source packaging
-
-The repository now includes a `pyproject.toml` and MIT license.
-
-## Versioning status
-
-Current package version in `pyproject.toml` is `0.1.0`.
-The target stabilization milestone is `v1.0.0`.
-
-The CLI namespace has moved from `sgsma-*` to `openfreqbench`:
-
-- `sgsma-full-benchmark` -> `openfreqbench benchmark run`
-- `sgsma-sync-paper-artifacts` -> `openfreqbench benchmark sync-paper`
-- `sgsma-validate-artifacts` -> `openfreqbench benchmark validate`
-- `sgsma-quality-gate --profile <name>` -> `openfreqbench quality-gate --profile <name>`
-
-After editable install:
+Replay the paper-style tuned matrix through the 2.0.0 artifact contract:
 
 ```bash
-pip install -e .
-openfreqbench benchmark run
-openfreqbench benchmark sync-paper
-openfreqbench benchmark validate
-openfreqbench quality-gate --profile canonical
-openfreqbench stats run
-openfreqbench report build
-openfreqbench andes run-ieee39
+openfreqbench run --config configs/journal-paper-replay.yaml
 ```
 
-## Docker
+Install `.[benchmark-full]` first if the run includes PI-GRU.
 
-CPU baseline image:
+Validate without running:
 
 ```bash
-docker build -t openfreqbench:cpu -f Dockerfile .
-docker run --rm -v ${PWD}/artifacts:/workspace/artifacts openfreqbench:cpu quality-gate --profile canonical
+openfreqbench run --config configs/montecarlo.yaml --dry-run
+openfreqbench validate-artifacts --config configs/journal-paper-replay.yaml
+openfreqbench quality-gate
 ```
 
-Extended image (torch + andes):
+Freeze a paper-grade run:
 
 ```bash
-docker build -t openfreqbench:full -f Dockerfile.full .
-docker run --rm -v ${PWD}/artifacts:/workspace/artifacts openfreqbench:full andes run-ieee39
+openfreqbench doctor --output artifacts/openfreqbench/journal-paper-replay-v2/environment_report.json
+openfreqbench report build \
+  --input-json artifacts/openfreqbench/journal-paper-replay-v2/benchmark_report.json
+openfreqbench hypotheses run \
+  --hypotheses configs/hypotheses_preregistered.yaml \
+  --schema hypotheses_schema.yaml \
+  --input-json artifacts/openfreqbench/journal-paper-replay-v2/benchmark_report.json \
+  --output-dir artifacts/openfreqbench/journal-paper-replay-v2/stats
+openfreqbench archive \
+  --run-root artifacts/openfreqbench/journal-paper-replay-v2 \
+  --config configs/journal-paper-replay.yaml
 ```
 
-## Project governance
+## Output contract
 
-- Roadmap: `ROADMAP.md`
-- Changelog: `CHANGELOG.md`
-- Contribution guide: `CONTRIBUTING.md`
-- Code of conduct: `CODE_OF_CONDUCT.md`
-- Security policy: `SECURITY.md`
-- Citation metadata: `CITATION.cff`
+Each run writes to `artifacts/openfreqbench/<run_id>/` by default:
 
-## Artifact policy
+- `benchmark_report.json`: machine-readable report with raw run records.
+- `raw_run_records.csv`: one row per Monte Carlo run.
+- `aggregated_metrics.csv`: grouped estimator/scenario summaries.
+- per-scenario/per-estimator summary, signal, and run-spec files.
 
-Policy for new pull requests:
-- do not add heavy generated outputs under `artifacts/full_mc_benchmark/`
-- do not add heavy generated outputs under `tests/montecarlo/outputs/`
-- regenerate locally from the canonical pipeline and validate with:
-  `python -m pipelines.validate_canonical_artifacts`
-- do not commit generated outputs under:
-  - `artifacts/freq_ramp_rocof_sweep/`
-  - `artifacts/voltage_step_sweep/`
-  - `paper_submit_v2/outputs/`
-  - `paper_submit_v2/support/`
-
-Git cannot ignore files by size using only `.gitignore`. This repository includes
-an optional pre-commit hook at `.githooks/pre-commit` that blocks staged files
-larger than 100 MB.
-
-Enable it once per local clone:
+Hypotheses run against `benchmark_report.json`:
 
 ```bash
-git config core.hooksPath .githooks
+openfreqbench hypotheses generate --scope canonical --output hypotheses.generated.yaml
+openfreqbench hypotheses run \
+  --hypotheses hypotheses.generated.yaml \
+  --schema hypotheses_schema.yaml \
+  --input-json artifacts/openfreqbench/compare-zcd-ipdft/benchmark_report.json \
+  --output-dir artifacts/openfreqbench/compare-zcd-ipdft/stats
 ```
 
-Legacy generated outputs may still exist in history and will be cleaned in a
-dedicated repository hygiene pass.
+Generate analysis tables and plots from any OpenFreqBench run:
 
-## Current status
+```bash
+openfreqbench report build \
+  --input-json artifacts/openfreqbench/compare-zcd-ipdft/benchmark_report.json
+```
 
-The repository is under active consolidation. The main technical priorities are:
+This creates `analysis_summary.md`, `analysis_summary.json`, CSV tables, and
+PNG plots such as RMSE/CPU bars with bootstrap confidence intervals,
+RMSE-vs-CPU Pareto, scenario heatmaps, family RMSE boxplots, and time traces
+when signal CSVs are available. Journal tables include metric confidence
+intervals, failure analysis, ranking sensitivity, IBR robustness,
+PI-GRU generalization, classical competitiveness, Pareto recommendations,
+`paper_traceability.csv`, `artifact_index.csv`, and `evidence_manifest.json`.
 
-- keep `step()` and `step_vectorized()` behavior equivalent
-- keep benchmark outputs traceable to one canonical artifact set
-- keep plotting logic modular and paper-facing filenames stable
-- keep paper numbers derived from fresh generated artifacts, not hardcoded edits
+Public schemas are available from the CLI:
+
+```bash
+openfreqbench schema --name benchmark-report
+openfreqbench schema --name manifest --output schemas/manifest.generated.schema.json
+openfreqbench schema --name benchmark-report \
+  --validate artifacts/openfreqbench/journal-paper-replay-v2/benchmark_report.json
+```
+
+## Researcher contract
+
+OpenFreqBench intentionally separates user-modifiable code from benchmark
+method code:
+
+- Estimators: researchers may add a class with `step(...)` or `step_vectorized(...)`.
+- Scenarios: researchers may add scenario classes that return validated 10 kHz data.
+- Metrics: researchers may select canonical metrics, but may not define formulas in YAML.
+- Hypotheses: researchers may add preregistered or exploratory YAML hypotheses.
+
+If a YAML file tries to define metric formulas, the CLI rejects it.
+
+## Roadmap
+
+1. Single-phase public release: current MVP 2.0.0 scope.
+2. Three-phase extension: phasor/vector scenarios and per-phase metric adapters.
+3. WAMS extension: OpenDSS/ANDES dynamic cases, multi-bus events, and network-aware
+   estimator stress tests.
+
+See `docs/ARCHITECTURE.md` and `docs/RESEARCHER_CONTRACT.md`.
+For scientific use, also read `docs/METHODS.md`,
+`docs/VALIDATION.md`, `docs/SCIENTIFIC_READINESS.md`,
+`docs/ARCHITECTURE_REVIEW.md`, `docs/JOURNAL_RESULTS_PROTOCOL.md`, and
+`docs/MVP2_RELEASE_NOTES.md`. Start with `docs/TUTORIALS.md` for the
+10-minute estimator, two-estimator comparison, Monte Carlo, and custom
+hypothesis workflows.

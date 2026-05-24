@@ -1,48 +1,33 @@
-# Contributing Guide
+# Contributing to OpenFreqBench
 
-## Development setup
-1. Use Python 3.13.
-2. Install dependencies:
-   - `pip install -r requirements.txt`
-   - `pip install -e .`
-3. Validate CLI availability:
-   - `openfreqbench --help`
-   - `openfreqbench env doctor`
+OpenFreqBench welcomes estimator, scenario, documentation, and reproducibility
+contributions.
 
-## Quality gates
-- Canonical gate (required for PR merge):
-  - `cd src && python -m pipelines.run_quality_gate --profile canonical`
-- Legacy compatibility gate (recommended):
-  - `cd src && python -m pipelines.run_quality_gate --profile legacy`
-- Manual/nightly full benchmark gate:
-  - `cd src && python -m pipelines.run_quality_gate --profile manual-nightly`
+## Estimators
 
-## Test policy
-- Do not delete `tests/montecarlo`; it is a legacy compatibility harness.
-- `tests/montecarlo/temp` is preserved for local experiments and is not part of canonical PR gate.
-- New benchmark-science claims must be traceable to canonical artifacts in `artifacts/full_mc_benchmark/`.
+Add an estimator class with either:
 
-## Coding policy
-- Keep pipeline logic under `src/pipelines/`.
-- Keep benchmark plotting under `src/plotting/benchmark/`.
-- Preserve scientific contracts:
-  - `step()` and `step_vectorized()` equivalence
-  - deterministic ESPRIT behavior
-  - no silent numerical masking in Prony
-  - CPU timing via repeated `time.process_time()`
+- `step(z, t_s=None, memory=None) -> float`
+- `step_vectorized(v) -> np.ndarray`
 
-## Pull request checklist
-- [ ] Canonical gate passes.
-- [ ] Behavior/doc updates included.
-- [ ] No heavy generated artifacts added.
-- [ ] If benchmark behavior changed, artifact validator command/result provided.
+The class must expose a stable `name`. Constructor parameters should have
+defaults and be serializable in YAML.
 
-## CLI product direction (v1 target)
-Planned UX for benchmark execution modes:
-- scenario against all estimators
-- estimator against all scenarios
-- subset x subset matrix execution
+## Scenarios
 
-Planned output upgrades:
-- publication-ready plots (consistent styles and export profiles)
-- richer comparative reports with stronger statistical summaries
+Scenario contributions must return validated single-phase 10 kHz data through
+the scenario contract. Do not bypass `Scenario.run()`.
+
+## Metrics
+
+Metric formulas are part of the versioned platform profile. Do not add metric
+formulas in YAML. New metrics need code, tests, docs, and a profile-version
+decision.
+
+## Before opening a pull request
+
+```bash
+python -m pytest tests -q
+openfreqbench run --config configs/quick.yaml --dry-run
+openfreqbench quick-test --scenario IEEE_Single_SinWave --estimator ZCD --n-runs 1
+```

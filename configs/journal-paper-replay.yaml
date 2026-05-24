@@ -1,0 +1,67 @@
+run:
+  id: journal-paper-replay-v2
+  mode: monte_carlo
+  output_dir: ../artifacts/openfreqbench
+  n_runs: 100
+  base_seed: 12345
+  max_workers: 1
+  capture_signals: false
+
+benchmark:
+  parameter_policy: artifact_tuned
+  tuned_artifacts_dir: ../artifacts/full_mc_benchmark
+  scenarios:
+    - IBR_Multi_Event
+    - IBR_Power_Imbalance_Ringdown
+    - IBR_Harmonics_Small
+    - IBR_Harmonics_Medium
+    - IBR_Harmonics_Large
+    - IEEE_Freq_Step
+    - IEEE_Modulation
+    - IEEE_Modulation_AM
+    - IEEE_Modulation_FM
+    - IEEE_OOB_Interference
+    - IEEE_Phase_Jump_20
+    - IEEE_Phase_Jump_60
+    - NERC_Phase_Jump_60
+    - IEEE_Single_SinWave
+    - IEEE_Mag_Step_1pct
+    - IEEE_Mag_Step_5pct
+    - IEEE_Mag_Step_10pct
+    - IEEE_Mag_Step_15pct
+    - IEEE_Mag_Step_25pct
+    - IEEE_Mag_Step_50pct
+    - IEEE_Freq_Ramp_0.25Hzs
+    - IEEE_Freq_Ramp_0.5Hzs
+    - IEEE_Freq_Ramp_1Hzs
+    - IEEE_Freq_Ramp_2Hzs
+    - IEEE_Freq_Ramp_5Hzs
+    - IEEE_Freq_Ramp_10Hzs
+    - IEEE_Freq_Ramp_15Hzs
+    - IEEE_Freq_Ramp_20Hzs
+    - IBR_Power_Imbalance_Ringdown_Low_Noise
+    - IBR_Power_Imbalance_Ringdown_Normal_Noise
+    - IBR_Power_Imbalance_Ringdown_Medium_Noise
+    - IBR_Power_Imbalance_Ringdown_Severe_Noise
+  estimators:
+    - ZCD
+    - IPDFT
+    - TFT
+    - RLS
+    - PLL
+    - SOGI-PLL
+    - SOGI-FLL
+    - Type-3 SOGI-PLL
+    - LKF
+    - LKF2
+    - EKF
+    - UKF
+    - RA-EKF
+    - TKEO
+    - Prony
+    - ESPRIT
+    - Koopman (RK-DPMU)
+    - PI-GRU
+
+metrics:
+  profile: canonical-single-phase-v1

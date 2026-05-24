@@ -527,6 +527,8 @@ SEARCH_SPACES: dict[str, Any] = {
     "TKEO": lambda trial: {
         "output_smoothing": trial.suggest_float("output_smoothing", 1e-6, 0.5, log=True),
         "input_smoothing": trial.suggest_float("input_smoothing", 0.08, 1.0, log=True),
+        "noise_power": trial.suggest_float("noise_power", 0.0, 1e-5),
+        "derivative_noise_factor": trial.suggest_float("derivative_noise_factor", 0.5, 4.0),
     },
     "Koopman (RK-DPMU)": lambda trial: {
         "n_cycles": trial.suggest_float("n_cycles", 0.5, 10.0),

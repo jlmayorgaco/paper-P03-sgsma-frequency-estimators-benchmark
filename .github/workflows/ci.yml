@@ -1,0 +1,41 @@
+name: OpenFreqBench 2.0.0 CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Unit tests
+        run: python -m pytest tests -q -p no:cacheprovider
+
+      - name: Build wheel
+        run: python -m build --wheel
+
+      - name: CLI doctor
+        run: openfreqbench doctor
+
+      - name: Quick smoke
+        run: openfreqbench quick-test --scenario IEEE_Single_SinWave --estimator ZCD --n-runs 1 --max-workers 1 --id ci-smoke --output-dir artifacts/openfreqbench --no-capture-signals
+
+      - name: Quality gate
+        run: openfreqbench quality-gate

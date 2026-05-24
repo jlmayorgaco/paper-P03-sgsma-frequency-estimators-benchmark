@@ -5,6 +5,7 @@ import math
 import os
 import sys
 import time
+import inspect
 from dataclasses import dataclass
 from itertools import product
 from pathlib import Path
@@ -44,6 +45,8 @@ FAST_ESTIMATORS = (
     "ZCD,IPDFT,TFT,RLS,PLL,SOGI-PLL,SOGI-FLL,Type-3 SOGI-PLL,"
     "LKF,LKF2,EKF,UKF,RA-EKF,TKEO"
 )
+DATA_DRIVEN_ESTIMATORS = "Koopman (RK-DPMU),PI-GRU"
+JOURNAL_ESTIMATORS = f"{FAST_ESTIMATORS},{DATA_DRIVEN_ESTIMATORS}"
 
 OUTPUT_SUBDIR = os.getenv("FREQRAMP_OUTPUT_SUBDIR", "freq_ramp_rocof_v1_fixed_policy_fast14")
 OUTPUT_DIR = ROOT / "artifacts" / OUTPUT_SUBDIR
@@ -120,7 +123,9 @@ METHODOLOGY_TEXT = (
     "Frequency-ramp RoCoF atlas. The swept variable is the true linear ramp rate; "
     "amplitude and noise remain controlled nuisance variables. Fixed-policy mode uses one "
     "parameter set per estimator across every RoCoF level and both ramp signs, so curve shape "
-    "reflects dynamic tracking degradation rather than per-point retuning."
+    "reflects dynamic tracking degradation rather than per-point retuning. Scenario-derived "
+    "frequency bounds prevent artificial rail saturation, and TKEO tuning penalizes noise-only "
+    "bias by comparing paired noisy and clean evaluation signals."
 )
 
 
@@ -203,6 +208,71 @@ def _noise_bounds() -> tuple[float, float]:
     lo = _env_float("FREQRAMP_NOISE_LOW", 0.0005, minimum=0.0)
     hi = _env_float("FREQRAMP_NOISE_HIGH", 0.0020, minimum=lo)
     return lo, hi
+
+
+def _scenario_frequency_bounds(scenarios: list[SweepScenario]) -> tuple[float, float]:
+    values: list[float] = []
+    for sc in scenarios:
+        params = sc.scenario_cls.get_default_params()
+        f_nom = float(params.get("freq_nom_hz", 60.0))
+        f_cap = float(params.get("freq_cap_hz", f_nom))
+        values.extend([f_nom, f_cap])
+    if not values:
+        values = [60.0]
+    margin = _env_float("FREQRAMP_FREQ_BOUND_MARGIN_HZ", 10.0, minimum=0.0)
+    f_min = max(0.0, min(values) - margin)
+    f_max = max(values) + margin
+    return float(f_min), float(f_max)
+
+
+def _accepted_init_params(est_cls: type) -> set[str]:
+    try:
+        sig = inspect.signature(est_cls.__init__)
+    except (TypeError, ValueError):
+        return set()
+    accepted: set[str] = set()
+    for name, param in sig.parameters.items():
+        if name == "self":
+            continue
+        if param.kind == inspect.Parameter.VAR_KEYWORD:
+            accepted.add("**kwargs")
+        else:
+            accepted.add(name)
+    return accepted
+
+
+def _apply_rocof_frequency_bounds(
+    est_name: str,
+    est_cls: type,
+    params: dict[str, Any],
+    frequency_bounds: tuple[float, float] | None,
+) -> dict[str, Any]:
+    if frequency_bounds is None or not _env_bool("FREQRAMP_FORCE_SCENARIO_FREQ_BOUNDS", True):
+        return dict(params)
+
+    f_min, f_max = frequency_bounds
+    out = dict(params)
+    accepted = _accepted_init_params(est_cls)
+    accepts_any = "**kwargs" in accepted
+    bound_keys = (("f_min_hz", "f_max_hz"), ("freq_min_hz", "freq_max_hz"))
+
+    for lo_key, hi_key in bound_keys:
+        force_sogi_fll_keys = est_name == "SOGI-FLL" and lo_key == "f_min_hz" and hi_key == "f_max_hz"
+        should_apply = (
+            accepts_any
+            or lo_key in accepted
+            or hi_key in accepted
+            or lo_key in out
+            or hi_key in out
+            or force_sogi_fll_keys
+        )
+        if not should_apply:
+            continue
+        if accepts_any or lo_key in accepted or lo_key in out or force_sogi_fll_keys:
+            out[lo_key] = float(f_min)
+        if accepts_any or hi_key in accepted or hi_key in out or force_sogi_fll_keys:
+            out[hi_key] = float(f_max)
+    return out
 
 
 def _apply_stratified_overrides(
@@ -305,7 +375,17 @@ def _build_scenarios() -> list[SweepScenario]:
 
 def _select_estimators() -> dict[str, type]:
     estimators = load_active_estimators()
-    default_include = FAST_ESTIMATORS
+    estimator_set = os.getenv("FREQRAMP_ESTIMATOR_SET", "journal").strip().lower()
+    if estimator_set in {"fast", "fast14"}:
+        default_include = FAST_ESTIMATORS
+    elif estimator_set in {"data-driven", "datadriven", "data"}:
+        default_include = DATA_DRIVEN_ESTIMATORS
+    elif estimator_set in {"journal", "journal16", "all-fast-data"}:
+        default_include = JOURNAL_ESTIMATORS
+    elif estimator_set in {"active", "all"}:
+        default_include = ""
+    else:
+        default_include = JOURNAL_ESTIMATORS
     include_raw = os.getenv("FREQRAMP_SWEEP_INCLUDE_ESTIMATORS", default_include).strip()
     exclude_raw = os.getenv("FREQRAMP_SWEEP_EXCLUDE_ESTIMATORS", "").strip()
     by_lower = {label.lower(): label for label in estimators}
@@ -381,25 +461,44 @@ def _run_engine_local(engine: MonteCarloEngine) -> MonteCarloResult:
     )
 
 
-def _evaluate_params_score(est_cls: type, params: dict[str, Any], scenarios_eval: list[Any], eval_start: int) -> float:
+def _score_estimator_on_scenario(est_cls: type, params: dict[str, Any], sc: Any, eval_start: int) -> tuple[float, float]:
+    est = est_cls(**params)
+    f_hat = benchmark._run_estimator(est, sc.v)
+    f_true = np.asarray(sc.f_true, dtype=float)
+    f_hat = np.asarray(f_hat, dtype=float)
+    if len(f_hat) != len(f_true):
+        return 1e9, 1e9
+    err = f_hat[eval_start:] - f_true[eval_start:]
+    if len(err) < 4 or not np.all(np.isfinite(err)):
+        return 1e9, 1e9
+    rmse = float(np.sqrt(np.mean(err ** 2)))
+    dt = float(sc.t[1] - sc.t[0]) if len(sc.t) > 1 else 1e-4
+    rfe = np.gradient(f_hat[eval_start:], dt) - np.gradient(f_true[eval_start:], dt)
+    rfe_rms = float(np.sqrt(np.mean(np.clip(rfe, -500.0, 500.0) ** 2)))
+    if not np.isfinite(rmse) or not np.isfinite(rfe_rms):
+        return 1e9, 1e9
+    return rmse, rfe_rms
+
+
+def _clean_counterpart(sc: Any) -> Any | None:
+    params = getattr(sc, "meta", {}).get("parameters", {}) if hasattr(sc, "meta") else {}
+    if not isinstance(params, dict):
+        return None
+    clean_params = dict(params)
+    clean_params["noise_sigma"] = 0.0
+    try:
+        return IEEEFreqRampScenario.run(**clean_params)
+    except Exception:
+        return None
+
+
+def _evaluate_standard_params_score(est_cls: type, params: dict[str, Any], scenarios_eval: list[Any], eval_start: int) -> float:
     try:
         rmses: list[float] = []
         rfes: list[float] = []
         for sc in scenarios_eval:
-            est = est_cls(**params)
-            f_hat = benchmark._run_estimator(est, sc.v)
-            f_true = np.asarray(sc.f_true, dtype=float)
-            f_hat = np.asarray(f_hat, dtype=float)
-            if len(f_hat) != len(f_true):
-                return 1e9
-            err = f_hat[eval_start:] - f_true[eval_start:]
-            if len(err) < 4 or not np.all(np.isfinite(err)):
-                return 1e9
-            rmse = float(np.sqrt(np.mean(err ** 2)))
-            dt = float(sc.t[1] - sc.t[0]) if len(sc.t) > 1 else 1e-4
-            rfe = np.gradient(f_hat[eval_start:], dt) - np.gradient(f_true[eval_start:], dt)
-            rfe_rms = float(np.sqrt(np.mean(np.clip(rfe, -500.0, 500.0) ** 2)))
-            if not np.isfinite(rmse) or not np.isfinite(rfe_rms):
+            rmse, rfe_rms = _score_estimator_on_scenario(est_cls, params, sc, eval_start)
+            if rmse >= 1e9 or rfe_rms >= 1e9:
                 return 1e9
             rmses.append(rmse)
             rfes.append(rfe_rms)
@@ -411,7 +510,101 @@ def _evaluate_params_score(est_cls: type, params: dict[str, Any], scenarios_eval
         return 1e9
 
 
+def _evaluate_tkeo_rocof_score(est_cls: type, params: dict[str, Any], scenarios_eval: list[Any], eval_start: int) -> float:
+    try:
+        noisy_rmses: list[float] = []
+        clean_rmses: list[float] = []
+        noise_gaps: list[float] = []
+        rfe_values: list[float] = []
+        by_rocof: dict[float, list[float]] = {}
+
+        for sc in scenarios_eval:
+            noisy_rmse, noisy_rfe = _score_estimator_on_scenario(est_cls, params, sc, eval_start)
+            if noisy_rmse >= 1e9 or noisy_rfe >= 1e9:
+                return 1e9
+            clean_sc = _clean_counterpart(sc)
+            if clean_sc is None:
+                return 1e9
+            clean_rmse, clean_rfe = _score_estimator_on_scenario(est_cls, params, clean_sc, eval_start)
+            if clean_rmse >= 1e9 or clean_rfe >= 1e9:
+                return 1e9
+
+            noisy_rmses.append(noisy_rmse)
+            clean_rmses.append(clean_rmse)
+            noise_gaps.append(abs(noisy_rmse - clean_rmse))
+            rfe_values.append(noisy_rfe)
+            params_meta = getattr(sc, "meta", {}).get("parameters", {}) if hasattr(sc, "meta") else {}
+            rocof = abs(float(params_meta.get("rocof_hz_s", 0.0))) if isinstance(params_meta, dict) else 0.0
+            by_rocof.setdefault(rocof, []).append(noisy_rmse)
+
+        if not noisy_rmses:
+            return 1e9
+
+        means = [float(np.mean(by_rocof[k])) for k in sorted(by_rocof)]
+        reversal_tol = _env_float("FREQRAMP_TKEO_REVERSAL_TOL_HZ", 0.05, minimum=0.0)
+        reversal_penalty = 0.0
+        for prev, cur in zip(means, means[1:]):
+            if cur < prev - reversal_tol:
+                reversal_penalty += (prev - cur) + reversal_tol
+
+        clean_weight = _env_float("FREQRAMP_TKEO_CLEAN_WEIGHT", 0.25, minimum=0.0)
+        noise_bias_weight = _env_float("FREQRAMP_TKEO_NOISE_BIAS_WEIGHT", 1.0, minimum=0.0)
+        reversal_weight = _env_float("FREQRAMP_TKEO_REVERSAL_WEIGHT", 2.0, minimum=0.0)
+        max_weight = _env_float("FREQRAMP_TKEO_MAX_WEIGHT", 0.10, minimum=0.0)
+        rfe_weight = _env_float("FREQRAMP_TUNE_RFE_WEIGHT", 0.001, minimum=0.0)
+
+        return float(
+            np.mean(noisy_rmses)
+            + clean_weight * np.mean(clean_rmses)
+            + noise_bias_weight * np.mean(noise_gaps)
+            + reversal_weight * reversal_penalty
+            + max_weight * max(noisy_rmses)
+            + rfe_weight * np.mean(rfe_values)
+        )
+    except Exception:
+        return 1e9
+
+
+def _evaluate_params_score(
+    est_name: str,
+    est_cls: type,
+    params: dict[str, Any],
+    scenarios_eval: list[Any],
+    eval_start: int,
+) -> float:
+    if est_name == "TKEO" and _env_bool("FREQRAMP_TKEO_ROBUST_OBJECTIVE", True):
+        return _evaluate_tkeo_rocof_score(est_cls, params, scenarios_eval, eval_start)
+    return _evaluate_standard_params_score(est_cls, params, scenarios_eval, eval_start)
+
+
+def _tkeo_rocof_candidates() -> list[dict[str, Any]]:
+    input_values = _env_float_csv("FREQRAMP_TKEO_INPUT_SMOOTHING_GRID") or [0.04, 0.08, 0.12, 0.20, 0.35, 0.50, 1.00]
+    output_values = _env_float_csv("FREQRAMP_TKEO_OUTPUT_SMOOTHING_GRID") or [1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 5e-3]
+    noise_values = _env_float_csv("FREQRAMP_TKEO_NOISE_POWER_GRID") or [0.0, 1e-7, 3e-7, 1e-6, 3e-6]
+    derivative_factors = _env_float_csv("FREQRAMP_TKEO_DERIVATIVE_NOISE_FACTOR_GRID") or [1.0, 2.0]
+    return [
+        {
+            "input_smoothing": float(inp),
+            "output_smoothing": float(out),
+            "noise_power": float(noise_power),
+            "derivative_noise_factor": float(derivative_factor),
+        }
+        for inp, out, noise_power, derivative_factor in product(input_values, output_values, noise_values, derivative_factors)
+        if (
+            0.0 < float(inp) <= 1.0
+            and 0.0 < float(out) <= 1.0
+            and float(noise_power) >= 0.0
+            and float(derivative_factor) >= 0.0
+        )
+    ]
+
+
 def _small_grid_candidates(est_name: str) -> list[dict[str, Any]]:
+    if est_name == "TKEO" and _env_bool("FREQRAMP_TKEO_ROBUST_GRID", True):
+        return _tkeo_rocof_candidates()
+    if est_name == "Koopman (RK-DPMU)" and _env_bool("FREQRAMP_KOOPMAN_ROCOF_FAST_GRID", True):
+        n_cycles = _env_float_csv("FREQRAMP_KOOPMAN_N_CYCLES_GRID") or [0.5, 0.75, 1.0, 1.5, 2.0]
+        return [{"n_cycles": float(c)} for c in n_cycles if float(c) > 0.0]
     if est_name == "Prony":
         orders = [2, 4, 6, 8, 10]
         n_cycles = [0.5, 1.0, 2.0, 4.0]
@@ -433,8 +626,10 @@ def _tune_estimator_on_scenarios(
     n_trials: int,
     tune_eval_runs: int,
     mode: str,
+    frequency_bounds: tuple[float, float] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     defaults: dict[str, Any] = est_cls.default_params() if hasattr(est_cls, "default_params") else {}
+    defaults = _apply_rocof_frequency_bounds(est_name, est_cls, defaults, frequency_bounds)
     tuning_meta: dict[str, Any] = {
         "mode": mode,
         "policy": _tuning_policy(),
@@ -445,7 +640,10 @@ def _tune_estimator_on_scenarios(
         "n_eval_scenarios": int(len(scenarios_eval)),
         "sampler_mode_effective": None,
         "best_objective": None,
+        "frequency_bounds_hz": list(frequency_bounds) if frequency_bounds is not None else None,
     }
+    if est_name == "TKEO" and _env_bool("FREQRAMP_TKEO_ROBUST_OBJECTIVE", True):
+        tuning_meta["objective"] = "minimize_noisy_rmse_plus_clean_noise_bias_reversal_rfe_penalty"
     if est_name not in benchmark.SEARCH_SPACES:
         tuning_meta["reason"] = "no_search_space"
         return defaults, tuning_meta
@@ -464,8 +662,8 @@ def _tune_estimator_on_scenarios(
         best_params = defaults
         best_loss = 1e9
         for cand in grid_candidates:
-            params = {**defaults, **cand}
-            loss = _evaluate_params_score(est_cls, params, scenarios_eval, eval_start)
+            params = _apply_rocof_frequency_bounds(est_name, est_cls, {**defaults, **cand}, frequency_bounds)
+            loss = _evaluate_params_score(est_name, est_cls, params, scenarios_eval, eval_start)
             if loss < best_loss:
                 best_loss = loss
                 best_params = params
@@ -486,8 +684,8 @@ def _tune_estimator_on_scenarios(
 
     def objective(trial: optuna.Trial) -> float:
         suggested = space_fn(trial)
-        params = {**defaults, **suggested}
-        return _evaluate_params_score(est_cls, params, scenarios_eval, eval_start)
+        params = _apply_rocof_frequency_bounds(est_name, est_cls, {**defaults, **suggested}, frequency_bounds)
+        return _evaluate_params_score(est_name, est_cls, params, scenarios_eval, eval_start)
 
     study, n_trials_exec, sampler_mode_effective = benchmark._build_optuna_study(
         space_fn=space_fn,
@@ -502,7 +700,7 @@ def _tune_estimator_on_scenarios(
 
     best_suggested = space_fn(study.best_trial)
     tuning_meta["best_objective"] = float(study.best_value)
-    return {**defaults, **best_suggested}, tuning_meta
+    return _apply_rocof_frequency_bounds(est_name, est_cls, {**defaults, **best_suggested}, frequency_bounds), tuning_meta
 
 
 def _tuning_policy() -> str:
@@ -511,6 +709,41 @@ def _tuning_policy() -> str:
 
 def _fixed_policy_enabled() -> bool:
     return _tuning_policy() == "fixed_policy"
+
+
+def _enforce_standardized_step(est_name: str) -> bool:
+    vectorized = set(_env_csv("FREQRAMP_VECTORIZE_ESTIMATORS") or ["PI-GRU", "Koopman (RK-DPMU)"])
+    return est_name not in vectorized
+
+
+def _env_key_for_estimator(est_name: str) -> str:
+    return (
+        est_name.upper()
+        .replace(" ", "_")
+        .replace("-", "_")
+        .replace("(", "")
+        .replace(")", "")
+    )
+
+
+def _estimator_n_mc_runs(est_name: str, default: int) -> int:
+    key = _env_key_for_estimator(est_name)
+    specific = os.getenv(f"FREQRAMP_{key}_N_MC_RUNS")
+    if specific is not None:
+        return _env_int(f"FREQRAMP_{key}_N_MC_RUNS", default, minimum=1)
+    if ESTIMATOR_FAMILIES.get(est_name) == "Data-driven":
+        return _env_int("FREQRAMP_DATA_DRIVEN_N_MC_RUNS", default, minimum=1)
+    return int(default)
+
+
+def _estimator_n_cost_reps(est_name: str, default: int) -> int:
+    key = _env_key_for_estimator(est_name)
+    specific = os.getenv(f"FREQRAMP_{key}_N_COST_REPS")
+    if specific is not None:
+        return _env_int(f"FREQRAMP_{key}_N_COST_REPS", default, minimum=1)
+    if ESTIMATOR_FAMILIES.get(est_name) == "Data-driven":
+        return _env_int("FREQRAMP_DATA_DRIVEN_N_COST_REPS", default, minimum=1)
+    return int(default)
 
 
 def _fixed_policy_train_levels() -> list[float]:
@@ -978,6 +1211,10 @@ def _classify_rocof_regime(df_est: pd.DataFrame) -> dict[str, Any]:
         regime = "Monotone growth"
         status = "claimable"
         interp = "RMSE grows mostly monotonically with RoCoF, but not as a strict power law."
+    elif monotone_fraction >= 0.90 and large_reversals == 0 and ratio > 1.35:
+        regime = "Weak monotone/noise-floor-limited"
+        status = "claimable_with_caveat"
+        interp = "RMSE is monotone but weakly shaped; interpret as noise-floor-limited or weakly RoCoF-sensitive, not erratic."
     elif ratio >= 2.0 and abs(float(np.mean(diffs[-3:]))) < 0.12:
         regime = "Saturation/plateau"
         status = "claimable"
@@ -1018,9 +1255,10 @@ def _save_rocof_hypothesis_tests(df_global: pd.DataFrame, out_dir: Path) -> tupl
             "SNR-improving": "RMSE falls as RoCoF increases.",
             "Power-law-like": "Positive log-log slope with high R2.",
             "Monotone growth": "Mostly monotone growth but weaker power-law evidence.",
+            "Weak monotone/noise-floor-limited": "Monotone response with weak slope or low model support; claim trend only with caveat.",
             "Saturation/plateau": "High-RoCoF response approaches a plateau or rail.",
             "Sign-asymmetric": "Positive and negative ramps differ strongly.",
-            "Erratic": "Do not interpret without repeat run.",
+            "Erratic": "Large reversals or non-monotone behavior; do not interpret without repeat run.",
         },
     }
     json_path.write_text(json.dumps(benchmark._to_builtin(payload), indent=2, ensure_ascii=False), encoding="utf-8")
@@ -1031,7 +1269,8 @@ def _save_rocof_hypothesis_tests(df_global: pd.DataFrame, out_dir: Path) -> tupl
         "- Metric: `m1_rmse_hz`",
         "- X axis: `abs_rocof_hz_s`",
         "",
-        "These automatic screens classify observed trend shape. They do not smooth curves and do not create compliance claims.",
+        "These automatic screens classify observed trend shape. They do not smooth curves and do not create compliance claims. "
+        "`Weak monotone/noise-floor-limited` is not an erratic failure: it marks a monotone but weak trend whose low-RoCoF region is dominated by estimator/noise floor.",
         "",
         "## Regime Counts",
         "",
@@ -1245,17 +1484,24 @@ def main() -> None:
         "tune_trials": tune_trials,
         "tune_eval_runs": tune_eval_runs,
         "capture_signals": capture_signals,
+        "estimator_set": os.getenv("FREQRAMP_ESTIMATOR_SET", "journal"),
     }
 
     t0 = time.time()
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     scenarios = _build_scenarios()
     estimators = _select_estimators()
+    frequency_bounds = _scenario_frequency_bounds(scenarios)
+    settings["frequency_bounds_hz"] = list(frequency_bounds)
+    settings["force_scenario_frequency_bounds"] = _env_bool("FREQRAMP_FORCE_SCENARIO_FREQ_BOUNDS", True)
+    settings["tkeo_robust_objective"] = _env_bool("FREQRAMP_TKEO_ROBUST_OBJECTIVE", True)
+    settings["tkeo_robust_grid"] = _env_bool("FREQRAMP_TKEO_ROBUST_GRID", True)
     print(f"Running fixed-policy RoCoF sweep: {len(scenarios)} scenarios x {len(estimators)} estimators")
     print(f"  MC runs per pair: {n_mc_runs}")
     print(f"  CPU timing reps per pair: {n_cost_reps}")
     print(f"  Tuning policy: {_tuning_policy()}")
     print(f"  Tuning trials: {tune_trials}")
+    print(f"  Scenario frequency bounds: {frequency_bounds[0]:g}..{frequency_bounds[1]:g} Hz")
     print(f"  Output dir: {OUTPUT_DIR}")
 
     fixed_policy_params: dict[str, dict[str, Any]] = {}
@@ -1272,6 +1518,7 @@ def main() -> None:
                 n_trials=tune_trials,
                 tune_eval_runs=tune_eval_runs,
                 mode="fixed_policy_global",
+                frequency_bounds=frequency_bounds,
             )
             fixed_policy_params[est_name] = params
             fixed_policy_meta[est_name] = meta
@@ -1283,6 +1530,8 @@ def main() -> None:
         sc_dir = OUTPUT_DIR / sc.scenario_name
         sc_dir.mkdir(parents=True, exist_ok=True)
         for est_name, est_cls in estimators.items():
+            est_n_mc_runs = _estimator_n_mc_runs(est_name, n_mc_runs)
+            est_n_cost_reps = _estimator_n_cost_reps(est_name, n_cost_reps)
             out_dir = sc_dir / est_name
             out_dir.mkdir(parents=True, exist_ok=True)
             summary_csv = out_dir / f"{sc.scenario_name}__{est_name}_summary.csv"
@@ -1301,12 +1550,14 @@ def main() -> None:
                     n_trials=tune_trials,
                     tune_eval_runs=tune_eval_runs,
                     mode="per_scenario_oracle",
+                    frequency_bounds=frequency_bounds,
                 )
+            best_params = _apply_rocof_frequency_bounds(est_name, est_cls, best_params, frequency_bounds)
 
             if resume_run and _can_reuse_existing_run(
                 summary_csv,
                 run_spec_path,
-                requested_n_mc_runs=n_mc_runs,
+                requested_n_mc_runs=est_n_mc_runs,
                 requested_tune_trials=tune_trials,
                 requested_tuning_policy=_tuning_policy(),
             ):
@@ -1319,9 +1570,10 @@ def main() -> None:
                     scenario_cls=sc.scenario_cls,
                     estimator_cls=est_cls,
                     estimator_params=best_params,
-                    n_runs=n_mc_runs,
+                    n_runs=est_n_mc_runs,
                     base_seed=base_seed,
-                    n_cost_reps=n_cost_reps,
+                    n_cost_reps=est_n_cost_reps,
+                    enforce_standardized_step=_enforce_standardized_step(est_name),
                     capture_signals=capture_signals,
                 )
                 result = _run_engine_local(engine)
@@ -1340,8 +1592,10 @@ def main() -> None:
                     "best_params": benchmark._to_builtin(best_params),
                     "tuning_meta": benchmark._to_builtin(tuning_meta),
                     "tuning_policy": _tuning_policy(),
-                    "n_mc_runs": int(n_mc_runs),
-                    "n_cost_reps": int(n_cost_reps),
+                    "frequency_bounds_hz": list(frequency_bounds),
+                    "n_mc_runs": int(est_n_mc_runs),
+                    "n_cost_reps": int(est_n_cost_reps),
+                    "enforce_standardized_step": _enforce_standardized_step(est_name),
                     "base_seed": int(base_seed),
                     "timing": benchmark._to_builtin(timing),
                 }
@@ -1373,7 +1627,7 @@ def main() -> None:
                     "family": ESTIMATOR_FAMILIES.get(est_name, "Unknown"),
                     "n_mc_runs": int(len(summary_df)),
                     "tune_trials": int(tuning_meta.get("n_trials_requested", tune_trials) or 0),
-                    "n_cost_reps": int(n_cost_reps),
+                    "n_cost_reps": int(est_n_cost_reps),
                     "total_elapsed_s": timing.get("total_elapsed_s") if isinstance(timing, dict) else None,
                 }
             )

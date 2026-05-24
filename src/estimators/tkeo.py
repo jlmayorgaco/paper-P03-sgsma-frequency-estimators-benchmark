@@ -24,6 +24,8 @@ def _tkeo_vectorized_core(
     buffer_x: np.ndarray,
     buffer_y: np.ndarray,
     samples_seen: int,
+    noise_power: float,
+    derivative_noise_factor: float,
 ) -> tuple[np.ndarray, float, float, bool, np.ndarray, np.ndarray, int]:
     """
     Núcleo del estimador TKEO utilizando un algoritmo DES más robusto.
@@ -66,13 +68,13 @@ def _tkeo_vectorized_core(
              continue
 
         # Energy of the signal at n-1 (center of our available window for symmetry)
-        psi_x = _psi(buffer_x[2], buffer_x[1], buffer_x[3])
+        psi_x = _psi(buffer_x[2], buffer_x[1], buffer_x[3]) - noise_power
         
         # Energy of the derivative at n-1
-        psi_y = _psi(buffer_y[1], buffer_y[0], buffer_y[2])
+        psi_y = _psi(buffer_y[1], buffer_y[0], buffer_y[2]) - derivative_noise_factor * noise_power
 
         # Security check: avoid division by zero or extremely small numbers
-        if abs(psi_x) > 1e-10 and psi_y >= 0:
+        if psi_x > 1e-10 and psi_y >= 0:
             # The classic DES ratio:
             # sin^2(w * dt / 2) = Psi(y_n) / (4 * Psi(x_n))
             # However, a more direct and stable formulation often used is:
@@ -115,6 +117,8 @@ class TKEO_Estimator(BaseFrequencyEstimator):
         nominal_f: float = 60.0,
         output_smoothing: float = 0.01,
         input_smoothing: float = 1.0,
+        noise_power: float = 0.0,
+        derivative_noise_factor: float = 2.0,
         dt: float = DT_DSP,
     ) -> None:
         self.nominal_f = float(nominal_f)
@@ -122,6 +126,12 @@ class TKEO_Estimator(BaseFrequencyEstimator):
         self.input_smoothing = float(input_smoothing)
         if not np.isfinite(self.input_smoothing) or not (0.0 < self.input_smoothing <= 1.0):
             raise ValueError("input_smoothing must be in (0, 1].")
+        self.noise_power = float(noise_power)
+        self.derivative_noise_factor = float(derivative_noise_factor)
+        if not np.isfinite(self.noise_power) or self.noise_power < 0.0:
+            raise ValueError("noise_power must be >= 0.")
+        if not np.isfinite(self.derivative_noise_factor) or self.derivative_noise_factor < 0.0:
+            raise ValueError("derivative_noise_factor must be >= 0.")
         self.dt = float(dt)
         self.reset()
 
@@ -137,7 +147,13 @@ class TKEO_Estimator(BaseFrequencyEstimator):
 
     @classmethod
     def default_params(cls) -> dict[str, float]:
-        return {"nominal_f": 60.0, "output_smoothing": 0.01, "input_smoothing": 1.0}
+        return {
+            "nominal_f": 60.0,
+            "output_smoothing": 0.01,
+            "input_smoothing": 1.0,
+            "noise_power": 0.0,
+            "derivative_noise_factor": 2.0,
+        }
 
     def structural_latency_samples(self) -> int:
         return 3 # Latency increased slightly due to deeper buffering required for stability
@@ -170,6 +186,8 @@ class TKEO_Estimator(BaseFrequencyEstimator):
             buffer_x=self.buffer_x,
             buffer_y=self.buffer_y,
             samples_seen=self.samples_seen,
+            noise_power=self.noise_power,
+            derivative_noise_factor=self.derivative_noise_factor,
         )
         return f_est
 

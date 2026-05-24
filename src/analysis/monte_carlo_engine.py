@@ -363,7 +363,15 @@ class MonteCarloEngine:
                 signal_dfs.append(signal_df)
 
         summary_df = pd.DataFrame(summary_rows).sort_values(by="run_idx").reset_index(drop=True)
-        signals_df = pd.concat(signal_dfs, ignore_index=True).sort_values(by=["run_idx", "t_s"]).reset_index(drop=True)
+        nonempty_signal_dfs = [df for df in signal_dfs if not df.empty]
+        if nonempty_signal_dfs:
+            signals_df = (
+                pd.concat(nonempty_signal_dfs, ignore_index=True)
+                .sort_values(by=["run_idx", "t_s"])
+                .reset_index(drop=True)
+            )
+        else:
+            signals_df = pd.DataFrame()
 
         estimator_name = None
         if self.estimator_cls is not None:

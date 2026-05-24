@@ -1,70 +1,14 @@
-
-# Project root
-**/venv/
-**/.venv/
-
-# IDE & Editor caches
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# OS-specific cache directories
-.DS_Store
-Thumbs.db
-
-# Python-specific
+.pytest_cache/
 __pycache__/
 *.py[cod]
-*$py.class
 *.egg-info/
-*/**/*.nbc
-*.nbc
-*.csv
-
-# LaTeX files (exclude from version control)
-\latex/
-*.log
-*.aux
-*.toc
-*.out
-*.bak
-*.fls
-*.fdb_latexmk
-*.synctex.gz
-*.gbl
-*.glg
-
-# CSV files (if you want to ignore them)
-data/*.csv  # Adjust path as needed
-
-# Cached downloads & temporary files
-.DS_Store
-Downloads/
-temp/*
+build/
+dist/
+.venv/
+.venv*/
+venv/
+artifacts/
+reports/
 outputs/
-
-# Environment variables
-.env
-.env.local
-
-# IDE-specific caches
-.vscode/settings.json
-.idea/workspace.xml
-
-# Benchmark artifact policy (do not version heavy generated outputs)
-artifacts/full_mc_benchmark/
-tests/montecarlo/outputs/
-artifacts/freq_ramp_rocof_sweep/
-artifacts/freq_ramp_rocof_v*_smoke/
-artifacts/freq_ramp_rocof_v*/Sweep_FreqRamp_RoCoF_*/
-artifacts/voltage_step_sweep/
-artifacts/pdf_previews/
-artifacts/run_logs/
-artifacts/voltage_mag_step_v13_clean_fast14/
-artifacts/voltage_mag_step_v14*/
-artifacts/voltage_mag_step_v15_classic_rls_rls_tmp/
-artifacts/voltage_mag_step_v15_classic_rls_fixed_policy_fast14/Sweep_AmplitudeStep_*/
-artifacts/voltage_mag_step_v15_classic_rls_fixed_policy_fast14/_fixed_policy_tuning/
-paper_submit_v2/outputs/
-paper_submit_v2/support/
+*.csv
+*.log
