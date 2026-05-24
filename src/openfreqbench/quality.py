@@ -35,7 +35,7 @@ def _run_pytest(root: Path) -> dict[str, Any]:
 def run_quality_gate(root: Path, *, run_tests: bool = True, release: bool = False) -> dict[str, Any]:
     required_files = [
         root / "README.md",
-        root / "docs" / "ARCHITECTURE_REVIEW.md",
+        root / "docs" / "ARCHITECTURE.md",
         root / "docs" / "JOURNAL_RESULTS_PROTOCOL.md",
         root / "docs" / "METHODS.md",
         root / "docs" / "VALIDATION.md",
