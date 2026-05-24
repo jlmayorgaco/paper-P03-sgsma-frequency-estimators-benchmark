@@ -1,0 +1,17 @@
+{
+  "weights_path": "C:\\Users\\walla\\Documents\\Github\\paper-P03-sgsma-frequency-estimators-benchmark\\src\\estimators\\pi_gru_weights_retrained.pt",
+  "model_config": {
+    "input_dim": 3,
+    "conv_channels": 48,
+    "hidden_dim": 128,
+    "fc_hidden_dim": 96,
+    "num_layers": 2,
+    "dropout": 0.15
+  },
+  "train_samples": 46080,
+  "val_samples": 5120,
+  "best_epoch": 11,
+  "best_val_loss": 0.38267144560813904,
+  "scenario_count": 32,
+  "synthetic_source_count": 36
+}

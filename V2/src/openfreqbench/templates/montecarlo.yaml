@@ -1,0 +1,24 @@
+run:
+  id: mc-small-matrix
+  mode: monte_carlo
+  output_dir: artifacts/openfreqbench
+  n_runs: 10
+  base_seed: 12345
+  max_workers: 4
+  capture_signals: false
+
+benchmark:
+  parameter_policy: default
+  scenarios:
+    - IEEE_Single_SinWave
+    - IEEE_Freq_Step
+    - IEEE_Modulation
+    - IBR_Power_Imbalance_Ringdown_Normal_Noise
+  estimators:
+    - name: ZCD
+    - name: IPDFT
+    - name: PLL
+    - name: EKF
+
+metrics:
+  profile: canonical-single-phase-v1

@@ -1,0 +1,25 @@
+{
+  "weights_path": "C:\\Users\\walla\\Documents\\Github\\paper-P03-sgsma-frequency-estimators-benchmark\\src\\estimators\\pi_gru_weights_hybrid_smoke.pt",
+  "model_config": {
+    "input_dim": 7,
+    "conv_channels": 32,
+    "hidden_dim": 96,
+    "fc_hidden_dim": 64,
+    "num_layers": 2,
+    "dropout": 0.1
+  },
+  "feature_config": {
+    "mode": "hybrid_priors",
+    "clip_hz": 12.0
+  },
+  "target_mode": "residual_to_prior",
+  "train_samples": 8640,
+  "val_samples": 960,
+  "best_epoch": 1,
+  "best_val_loss": 0.07195201756387834,
+  "scenario_count": 32,
+  "synthetic_source_count": 43,
+  "random_synth_cases": 4,
+  "mc_aug_per_scenario": 0,
+  "max_windows_per_source": 128
+}

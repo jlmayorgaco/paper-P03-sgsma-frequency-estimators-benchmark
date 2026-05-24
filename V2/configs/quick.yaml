@@ -1,0 +1,22 @@
+run:
+  id: quick-zcd-single-sinwave
+  mode: single
+  output_dir: ../artifacts/openfreqbench
+  n_runs: 1
+  base_seed: 12345
+  max_workers: 1
+  capture_signals: true
+
+benchmark:
+  parameter_policy: default
+  scenarios:
+    - IEEE_Single_SinWave
+  estimators:
+    - name: ZCD
+
+metrics:
+  profile: canonical-single-phase-v1
+  include:
+    - m1_rmse_hz
+    - m2_mae_hz
+    - m13_cpu_time_us

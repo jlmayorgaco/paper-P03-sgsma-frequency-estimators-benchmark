@@ -1,0 +1,330 @@
+hypotheses:
+  # Global (12)
+  - id: H_GLOBAL_01
+    title: Global RMSE difference (Model-based vs Loop-based)
+    metric: m1_rmse_hz
+    group_a: family:Model-based
+    group_b: family:Loop-based
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+  - id: H_GLOBAL_02
+    title: Global RMSE difference (Window-based vs Loop-based)
+    metric: m1_rmse_hz
+    group_a: family:Window-based
+    group_b: family:Loop-based
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+  - id: H_GLOBAL_03
+    title: Global CPU difference (Model-based vs Window-based)
+    metric: m13_cpu_time_us
+    group_a: family:Model-based
+    group_b: family:Window-based
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+  - id: H_GLOBAL_04
+    title: Global MAE difference (Data-driven vs Model-based)
+    metric: m2_mae_hz
+    group_a: family:Data-driven
+    group_b: family:Model-based
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+  - id: H_GLOBAL_05
+    title: Trip risk difference (Loop-based vs Model-based)
+    metric: m5_trip_risk_s
+    group_a: family:Loop-based
+    group_b: family:Model-based
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+  - id: H_GLOBAL_06
+    title: Settling time difference (Window-based vs Model-based)
+    metric: m8_settling_time_s
+    group_a: family:Window-based
+    group_b: family:Model-based
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+  - id: H_GLOBAL_07
+    title: RFE max difference (Loop-based vs Window-based)
+    metric: m9_rfe_max_hz_s
+    group_a: family:Loop-based
+    group_b: family:Window-based
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+  - id: H_GLOBAL_08
+    title: RFE rms difference (Model-based vs Loop-based)
+    metric: m10_rfe_rms_hz_s
+    group_a: family:Model-based
+    group_b: family:Loop-based
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+  - id: H_GLOBAL_09
+    title: RNAF difference (Adaptive vs Model-based)
+    metric: m11_rnaf_db
+    group_a: family:Adaptive
+    group_b: family:Model-based
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+  - id: H_GLOBAL_10
+    title: ISI difference (Data-driven vs Adaptive)
+    metric: m12_isi_pu
+    group_a: family:Data-driven
+    group_b: family:Adaptive
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+  - id: H_GLOBAL_11
+    title: Structural latency difference (Loop-based vs Model-based)
+    metric: m14_struct_latency_ms
+    group_a: family:Loop-based
+    group_b: family:Model-based
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+  - id: H_GLOBAL_12
+    title: CPU difference (Data-driven vs Loop-based)
+    metric: m13_cpu_time_us
+    group_a: family:Data-driven
+    group_b: family:Loop-based
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+
+  # Family-focused (12)
+  - id: H_FAMILY_01
+    title: LKF vs EKF RMSE
+    metric: m1_rmse_hz
+    group_a: estimator:LKF
+    group_b: estimator:EKF
+    test: mw
+    alpha: 0.05
+    correction: bh
+    mode: preregistered
+  - id: H_FAMILY_02
+    title: LKF2 vs UKF RMSE
+    metric: m1_rmse_hz
+    group_a: estimator:LKF2
+    group_b: estimator:UKF
+    test: mw
+    alpha: 0.05
+    correction: bh
+    mode: preregistered
+  - id: H_FAMILY_03
+    title: EKF vs RA-EKF MAE
+    metric: m2_mae_hz
+    group_a: estimator:EKF
+    group_b: estimator:RA-EKF
+    test: mw
+    alpha: 0.05
+    correction: bh
+    mode: preregistered
+  - id: H_FAMILY_04
+    title: IPDFT vs TFT RMSE
+    metric: m1_rmse_hz
+    group_a: estimator:IPDFT
+    group_b: estimator:TFT
+    test: mw
+    alpha: 0.05
+    correction: bh
+    mode: preregistered
+  - id: H_FAMILY_05
+    title: Prony vs ESPRIT RMSE
+    metric: m1_rmse_hz
+    group_a: estimator:Prony
+    group_b: estimator:ESPRIT
+    test: mw
+    alpha: 0.05
+    correction: bh
+    mode: preregistered
+  - id: H_FAMILY_06
+    title: PLL vs SOGI-PLL trip risk
+    metric: m5_trip_risk_s
+    group_a: estimator:PLL
+    group_b: estimator:SOGI-PLL
+    test: mw
+    alpha: 0.05
+    correction: bh
+    mode: preregistered
+  - id: H_FAMILY_07
+    title: SOGI-FLL vs Type-3 SOGI-PLL RMSE
+    metric: m1_rmse_hz
+    group_a: estimator:SOGI-FLL
+    group_b: estimator:Type-3 SOGI-PLL
+    test: mw
+    alpha: 0.05
+    correction: bh
+    mode: preregistered
+  - id: H_FAMILY_08
+    title: RLS vs TKEO RMSE
+    metric: m1_rmse_hz
+    group_a: estimator:RLS
+    group_b: estimator:TKEO
+    test: mw
+    alpha: 0.05
+    correction: bh
+    mode: preregistered
+  - id: H_FAMILY_09
+    title: Koopman vs PI-GRU RMSE
+    metric: m1_rmse_hz
+    group_a: estimator:Koopman (RK-DPMU)
+    group_b: estimator:PI-GRU
+    test: mw
+    alpha: 0.05
+    correction: bh
+    mode: preregistered
+  - id: H_FAMILY_10
+    title: ZCD vs PLL CPU
+    metric: m13_cpu_time_us
+    group_a: estimator:ZCD
+    group_b: estimator:PLL
+    test: mw
+    alpha: 0.05
+    correction: bh
+    mode: preregistered
+  - id: H_FAMILY_11
+    title: ZCD vs IPDFT RMSE
+    metric: m1_rmse_hz
+    group_a: estimator:ZCD
+    group_b: estimator:IPDFT
+    test: mw
+    alpha: 0.05
+    correction: bh
+    mode: preregistered
+  - id: H_FAMILY_12
+    title: UKF vs PI-GRU CPU
+    metric: m13_cpu_time_us
+    group_a: estimator:UKF
+    group_b: estimator:PI-GRU
+    test: mw
+    alpha: 0.05
+    correction: bh
+    mode: preregistered
+
+  # Tuning/robustness (12)
+  - id: H_TUNING_01
+    title: Ringdown severe vs low noise RMSE
+    metric: m1_rmse_hz
+    group_a: scenario:IBR_Power_Imbalance_Ringdown_Severe_Noise
+    group_b: scenario:IBR_Power_Imbalance_Ringdown_Low_Noise
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+  - id: H_TUNING_02
+    title: Ringdown medium vs normal noise RMSE
+    metric: m1_rmse_hz
+    group_a: scenario:IBR_Power_Imbalance_Ringdown_Medium_Noise
+    group_b: scenario:IBR_Power_Imbalance_Ringdown_Normal_Noise
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+  - id: H_TUNING_03
+    title: Ramp 20Hz/s vs 0.25Hz/s RMSE
+    metric: m1_rmse_hz
+    group_a: scenario:IEEE_Freq_Ramp_20Hzs
+    group_b: scenario:IEEE_Freq_Ramp_0.25Hzs
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+  - id: H_TUNING_04
+    title: Ramp 10Hz/s vs 1Hz/s MAE
+    metric: m2_mae_hz
+    group_a: scenario:IEEE_Freq_Ramp_10Hzs
+    group_b: scenario:IEEE_Freq_Ramp_1Hzs
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+  - id: H_TUNING_05
+    title: Mag step 50pct vs 5pct RMSE
+    metric: m1_rmse_hz
+    group_a: scenario:IEEE_Mag_Step_50pct
+    group_b: scenario:IEEE_Mag_Step_5pct
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+  - id: H_TUNING_06
+    title: Mag step 25pct vs 1pct MAE
+    metric: m2_mae_hz
+    group_a: scenario:IEEE_Mag_Step_25pct
+    group_b: scenario:IEEE_Mag_Step_1pct
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+  - id: H_TUNING_07
+    title: Phase jump 60 vs 20 RMSE
+    metric: m1_rmse_hz
+    group_a: scenario:IEEE_Phase_Jump_60
+    group_b: scenario:IEEE_Phase_Jump_20
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+  - id: H_TUNING_08
+    title: NERC vs IEEE phase 60 RMSE
+    metric: m1_rmse_hz
+    group_a: scenario:NERC_Phase_Jump_60
+    group_b: scenario:IEEE_Phase_Jump_60
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+  - id: H_TUNING_09
+    title: OOB interference vs single sinwave RMSE
+    metric: m1_rmse_hz
+    group_a: scenario:IEEE_OOB_Interference
+    group_b: scenario:IEEE_Single_SinWave
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+  - id: H_TUNING_10
+    title: IBR multi event vs freq step RMSE
+    metric: m1_rmse_hz
+    group_a: scenario:IBR_Multi_Event
+    group_b: scenario:IEEE_Freq_Step
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+  - id: H_TUNING_11
+    title: Modulation FM vs AM RMSE
+    metric: m1_rmse_hz
+    group_a: scenario:IEEE_Modulation_FM
+    group_b: scenario:IEEE_Modulation_AM
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+  - id: H_TUNING_12
+    title: Harmonics large vs small RMSE
+    metric: m1_rmse_hz
+    group_a: scenario:IBR_Harmonics_Large
+    group_b: scenario:IBR_Harmonics_Small
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
