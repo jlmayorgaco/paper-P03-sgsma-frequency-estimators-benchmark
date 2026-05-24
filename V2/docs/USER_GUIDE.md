@@ -51,6 +51,15 @@ Then run:
 openfreqbench run --config configs/tuned-artifacts.yaml
 ```
 
+For the paper-scale single-phase matrix in this repository, use:
+
+```bash
+openfreqbench run --config configs/journal-paper-replay.yaml
+```
+
+That config expects tuned artifacts under `artifacts/full_mc_benchmark/` in the
+repository root. It is meant for paper regeneration, not for a quick demo.
+
 ## Add an estimator
 
 Create a Python file with a class:

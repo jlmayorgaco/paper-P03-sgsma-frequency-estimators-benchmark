@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from openfreqbench.config import ConfigError, parse_config
+from openfreqbench.runner import dry_run_manifest
 
 
 def test_metric_formula_definitions_are_rejected() -> None:
@@ -63,3 +64,15 @@ def test_artifact_tuned_config_shape_is_valid(tmp_path) -> None:
     )
     assert cfg.parameter_policy == "artifact_tuned"
     assert cfg.tuned_artifacts_dir == tuned.resolve()
+
+
+def test_dry_run_rejects_unknown_estimator_label() -> None:
+    cfg = parse_config(
+        {
+            "run": {"id": "bad-estimator", "n_runs": 1},
+            "benchmark": {"scenarios": ["IEEE_Single_SinWave"], "estimators": ["BAD"]},
+            "metrics": {"profile": "canonical-single-phase-v1"},
+        }
+    )
+    with pytest.raises(ValueError):
+        dry_run_manifest(cfg)

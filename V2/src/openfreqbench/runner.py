@@ -15,18 +15,20 @@ import pandas as pd
 from analysis.monte_carlo_engine import MonteCarloEngine
 
 from .config import BenchmarkRunConfig, CustomEstimatorSelection, EstimatorSelection
+from .paths import PROJECT_ROOT, SOURCE_ROOT
 from .registry import (
     CANONICAL_METRIC_IDS,
     CANONICAL_METRIC_PROFILE,
     METRIC_LABELS,
     ESTIMATOR_FAMILIES,
+    estimator_spec_registry,
     load_estimators,
     platform_manifest,
     scenario_registry,
 )
 from .reproducibility import build_reproducibility_manifest, sha256_file
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = PROJECT_ROOT
 
 
 @contextmanager
@@ -128,6 +130,12 @@ def _validate_selection(config: BenchmarkRunConfig) -> None:
     unknown_scenarios = [name for name in config.scenarios if name not in known_scenarios]
     if unknown_scenarios:
         raise ValueError(f"Unknown scenario(s): {unknown_scenarios}. Known: {sorted(known_scenarios)}")
+    known_estimators = estimator_spec_registry(include_experimental=False)
+    unknown_estimators = [item.name for item in config.estimators if item.name not in known_estimators]
+    if unknown_estimators:
+        raise ValueError(
+            f"Unknown estimator(s): {unknown_estimators}. Known: {sorted(known_estimators)}"
+        )
 
 
 def dry_run_manifest(config: BenchmarkRunConfig) -> dict[str, Any]:
@@ -301,7 +309,11 @@ def run_benchmark_config(config: BenchmarkRunConfig, *, dry_run: bool = False) -
             "parameter_policy": config.parameter_policy,
             "tuned_artifacts_dir": str(config.tuned_artifacts_dir) if config.tuned_artifacts_dir else None,
         },
-        "reproducibility": build_reproducibility_manifest(ROOT, config.source_path),
+        "reproducibility": build_reproducibility_manifest(
+            ROOT,
+            config.source_path,
+            source_root=SOURCE_ROOT,
+        ),
         "platform_manifest": manifest,
         "raw_run_records": raw.to_dict(orient="records") if not raw.empty else [],
         "aggregated_metrics": aggregated.to_dict(orient="records") if not aggregated.empty else [],

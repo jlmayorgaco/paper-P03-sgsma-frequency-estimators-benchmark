@@ -10,6 +10,7 @@ OpenFreqBench MVP 2.0.0 is the first public-ready single-phase package cut.
 - Locked metric profile: `canonical-single-phase-v1`.
 - YAML-driven quick tests, estimator comparisons, Monte Carlo runs, tuned-artifact
   replay, reports, plots, and hypothesis testing.
+- Paper-scale replay config: `configs/journal-paper-replay.yaml`.
 
 ## Public Contract
 
@@ -32,3 +33,4 @@ part of the wheel.
 
 MVP 2.0.0 is package-ready. Award, paper, or leaderboard claims still require a
 Level 3 or Level 4 artifact set as defined in `docs/SCIENTIFIC_READINESS.md`.
+The run plan for that step is in `docs/JOURNAL_RESULTS_PROTOCOL.md`.

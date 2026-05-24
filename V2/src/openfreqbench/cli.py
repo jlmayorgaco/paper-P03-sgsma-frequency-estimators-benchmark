@@ -13,6 +13,7 @@ from pipelines.stats_hypotheses import run_hypotheses
 
 from .config import load_config, parse_config
 from .hypotheses import write_hypothesis_bank
+from .paths import PACKAGE_ROOT, PROJECT_ROOT
 from .quality import run_quality_gate
 from .reports import build_report_outputs
 from .registry import (
@@ -25,8 +26,8 @@ from .registry import (
 )
 from .runner import run_benchmark_config
 
-ROOT = Path(__file__).resolve().parents[2]
-PACKAGE_TEMPLATE_DIR = Path(__file__).resolve().parent / "templates"
+ROOT = PROJECT_ROOT
+PACKAGE_TEMPLATE_DIR = PACKAGE_ROOT / "templates"
 CHECKOUT_TEMPLATE_DIR = ROOT / "configs"
 
 

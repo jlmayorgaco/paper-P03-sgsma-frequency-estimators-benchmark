@@ -65,6 +65,14 @@ openfreqbench run --config configs/montecarlo.yaml
 openfreqbench run --config configs/tuned-artifacts.yaml
 ```
 
+Replay the paper-style tuned matrix through the V2 artifact contract:
+
+```bash
+openfreqbench run --config configs/journal-paper-replay.yaml
+```
+
+Install `.[benchmark-full]` first if the run includes PI-GRU.
+
 Validate without running:
 
 ```bash
@@ -125,5 +133,6 @@ If a YAML file tries to define metric formulas, the CLI rejects it.
 
 See `docs/ARCHITECTURE.md` and `docs/RESEARCHER_CONTRACT.md`.
 For scientific use, also read `docs/METHODS.md`,
-`docs/VALIDATION.md`, `docs/SCIENTIFIC_READINESS.md`, and
+`docs/VALIDATION.md`, `docs/SCIENTIFIC_READINESS.md`,
+`docs/ARCHITECTURE_REVIEW.md`, `docs/JOURNAL_RESULTS_PROTOCOL.md`, and
 `docs/MVP2_RELEASE_NOTES.md`.

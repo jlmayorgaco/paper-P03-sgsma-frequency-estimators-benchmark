@@ -68,32 +68,39 @@ def dependency_manifest(names: list[str]) -> dict[str, str | None]:
 
 def source_hash_manifest(root: Path) -> dict[str, dict[str, Any]]:
     tracked = [
-        "src/openfreqbench/config.py",
-        "src/openfreqbench/runner.py",
-        "src/openfreqbench/registry.py",
-        "src/openfreqbench/reports.py",
-        "src/openfreqbench/reproducibility.py",
-        "src/analysis/metrics.py",
-        "src/analysis/monte_carlo_engine.py",
-        "src/scenarios/base.py",
-        "src/estimators/base.py",
-        "src/pipelines/benchmark_definition.py",
+        ("src/openfreqbench/config.py", "openfreqbench/config.py"),
+        ("src/openfreqbench/runner.py", "openfreqbench/runner.py"),
+        ("src/openfreqbench/registry.py", "openfreqbench/registry.py"),
+        ("src/openfreqbench/reports.py", "openfreqbench/reports.py"),
+        ("src/openfreqbench/paths.py", "openfreqbench/paths.py"),
+        ("src/openfreqbench/reproducibility.py", "openfreqbench/reproducibility.py"),
+        ("src/analysis/metrics.py", "analysis/metrics.py"),
+        ("src/analysis/monte_carlo_engine.py", "analysis/monte_carlo_engine.py"),
+        ("src/scenarios/base.py", "scenarios/base.py"),
+        ("src/estimators/base.py", "estimators/base.py"),
+        ("src/pipelines/benchmark_definition.py", "pipelines/benchmark_definition.py"),
     ]
     out: dict[str, dict[str, Any]] = {}
-    for rel in tracked:
-        path = root / rel
+    for manifest_key, installed_rel in tracked:
+        path = root / manifest_key
+        if not path.exists():
+            path = root / installed_rel
         if path.exists():
-            out[rel] = {"sha256": sha256_file(path), "size_bytes": path.stat().st_size}
+            out[manifest_key] = {"sha256": sha256_file(path), "size_bytes": path.stat().st_size}
     return out
 
 
 def checkpoint_manifest(root: Path) -> dict[str, dict[str, Any]]:
     estimator_dir = root / "src" / "estimators"
+    if not estimator_dir.exists():
+        estimator_dir = root / "estimators"
     out: dict[str, dict[str, Any]] = {}
     for pattern in ("*.pt", "*.npz", "*.json"):
         for path in sorted(estimator_dir.glob(pattern)):
             if path.name.startswith("pi_gru"):
                 rel = path.relative_to(root).as_posix()
+                if not rel.startswith("src/"):
+                    rel = f"src/{rel}"
                 out[rel] = {"sha256": sha256_file(path), "size_bytes": path.stat().st_size}
     return out
 
@@ -108,7 +115,12 @@ def config_manifest(config_path: Path | None) -> dict[str, Any]:
     }
 
 
-def build_reproducibility_manifest(root: Path, config_path: Path | None = None) -> dict[str, Any]:
+def build_reproducibility_manifest(
+    root: Path,
+    config_path: Path | None = None,
+    *,
+    source_root: Path | None = None,
+) -> dict[str, Any]:
     dependencies = [
         "numpy",
         "scipy",
@@ -122,6 +134,7 @@ def build_reproducibility_manifest(root: Path, config_path: Path | None = None) 
         "andes",
         "opendssdirect.py",
     ]
+    hash_root = source_root or root
     payload = {
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "python": {
@@ -137,8 +150,8 @@ def build_reproducibility_manifest(root: Path, config_path: Path | None = None) 
         "git": git_manifest(root),
         "dependencies": dependency_manifest(dependencies),
         "config": config_manifest(config_path),
-        "source_hashes": source_hash_manifest(root),
-        "checkpoints": checkpoint_manifest(root),
+        "source_hashes": source_hash_manifest(hash_root),
+        "checkpoints": checkpoint_manifest(hash_root),
     }
     payload["manifest_sha256"] = sha256_text(json.dumps(payload, sort_keys=True, default=str))
     return payload
