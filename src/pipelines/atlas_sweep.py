@@ -130,6 +130,43 @@ FAMILY_PALETTE = {
 
 FAMILY_ORDER = ["Loop-based", "Model-based", "Window-based", "Adaptive", "Data-driven", "Exotic"]
 
+HIGH_CONTRAST_ESTIMATOR_COLORS = {
+    "PLL": "#B22222",
+    "SOGI-PLL": "#008000",
+    "SOGI-FLL": "#D6A100",
+    "Type-3 SOGI-PLL": "#008B8B",
+    "ZCD": "#2CA02C",
+    "EKF": "#C49A00",
+    "LKF": "#E41A1C",
+    "LKF2": "#4DAF4A",
+    "RA-EKF": "#111111",
+    "UKF": "#984EA3",
+    "IPDFT": "#FF7F0E",
+    "TFT": "#D62728",
+    "RLS": "#9467BD",
+    "TKEO": "#C71585",
+    "Prony": "#8C564B",
+    "ESPRIT": "#17BECF",
+    "Koopman (RK-DPMU)": "#1F77B4",
+    "PI-GRU": "#FF1493",
+    "MUSIC": "#7F7F7F",
+}
+
+HIGH_CONTRAST_FALLBACK_COLORS = (
+    "#B22222",
+    "#008000",
+    "#D6A100",
+    "#008B8B",
+    "#E41A1C",
+    "#4DAF4A",
+    "#984EA3",
+    "#FF7F0E",
+    "#111111",
+    "#C71585",
+    "#17BECF",
+    "#8C564B",
+)
+
 SEVERITY_REGIONS: dict[str, tuple[tuple[str, float, float, str], ...]] = {
     "magnitude_step": (
         ("Voltage PMU", 1.0, 10.0, "#66BB6A"),
@@ -941,15 +978,12 @@ def _direction_label_suffix(direction: str) -> str:
 
 def _estimator_color_map(estimators: list[str]) -> dict[str, Any]:
     out: dict[str, Any] = {}
-    for family, items in pd.DataFrame({"estimator": estimators}).assign(
-        family=lambda d: d["estimator"].map(lambda e: ESTIMATOR_FAMILIES.get(e, "Unknown"))
-    ).groupby("family"):
-        cmap = plt.get_cmap("tab20")
-        for idx, est in enumerate(sorted(items["estimator"])):
-            base = matplotlib.colors.to_rgb(FAMILY_PALETTE.get(str(family), "#616161"))
-            accent = cmap(idx % 20)[:3]
-            mix = 0.70
-            out[str(est)] = tuple(mix * b + (1 - mix) * a for b, a in zip(base, accent)) + (1.0,)
+    for idx, est in enumerate(sorted(estimators)):
+        color = HIGH_CONTRAST_ESTIMATOR_COLORS.get(
+            str(est),
+            HIGH_CONTRAST_FALLBACK_COLORS[idx % len(HIGH_CONTRAST_FALLBACK_COLORS)],
+        )
+        out[str(est)] = matplotlib.colors.to_rgba(color)
     return out
 
 
@@ -1071,6 +1105,8 @@ def _plot_metric_page(df: pd.DataFrame, sweep_key: str, metric_col: str, metric_
                 y,
                 marker="o",
                 markersize=2.8,
+                markeredgecolor="#111111",
+                markeredgewidth=0.25,
                 linewidth=1.05,
                 color=color_map[str(estimator)],
                 linestyle=_line_style(str(direction)),
@@ -1323,9 +1359,10 @@ def save_sign_asymmetry(df_global: pd.DataFrame, out_dir: Path) -> list[Path]:
             ax.text(0.5, 0.5, "No paired sign or level-sensitivity diagnostic available.", ha="center", va="center")
         else:
             df_level = df_level.sort_values(["family", "ratio"], ascending=[True, False])
-            colors = [FAMILY_PALETTE.get(str(fam), "#616161") for fam in df_level["family"]]
+            color_map = _estimator_color_map(df_level["estimator"].astype(str).tolist())
+            colors = [color_map.get(str(est), matplotlib.colors.to_rgba("#616161")) for est in df_level["estimator"]]
             x = np.arange(len(df_level))
-            ax.bar(x, df_level["ratio"].to_numpy(dtype=float), color=colors, alpha=0.88)
+            ax.bar(x, df_level["ratio"].to_numpy(dtype=float), color=colors, alpha=0.90, edgecolor="#111111", linewidth=0.25)
             ax.axhline(2.0, color="#303F9F", linestyle="--", linewidth=0.95, label="2x ratio guide")
             ax.set_yscale("log")
             ax.set_xticks(x)
@@ -1390,6 +1427,8 @@ def save_pareto_plot(df_global: pd.DataFrame, out_dir: Path) -> list[Path]:
                 max(float(row["rmse"]), 1e-12),
                 s=25 + 4 * max(float(row.get("latency", 0.0)), 0.0),
                 color=color_map.get(str(row["estimator"]), "#616161"),
+                edgecolors="#111111",
+                linewidths=0.25,
                 alpha=0.85,
             )
         top = part.sort_values("rmse").head(5)
