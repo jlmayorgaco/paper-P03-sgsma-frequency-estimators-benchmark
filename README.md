@@ -93,22 +93,28 @@ openfreqbench report build \
 ## ATLAS sweeps
 
 Use ATLAS when you want the same Monte Carlo, tuning policy, manifests, and PDFs
-for magnitude-step, RoCoF, and frequency-step studies.
+for magnitude-step, RoCoF, frequency-step, harmonics, interharmonics, and
+white-noise/SNR studies.
 
 ```bash
 python -m pipelines.atlas_sweep \
-  --sweeps magnitude_step,rocof,frequency_step \
+  --sweeps all \
   --policy fixed_policy \
   --n-runs 100 \
   --tune-trials 80 \
   --output-subdir atlas-paper-v1
 ```
 
+Use `--sweeps core` for only magnitude-step/RoCoF/frequency-step, or
+`--sweeps p0` for harmonics/interharmonics/noise.
+
 For a quick diagnostic run:
 
 ```bash
+ATLAS_INCLUDE_ESTIMATORS=ZCD,IPDFT \
+ATLAS_FREQSTEP_LEVELS_HZ=0.1 \
 python -m pipelines.atlas_sweep \
-  --sweeps all \
+  --sweeps frequency_step \
   --policy default \
   --n-runs 1 \
   --output-subdir atlas-smoke

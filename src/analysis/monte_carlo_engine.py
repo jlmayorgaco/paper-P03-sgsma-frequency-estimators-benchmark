@@ -290,7 +290,11 @@ class MonteCarloEngine:
                 signal_dict["f_hat_hz"] = f_hat
 
             struct_samples = est_out.get("struct_samples", 0)
-            noise_sigma = params.get("noise_sigma", 0.0)
+            noise_sigma = params.get("noise_sigma", params.get("white_noise_sigma", 0.0))
+            event_time_s = params.get("t_step_s", params.get("t_start_s", params.get("t_event_s")))
+            if getattr(self.scenario_cls, "DISABLE_EVENT_METRICS", False):
+                event_time_s = None
+            interharmonic_hz = 75.0 if float(params.get("ih75_pct", 0.0) or 0.0) > 0.0 else 32.5
 
             # -------------------------------------------------------------
             # New metrics architecture (integration with metrics.py)
@@ -302,8 +306,8 @@ class MonteCarloEngine:
                 exec_time_s=exec_time_s,
                 structural_samples=struct_samples,
                 noise_sigma=noise_sigma,
-                interharmonic_hz=32.5,
-                event_time_s=params.get("t_step_s", params.get("t_start_s")),
+                interharmonic_hz=interharmonic_hz,
+                event_time_s=event_time_s,
             )
             est_params_for_bounds = dict(self.estimator_params or {})
             freq_min = est_params_for_bounds.get("f_min_hz", est_params_for_bounds.get("freq_min_hz"))

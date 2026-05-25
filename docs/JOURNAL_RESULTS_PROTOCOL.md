@@ -32,14 +32,19 @@ Use three layers of evidence.
    This keeps the original full Monte Carlo workflow alive. Use it when the
    paper figures or legacy artifact structure need to be regenerated.
 
-3. `python -m pipelines.atlas_sweep --sweeps magnitude_step,rocof,frequency_step --policy fixed_policy --n-runs 100 --tune-trials 80 --output-subdir atlas-paper-v1`
+3. `python -m pipelines.atlas_sweep --sweeps all --policy fixed_policy --n-runs 100 --tune-trials 80 --output-subdir atlas-paper-v1`
 
-   This produces the unified ATLAS sweep set. Magnitude Step, RoCoF, and
-   Frequency Step use the same scenario factory, estimator selection, Monte
-   Carlo aggregation, tuning/oracle policy, manifests, traceability tables, and
-   PDF plotting code. It answers whether tracking error grows smoothly with
-   stress, whether methods saturate, and whether positive and negative events
-   behave differently.
+   This produces the unified ATLAS sweep set. Magnitude Step, RoCoF, Frequency
+   Step, Harmonics, Interharmonics, and White-Noise/SNR use the same scenario
+   factory, estimator selection, Monte Carlo aggregation, tuning/oracle policy,
+   manifests, traceability tables, and PDF plotting code. It answers whether
+   tracking error grows smoothly with stress, whether methods saturate, whether
+   positive and negative events behave differently, and whether ranking changes
+   under isolated distortion/noise mechanisms.
+
+   For a smaller confirmatory slice, use `--sweeps p0` for harmonics,
+   interharmonics, and noise, or `--sweeps core` for magnitude-step, RoCoF, and
+   frequency-step.
 
 Do not replace these runs with a smoke test. Smoke tests check software. They do
 not support paper claims.
@@ -56,8 +61,8 @@ Every claim must point to files, not memory or old notes. Keep these files:
 - hypothesis outputs
 - plots used in the paper
 - reproducibility manifest with source and checkpoint hashes
-- ATLAS manifests and aggregate CSVs for magnitude-step, RoCoF, and
-  frequency-step runs
+- ATLAS manifests and aggregate CSVs for magnitude-step, RoCoF, frequency-step,
+  harmonics, interharmonics, and noise/SNR runs
 
 Generated per-run folders can stay out of git if the aggregate files and
 manifests are archived.

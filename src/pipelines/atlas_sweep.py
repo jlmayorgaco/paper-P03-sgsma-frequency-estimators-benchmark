@@ -47,9 +47,12 @@ from openfreqbench.artifacts import (
 from openfreqbench.reproducibility import git_manifest, sha256_file
 from pipelines.benchmark_definition import ESTIMATOR_FAMILIES, load_active_estimators
 import pipelines.full_mc_benchmark as benchmark
+from scenarios.ibr_harmonics_large import IBRHarmonicsLargeScenario
+from scenarios.ibr_harmonics_medium import IBRHarmonicsMediumScenario
 from scenarios.ieee_freq_ramp import IEEEFreqRampScenario
 from scenarios.ieee_freq_step import IEEEFreqStepScenario
 from scenarios.ieee_mag_step import IEEEMagStepScenario
+from scenarios.ieee_single_sinwave import IEEESingleSinWaveScenario
 
 
 METHOD_VERSION = "atlas_sweep_v1_2026_05_25"
@@ -136,6 +139,7 @@ class SweepSpec:
     default_levels: tuple[float, ...]
     reference_value: float
     methodology: str
+    directional: bool = True
 
 
 @dataclass(frozen=True)
@@ -192,6 +196,52 @@ SWEEP_SPECS: dict[str, SweepSpec] = {
             "artificial phase jump. Curves expose transient tracking, overshoot and settling."
         ),
     ),
+    "harmonics": SweepSpec(
+        key="harmonics",
+        label="Integer Harmonics",
+        x_col="thd_percent",
+        x_label="Integer-harmonic THD [%]",
+        signed_col="thd_percent",
+        default_levels=(1.0, 2.0, 3.0, 5.0, 8.0, 10.0, 15.0, 20.0, 30.0),
+        reference_value=5.0,
+        methodology=(
+            "Integer-harmonic isolation sweep: the true frequency is fixed at nominal and "
+            "integer harmonic coefficients are scaled to a target THD. Interharmonics, "
+            "subharmonics, impulses and frequency events are disabled so degradation can be "
+            "attributed to harmonic distortion rather than mixed IBR artifacts."
+        ),
+        directional=False,
+    ),
+    "interharmonics": SweepSpec(
+        key="interharmonics",
+        label="Interharmonics",
+        x_col="interharmonic_percent",
+        x_label="Interharmonic amplitude [%]",
+        signed_col="interharmonic_percent",
+        default_levels=(0.5, 1.0, 2.0, 3.0, 5.0, 8.0, 10.0, 15.0, 20.0),
+        reference_value=2.0,
+        methodology=(
+            "Non-synchronous interharmonic isolation sweep: integer harmonics and RoCoF are "
+            "disabled while a 75 Hz component is scaled. This isolates spectral leakage and "
+            "off-bin disturbance sensitivity."
+        ),
+        directional=False,
+    ),
+    "noise_snr": SweepSpec(
+        key="noise_snr",
+        label="White Noise / SNR",
+        x_col="noise_sigma_pu",
+        x_label="White-noise sigma [pu]",
+        signed_col="snr_db",
+        default_levels=(0.0001, 0.0003, 0.001, 0.003, 0.01, 0.03, 0.10),
+        reference_value=0.001,
+        methodology=(
+            "Single-tone white-noise sweep: the signal is a constant-frequency sinusoid and "
+            "only additive white noise changes. Reported SNR assumes a 1 pu peak sine wave "
+            "with RMS 1/sqrt(2)."
+        ),
+        directional=False,
+    ),
 }
 
 
@@ -245,6 +295,25 @@ def _float_csv(raw: str | None) -> list[float]:
 
 def _sanitize_token(value: float) -> str:
     return f"{abs(float(value)):g}".replace(".", "p").replace("-", "m")
+
+
+def _snr_db_from_sigma(noise_sigma: float, amplitude_peak: float = 1.0) -> float:
+    if noise_sigma <= 0.0:
+        return float("inf")
+    return float(20.0 * math.log10((abs(amplitude_peak) / math.sqrt(2.0)) / noise_sigma))
+
+
+def _integer_harmonic_coefficients_for_thd(thd_pu: float) -> dict[str, float]:
+    weights = {
+        "h2_pct": 0.25,
+        "h3_pct": 0.50,
+        "h5_pct": 1.00,
+        "h7_pct": 0.75,
+        "h11_pct": 0.375,
+        "h13_pct": 0.25,
+    }
+    norm = math.sqrt(sum(v * v for v in weights.values()))
+    return {key: float(max(0.0, thd_pu) * value / norm) for key, value in weights.items()}
 
 
 def _env_key_for_estimator(est_name: str) -> str:
@@ -308,15 +377,22 @@ def _apply_atlas_overrides(cls: type, params: dict[str, Any], run_idx: int, n_ru
     time_u = (0.41421356237 * (int(run_idx) + 1)) % 1.0
     noise_lo, noise_hi = _noise_bounds()
     out = dict(params)
-    out["phase_rad"] = float(2.0 * math.pi * phase_u)
-    noise = float(noise_lo + (noise_hi - noise_lo) * u)
-    if getattr(cls, "ATLAS_SWEEP_KEY", "") == "magnitude_step":
-        mode = os.getenv("ATLAS_MAG_NOISE_MODE", "fixed_absolute").strip().lower()
-        if mode in {"fixed_snr", "amplitude_scaled", "post_fixed_snr"}:
-            noise *= max(abs(float(out.get("amp_post_pu", 1.0))), 1e-12)
-        elif mode in {"none", "noise_free", "no_noise"}:
-            noise = 0.0
-    out["noise_sigma"] = noise
+    sweep_key = getattr(cls, "ATLAS_SWEEP_KEY", "")
+    if sweep_key in {"magnitude_step", "rocof", "frequency_step", "noise_snr"}:
+        out["phase_rad"] = float(2.0 * math.pi * phase_u)
+    if sweep_key in {"magnitude_step", "rocof", "frequency_step"}:
+        noise = float(noise_lo + (noise_hi - noise_lo) * u)
+        if sweep_key == "magnitude_step":
+            mode = os.getenv("ATLAS_MAG_NOISE_MODE", "fixed_absolute").strip().lower()
+            if mode in {"fixed_snr", "amplitude_scaled", "post_fixed_snr"}:
+                noise *= max(abs(float(out.get("amp_post_pu", 1.0))), 1e-12)
+            elif mode in {"none", "noise_free", "no_noise"}:
+                noise = 0.0
+        out["noise_sigma"] = noise
+    elif sweep_key == "noise_snr":
+        out["noise_sigma"] = float(out.get("noise_sigma", 0.0))
+    elif sweep_key in {"harmonics", "interharmonics"}:
+        out["white_noise_sigma"] = float(out.get("white_noise_sigma", 0.0))
     if "t_step_s" in out:
         out["t_step_s"] = float(float(out["t_step_s"]) - 0.025 + 0.050 * time_u)
     if "t_start_s" in out:
@@ -330,7 +406,11 @@ def _make_scenario_variant(sweep_key: str, signed_value: float) -> AtlasScenario
     value = float(signed_value)
     abs_value = abs(value)
     direction = "pos" if value >= 0.0 else "neg"
+    if not spec.directional:
+        value = abs_value
+        direction = "level"
     token = _sanitize_token(value)
+    monte_carlo_space: dict[str, Any]
 
     if sweep_key == "magnitude_step":
         amp_pre = 1.0
@@ -347,6 +427,10 @@ def _make_scenario_variant(sweep_key: str, signed_value: float) -> AtlasScenario
         }
         base_cls = IEEEMagStepScenario
         signed_col = {"step_percent": value, "abs_step_percent": abs_value}
+        monte_carlo_space = {
+            "phase_rad": {"kind": "uniform", "low": 0.0, "high": 2.0 * math.pi},
+            "noise_sigma": {"kind": "uniform", "low": _noise_bounds()[0], "high": _noise_bounds()[1]},
+        }
     elif sweep_key == "rocof":
         t_start = _env_float("ATLAS_ROCOF_T_START_S", 0.30, minimum=0.0)
         ramp_duration = _env_float("ATLAS_ROCOF_RAMP_DURATION_S", 0.40, minimum=0.02)
@@ -362,6 +446,10 @@ def _make_scenario_variant(sweep_key: str, signed_value: float) -> AtlasScenario
         }
         base_cls = IEEEFreqRampScenario
         signed_col = {"rocof_hz_s": value, "abs_rocof_hz_s": abs_value}
+        monte_carlo_space = {
+            "phase_rad": {"kind": "uniform", "low": 0.0, "high": 2.0 * math.pi},
+            "noise_sigma": {"kind": "uniform", "low": _noise_bounds()[0], "high": _noise_bounds()[1]},
+        }
     elif sweep_key == "frequency_step":
         scenario_name = f"Atlas_FrequencyStep_{direction}_{token}Hz"
         class_name = f"AtlasFrequencyStep{direction.title()}{token}"
@@ -375,16 +463,84 @@ def _make_scenario_variant(sweep_key: str, signed_value: float) -> AtlasScenario
         }
         base_cls = IEEEFreqStepScenario
         signed_col = {"step_hz": value, "abs_step_hz": abs_value}
+        monte_carlo_space = {
+            "phase_rad": {"kind": "uniform", "low": 0.0, "high": 2.0 * math.pi},
+            "noise_sigma": {"kind": "uniform", "low": _noise_bounds()[0], "high": _noise_bounds()[1]},
+        }
+    elif sweep_key == "harmonics":
+        thd_pu = abs_value / 100.0
+        harmonic_coeffs = _integer_harmonic_coefficients_for_thd(thd_pu)
+        scenario_name = f"Atlas_Harmonics_THD_{token}pct"
+        class_name = f"AtlasHarmonicsThd{token}"
+        default_params = {
+            **IBRHarmonicsLargeScenario.DEFAULT_PARAMS,
+            "duration_s": _env_float("ATLAS_HARMONICS_DURATION_S", 2.0, minimum=0.3),
+            "freq_nom_hz": 60.0,
+            "freq_step_hz": 0.0,
+            "t_event_s": _env_float("ATLAS_HARMONICS_MARKER_S", 1.0, minimum=0.0),
+            "amp_pu": 1.0,
+            **harmonic_coeffs,
+            "sub_pct": 0.0,
+            "ih325_pct": 0.0,
+            "ih85_pct": 0.0,
+            "white_noise_sigma": _env_float("ATLAS_DISTORTION_NOISE_SIGMA", 0.001, minimum=0.0),
+            "brown_noise_sigma": 0.0,
+            "impulse_prob": 0.0,
+            "impulse_mag": 0.0,
+        }
+        base_cls = IBRHarmonicsLargeScenario
+        signed_col = {"thd_percent": abs_value, "thd_pu": thd_pu, **harmonic_coeffs}
+        monte_carlo_space = {}
+    elif sweep_key == "interharmonics":
+        interharmonic_pu = abs_value / 100.0
+        scenario_name = f"Atlas_Interharmonics_75Hz_{token}pct"
+        class_name = f"AtlasInterharmonics75Hz{token}"
+        default_params = {
+            **IBRHarmonicsMediumScenario.DEFAULT_PARAMS,
+            "duration_s": _env_float("ATLAS_INTERHARMONICS_DURATION_S", 2.0, minimum=0.3),
+            "freq_nom_hz": 60.0,
+            "rocof_hz_s": 0.0,
+            "rocof_duration_s": 0.0,
+            "t_event_s": _env_float("ATLAS_INTERHARMONICS_MARKER_S", 1.0, minimum=0.0),
+            "amp_pu": 1.0,
+            "h3_pct": 0.0,
+            "h5_pct": 0.0,
+            "h7_pct": 0.0,
+            "h11_pct": 0.0,
+            "h13_pct": 0.0,
+            "ih75_pct": interharmonic_pu,
+            "white_noise_sigma": _env_float("ATLAS_DISTORTION_NOISE_SIGMA", 0.001, minimum=0.0),
+            "brown_noise_sigma": 0.0,
+        }
+        base_cls = IBRHarmonicsMediumScenario
+        signed_col = {"interharmonic_percent": abs_value, "interharmonic_pu": interharmonic_pu, "interharmonic_hz": 75.0}
+        monte_carlo_space = {}
+    elif sweep_key == "noise_snr":
+        sigma = abs_value
+        snr_db = _snr_db_from_sigma(sigma, amplitude_peak=1.0)
+        scenario_name = f"Atlas_NoiseSigma_{token}pu"
+        class_name = f"AtlasNoiseSigma{token}"
+        default_params = {
+            **IEEESingleSinWaveScenario.DEFAULT_PARAMS,
+            "duration_s": _env_float("ATLAS_NOISE_DURATION_S", 1.5, minimum=0.3),
+            "amplitude": 1.0,
+            "freq_hz": 60.0,
+            "phase_rad": 0.0,
+            "noise_sigma": sigma,
+        }
+        base_cls = IEEESingleSinWaveScenario
+        signed_col = {"noise_sigma_pu": sigma, "snr_db": snr_db}
+        monte_carlo_space = {
+            "phase_rad": {"kind": "uniform", "low": 0.0, "high": 2.0 * math.pi},
+        }
     else:
         raise ValueError(f"Unknown atlas sweep: {sweep_key}")
 
     attrs = {
         "SCENARIO_NAME": scenario_name,
         "DEFAULT_PARAMS": default_params,
-        "MONTE_CARLO_SPACE": {
-            "phase_rad": {"kind": "uniform", "low": 0.0, "high": 2.0 * math.pi},
-            "noise_sigma": {"kind": "uniform", "low": _noise_bounds()[0], "high": _noise_bounds()[1]},
-        },
+        "MONTE_CARLO_SPACE": monte_carlo_space,
+        "DISABLE_EVENT_METRICS": sweep_key in {"harmonics", "interharmonics", "noise_snr"},
         "ATLAS_SWEEP_KEY": sweep_key,
         "ATLAS_SWEEP_VALUE": value,
         "ATLAS_ABS_VALUE": abs_value,
@@ -413,6 +569,9 @@ def _levels_for_sweep(sweep_key: str) -> list[float]:
         "magnitude_step": "ATLAS_MAG_LEVELS_PCT",
         "rocof": "ATLAS_ROCOF_LEVELS_HZ_S",
         "frequency_step": "ATLAS_FREQSTEP_LEVELS_HZ",
+        "harmonics": "ATLAS_HARMONICS_THD_LEVELS_PCT",
+        "interharmonics": "ATLAS_INTERHARMONIC_LEVELS_PCT",
+        "noise_snr": "ATLAS_NOISE_SIGMA_LEVELS_PU",
     }[sweep_key]
     configured = _float_csv(os.getenv(env_name))
     values = configured if configured else list(spec.default_levels)
@@ -420,6 +579,8 @@ def _levels_for_sweep(sweep_key: str) -> list[float]:
 
 
 def _directions_for_sweep(sweep_key: str) -> list[str]:
+    if not SWEEP_SPECS[sweep_key].directional:
+        return ["level"]
     raw = os.getenv(f"ATLAS_{sweep_key.upper()}_DIRECTIONS") or os.getenv("ATLAS_DIRECTIONS", "pos,neg")
     requested = [item.lower() for item in _csv(raw)]
     out: list[str] = []
@@ -430,15 +591,32 @@ def _directions_for_sweep(sweep_key: str) -> list[str]:
     return out or ["pos", "neg"]
 
 
+def _expand_sweep_keys(requested: list[str]) -> list[str]:
+    expanded: list[str] = []
+    for item in requested:
+        key = item.strip().lower().replace("-", "_")
+        if key == "all":
+            expanded.extend(SWEEP_SPECS.keys())
+        elif key == "core":
+            expanded.extend(["magnitude_step", "rocof", "frequency_step"])
+        elif key == "p0":
+            expanded.extend(["harmonics", "interharmonics", "noise_snr"])
+        else:
+            expanded.append(key)
+    return list(dict.fromkeys(expanded))
+
+
 def build_atlas_scenarios(sweep_keys: list[str]) -> list[AtlasScenario]:
     scenarios: list[AtlasScenario] = []
-    for sweep_key in sweep_keys:
+    for sweep_key in _expand_sweep_keys(sweep_keys):
+        if sweep_key not in SWEEP_SPECS:
+            raise ValueError(f"Unknown ATLAS sweep: {sweep_key}. Known: {sorted(SWEEP_SPECS)}")
         levels = _levels_for_sweep(sweep_key)
         for direction in _directions_for_sweep(sweep_key):
             for level in levels:
                 if sweep_key == "magnitude_step" and direction == "neg" and level >= 100.0:
                     continue
-                signed = level if direction == "pos" else -level
+                signed = level if direction in {"pos", "level"} else -level
                 scenarios.append(_make_scenario_variant(sweep_key, signed))
     include = set(_csv(os.getenv("ATLAS_INCLUDE_SCENARIOS")))
     if include:
@@ -616,6 +794,10 @@ def _frequency_bounds_for_sweep(scenarios: list[AtlasScenario]) -> tuple[float, 
             values.extend([float(params.get("freq_nom_hz", 60.0)), float(params.get("freq_cap_hz", 60.0))])
         elif sc.sweep_key == "frequency_step":
             values.extend([float(params.get("freq_pre_hz", 60.0)), float(params.get("freq_post_hz", 60.0))])
+        elif sc.sweep_key in {"harmonics", "interharmonics"}:
+            values.append(float(params.get("freq_nom_hz", 60.0)))
+        elif sc.sweep_key == "noise_snr":
+            values.append(float(params.get("freq_hz", 60.0)))
     if not values:
         return None
     margin = _env_float("ATLAS_FREQ_BOUND_MARGIN_HZ", 10.0, minimum=0.0)
@@ -686,7 +868,15 @@ def _add_derived_metric_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _line_style(direction: str) -> str:
-    return "-" if direction == "pos" else "--"
+    return "--" if direction == "neg" else "-"
+
+
+def _direction_label_suffix(direction: str) -> str:
+    if direction == "pos":
+        return " +"
+    if direction == "neg":
+        return " -"
+    return ""
 
 
 def _estimator_color_map(estimators: list[str]) -> dict[str, Any]:
@@ -715,13 +905,18 @@ def _plot_metric_page(df: pd.DataFrame, sweep_key: str, metric_col: str, metric_
         for (estimator, direction), df_est in part.sort_values([spec.x_col, "estimator"]).groupby(["estimator", "direction"], sort=True):
             x = pd.to_numeric(df_est[spec.x_col], errors="coerce").to_numpy(dtype=float)
             y = pd.to_numeric(df_est[metric_col], errors="coerce").to_numpy(dtype=float)
+            valid_xy = np.isfinite(x) & np.isfinite(y)
+            if not np.any(valid_xy):
+                continue
+            x = x[valid_xy]
+            y = y[valid_xy]
             if yscale == "log":
                 y = np.maximum(y, 1e-12)
             lo_col = metric_col.replace("_mean", "_ci95_low")
             hi_col = metric_col.replace("_mean", "_ci95_high")
             if lo_col in df_est.columns and hi_col in df_est.columns:
-                lo = pd.to_numeric(df_est[lo_col], errors="coerce").to_numpy(dtype=float)
-                hi = pd.to_numeric(df_est[hi_col], errors="coerce").to_numpy(dtype=float)
+                lo = pd.to_numeric(df_est[lo_col], errors="coerce").to_numpy(dtype=float)[valid_xy]
+                hi = pd.to_numeric(df_est[hi_col], errors="coerce").to_numpy(dtype=float)[valid_xy]
                 if np.any(np.isfinite(lo)) and np.any(np.isfinite(hi)):
                     if yscale == "log":
                         lo = np.maximum(lo, 1e-12)
@@ -735,7 +930,7 @@ def _plot_metric_page(df: pd.DataFrame, sweep_key: str, metric_col: str, metric_
                 linewidth=1.05,
                 color=color_map[str(estimator)],
                 linestyle=_line_style(str(direction)),
-                label=f"{estimator} {'+' if direction == 'pos' else '-'}",
+                label=f"{estimator}{_direction_label_suffix(str(direction))}",
             )
         ticks = sorted(df_sweep[spec.x_col].dropna().unique().tolist())
         if ticks:
@@ -760,7 +955,7 @@ def _plot_metric_page(df: pd.DataFrame, sweep_key: str, metric_col: str, metric_
     fig.text(
         0.5,
         0.006,
-        "Solid lines are positive events; dashed lines are negative events. Shaded bands are bootstrap CI95 when n>1.",
+        "Solid/dashed lines mark event sign where the sweep has signed perturbations. Shaded bands are bootstrap CI95 when n>1.",
         ha="center",
         va="bottom",
         fontsize=7.5,
@@ -824,7 +1019,7 @@ def save_multipage_dashboard(df_global: pd.DataFrame, out_dir: Path) -> Path:
             "",
             "Interpretation:",
             "- Every sweep uses the same runner, metric aggregation, manifests and plotting code.",
-            "- Positive and negative events are plotted together to expose sign asymmetry.",
+            "- Signed sweeps plot positive and negative events together; level-only sweeps isolate one disturbance amplitude.",
             "- CI bands are bootstrap intervals over Monte Carlo runs; n=1 runs are diagnostic only.",
             "- Guide lines in older plots are not formal compliance claims unless tied to a preregistered test.",
         ]
@@ -907,9 +1102,14 @@ def save_sign_asymmetry(df_global: pd.DataFrame, out_dir: Path) -> list[Path]:
 
 
 def save_pareto_plot(df_global: pd.DataFrame, out_dir: Path) -> list[Path]:
-    fig, axes = plt.subplots(1, 3, figsize=(14.0, 4.2), sharey=False)
+    sweeps = sorted(df_global["sweep_key"].unique())
+    n_sweeps = max(1, len(sweeps))
+    n_cols = min(3, n_sweeps)
+    n_rows = int(math.ceil(n_sweeps / n_cols))
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(4.8 * n_cols, 4.2 * n_rows), sharey=False, squeeze=False)
+    axes_flat = axes.flatten()
     color_map = _estimator_color_map(sorted(df_global["estimator"].unique()))
-    for ax, sweep_key in zip(axes, sorted(df_global["sweep_key"].unique())):
+    for ax, sweep_key in zip(axes_flat, sweeps):
         part = (
             df_global[df_global["sweep_key"] == sweep_key]
             .groupby(["estimator", "family"], as_index=False)
@@ -936,6 +1136,8 @@ def save_pareto_plot(df_global: pd.DataFrame, out_dir: Path) -> list[Path]:
         ax.set_ylabel("median RMSE [Hz]")
         ax.set_title(SWEEP_SPECS[str(sweep_key)].label, loc="left", fontweight="bold")
         ax.grid(True, which="both", alpha=0.25)
+    for ax in axes_flat[len(sweeps):]:
+        ax.set_visible(False)
     fig.suptitle("Accuracy vs CPU vs structural latency", fontsize=13)
     fig.tight_layout()
     png = out_dir / PARETO_PNG_NAME
@@ -1159,9 +1361,7 @@ def run_atlas(args: argparse.Namespace) -> Path:
     if policy not in {"default", "fixed_policy", "per_scenario_oracle"}:
         raise ValueError("ATLAS policy must be one of: default, fixed_policy, oracle/per_scenario_oracle.")
 
-    sweep_keys = [item.strip().lower().replace("-", "_") for item in _csv(args.sweeps)]
-    if "all" in sweep_keys:
-        sweep_keys = ["magnitude_step", "rocof", "frequency_step"]
+    sweep_keys = _expand_sweep_keys(_csv(args.sweeps))
     unknown = [item for item in sweep_keys if item not in SWEEP_SPECS]
     if unknown:
         raise ValueError(f"Unknown ATLAS sweeps: {unknown}. Known: {sorted(SWEEP_SPECS)}")
@@ -1420,7 +1620,11 @@ def run_atlas(args: argparse.Namespace) -> Path:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Unified OpenFreqBench ATLAS sweep runner.")
-    parser.add_argument("--sweeps", default=os.getenv("ATLAS_SWEEPS", "all"), help="Comma list: all,magnitude_step,rocof,frequency_step.")
+    parser.add_argument(
+        "--sweeps",
+        default=os.getenv("ATLAS_SWEEPS", "all"),
+        help="Comma list: all,core,p0,magnitude_step,rocof,frequency_step,harmonics,interharmonics,noise_snr.",
+    )
     parser.add_argument("--policy", default=os.getenv("ATLAS_POLICY", "default"), help="default, fixed_policy, or oracle/per_scenario_oracle.")
     parser.add_argument("--n-runs", type=int, default=None, help="Monte Carlo runs per scenario/estimator.")
     parser.add_argument("--base-seed", type=int, default=None)
