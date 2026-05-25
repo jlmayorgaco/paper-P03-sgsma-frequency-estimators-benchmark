@@ -44,6 +44,35 @@ SCHEMAS: dict[str, dict[str, Any]] = {
             "manifest_sha256": {"type": "string"},
         },
     },
+    "atlas-readiness": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://openfreqbench.org/schemas/atlas-readiness-v1.json",
+        "title": "OpenFreqBench ATLAS readiness report",
+        "type": "object",
+        "required": [
+            "schema_version",
+            "method_version",
+            "status",
+            "scope",
+            "paper_claims_allowed",
+            "journal_claims_allowed",
+            "summary",
+            "issues",
+        ],
+        "properties": {
+            "schema_version": {"type": "string"},
+            "method_version": {"type": "string"},
+            "created_utc": {"type": "string"},
+            "status": {"type": "string"},
+            "scope": {"type": "string"},
+            "paper_claims_allowed": {"type": "boolean"},
+            "journal_claims_allowed": {"type": "boolean"},
+            "settings": {"type": "object"},
+            "summary": {"type": "object"},
+            "issues": {"type": "array"},
+            "required_next_action": {"type": "string"},
+        },
+    },
     "run-config": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "$id": "https://openfreqbench.org/schemas/run-config-v1.json",
@@ -97,4 +126,6 @@ def validate_payload(name: str, payload: dict[str, Any]) -> list[str]:
             errors.append(f"Field {field} must be an array.")
         elif expected == "string" and not isinstance(value, str):
             errors.append(f"Field {field} must be a string.")
+        elif expected == "boolean" and not isinstance(value, bool):
+            errors.append(f"Field {field} must be a boolean.")
     return errors

@@ -101,6 +101,7 @@ python -m pipelines.atlas_sweep \
   --sweeps all \
   --policy fixed_policy \
   --n-runs 100 \
+  --n-cost-reps 3 \
   --tune-trials 80 \
   --output-subdir atlas-paper-v1
 ```
@@ -123,7 +124,13 @@ python -m pipelines.atlas_sweep \
 ATLAS writes `metrics_dashboard_multipage.pdf`,
 `rmse_deterioration_by_family.pdf`, `atlas_method_map.pdf`,
 `atlas_sign_asymmetry.pdf`, `benchmark_report.json`, `manifest.json`,
-`artifact_index.csv`, `paper_traceability.csv`, and `evidence_manifest.json`.
+`artifact_index.csv`, `paper_traceability.csv`, `evidence_manifest.json`, and
+`atlas_readiness_report.json/md`.
+
+Read `atlas_readiness_report.md` before using results in the paper. Preview runs
+are marked `diagnostic`; full publication evidence must pass the readiness gate
+with all ATLAS sweeps, the canonical estimator set, fixed policy, and enough
+Monte Carlo support.
 
 ## YAML workflows
 

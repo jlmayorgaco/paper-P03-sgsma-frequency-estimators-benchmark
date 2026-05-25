@@ -57,6 +57,25 @@ def test_schema_registry_validates_required_report_fields() -> None:
     assert "Missing required field: run_configuration" in errors
 
 
+def test_schema_registry_exposes_atlas_readiness() -> None:
+    schema = get_schema("atlas-readiness")
+    assert schema["title"] == "OpenFreqBench ATLAS readiness report"
+    errors = validate_payload(
+        "atlas-readiness",
+        {
+            "schema_version": "openfreqbench-atlas-readiness-v1",
+            "method_version": "test",
+            "status": "diagnostic",
+            "scope": "subset",
+            "paper_claims_allowed": False,
+            "journal_claims_allowed": False,
+            "summary": {},
+            "issues": [],
+        },
+    )
+    assert errors == []
+
+
 def test_validate_tuned_artifacts_reports_missing_pairs(tmp_path) -> None:
     tuned_dir = tmp_path / "tuned"
     (tuned_dir / "IEEE_Single_SinWave" / "ZCD").mkdir(parents=True)

@@ -32,7 +32,7 @@ Use three layers of evidence.
    This keeps the original full Monte Carlo workflow alive. Use it when the
    paper figures or legacy artifact structure need to be regenerated.
 
-3. `python -m pipelines.atlas_sweep --sweeps all --policy fixed_policy --n-runs 100 --tune-trials 80 --output-subdir atlas-paper-v1`
+3. `python -m pipelines.atlas_sweep --sweeps all --policy fixed_policy --n-runs 100 --n-cost-reps 3 --tune-trials 80 --output-subdir atlas-paper-v1`
 
    This produces the unified ATLAS sweep set. Magnitude Step, RoCoF, Frequency
    Step, Harmonics, Interharmonics, and White-Noise/SNR use the same scenario
@@ -50,8 +50,10 @@ Do not replace these runs with a smoke test. Smoke tests check software. They do
 not support paper claims.
 
 Before moving ATLAS numbers into the paper, check
-`docs/ATLAS_METHOD_AUDIT.md` and confirm that the run was generated with the
-current ATLAS method version.
+`docs/ATLAS_METHOD_AUDIT.md`, confirm that the run was generated with the
+current ATLAS method version, and open `atlas_readiness_report.json`.
+ATLAS numbers can enter the paper only when `paper_claims_allowed` is `true`.
+Journal claims require `journal_claims_allowed=true`.
 
 ## Artifact standard
 
@@ -67,6 +69,7 @@ Every claim must point to files, not memory or old notes. Keep these files:
 - reproducibility manifest with source and checkpoint hashes
 - ATLAS manifests and aggregate CSVs for magnitude-step, RoCoF, frequency-step,
   harmonics, interharmonics, and noise/SNR runs
+- `atlas_readiness_report.json` and `atlas_readiness_report.md`
 
 Generated per-run folders can stay out of git if the aggregate files and
 manifests are archived.
@@ -106,6 +109,9 @@ The result set is Journal-ready when:
 - OpenFreqBench 2.0.0 can regenerate the main tables and plots from a public branch.
 - The report includes source hashes and checkpoint hashes.
 - The ATLAS run has aggregate CSV, manifest, artifact index, traceability table,
-  PDF/PNG figures, and hypothesis classifications.
+  PDF/PNG figures, readiness report, and hypothesis classifications.
+- `atlas_readiness_report.json` reports `journal_grade` for the full ATLAS
+  evidence set, or `paper_grade` for a clearly labeled smaller confirmatory
+  result.
 - A fresh clone or wheel install can reproduce at least one confirmatory subset.
 - The paper cites artifact paths or hashes for every quantitative claim.

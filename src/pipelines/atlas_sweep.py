@@ -75,11 +75,25 @@ ASYMMETRY_PNG_NAME = "atlas_sign_asymmetry.png"
 PARETO_PDF_NAME = "atlas_accuracy_latency_cpu_pareto.pdf"
 PARETO_PNG_NAME = "atlas_accuracy_latency_cpu_pareto.png"
 LEGEND_CSV_NAME = "rmse_plot_method_legend.csv"
+READINESS_JSON_NAME = "atlas_readiness_report.json"
+READINESS_MD_NAME = "atlas_readiness_report.md"
 
 CANONICAL_ESTIMATORS = (
     "ZCD,IPDFT,TFT,RLS,PLL,SOGI-PLL,SOGI-FLL,Type-3 SOGI-PLL,"
     "LKF,LKF2,EKF,UKF,RA-EKF,TKEO,Prony,ESPRIT,Koopman (RK-DPMU),PI-GRU"
 )
+REQUIRED_ATLAS_SWEEPS = (
+    "magnitude_step",
+    "rocof",
+    "frequency_step",
+    "harmonics",
+    "interharmonics",
+    "noise_snr",
+)
+PAPER_GRADE_MIN_RUNS = 30
+JOURNAL_GRADE_MIN_RUNS = 100
+MIN_LEVELS_PER_SWEEP = 4
+PAPER_READY_POLICIES = {"fixed_policy"}
 
 METRIC_COLUMNS = [
     "m1_rmse_hz",
@@ -1569,6 +1583,223 @@ def save_hypothesis_results(df_global: pd.DataFrame, out_dir: Path) -> Path:
     return path
 
 
+def _canonical_estimator_set() -> set[str]:
+    return set(_csv(CANONICAL_ESTIMATORS))
+
+
+def _issue(severity: str, code: str, message: str) -> dict[str, str]:
+    return {"severity": severity, "code": code, "message": message}
+
+
+def build_atlas_readiness_report(df_global: pd.DataFrame, settings: dict[str, Any]) -> dict[str, Any]:
+    issues: list[dict[str, str]] = []
+    if df_global.empty:
+        issues.append(_issue("blocker", "empty_results", "No aggregate rows were produced."))
+        return {
+            "schema_version": "openfreqbench-atlas-readiness-v1",
+            "method_version": METHOD_VERSION,
+            "created_utc": datetime.now(timezone.utc).isoformat(),
+            "status": "diagnostic",
+            "scope": "empty",
+            "paper_claims_allowed": False,
+            "journal_claims_allowed": False,
+            "settings": settings,
+            "summary": {},
+            "issues": issues,
+            "required_next_action": "Rerun ATLAS and inspect estimator/scenario failures before using any result.",
+        }
+
+    sweeps = sorted(str(item) for item in df_global["sweep_key"].dropna().astype(str).unique()) if "sweep_key" in df_global else []
+    estimators = sorted(str(item) for item in df_global["estimator"].dropna().astype(str).unique()) if "estimator" in df_global else []
+    policies = sorted(str(item) for item in df_global["policy"].dropna().astype(str).unique()) if "policy" in df_global else []
+    n_runs = pd.to_numeric(df_global.get("n_mc_runs", pd.Series(dtype=float)), errors="coerce").dropna()
+    min_runs = int(n_runs.min()) if not n_runs.empty else 0
+    max_runs = int(n_runs.max()) if not n_runs.empty else 0
+    canonical = _canonical_estimator_set()
+    missing_sweeps = [item for item in REQUIRED_ATLAS_SWEEPS if item not in set(sweeps)]
+    missing_estimators = sorted(canonical.difference(estimators))
+    extra_estimators = sorted(set(estimators).difference(canonical))
+
+    if missing_sweeps:
+        issues.append(
+            _issue(
+                "blocker",
+                "missing_required_sweeps",
+                "Full ATLAS paper claims require all sweeps: " + ", ".join(missing_sweeps) + ".",
+            )
+        )
+    if missing_estimators:
+        issues.append(
+            _issue(
+                "blocker",
+                "missing_canonical_estimators",
+                "Canonical estimator set is incomplete: " + ", ".join(missing_estimators) + ".",
+            )
+        )
+    if extra_estimators:
+        issues.append(
+            _issue(
+                "warning",
+                "noncanonical_estimators_present",
+                "Noncanonical estimators are present and must be reported separately: " + ", ".join(extra_estimators) + ".",
+            )
+        )
+    if min_runs < PAPER_GRADE_MIN_RUNS:
+        issues.append(
+            _issue(
+                "blocker",
+                "insufficient_monte_carlo_runs",
+                f"Minimum Monte Carlo count is {min_runs}; paper-grade ATLAS requires at least {PAPER_GRADE_MIN_RUNS}.",
+            )
+        )
+    if len(policies) != 1:
+        issues.append(
+            _issue(
+                "blocker",
+                "mixed_parameter_policies",
+                "A paper-grade ATLAS run must use one parameter policy; found: " + ", ".join(policies or ["<missing>"]) + ".",
+            )
+        )
+    elif policies[0] not in PAPER_READY_POLICIES:
+        policy = policies[0]
+        if policy == "per_scenario_oracle":
+            msg = "Oracle tuning is a lower-bound diagnostic, not a deployable estimator policy."
+        elif policy == "default":
+            msg = "Default parameters are useful for smoke/exploratory analysis; use fixed_policy for paper-grade ATLAS claims."
+        else:
+            msg = f"Policy {policy!r} is not approved for paper-grade ATLAS claims."
+        issues.append(_issue("blocker", "policy_not_paper_ready", msg))
+
+    level_counts: dict[str, int] = {}
+    direction_coverage: dict[str, list[str]] = {}
+    for sweep_key in sweeps:
+        spec = SWEEP_SPECS.get(sweep_key)
+        if spec is None or spec.x_col not in df_global.columns:
+            continue
+        part = df_global[df_global["sweep_key"].astype(str) == sweep_key]
+        levels = pd.to_numeric(part[spec.x_col], errors="coerce").dropna().unique()
+        level_counts[sweep_key] = int(len(levels))
+        if len(levels) < MIN_LEVELS_PER_SWEEP:
+            issues.append(
+                _issue(
+                    "blocker",
+                    "insufficient_sweep_levels",
+                    f"{spec.label} has {len(levels)} level(s); paper-grade ATLAS requires at least {MIN_LEVELS_PER_SWEEP}.",
+                )
+            )
+        if spec.directional:
+            directions = sorted(str(item) for item in part["direction"].dropna().astype(str).unique()) if "direction" in part else []
+            direction_coverage[sweep_key] = directions
+            missing_directions = [item for item in ("pos", "neg") if item not in directions]
+            if missing_directions:
+                issues.append(
+                    _issue(
+                        "blocker",
+                        "missing_directional_signs",
+                        f"{spec.label} is missing direction(s): " + ", ".join(missing_directions) + ".",
+                    )
+                )
+        else:
+            direction_coverage[sweep_key] = sorted(str(item) for item in part["direction"].dropna().astype(str).unique()) if "direction" in part else []
+
+    n_cost_reps = int(settings.get("n_cost_reps", 0) or 0)
+    if n_cost_reps < 3:
+        issues.append(
+            _issue(
+                "warning",
+                "low_cpu_repetitions",
+                f"CPU timing uses n_cost_reps={n_cost_reps}; use at least 3 for publication-quality timing comparisons.",
+            )
+        )
+
+    has_blockers = any(item["severity"] == "blocker" for item in issues)
+    if has_blockers:
+        status = "diagnostic"
+    elif min_runs >= JOURNAL_GRADE_MIN_RUNS:
+        status = "journal_grade"
+    else:
+        status = "paper_grade"
+
+    scope = "full_atlas" if not missing_sweeps else "subset"
+    paper_claims_allowed = status in {"paper_grade", "journal_grade"}
+    journal_claims_allowed = status == "journal_grade"
+    if status == "journal_grade":
+        next_action = "Archive this run with its manifest and use artifact hashes for paper claims."
+    elif status == "paper_grade":
+        next_action = f"Use for confirmatory paper analysis, or rerun with n_runs>={JOURNAL_GRADE_MIN_RUNS} for journal-grade evidence."
+    else:
+        next_action = (
+            "Treat this output as diagnostic. Rerun with --sweeps all --policy fixed_policy "
+            f"--n-runs {JOURNAL_GRADE_MIN_RUNS} and the full canonical estimator set before updating paper numbers."
+        )
+
+    return {
+        "schema_version": "openfreqbench-atlas-readiness-v1",
+        "method_version": METHOD_VERSION,
+        "created_utc": datetime.now(timezone.utc).isoformat(),
+        "status": status,
+        "scope": scope,
+        "paper_claims_allowed": paper_claims_allowed,
+        "journal_claims_allowed": journal_claims_allowed,
+        "settings": settings,
+        "summary": {
+            "sweeps_present": sweeps,
+            "required_sweeps": list(REQUIRED_ATLAS_SWEEPS),
+            "missing_sweeps": missing_sweeps,
+            "estimators_present": estimators,
+            "canonical_estimators": sorted(canonical),
+            "missing_canonical_estimators": missing_estimators,
+            "extra_estimators": extra_estimators,
+            "policies": policies,
+            "min_n_mc_runs": min_runs,
+            "max_n_mc_runs": max_runs,
+            "n_rows": int(len(df_global)),
+            "level_counts": level_counts,
+            "direction_coverage": direction_coverage,
+            "minimum_required_runs": PAPER_GRADE_MIN_RUNS,
+            "journal_required_runs": JOURNAL_GRADE_MIN_RUNS,
+            "minimum_levels_per_sweep": MIN_LEVELS_PER_SWEEP,
+        },
+        "issues": issues,
+        "required_next_action": next_action,
+    }
+
+
+def write_atlas_readiness_report(df_global: pd.DataFrame, settings: dict[str, Any], out_dir: Path) -> tuple[Path, Path, dict[str, Any]]:
+    report = build_atlas_readiness_report(df_global, settings)
+    json_path = out_dir / READINESS_JSON_NAME
+    md_path = out_dir / READINESS_MD_NAME
+    json_path.write_text(json.dumps(benchmark._to_builtin(report), indent=2, ensure_ascii=False), encoding="utf-8")
+
+    summary = report.get("summary", {})
+    lines = [
+        "# ATLAS Readiness Report",
+        "",
+        f"Status: `{report['status']}`",
+        f"Scope: `{report['scope']}`",
+        f"Paper claims allowed: `{str(report['paper_claims_allowed']).lower()}`",
+        f"Journal claims allowed: `{str(report['journal_claims_allowed']).lower()}`",
+        "",
+        "## Summary",
+        "",
+        f"- Sweeps: {len(summary.get('sweeps_present', []))}/{len(REQUIRED_ATLAS_SWEEPS)}",
+        f"- Estimators: {len(summary.get('estimators_present', []))}/{len(_canonical_estimator_set())} canonical",
+        f"- Monte Carlo runs: {summary.get('min_n_mc_runs', 0)} min, {summary.get('max_n_mc_runs', 0)} max",
+        f"- Parameter policies: {', '.join(summary.get('policies', [])) or '<missing>'}",
+        "",
+        "## Issues",
+        "",
+    ]
+    if report["issues"]:
+        for item in report["issues"]:
+            lines.append(f"- `{item['severity']}` `{item['code']}`: {item['message']}")
+    else:
+        lines.append("- None.")
+    lines.extend(["", "## Next Action", "", str(report["required_next_action"]), ""])
+    md_path.write_text("\n".join(lines), encoding="utf-8")
+    return json_path, md_path, report
+
+
 def build_benchmark_report(df_global: pd.DataFrame, artifacts: dict[str, str], settings: dict[str, Any], out_dir: Path) -> Path:
     report_path = out_dir / BENCHMARK_REPORT_NAME
     payload = {
@@ -1658,12 +1889,21 @@ def reproduce_command(settings: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
-def write_readme(out_dir: Path, settings: dict[str, Any]) -> Path:
+def write_readme(out_dir: Path, settings: dict[str, Any], readiness: dict[str, Any] | None = None) -> Path:
     path = out_dir / "README.md"
+    readiness = readiness or {}
+    readiness_status = readiness.get("status", "unknown")
+    paper_allowed = str(readiness.get("paper_claims_allowed", False)).lower()
     lines = [
         "# OpenFreqBench ATLAS Run",
         "",
         "This artifact directory was produced by the unified ATLAS pipeline.",
+        "",
+        "## Readiness",
+        "",
+        f"- Status: `{readiness_status}`",
+        f"- Paper claims allowed: `{paper_allowed}`",
+        f"- Full details: `{READINESS_MD_NAME}` and `{READINESS_JSON_NAME}`",
         "",
         "## Reproduce",
         "",
@@ -1679,12 +1919,14 @@ def write_readme(out_dir: Path, settings: dict[str, Any]) -> Path:
         f"- `{METHOD_MAP_PDF_NAME}`",
         f"- `{ASYMMETRY_PDF_NAME}`",
         f"- `{PARETO_PDF_NAME}`",
+        f"- `{READINESS_MD_NAME}`",
+        f"- `{READINESS_JSON_NAME}`",
         f"- `{MANIFEST_NAME}`",
         "- `artifact_index.csv`",
         "- `paper_traceability.csv`",
         "- `evidence_manifest.json`",
         "",
-        "Runs with `n_runs < 30` are diagnostic. Use `n_runs >= 100` for paper-grade Monte Carlo evidence.",
+        "Runs with `n_runs < 30` are diagnostic. Use the readiness report before moving any number into the paper.",
     ]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
@@ -1900,6 +2142,7 @@ def run_atlas(args: argparse.Namespace) -> Path:
     plot_paths.extend(save_pareto_plot(df_global, out_dir))
     dashboard_pdf = save_multipage_dashboard(df_global, out_dir)
     hypothesis_csv = save_hypothesis_results(df_global, out_dir)
+    readiness_json_path, readiness_md_path, readiness_report = write_atlas_readiness_report(df_global, settings, out_dir)
 
     legend_path = out_dir / LEGEND_CSV_NAME
     pd.DataFrame(
@@ -1928,6 +2171,8 @@ def run_atlas(args: argparse.Namespace) -> Path:
         "method_map_pdf": str(out_dir / METHOD_MAP_PDF_NAME),
         "sign_asymmetry_pdf": str(out_dir / ASYMMETRY_PDF_NAME),
         "pareto_pdf": str(out_dir / PARETO_PDF_NAME),
+        "atlas_readiness_json": str(readiness_json_path),
+        "atlas_readiness_md": str(readiness_md_path),
         "benchmark_report_json": str(report_path),
         "manifest_json": str(manifest_path),
         "readme": str(readme_path),
@@ -1937,7 +2182,7 @@ def run_atlas(args: argparse.Namespace) -> Path:
         "evidence_manifest_json": str(evidence_path),
     }
     report_path = build_benchmark_report(df_global, artifacts, settings, out_dir)
-    readme_path = write_readme(out_dir, settings)
+    readme_path = write_readme(out_dir, settings, readiness_report)
     env_path = write_environment_report(ROOT, env_path, source_root=SRC)
     trace_path = write_paper_traceability(report_path, trace_path)
     manifest_path = write_manifest(out_dir, scenarios, estimators, settings, artifacts)
@@ -1955,6 +2200,8 @@ def run_atlas(args: argparse.Namespace) -> Path:
         hypothesis_csv,
         *plot_paths,
         dashboard_pdf,
+        readiness_json_path,
+        readiness_md_path,
         report_path,
         manifest_path,
         trace_path,
@@ -1962,6 +2209,10 @@ def run_atlas(args: argparse.Namespace) -> Path:
         evidence_path,
     ]:
         print(f"  - {path.relative_to(ROOT)}")
+    print(
+        f"\nReadiness: {readiness_report['status']} "
+        f"(paper_claims_allowed={readiness_report['paper_claims_allowed']})"
+    )
     print(f"\n[DONE] ATLAS completed in {elapsed:.1f} min.")
     return out_dir
 

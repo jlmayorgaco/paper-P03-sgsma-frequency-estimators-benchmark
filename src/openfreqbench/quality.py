@@ -49,6 +49,7 @@ def run_quality_gate(root: Path, *, run_tests: bool = True, release: bool = Fals
         root / "schemas" / "benchmark_report.schema.json",
         root / "schemas" / "manifest.schema.json",
         root / "schemas" / "run_config.schema.json",
+        root / "schemas" / "atlas_readiness.schema.json",
         root / "examples" / "README.md",
         root / ".github" / "workflows" / "ci.yml",
         root / "scripts" / "verify_local.ps1",

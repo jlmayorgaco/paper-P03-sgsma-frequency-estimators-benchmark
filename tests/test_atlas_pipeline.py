@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pandas as pd
+
 from pipelines import atlas_sweep
 
 
@@ -62,3 +64,58 @@ def test_atlas_p0_scenarios_isolate_primary_disturbance(monkeypatch) -> None:
 
     assert noise["freq_hz"] == 60.0
     assert noise["noise_sigma"] == 0.001
+
+
+def test_atlas_readiness_marks_preview_as_diagnostic() -> None:
+    df = pd.DataFrame(
+        [
+            {
+                "sweep_key": "harmonics",
+                "estimator": "EKF",
+                "policy": "default",
+                "n_mc_runs": 1,
+                "direction": "level",
+                "thd_percent": 5.0,
+            }
+        ]
+    )
+
+    report = atlas_sweep.build_atlas_readiness_report(df, {"policy": "default", "n_cost_reps": 1})
+
+    assert report["status"] == "diagnostic"
+    assert report["paper_claims_allowed"] is False
+    assert {issue["code"] for issue in report["issues"]} >= {
+        "missing_required_sweeps",
+        "missing_canonical_estimators",
+        "insufficient_monte_carlo_runs",
+        "policy_not_paper_ready",
+    }
+
+
+def test_atlas_readiness_accepts_full_fixed_policy_paper_grade() -> None:
+    rows = []
+    canonical_estimators = atlas_sweep._csv(atlas_sweep.CANONICAL_ESTIMATORS)
+    for sweep_key in atlas_sweep.REQUIRED_ATLAS_SWEEPS:
+        spec = atlas_sweep.SWEEP_SPECS[sweep_key]
+        directions = ["pos", "neg"] if spec.directional else ["level"]
+        for level in [1.0, 2.0, 3.0, 4.0]:
+            for direction in directions:
+                for estimator in canonical_estimators:
+                    rows.append(
+                        {
+                            "sweep_key": sweep_key,
+                            "estimator": estimator,
+                            "policy": "fixed_policy",
+                            "n_mc_runs": atlas_sweep.PAPER_GRADE_MIN_RUNS,
+                            "direction": direction,
+                            spec.x_col: level,
+                        }
+                    )
+    df = pd.DataFrame(rows)
+
+    report = atlas_sweep.build_atlas_readiness_report(df, {"policy": "fixed_policy", "n_cost_reps": 3})
+
+    assert report["status"] == "paper_grade"
+    assert report["paper_claims_allowed"] is True
+    assert report["journal_claims_allowed"] is False
+    assert not [issue for issue in report["issues"] if issue["severity"] == "blocker"]

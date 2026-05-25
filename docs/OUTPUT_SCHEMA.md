@@ -21,6 +21,8 @@ single-phase benchmark replay under `canonical-single-phase-v1`.
 - `paper_traceability.csv`: claim-to-artifact table for manuscript numbers.
 - `artifact_index.csv`: file hashes and sizes.
 - `evidence_manifest.json`: run-level evidence index.
+- `atlas_readiness_report.json`: ATLAS gate that says whether a sweep run is
+  diagnostic, paper-grade, or journal-grade.
 
 ## Schema commands
 
@@ -28,6 +30,7 @@ single-phase benchmark replay under `canonical-single-phase-v1`.
 openfreqbench schema --name benchmark-report
 openfreqbench schema --name manifest
 openfreqbench schema --name run-config
+openfreqbench schema --name atlas-readiness
 ```
 
 Lightweight validation:

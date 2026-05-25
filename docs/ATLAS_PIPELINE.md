@@ -11,6 +11,7 @@ python -m pipelines.atlas_sweep \
   --sweeps all \
   --policy fixed_policy \
   --n-runs 100 \
+  --n-cost-reps 3 \
   --tune-trials 80 \
   --output-subdir atlas-paper-v1
 ```
@@ -61,6 +62,8 @@ Each ATLAS run writes:
 - `atlas_method_map.pdf`
 - `atlas_sign_asymmetry.pdf`
 - `atlas_accuracy_latency_cpu_pareto.pdf`
+- `atlas_readiness_report.json`
+- `atlas_readiness_report.md`
 - `benchmark_report.json`
 - `manifest.json`
 - `environment_report.json`
@@ -68,5 +71,23 @@ Each ATLAS run writes:
 - `paper_traceability.csv`
 - `evidence_manifest.json`
 
-Runs with `n_runs < 30` are diagnostic. Use `n_runs >= 100` before making paper
-claims, and archive the output directory with hashes.
+## Readiness gate
+
+Every ATLAS run writes `atlas_readiness_report.json` and
+`atlas_readiness_report.md`. Treat that report as the first file to read:
+
+- `diagnostic`: useful for debugging plots, estimator behavior, or a subset.
+  Do not move numbers into the paper.
+- `paper_grade`: full ATLAS, full canonical estimator set, fixed policy, at
+  least 30 Monte Carlo runs, and enough levels/sign coverage for trend claims.
+- `journal_grade`: same checks as `paper_grade`, but with at least 100 Monte
+  Carlo runs.
+
+The gate is intentionally strict. It blocks paper claims when sweeps are
+missing, the canonical estimator set is incomplete, policies are mixed,
+`oracle` is used as if it were deployable, `default` parameters are used for
+publication claims, Monte Carlo support is too small, or a directional sweep is
+missing one sign.
+
+Runs with `n_runs < 30` are diagnostic. Use `n_runs >= 100` before making
+journal claims, and archive the output directory with hashes.
