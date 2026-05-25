@@ -131,41 +131,64 @@ FAMILY_PALETTE = {
 FAMILY_ORDER = ["Loop-based", "Model-based", "Window-based", "Adaptive", "Data-driven", "Exotic"]
 
 HIGH_CONTRAST_ESTIMATOR_COLORS = {
-    "PLL": "#B22222",
+    "PLL": "#D00000",
     "SOGI-PLL": "#008000",
-    "SOGI-FLL": "#D6A100",
-    "Type-3 SOGI-PLL": "#008B8B",
-    "ZCD": "#2CA02C",
-    "EKF": "#C49A00",
-    "LKF": "#E41A1C",
-    "LKF2": "#4DAF4A",
+    "SOGI-FLL": "#FFB000",
+    "Type-3 SOGI-PLL": "#0072B2",
+    "ZCD": "#6F2DBD",
+    "EKF": "#E69F00",
+    "LKF": "#D55E00",
+    "LKF2": "#009E73",
     "RA-EKF": "#111111",
-    "UKF": "#984EA3",
+    "UKF": "#7B2CBF",
     "IPDFT": "#FF7F0E",
-    "TFT": "#D62728",
-    "RLS": "#9467BD",
-    "TKEO": "#C71585",
+    "TFT": "#0057B8",
+    "RLS": "#5A189A",
+    "TKEO": "#E63946",
     "Prony": "#8C564B",
     "ESPRIT": "#17BECF",
-    "Koopman (RK-DPMU)": "#1F77B4",
-    "PI-GRU": "#FF1493",
+    "Koopman (RK-DPMU)": "#004E98",
+    "PI-GRU": "#E7298A",
     "MUSIC": "#7F7F7F",
 }
 
 HIGH_CONTRAST_FALLBACK_COLORS = (
-    "#B22222",
+    "#D00000",
     "#008000",
-    "#D6A100",
-    "#008B8B",
-    "#E41A1C",
-    "#4DAF4A",
-    "#984EA3",
-    "#FF7F0E",
+    "#FFB000",
+    "#0072B2",
+    "#6F2DBD",
+    "#D55E00",
+    "#009E73",
     "#111111",
-    "#C71585",
+    "#E63946",
     "#17BECF",
     "#8C564B",
 )
+
+HIGH_CONTRAST_ESTIMATOR_MARKERS = {
+    "PLL": "o",
+    "SOGI-PLL": "s",
+    "SOGI-FLL": "^",
+    "Type-3 SOGI-PLL": "D",
+    "ZCD": "P",
+    "EKF": "o",
+    "LKF": "s",
+    "LKF2": "^",
+    "RA-EKF": "X",
+    "UKF": "D",
+    "IPDFT": "o",
+    "TFT": "s",
+    "RLS": "o",
+    "TKEO": "s",
+    "Prony": "^",
+    "ESPRIT": "D",
+    "Koopman (RK-DPMU)": "P",
+    "PI-GRU": "X",
+    "MUSIC": "v",
+}
+
+HIGH_CONTRAST_FALLBACK_MARKERS = ("o", "s", "^", "D", "P", "X", "v", "<", ">")
 
 SEVERITY_REGIONS: dict[str, tuple[tuple[str, float, float, str], ...]] = {
     "magnitude_step": (
@@ -987,6 +1010,13 @@ def _estimator_color_map(estimators: list[str]) -> dict[str, Any]:
     return out
 
 
+def _estimator_marker(estimator: str) -> str:
+    if estimator in HIGH_CONTRAST_ESTIMATOR_MARKERS:
+        return HIGH_CONTRAST_ESTIMATOR_MARKERS[estimator]
+    idx = sum(ord(ch) for ch in estimator) % len(HIGH_CONTRAST_FALLBACK_MARKERS)
+    return HIGH_CONTRAST_FALLBACK_MARKERS[idx]
+
+
 def _dominant_policy_label(df: pd.DataFrame) -> str:
     if "policy" not in df.columns or df["policy"].dropna().empty:
         return "policy"
@@ -1103,8 +1133,8 @@ def _plot_metric_page(df: pd.DataFrame, sweep_key: str, metric_col: str, metric_
             ax.plot(
                 x,
                 y,
-                marker="o",
-                markersize=2.8,
+                marker=_estimator_marker(str(estimator)),
+                markersize=3.2,
                 markeredgecolor="#111111",
                 markeredgewidth=0.25,
                 linewidth=1.05,
