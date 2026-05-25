@@ -1,0 +1,1444 @@
+from __future__ import annotations
+
+import argparse
+import inspect
+import json
+import math
+import os
+import sys
+import time
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.ticker import FixedLocator, FuncFormatter
+import numpy as np
+import optuna
+import pandas as pd
+
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
+os.environ.setdefault("BENCHMARK_INCLUDE_EXPERIMENTAL", "0")
+
+ROOT = Path(__file__).resolve().parents[2]
+SRC = ROOT / "src"
+for p in (str(SRC), str(ROOT)):
+    while p in sys.path:
+        sys.path.remove(p)
+sys.path.insert(0, str(SRC))
+sys.path.insert(1, str(ROOT))
+
+from analysis.monte_carlo_engine import MonteCarloEngine, MonteCarloResult
+from openfreqbench.artifacts import (
+    build_artifact_index,
+    write_artifact_index,
+    write_environment_report,
+    write_evidence_manifest,
+    write_paper_traceability,
+)
+from openfreqbench.reproducibility import git_manifest, sha256_file
+from pipelines.benchmark_definition import ESTIMATOR_FAMILIES, load_active_estimators
+import pipelines.full_mc_benchmark as benchmark
+from scenarios.ieee_freq_ramp import IEEEFreqRampScenario
+from scenarios.ieee_freq_step import IEEEFreqStepScenario
+from scenarios.ieee_mag_step import IEEEMagStepScenario
+
+
+METHOD_VERSION = "atlas_sweep_v1_2026_05_25"
+
+GLOBAL_CSV_NAME = "global_metrics_report.csv"
+RMSE_EST_CSV_NAME = "rmse_by_estimator.csv"
+RMSE_FAM_CSV_NAME = "rmse_by_family.csv"
+TIMING_CSV_NAME = "timing_profile.csv"
+TUNING_CONTINUITY_CSV_NAME = "tuning_parameter_continuity.csv"
+HYPOTHESIS_CSV_NAME = "hypothesis_results.csv"
+BENCHMARK_REPORT_NAME = "benchmark_report.json"
+MANIFEST_NAME = "manifest.json"
+MULTIPAGE_PDF_NAME = "metrics_dashboard_multipage.pdf"
+RMSE_FAMILY_PDF_NAME = "rmse_deterioration_by_family.pdf"
+RMSE_FAMILY_PNG_NAME = "rmse_deterioration_by_family.png"
+METHOD_MAP_PDF_NAME = "atlas_method_map.pdf"
+METHOD_MAP_PNG_NAME = "atlas_method_map.png"
+ASYMMETRY_PDF_NAME = "atlas_sign_asymmetry.pdf"
+ASYMMETRY_PNG_NAME = "atlas_sign_asymmetry.png"
+PARETO_PDF_NAME = "atlas_accuracy_latency_cpu_pareto.pdf"
+PARETO_PNG_NAME = "atlas_accuracy_latency_cpu_pareto.png"
+LEGEND_CSV_NAME = "rmse_plot_method_legend.csv"
+
+CANONICAL_ESTIMATORS = (
+    "ZCD,IPDFT,TFT,RLS,PLL,SOGI-PLL,SOGI-FLL,Type-3 SOGI-PLL,"
+    "LKF,LKF2,EKF,UKF,RA-EKF,TKEO,Prony,ESPRIT,Koopman (RK-DPMU),PI-GRU"
+)
+
+METRIC_COLUMNS = [
+    "m1_rmse_hz",
+    "m2_mae_hz",
+    "m3_max_peak_hz",
+    "m4_std_error_hz",
+    "m5_trip_risk_s",
+    "m5_trip_risk_resolution_s",
+    "m6_max_contig_trip_s",
+    "m7_pcb_hz",
+    "m8_settling_time_s",
+    "m9_rfe_max_hz_s",
+    "m10_rfe_rms_hz_s",
+    "m11_rnaf_db",
+    "m12_isi_pu",
+    "m13_cpu_time_us",
+    "m14_struct_latency_ms",
+    "m15_pcb_compliant",
+    "m16_heatmap_pass",
+    "m17_hw_class",
+    "m18_mem_peak_kb",
+    "m19_mem_mean_kb",
+    "m20_runtime_jitter_us",
+    "m21_startup_valid_samples",
+    "m22_invalid_output_rate",
+    "m23_memory_key_count",
+    "m24_pre_event_rmse_hz",
+    "m25_post_1cy_rmse_hz",
+    "m26_post_3cy_rmse_hz",
+    "m27_post_100ms_rmse_hz",
+    "m28_post_event_peak_hz",
+    "m29_late_event_rmse_hz",
+    "m30_event_settling_time_s",
+    "m31_freq_bound_hit_rate",
+    "m32_freq_lower_bound_hit_rate",
+    "m33_freq_upper_bound_hit_rate",
+]
+
+FAMILY_PALETTE = {
+    "Model-based": "#1565C0",
+    "Loop-based": "#2E7D32",
+    "Window-based": "#E65100",
+    "Adaptive": "#6A1B9A",
+    "Data-driven": "#B71C1C",
+    "Exotic": "#455A64",
+    "Unknown": "#616161",
+}
+
+
+@dataclass(frozen=True)
+class SweepSpec:
+    key: str
+    label: str
+    x_col: str
+    x_label: str
+    signed_col: str
+    default_levels: tuple[float, ...]
+    reference_value: float
+    methodology: str
+
+
+@dataclass(frozen=True)
+class AtlasScenario:
+    sweep_key: str
+    sweep_label: str
+    scenario_name: str
+    scenario_cls: type
+    signed_value: float
+    abs_value: float
+    direction: str
+    params: dict[str, Any]
+
+
+SWEEP_SPECS: dict[str, SweepSpec] = {
+    "magnitude_step": SweepSpec(
+        key="magnitude_step",
+        label="Magnitude Step",
+        x_col="abs_step_percent",
+        x_label="|Magnitude step| [%]",
+        signed_col="step_percent",
+        default_levels=(1.0, 2.0, 3.0, 5.0, 7.5, 10.0, 15.0, 20.0, 25.0, 35.0, 50.0, 75.0, 90.0),
+        reference_value=10.0,
+        methodology=(
+            "Pure magnitude step: true frequency remains nominal. Frequency errors quantify "
+            "AM-to-FM cross-sensitivity and numerical robustness. Upward steps are swells; "
+            "downward steps are sags. The default sag grid stops below 100% to avoid a zero-voltage test."
+        ),
+    ),
+    "rocof": SweepSpec(
+        key="rocof",
+        label="RoCoF Ramp",
+        x_col="abs_rocof_hz_s",
+        x_label="|RoCoF| [Hz/s]",
+        signed_col="rocof_hz_s",
+        default_levels=(0.1, 0.5, 1.0, 3.0, 5.0, 10.0, 20.0, 50.0),
+        reference_value=3.0,
+        methodology=(
+            "Frequency-ramp RoCoF atlas: true frequency changes linearly during the ramp and "
+            "then holds. Curves expose dynamic tracking error, RoCoF sensitivity, latency and "
+            "directional bias."
+        ),
+    ),
+    "frequency_step": SweepSpec(
+        key="frequency_step",
+        label="Frequency Step",
+        x_col="abs_step_hz",
+        x_label="|Frequency step| [Hz]",
+        signed_col="step_hz",
+        default_levels=(0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 3.0, 5.0),
+        reference_value=1.0,
+        methodology=(
+            "C0-continuous frequency-step atlas: true frequency changes abruptly without an "
+            "artificial phase jump. Curves expose transient tracking, overshoot and settling."
+        ),
+    ),
+}
+
+
+def _env_int(name: str, default: int, minimum: int = 0) -> int:
+    raw = os.getenv(name)
+    if raw is None:
+        return int(default)
+    try:
+        value = int(raw)
+    except ValueError:
+        return int(default)
+    return max(int(minimum), value)
+
+
+def _env_float(name: str, default: float, minimum: float | None = None) -> float:
+    raw = os.getenv(name)
+    if raw is None:
+        value = float(default)
+    else:
+        try:
+            value = float(raw)
+        except ValueError:
+            value = float(default)
+    if minimum is not None and value < minimum:
+        return float(minimum)
+    return value
+
+
+def _env_bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return bool(default)
+    return raw.strip().lower() not in {"0", "false", "no", "off"}
+
+
+def _csv(raw: str | None) -> list[str]:
+    if not raw:
+        return []
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
+
+def _float_csv(raw: str | None) -> list[float]:
+    out: list[float] = []
+    for item in _csv(raw):
+        try:
+            out.append(float(item))
+        except ValueError:
+            continue
+    return out
+
+
+def _sanitize_token(value: float) -> str:
+    return f"{abs(float(value)):g}".replace(".", "p").replace("-", "m")
+
+
+def _env_key_for_estimator(est_name: str) -> str:
+    return "".join(ch if ch.isalnum() else "_" for ch in est_name.upper()).strip("_")
+
+
+def _accepted_init_params(est_cls: type) -> set[str]:
+    try:
+        sig = inspect.signature(est_cls.__init__)
+    except (TypeError, ValueError):
+        return set()
+    accepted: set[str] = set()
+    for name, param in sig.parameters.items():
+        if name == "self":
+            continue
+        if param.kind == inspect.Parameter.VAR_KEYWORD:
+            accepted.add("**kwargs")
+        else:
+            accepted.add(name)
+    return accepted
+
+
+def _estimator_defaults(est_cls: type) -> dict[str, Any]:
+    if hasattr(est_cls, "default_params"):
+        return dict(est_cls.default_params())
+    return {}
+
+
+def _apply_frequency_bounds(est_name: str, est_cls: type, params: dict[str, Any], bounds: tuple[float, float] | None) -> dict[str, Any]:
+    if bounds is None or not _env_bool("ATLAS_FORCE_FREQUENCY_BOUNDS", True):
+        return dict(params)
+    out = dict(params)
+    f_min, f_max = bounds
+    accepted = _accepted_init_params(est_cls)
+    accepts_any = "**kwargs" in accepted
+    for lo_key, hi_key in (("f_min_hz", "f_max_hz"), ("freq_min_hz", "freq_max_hz")):
+        if accepts_any or lo_key in accepted:
+            out[lo_key] = float(f_min)
+        if accepts_any or hi_key in accepted:
+            out[hi_key] = float(f_max)
+    if est_name == "LKF2" and (accepts_any or "freq_dev_limit_hz" in accepted):
+        out["freq_dev_limit_hz"] = max(abs(60.0 - f_min), abs(f_max - 60.0))
+    if est_name == "RA-EKF" and (accepts_any or "rocof_limit_hz_s" in accepted):
+        out["rocof_limit_hz_s"] = max(float(out.get("rocof_limit_hz_s", 0.0)), 50.0)
+    return out
+
+
+def _noise_bounds() -> tuple[float, float]:
+    lo = _env_float("ATLAS_NOISE_LOW", 0.0005, minimum=0.0)
+    hi = _env_float("ATLAS_NOISE_HIGH", 0.0020, minimum=lo)
+    return lo, hi
+
+
+def _apply_atlas_overrides(cls: type, params: dict[str, Any], run_idx: int, n_runs: int, base_seed: int) -> dict[str, Any]:
+    del base_seed
+    if not _env_bool("ATLAS_MC_STRATIFIED_COVARIATES", True):
+        return params
+    n = max(1, int(n_runs))
+    u = (int(run_idx) + 0.5) / n
+    phase_u = (0.61803398875 * (int(run_idx) + 1)) % 1.0
+    time_u = (0.41421356237 * (int(run_idx) + 1)) % 1.0
+    noise_lo, noise_hi = _noise_bounds()
+    out = dict(params)
+    out["phase_rad"] = float(2.0 * math.pi * phase_u)
+    noise = float(noise_lo + (noise_hi - noise_lo) * u)
+    if getattr(cls, "ATLAS_SWEEP_KEY", "") == "magnitude_step":
+        mode = os.getenv("ATLAS_MAG_NOISE_MODE", "fixed_absolute").strip().lower()
+        if mode in {"fixed_snr", "amplitude_scaled", "post_fixed_snr"}:
+            noise *= max(abs(float(out.get("amp_post_pu", 1.0))), 1e-12)
+        elif mode in {"none", "noise_free", "no_noise"}:
+            noise = 0.0
+    out["noise_sigma"] = noise
+    if "t_step_s" in out:
+        out["t_step_s"] = float(float(out["t_step_s"]) - 0.025 + 0.050 * time_u)
+    if "t_start_s" in out:
+        out["t_start_s"] = float(float(out["t_start_s"]) - 0.025 + 0.050 * time_u)
+    out["seed"] = int(out.get("seed", 0) or 0)
+    return out
+
+
+def _make_scenario_variant(sweep_key: str, signed_value: float) -> AtlasScenario:
+    spec = SWEEP_SPECS[sweep_key]
+    value = float(signed_value)
+    abs_value = abs(value)
+    direction = "pos" if value >= 0.0 else "neg"
+    token = _sanitize_token(value)
+
+    if sweep_key == "magnitude_step":
+        amp_pre = 1.0
+        amp_post = amp_pre + abs_value / 100.0 if direction == "pos" else max(1e-3, amp_pre - abs_value / 100.0)
+        scenario_name = f"Atlas_MagnitudeStep_{direction}_{token}pct"
+        class_name = f"AtlasMagnitudeStep{direction.title()}{token}"
+        default_params = {
+            **IEEEMagStepScenario.DEFAULT_PARAMS,
+            "duration_s": _env_float("ATLAS_MAG_DURATION_S", 1.8, minimum=0.3),
+            "amp_pre_pu": amp_pre,
+            "amp_post_pu": amp_post,
+            "t_step_s": _env_float("ATLAS_MAG_T_STEP_S", 0.50, minimum=0.0),
+            "noise_sigma": 0.001,
+        }
+        base_cls = IEEEMagStepScenario
+        signed_col = {"step_percent": value, "abs_step_percent": abs_value}
+    elif sweep_key == "rocof":
+        t_start = _env_float("ATLAS_ROCOF_T_START_S", 0.30, minimum=0.0)
+        ramp_duration = _env_float("ATLAS_ROCOF_RAMP_DURATION_S", 0.40, minimum=0.02)
+        scenario_name = f"Atlas_RoCoF_{direction}_{token}Hzs"
+        class_name = f"AtlasRoCoF{direction.title()}{token}"
+        default_params = {
+            **IEEEFreqRampScenario.DEFAULT_PARAMS,
+            "duration_s": _env_float("ATLAS_ROCOF_DURATION_S", t_start + ramp_duration + 0.50, minimum=0.3),
+            "rocof_hz_s": value,
+            "t_start_s": t_start,
+            "freq_cap_hz": 60.0 + value * ramp_duration,
+            "noise_sigma": 0.001,
+        }
+        base_cls = IEEEFreqRampScenario
+        signed_col = {"rocof_hz_s": value, "abs_rocof_hz_s": abs_value}
+    elif sweep_key == "frequency_step":
+        scenario_name = f"Atlas_FrequencyStep_{direction}_{token}Hz"
+        class_name = f"AtlasFrequencyStep{direction.title()}{token}"
+        default_params = {
+            **IEEEFreqStepScenario.DEFAULT_PARAMS,
+            "duration_s": _env_float("ATLAS_FREQSTEP_DURATION_S", 1.5, minimum=0.3),
+            "freq_pre_hz": 60.0,
+            "freq_post_hz": 60.0 + value,
+            "t_step_s": _env_float("ATLAS_FREQSTEP_T_STEP_S", 0.50, minimum=0.0),
+            "noise_sigma": 0.001,
+        }
+        base_cls = IEEEFreqStepScenario
+        signed_col = {"step_hz": value, "abs_step_hz": abs_value}
+    else:
+        raise ValueError(f"Unknown atlas sweep: {sweep_key}")
+
+    attrs = {
+        "SCENARIO_NAME": scenario_name,
+        "DEFAULT_PARAMS": default_params,
+        "MONTE_CARLO_SPACE": {
+            "phase_rad": {"kind": "uniform", "low": 0.0, "high": 2.0 * math.pi},
+            "noise_sigma": {"kind": "uniform", "low": _noise_bounds()[0], "high": _noise_bounds()[1]},
+        },
+        "ATLAS_SWEEP_KEY": sweep_key,
+        "ATLAS_SWEEP_VALUE": value,
+        "ATLAS_ABS_VALUE": abs_value,
+        "ATLAS_DIRECTION": direction,
+        "get_name": classmethod(lambda cls: cls.SCENARIO_NAME),
+        "apply_run_index_overrides": classmethod(_apply_atlas_overrides),
+    }
+    new_cls = type(class_name, (base_cls,), attrs)
+    new_cls.__module__ = __name__
+    globals()[class_name] = new_cls
+    return AtlasScenario(
+        sweep_key=sweep_key,
+        sweep_label=spec.label,
+        scenario_name=scenario_name,
+        scenario_cls=new_cls,
+        signed_value=value,
+        abs_value=abs_value,
+        direction=direction,
+        params=signed_col,
+    )
+
+
+def _levels_for_sweep(sweep_key: str) -> list[float]:
+    spec = SWEEP_SPECS[sweep_key]
+    env_name = {
+        "magnitude_step": "ATLAS_MAG_LEVELS_PCT",
+        "rocof": "ATLAS_ROCOF_LEVELS_HZ_S",
+        "frequency_step": "ATLAS_FREQSTEP_LEVELS_HZ",
+    }[sweep_key]
+    configured = _float_csv(os.getenv(env_name))
+    values = configured if configured else list(spec.default_levels)
+    return sorted({round(abs(float(v)), 9) for v in values if abs(float(v)) > 0.0})
+
+
+def _directions_for_sweep(sweep_key: str) -> list[str]:
+    raw = os.getenv(f"ATLAS_{sweep_key.upper()}_DIRECTIONS") or os.getenv("ATLAS_DIRECTIONS", "pos,neg")
+    requested = [item.lower() for item in _csv(raw)]
+    out: list[str] = []
+    if any(item in {"pos", "+", "up", "positive", "swell"} for item in requested):
+        out.append("pos")
+    if any(item in {"neg", "-", "down", "negative", "sag"} for item in requested):
+        out.append("neg")
+    return out or ["pos", "neg"]
+
+
+def build_atlas_scenarios(sweep_keys: list[str]) -> list[AtlasScenario]:
+    scenarios: list[AtlasScenario] = []
+    for sweep_key in sweep_keys:
+        levels = _levels_for_sweep(sweep_key)
+        for direction in _directions_for_sweep(sweep_key):
+            for level in levels:
+                if sweep_key == "magnitude_step" and direction == "neg" and level >= 100.0:
+                    continue
+                signed = level if direction == "pos" else -level
+                scenarios.append(_make_scenario_variant(sweep_key, signed))
+    include = set(_csv(os.getenv("ATLAS_INCLUDE_SCENARIOS")))
+    if include:
+        scenarios = [sc for sc in scenarios if sc.scenario_name in include]
+    if not scenarios:
+        raise ValueError("ATLAS scenario selection is empty.")
+    return scenarios
+
+
+def select_estimators() -> dict[str, type]:
+    estimators = load_active_estimators()
+    include_raw = os.getenv("ATLAS_INCLUDE_ESTIMATORS", CANONICAL_ESTIMATORS).strip()
+    exclude_raw = os.getenv("ATLAS_EXCLUDE_ESTIMATORS", "").strip()
+    by_lower = {label.lower(): label for label in estimators}
+    if include_raw:
+        selected: set[str] = set()
+        missing: list[str] = []
+        for item in _csv(include_raw):
+            hit = by_lower.get(item.lower())
+            if hit:
+                selected.add(hit)
+            else:
+                missing.append(item)
+        if missing:
+            print(f"[WARN] Unknown ATLAS_INCLUDE_ESTIMATORS entries ignored: {missing}")
+        if not selected:
+            raise ValueError("ATLAS_INCLUDE_ESTIMATORS did not match any active estimator.")
+        estimators = {k: v for k, v in estimators.items() if k in selected}
+    if exclude_raw:
+        excluded = {by_lower[item.lower()] for item in _csv(exclude_raw) if item.lower() in by_lower}
+        estimators = {k: v for k, v in estimators.items() if k not in excluded}
+    if not estimators:
+        raise ValueError("Estimator filter removed all estimators.")
+    return estimators
+
+
+def _run_engine_local(engine: MonteCarloEngine) -> MonteCarloResult:
+    rows: list[dict[str, Any]] = []
+    signals: list[pd.DataFrame] = []
+    for run_idx in range(engine.n_runs):
+        row, signal_df = engine.run_once(run_idx)
+        rows.append(row)
+        if not signal_df.empty:
+            signals.append(signal_df)
+    summary_df = pd.DataFrame(rows).sort_values("run_idx").reset_index(drop=True)
+    signals_df = (
+        pd.concat(signals, ignore_index=True).sort_values(["run_idx", "t_s"]).reset_index(drop=True)
+        if signals
+        else pd.DataFrame()
+    )
+    estimator_name = None
+    if engine.estimator_cls is not None:
+        estimator_name = getattr(engine.estimator_cls, "name", engine.estimator_cls.__name__)
+    return MonteCarloResult(
+        scenario_name=engine.scenario_cls.get_name(),
+        estimator_name=estimator_name,
+        summary_df=summary_df,
+        signals_df=signals_df,
+        meta={
+            "n_runs": engine.n_runs,
+            "base_seed": engine.base_seed,
+            "estimator_params": dict(engine.estimator_params or {}),
+            "execution_mode": "atlas_local_sequential",
+        },
+    )
+
+
+def _score_params(est_cls: type, params: dict[str, Any], scenarios: list[Any], eval_start_s: float) -> float:
+    try:
+        rmses: list[float] = []
+        peaks: list[float] = []
+        late_rmses: list[float] = []
+        rfes: list[float] = []
+        for sc in scenarios:
+            est = est_cls(**params)
+            f_hat = benchmark._run_estimator(est, sc.v)
+            f_true = np.asarray(sc.f_true, dtype=float)
+            if len(f_hat) != len(f_true):
+                return 1e9
+            dt = float(sc.t[1] - sc.t[0]) if len(sc.t) > 1 else 1e-4
+            start = min(len(f_true) - 1, max(0, int(round(eval_start_s / dt))))
+            err = np.asarray(f_hat[start:], dtype=float) - f_true[start:]
+            if len(err) < 4 or not np.all(np.isfinite(err)):
+                return 1e9
+            late_start = min(len(f_true) - 1, max(start, int(round(1.0 / dt))))
+            late_err = np.asarray(f_hat[late_start:], dtype=float) - f_true[late_start:]
+            rfe = np.diff(err) / dt if len(err) > 1 else np.zeros(1)
+            rmses.append(float(np.sqrt(np.mean(err**2))))
+            peaks.append(float(np.max(np.abs(err))))
+            late_rmses.append(float(np.sqrt(np.mean(late_err**2))) if len(late_err) else rmses[-1])
+            rfes.append(float(np.sqrt(np.mean(np.clip(rfe, -500.0, 500.0) ** 2))))
+        if not rmses:
+            return 1e9
+        score = (
+            float(np.median(rmses))
+            + 0.50 * float(np.quantile(rmses, 0.90))
+            + 0.05 * float(np.quantile(peaks, 0.90))
+            + 0.25 * float(np.median(late_rmses))
+            + 0.001 * float(np.median(rfes))
+        )
+        return score if math.isfinite(score) else 1e9
+    except Exception:
+        return 1e9
+
+
+def _build_eval_scenarios(scenarios: list[AtlasScenario], base_seed: int, runs_per_level: int) -> list[Any]:
+    out: list[Any] = []
+    for idx, sc in enumerate(scenarios):
+        for run_idx in range(max(1, int(runs_per_level))):
+            sampler = MonteCarloEngine(sc.scenario_cls, n_runs=max(1, int(runs_per_level)), base_seed=base_seed + 1000 * idx)
+            params = sampler.sample_params(run_idx)
+            out.append(sc.scenario_cls.run(**params))
+    return out
+
+
+def _tune_estimator(
+    est_name: str,
+    est_cls: type,
+    eval_scenarios: list[Any],
+    *,
+    n_trials: int,
+    tune_eval_runs: int,
+    mode: str,
+    frequency_bounds: tuple[float, float] | None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    del tune_eval_runs
+    defaults = _apply_frequency_bounds(est_name, est_cls, _estimator_defaults(est_cls), frequency_bounds)
+    meta: dict[str, Any] = {
+        "mode": mode,
+        "n_trials_requested": int(n_trials),
+        "n_trials_executed": 0,
+        "n_eval_scenarios": int(len(eval_scenarios)),
+        "best_objective": None,
+        "frequency_bounds_hz": list(frequency_bounds) if frequency_bounds else None,
+    }
+    if est_name not in benchmark.SEARCH_SPACES:
+        meta["reason"] = "no_search_space"
+        return defaults, meta
+    if n_trials <= 0:
+        meta["reason"] = "n_trials<=0"
+        return defaults, meta
+    if not eval_scenarios:
+        meta["reason"] = "no_eval_scenarios"
+        return defaults, meta
+
+    raw_space_fn = benchmark.SEARCH_SPACES[est_name]
+    if not benchmark._grid_space_for_estimator(raw_space_fn, n_trials=2):
+        meta["reason"] = "empty_search_space"
+        return defaults, meta
+
+    def objective(trial: optuna.Trial) -> float:
+        suggested = raw_space_fn(trial)
+        params = _apply_frequency_bounds(est_name, est_cls, {**defaults, **suggested}, frequency_bounds)
+        return _score_params(est_cls, params, eval_scenarios, eval_start_s=0.15)
+
+    study, n_exec, sampler_mode = benchmark._build_optuna_study(raw_space_fn, n_trials=int(n_trials))
+    meta["n_trials_executed"] = int(n_exec)
+    meta["sampler_mode_effective"] = sampler_mode
+    study.optimize(objective, n_trials=n_exec)
+    if study.best_value >= 1e9:
+        meta["reason"] = "all_trials_failed"
+        return defaults, meta
+    best = _apply_frequency_bounds(est_name, est_cls, {**defaults, **raw_space_fn(study.best_trial)}, frequency_bounds)
+    meta["best_objective"] = float(study.best_value)
+    return best, meta
+
+
+def _frequency_bounds_for_sweep(scenarios: list[AtlasScenario]) -> tuple[float, float] | None:
+    values: list[float] = []
+    for sc in scenarios:
+        params = sc.scenario_cls.get_default_params()
+        if sc.sweep_key == "magnitude_step":
+            values.extend([40.0, 80.0])
+        elif sc.sweep_key == "rocof":
+            values.extend([float(params.get("freq_nom_hz", 60.0)), float(params.get("freq_cap_hz", 60.0))])
+        elif sc.sweep_key == "frequency_step":
+            values.extend([float(params.get("freq_pre_hz", 60.0)), float(params.get("freq_post_hz", 60.0))])
+    if not values:
+        return None
+    margin = _env_float("ATLAS_FREQ_BOUND_MARGIN_HZ", 10.0, minimum=0.0)
+    return max(0.0, min(values) - margin), max(values) + margin
+
+
+def _can_reuse(run_spec_path: Path, summary_csv: Path, expected: dict[str, Any]) -> bool:
+    if not run_spec_path.exists() or not summary_csv.exists():
+        return False
+    try:
+        spec = json.loads(run_spec_path.read_text(encoding="utf-8"))
+    except Exception:
+        return False
+    for key, value in expected.items():
+        if spec.get(key) != value:
+            return False
+    return True
+
+
+def _bootstrap_ci_mean(values: np.ndarray) -> tuple[float, float]:
+    finite = np.asarray(values, dtype=float)
+    finite = finite[np.isfinite(finite)]
+    if len(finite) == 0:
+        return float("nan"), float("nan")
+    if len(finite) == 1:
+        val = float(finite[0])
+        return val, val
+    n_boot = _env_int("ATLAS_BOOTSTRAP_RUNS", 500, minimum=50)
+    rng = np.random.default_rng(_env_int("ATLAS_BOOTSTRAP_SEED", 20260525, minimum=0))
+    idx = rng.integers(0, len(finite), size=(n_boot, len(finite)))
+    means = finite[idx].mean(axis=1)
+    return float(np.quantile(means, 0.025)), float(np.quantile(means, 0.975))
+
+
+def _aggregate_summary(summary_df: pd.DataFrame) -> dict[str, Any]:
+    row: dict[str, Any] = {}
+    for metric in METRIC_COLUMNS:
+        if metric not in summary_df.columns:
+            continue
+        series = pd.to_numeric(summary_df[metric], errors="coerce")
+        valid = series.dropna().to_numpy(dtype=float)
+        if len(valid) == 0:
+            continue
+        ci_lo, ci_hi = _bootstrap_ci_mean(valid)
+        row[f"{metric}_mean"] = float(np.mean(valid))
+        row[f"{metric}_median"] = float(np.median(valid))
+        row[f"{metric}_std"] = float(np.std(valid, ddof=1)) if len(valid) > 1 else 0.0
+        row[f"{metric}_p05"] = float(np.quantile(valid, 0.05))
+        row[f"{metric}_p95"] = float(np.quantile(valid, 0.95))
+        row[f"{metric}_ci95_low"] = ci_lo
+        row[f"{metric}_ci95_high"] = ci_hi
+        row[f"{metric}_n"] = int(len(valid))
+    return row
+
+
+def _add_derived_metric_columns(df: pd.DataFrame) -> pd.DataFrame:
+    out = df.copy()
+    for base_col, derived_prefix, scale in [
+        ("m15_pcb_compliant", "m15_pass_rate_pct", 100.0),
+        ("m16_heatmap_pass", "m16_heatmap_pass_rate_pct", 100.0),
+        ("m22_invalid_output_rate", "m22_invalid_output_rate_pct", 100.0),
+    ]:
+        for suffix in ["mean", "median", "p05", "p95", "std", "ci95_low", "ci95_high"]:
+            col = f"{base_col}_{suffix}"
+            if col in out.columns:
+                out[f"{derived_prefix}_{suffix}"] = pd.to_numeric(out[col], errors="coerce") * scale
+    return out
+
+
+def _line_style(direction: str) -> str:
+    return "-" if direction == "pos" else "--"
+
+
+def _estimator_color_map(estimators: list[str]) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for family, items in pd.DataFrame({"estimator": estimators}).assign(
+        family=lambda d: d["estimator"].map(lambda e: ESTIMATOR_FAMILIES.get(e, "Unknown"))
+    ).groupby("family"):
+        cmap = plt.get_cmap("tab20")
+        for idx, est in enumerate(sorted(items["estimator"])):
+            base = matplotlib.colors.to_rgb(FAMILY_PALETTE.get(str(family), "#616161"))
+            accent = cmap(idx % 20)[:3]
+            mix = 0.70
+            out[str(est)] = tuple(mix * b + (1 - mix) * a for b, a in zip(base, accent)) + (1.0,)
+    return out
+
+
+def _plot_metric_page(df: pd.DataFrame, sweep_key: str, metric_col: str, metric_label: str, yscale: str = "log") -> tuple[plt.Figure, dict[str, Any]]:
+    spec = SWEEP_SPECS[sweep_key]
+    df_sweep = df[df["sweep_key"] == sweep_key].copy()
+    fig, axes = plt.subplots(2, 3, figsize=(13.8, 8.0), sharex=False, sharey=False)
+    axes_arr = axes.flatten()
+    families = [fam for fam in ["Loop-based", "Window-based", "Model-based", "Adaptive", "Data-driven", "Exotic"] if fam in set(df_sweep["family"])]
+    color_map = _estimator_color_map(sorted(df_sweep["estimator"].unique()))
+    for ax, family in zip(axes_arr, families):
+        part = df_sweep[df_sweep["family"] == family]
+        for (estimator, direction), df_est in part.sort_values([spec.x_col, "estimator"]).groupby(["estimator", "direction"], sort=True):
+            x = pd.to_numeric(df_est[spec.x_col], errors="coerce").to_numpy(dtype=float)
+            y = pd.to_numeric(df_est[metric_col], errors="coerce").to_numpy(dtype=float)
+            if yscale == "log":
+                y = np.maximum(y, 1e-12)
+            lo_col = metric_col.replace("_mean", "_ci95_low")
+            hi_col = metric_col.replace("_mean", "_ci95_high")
+            if lo_col in df_est.columns and hi_col in df_est.columns:
+                lo = pd.to_numeric(df_est[lo_col], errors="coerce").to_numpy(dtype=float)
+                hi = pd.to_numeric(df_est[hi_col], errors="coerce").to_numpy(dtype=float)
+                if np.any(np.isfinite(lo)) and np.any(np.isfinite(hi)):
+                    if yscale == "log":
+                        lo = np.maximum(lo, 1e-12)
+                        hi = np.maximum(hi, 1e-12)
+                    ax.fill_between(x, lo, hi, color=color_map[str(estimator)], alpha=0.08, linewidth=0)
+            ax.plot(
+                x,
+                y,
+                marker="o",
+                markersize=2.8,
+                linewidth=1.05,
+                color=color_map[str(estimator)],
+                linestyle=_line_style(str(direction)),
+                label=f"{estimator} {'+' if direction == 'pos' else '-'}",
+            )
+        ticks = sorted(df_sweep[spec.x_col].dropna().unique().tolist())
+        if ticks:
+            ax.set_xscale("log")
+            ax.xaxis.set_major_locator(FixedLocator(ticks))
+            ax.xaxis.set_major_formatter(FuncFormatter(lambda x, _pos: f"{x:g}" if x in ticks else ""))
+            for tick in ax.get_xticklabels():
+                tick.set_rotation(65)
+                tick.set_fontsize(6)
+        if yscale == "log":
+            ax.set_yscale("log")
+        ax.axvline(spec.reference_value, color="#6A1B9A", linestyle=":", linewidth=0.9, label="reference")
+        ax.grid(True, which="both", alpha=0.25)
+        ax.set_title(family, loc="left", fontweight="bold")
+        ax.set_ylabel(metric_label)
+        ax.legend(loc="best", fontsize=5.6, frameon=True)
+    for idx in range(len(families), len(axes_arr)):
+        axes_arr[idx].set_visible(False)
+    for ax in axes_arr[: len(families)]:
+        ax.set_xlabel(spec.x_label)
+    fig.suptitle(f"{spec.label}: {metric_label} by estimator family", fontsize=13, y=0.995)
+    fig.text(
+        0.5,
+        0.006,
+        "Solid lines are positive events; dashed lines are negative events. Shaded bands are bootstrap CI95 when n>1.",
+        ha="center",
+        va="bottom",
+        fontsize=7.5,
+        color="#37474F",
+    )
+    fig.tight_layout(rect=[0.02, 0.03, 0.98, 0.94])
+    return fig, color_map
+
+
+def save_rmse_family_plot(df_global: pd.DataFrame, out_dir: Path) -> tuple[list[Path], dict[str, Any]]:
+    pdf_path = out_dir / RMSE_FAMILY_PDF_NAME
+    png_path = out_dir / RMSE_FAMILY_PNG_NAME
+    color_map: dict[str, Any] = {}
+    first_fig: plt.Figure | None = None
+    with PdfPages(pdf_path) as pdf:
+        for sweep_key in sorted(df_global["sweep_key"].unique()):
+            fig, cmap = _plot_metric_page(df_global, str(sweep_key), "m1_rmse_hz_mean", "RMSE [Hz]", "log")
+            color_map.update(cmap)
+            if first_fig is None:
+                first_fig = fig
+            pdf.savefig(fig)
+            if fig is not first_fig:
+                plt.close(fig)
+    if first_fig is not None:
+        first_fig.savefig(png_path, dpi=240)
+        plt.close(first_fig)
+    return [png_path, pdf_path], color_map
+
+
+def save_multipage_dashboard(df_global: pd.DataFrame, out_dir: Path) -> Path:
+    pdf_path = out_dir / MULTIPAGE_PDF_NAME
+    df_plot = _add_derived_metric_columns(df_global)
+    pages = [
+        ("m1_rmse_hz_mean", "RMSE [Hz]", "log"),
+        ("m3_max_peak_hz_mean", "Peak FE [Hz]", "log"),
+        ("m27_post_100ms_rmse_hz_mean", "Post-event 100 ms RMSE [Hz]", "log"),
+        ("m29_late_event_rmse_hz_mean", "Late-window RMSE [Hz]", "log"),
+        ("m30_event_settling_time_s_mean", "Settling time [s]", "linear"),
+        ("m5_trip_risk_s_mean", "Trip-risk time [s]", "linear"),
+        ("m15_pass_rate_pct_mean", "Pass rate [%]", "linear"),
+        ("m13_cpu_time_us_mean", "CPU time [us/pass]", "log"),
+    ]
+    with PdfPages(pdf_path) as pdf:
+        for sweep_key in sorted(df_plot["sweep_key"].unique()):
+            for metric_col, label, yscale in pages:
+                if metric_col not in df_plot.columns:
+                    continue
+                fig, _ = _plot_metric_page(df_plot, str(sweep_key), metric_col, label, yscale)
+                pdf.savefig(fig)
+                plt.close(fig)
+        fig, ax = plt.subplots(figsize=(11.0, 8.0))
+        ax.axis("off")
+        lines = [
+            "OpenFreqBench ATLAS",
+            "",
+            f"Method version: {METHOD_VERSION}",
+            f"Sweeps: {', '.join(sorted(df_global['sweep_key'].unique()))}",
+            f"Estimators: {df_global['estimator'].nunique()}",
+            f"Scenarios: {df_global['scenario'].nunique()}",
+            f"Median MC runs per pair: {int(df_global['n_mc_runs'].median())}",
+            "",
+            "Interpretation:",
+            "- Every sweep uses the same runner, metric aggregation, manifests and plotting code.",
+            "- Positive and negative events are plotted together to expose sign asymmetry.",
+            "- CI bands are bootstrap intervals over Monte Carlo runs; n=1 runs are diagnostic only.",
+            "- Guide lines in older plots are not formal compliance claims unless tied to a preregistered test.",
+        ]
+        ax.text(0.04, 0.95, "\n".join(lines), va="top", ha="left", fontsize=11, color="#263238", wrap=True)
+        fig.tight_layout()
+        pdf.savefig(fig)
+        plt.close(fig)
+    return pdf_path
+
+
+def save_method_map(df_global: pd.DataFrame, out_dir: Path) -> list[Path]:
+    sweeps = sorted(df_global["sweep_key"].unique())
+    fig, axes = plt.subplots(len(sweeps), 1, figsize=(12.5, max(4.0, 4.2 * len(sweeps))), squeeze=False)
+    for ax, sweep_key in zip(axes.flatten(), sweeps):
+        spec = SWEEP_SPECS[str(sweep_key)]
+        part = df_global[df_global["sweep_key"] == sweep_key].copy()
+        pivot = (
+            part.groupby(["estimator", spec.x_col], as_index=False)["m1_rmse_hz_mean"]
+            .mean()
+            .pivot(index="estimator", columns=spec.x_col, values="m1_rmse_hz_mean")
+        )
+        ordered = pivot.mean(axis=1).sort_values().index.tolist()
+        pivot = pivot.loc[ordered]
+        data = np.log10(np.maximum(pivot.to_numpy(dtype=float), 1e-12))
+        im = ax.imshow(data, aspect="auto", cmap="viridis")
+        ax.set_title(f"{spec.label}: log10 mean RMSE", loc="left", fontweight="bold")
+        ax.set_yticks(np.arange(len(pivot.index)))
+        ax.set_yticklabels(pivot.index, fontsize=7)
+        ax.set_xticks(np.arange(len(pivot.columns)))
+        ax.set_xticklabels([f"{float(x):g}" for x in pivot.columns], rotation=45, ha="right", fontsize=7)
+        ax.set_xlabel(spec.x_label)
+        fig.colorbar(im, ax=ax, fraction=0.025, pad=0.01)
+    fig.tight_layout()
+    png = out_dir / METHOD_MAP_PNG_NAME
+    pdf = out_dir / METHOD_MAP_PDF_NAME
+    fig.savefig(png, dpi=240)
+    fig.savefig(pdf)
+    plt.close(fig)
+    return [png, pdf]
+
+
+def save_sign_asymmetry(df_global: pd.DataFrame, out_dir: Path) -> list[Path]:
+    rows: list[dict[str, Any]] = []
+    for (sweep_key, estimator), part in df_global.groupby(["sweep_key", "estimator"], sort=True):
+        spec = SWEEP_SPECS[str(sweep_key)]
+        ratios: list[float] = []
+        for _x, by_x in part.groupby(spec.x_col):
+            vals = by_x.set_index("direction")["m1_rmse_hz_mean"].to_dict()
+            if "pos" in vals and "neg" in vals:
+                pos = max(float(vals["pos"]), 1e-12)
+                neg = max(float(vals["neg"]), 1e-12)
+                ratios.append(max(pos, neg) / min(pos, neg))
+        if ratios:
+            rows.append({"sweep_key": sweep_key, "estimator": estimator, "max_asymmetry_ratio": max(ratios)})
+    df = pd.DataFrame(rows)
+    fig, ax = plt.subplots(figsize=(12.0, 6.0))
+    if df.empty:
+        ax.text(0.5, 0.5, "No paired positive/negative events available.", ha="center", va="center")
+    else:
+        pivot = df.pivot(index="estimator", columns="sweep_key", values="max_asymmetry_ratio").fillna(1.0)
+        pivot = pivot.loc[pivot.max(axis=1).sort_values(ascending=False).index]
+        x = np.arange(len(pivot.index))
+        width = 0.8 / max(1, len(pivot.columns))
+        for idx, col in enumerate(pivot.columns):
+            ax.bar(x + idx * width, pivot[col].to_numpy(dtype=float), width=width, label=str(col))
+        ax.axhline(3.0, color="#B71C1C", linestyle="--", linewidth=1.0, label="diagnostic threshold")
+        ax.set_xticks(x + width * (len(pivot.columns) - 1) / 2)
+        ax.set_xticklabels(pivot.index, rotation=70, ha="right", fontsize=7)
+        ax.set_ylabel("max(pos, neg) / min(pos, neg)")
+        ax.set_title("Sign asymmetry by estimator and sweep", loc="left", fontweight="bold")
+        ax.grid(True, axis="y", alpha=0.25)
+        ax.legend(fontsize=7)
+    fig.tight_layout()
+    png = out_dir / ASYMMETRY_PNG_NAME
+    pdf = out_dir / ASYMMETRY_PDF_NAME
+    fig.savefig(png, dpi=240)
+    fig.savefig(pdf)
+    plt.close(fig)
+    return [png, pdf]
+
+
+def save_pareto_plot(df_global: pd.DataFrame, out_dir: Path) -> list[Path]:
+    fig, axes = plt.subplots(1, 3, figsize=(14.0, 4.2), sharey=False)
+    color_map = _estimator_color_map(sorted(df_global["estimator"].unique()))
+    for ax, sweep_key in zip(axes, sorted(df_global["sweep_key"].unique())):
+        part = (
+            df_global[df_global["sweep_key"] == sweep_key]
+            .groupby(["estimator", "family"], as_index=False)
+            .agg(
+                rmse=("m1_rmse_hz_mean", "median"),
+                cpu=("m13_cpu_time_us_mean", "median"),
+                latency=("m14_struct_latency_ms_mean", "median"),
+            )
+        )
+        for _, row in part.iterrows():
+            ax.scatter(
+                max(float(row["cpu"]), 1e-12),
+                max(float(row["rmse"]), 1e-12),
+                s=25 + 4 * max(float(row.get("latency", 0.0)), 0.0),
+                color=color_map.get(str(row["estimator"]), "#616161"),
+                alpha=0.85,
+            )
+        top = part.sort_values("rmse").head(5)
+        for _, row in top.iterrows():
+            ax.text(max(float(row["cpu"]), 1e-12), max(float(row["rmse"]), 1e-12), str(row["estimator"]), fontsize=6)
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        ax.set_xlabel("CPU time [us/pass]")
+        ax.set_ylabel("median RMSE [Hz]")
+        ax.set_title(SWEEP_SPECS[str(sweep_key)].label, loc="left", fontweight="bold")
+        ax.grid(True, which="both", alpha=0.25)
+    fig.suptitle("Accuracy vs CPU vs structural latency", fontsize=13)
+    fig.tight_layout()
+    png = out_dir / PARETO_PNG_NAME
+    pdf = out_dir / PARETO_PDF_NAME
+    fig.savefig(png, dpi=240)
+    fig.savefig(pdf)
+    plt.close(fig)
+    return [png, pdf]
+
+
+def save_summary_tables(df_global: pd.DataFrame, timing_rows: list[dict[str, Any]], out_dir: Path) -> tuple[Path, Path, Path, Path]:
+    global_csv = out_dir / GLOBAL_CSV_NAME
+    df_global.to_csv(global_csv, index=False)
+    rmse_cols = [
+        "sweep_key",
+        "scenario",
+        "direction",
+        "estimator",
+        "family",
+        "n_mc_runs",
+        "m1_rmse_hz_mean",
+        "m1_rmse_hz_median",
+        "m1_rmse_hz_ci95_low",
+        "m1_rmse_hz_ci95_high",
+        "m1_rmse_hz_std",
+    ]
+    for spec in SWEEP_SPECS.values():
+        if spec.x_col in df_global.columns:
+            rmse_cols.append(spec.x_col)
+        if spec.signed_col in df_global.columns:
+            rmse_cols.append(spec.signed_col)
+    rmse_cols = [c for c in dict.fromkeys(rmse_cols) if c in df_global.columns]
+    rmse_est = out_dir / RMSE_EST_CSV_NAME
+    df_global[rmse_cols].to_csv(rmse_est, index=False)
+    family = (
+        df_global.groupby(["sweep_key", "family"], as_index=False)
+        .agg(
+            family_rmse_median=("m1_rmse_hz_mean", "median"),
+            family_rmse_min=("m1_rmse_hz_mean", "min"),
+            family_rmse_max=("m1_rmse_hz_mean", "max"),
+            estimator_count=("estimator", "nunique"),
+        )
+        .sort_values(["sweep_key", "family"])
+    )
+    rmse_family = out_dir / RMSE_FAM_CSV_NAME
+    family.to_csv(rmse_family, index=False)
+    timing_csv = out_dir / TIMING_CSV_NAME
+    pd.DataFrame(timing_rows).to_csv(timing_csv, index=False)
+    return global_csv, rmse_est, rmse_family, timing_csv
+
+
+def save_hypothesis_results(df_global: pd.DataFrame, out_dir: Path) -> Path:
+    rows: list[dict[str, Any]] = []
+    for (sweep_key, estimator), part in df_global.groupby(["sweep_key", "estimator"], sort=True):
+        spec = SWEEP_SPECS[str(sweep_key)]
+        reduced = (
+            part.groupby(spec.x_col, as_index=False)["m1_rmse_hz_mean"]
+            .mean()
+            .sort_values(spec.x_col)
+        )
+        x = reduced[spec.x_col].to_numpy(dtype=float)
+        y = np.maximum(reduced["m1_rmse_hz_mean"].to_numpy(dtype=float), 1e-12)
+        if len(x) < 4:
+            regime = "too_few_points"
+            slope = float("nan")
+            ratio = float("nan")
+        else:
+            slope, _intercept = np.polyfit(np.log10(x), np.log10(y), 1)
+            ratio = float(y[-1] / max(y[0], 1e-12))
+            diffs = np.diff(np.log10(y))
+            if ratio <= 1.35 and abs(float(slope)) <= 0.12:
+                regime = "flat"
+            elif float(slope) > 0.15 and float(np.mean(diffs >= -0.08)) >= 0.75:
+                regime = "monotone_deterioration"
+            elif float(slope) < -0.12:
+                regime = "improves_with_severity"
+            else:
+                regime = "nonmonotone_or_noise_limited"
+        rows.append(
+            {
+                "hypothesis_id": f"{sweep_key}_{estimator}_severity_trend",
+                "sweep_key": sweep_key,
+                "estimator": estimator,
+                "family": ESTIMATOR_FAMILIES.get(estimator, "Unknown"),
+                "metric": "m1_rmse_hz",
+                "x_axis": spec.x_col,
+                "trend_slope_loglog": float(slope) if math.isfinite(float(slope)) else "",
+                "high_low_ratio": float(ratio) if math.isfinite(float(ratio)) else "",
+                "classification": regime,
+                "status": "diagnostic" if int(part["n_mc_runs"].median()) < 30 else "claimable_with_mc_support",
+            }
+        )
+    path = out_dir / HYPOTHESIS_CSV_NAME
+    pd.DataFrame(rows).to_csv(path, index=False)
+    return path
+
+
+def build_benchmark_report(df_global: pd.DataFrame, artifacts: dict[str, str], settings: dict[str, Any], out_dir: Path) -> Path:
+    report_path = out_dir / BENCHMARK_REPORT_NAME
+    payload = {
+        "schema_version": "openfreqbench-atlas-report-v1",
+        "method_version": METHOD_VERSION,
+        "created_utc": datetime.now(timezone.utc).isoformat(),
+        "run_id": settings.get("run_id"),
+        "mode": "atlas",
+        "metric_profile": "canonical-single-phase-v1",
+        "settings": settings,
+        "artifacts": artifacts,
+        "aggregated_metrics": benchmark._to_builtin(df_global.to_dict(orient="records")),
+        "reproducibility": {
+            "git": git_manifest(ROOT),
+            "command": settings.get("command"),
+        },
+    }
+    report_path.write_text(json.dumps(benchmark._to_builtin(payload), indent=2, ensure_ascii=False), encoding="utf-8")
+    return report_path
+
+
+def write_manifest(
+    out_dir: Path,
+    scenarios: list[AtlasScenario],
+    estimators: dict[str, type],
+    settings: dict[str, Any],
+    artifacts: dict[str, str],
+) -> Path:
+    path = out_dir / MANIFEST_NAME
+    payload = {
+        "schema_version": "openfreqbench-atlas-manifest-v1",
+        "method_version": METHOD_VERSION,
+        "created_utc": datetime.now(timezone.utc).isoformat(),
+        "run_root": str(out_dir.resolve()),
+        "settings": settings,
+        "sweeps": {
+            key: {
+                "label": spec.label,
+                "x_col": spec.x_col,
+                "signed_col": spec.signed_col,
+                "methodology": spec.methodology,
+            }
+            for key, spec in SWEEP_SPECS.items()
+            if key in {sc.sweep_key for sc in scenarios}
+        },
+        "scenarios": [
+            {
+                "sweep_key": sc.sweep_key,
+                "scenario": sc.scenario_name,
+                "signed_value": sc.signed_value,
+                "abs_value": sc.abs_value,
+                "direction": sc.direction,
+            }
+            for sc in scenarios
+        ],
+        "estimators": list(estimators.keys()),
+        "families": {label: ESTIMATOR_FAMILIES.get(label, "Unknown") for label in estimators},
+        "artifacts": artifacts,
+        "artifact_inventory": [
+            row
+            for row in build_artifact_index(out_dir)
+            if Path(str(row["artifact_path"])).resolve() != path.resolve()
+        ],
+        "git": git_manifest(ROOT),
+    }
+    path.write_text(json.dumps(benchmark._to_builtin(payload), indent=2, ensure_ascii=False), encoding="utf-8")
+    return path
+
+
+def reproduce_command(settings: dict[str, Any]) -> str:
+    parts = [
+        "python -m pipelines.atlas_sweep",
+        f"--sweeps {settings['sweeps_arg']}",
+        f"--policy {settings['policy']}",
+        f"--n-runs {settings['n_mc_runs']}",
+        f"--base-seed {settings['base_seed']}",
+        f"--n-cost-reps {settings['n_cost_reps']}",
+        f"--tune-trials {settings['tune_trials']}",
+        f"--tune-eval-runs {settings['tune_eval_runs']}",
+        f"--output-subdir {settings['output_subdir']}",
+    ]
+    if settings.get("run_id") and settings["run_id"] != settings["output_subdir"]:
+        parts.append(f"--run-id {settings['run_id']}")
+    return " ".join(parts)
+
+
+def write_readme(out_dir: Path, settings: dict[str, Any]) -> Path:
+    path = out_dir / "README.md"
+    lines = [
+        "# OpenFreqBench ATLAS Run",
+        "",
+        "This artifact directory was produced by the unified ATLAS pipeline.",
+        "",
+        "## Reproduce",
+        "",
+        "```powershell",
+        reproduce_command(settings),
+        "```",
+        "",
+        "## Primary Files",
+        "",
+        f"- `{GLOBAL_CSV_NAME}`",
+        f"- `{MULTIPAGE_PDF_NAME}`",
+        f"- `{RMSE_FAMILY_PDF_NAME}`",
+        f"- `{METHOD_MAP_PDF_NAME}`",
+        f"- `{ASYMMETRY_PDF_NAME}`",
+        f"- `{PARETO_PDF_NAME}`",
+        f"- `{MANIFEST_NAME}`",
+        "- `artifact_index.csv`",
+        "- `paper_traceability.csv`",
+        "- `evidence_manifest.json`",
+        "",
+        "Runs with `n_runs < 30` are diagnostic. Use `n_runs >= 100` for paper-grade Monte Carlo evidence.",
+    ]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
+
+
+def run_atlas(args: argparse.Namespace) -> Path:
+    t0 = time.time()
+    policy = str(args.policy).strip().lower().replace("-", "_")
+    if policy == "oracle":
+        policy = "per_scenario_oracle"
+    if policy not in {"default", "fixed_policy", "per_scenario_oracle"}:
+        raise ValueError("ATLAS policy must be one of: default, fixed_policy, oracle/per_scenario_oracle.")
+
+    sweep_keys = [item.strip().lower().replace("-", "_") for item in _csv(args.sweeps)]
+    if "all" in sweep_keys:
+        sweep_keys = ["magnitude_step", "rocof", "frequency_step"]
+    unknown = [item for item in sweep_keys if item not in SWEEP_SPECS]
+    if unknown:
+        raise ValueError(f"Unknown ATLAS sweeps: {unknown}. Known: {sorted(SWEEP_SPECS)}")
+
+    output_subdir = args.output_subdir or os.getenv("ATLAS_OUTPUT_SUBDIR", "atlas_mvp2_representative")
+    out_dir = ROOT / "artifacts" / output_subdir
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    n_mc_runs = int(args.n_runs if args.n_runs is not None else _env_int("ATLAS_N_MC_RUNS", 1, minimum=1))
+    base_seed = int(args.base_seed if args.base_seed is not None else _env_int("ATLAS_BASE_SEED", 12345, minimum=0))
+    n_cost_reps = int(args.n_cost_reps if args.n_cost_reps is not None else _env_int("ATLAS_N_COST_REPS", 1, minimum=1))
+    tune_trials = int(args.tune_trials if args.tune_trials is not None else _env_int("ATLAS_TUNE_TRIALS", 0, minimum=0))
+    tune_eval_runs = int(args.tune_eval_runs if args.tune_eval_runs is not None else _env_int("ATLAS_TUNE_EVAL_RUNS", 2, minimum=1))
+    fixed_eval_runs = _env_int("ATLAS_FIXED_POLICY_EVAL_RUNS_PER_LEVEL", max(1, min(4, tune_eval_runs)), minimum=1)
+    capture_signals = bool(args.capture_signals or _env_bool("ATLAS_CAPTURE_SIGNALS", False))
+    resume = bool(args.resume or _env_bool("ATLAS_RESUME", True))
+    run_id = args.run_id or os.getenv("ATLAS_RUN_ID", output_subdir)
+
+    settings: dict[str, Any] = {
+        "run_id": run_id,
+        "method_version": METHOD_VERSION,
+        "output_subdir": output_subdir,
+        "sweeps_arg": args.sweeps,
+        "sweeps": sweep_keys,
+        "policy": policy,
+        "n_mc_runs": n_mc_runs,
+        "base_seed": base_seed,
+        "n_cost_reps": n_cost_reps,
+        "tune_trials": tune_trials,
+        "tune_eval_runs": tune_eval_runs,
+        "fixed_policy_eval_runs_per_level": fixed_eval_runs,
+        "resume": resume,
+        "capture_signals": capture_signals,
+    }
+    settings["command"] = reproduce_command(settings)
+
+    scenarios = build_atlas_scenarios(sweep_keys)
+    estimators = select_estimators()
+    print(f"Running OpenFreqBench ATLAS: {len(scenarios)} scenarios x {len(estimators)} estimators")
+    print(f"  Sweeps: {', '.join(sweep_keys)}")
+    print(f"  Policy: {policy}; MC runs: {n_mc_runs}; tuning trials: {tune_trials}")
+    print(f"  Output dir: {out_dir}")
+
+    scenarios_by_sweep: dict[str, list[AtlasScenario]] = {}
+    for sc in scenarios:
+        scenarios_by_sweep.setdefault(sc.sweep_key, []).append(sc)
+
+    fixed_params: dict[tuple[str, str], dict[str, Any]] = {}
+    fixed_meta: dict[tuple[str, str], dict[str, Any]] = {}
+    if policy == "fixed_policy":
+        print("\nFixed-policy tuning phase")
+        for sweep_key, sweep_scenarios in scenarios_by_sweep.items():
+            frequency_bounds = _frequency_bounds_for_sweep(sweep_scenarios)
+            eval_scenarios = _build_eval_scenarios(sweep_scenarios, base_seed + 200000, fixed_eval_runs)
+            for est_name, est_cls in estimators.items():
+                print(f"  [tune fixed] {sweep_key} / {est_name}", flush=True)
+                params, meta = _tune_estimator(
+                    est_name,
+                    est_cls,
+                    eval_scenarios,
+                    n_trials=tune_trials,
+                    tune_eval_runs=tune_eval_runs,
+                    mode="fixed_policy",
+                    frequency_bounds=frequency_bounds,
+                )
+                fixed_params[(sweep_key, est_name)] = params
+                fixed_meta[(sweep_key, est_name)] = meta
+
+    rows: list[dict[str, Any]] = []
+    timing_rows: list[dict[str, Any]] = []
+    for sc in scenarios:
+        sc_dir = out_dir / sc.scenario_name
+        sc_dir.mkdir(parents=True, exist_ok=True)
+        frequency_bounds = _frequency_bounds_for_sweep(scenarios_by_sweep[sc.sweep_key])
+        print(f"\nScenario {sc.scenario_name} ({sc.signed_value:+g})")
+        for est_name, est_cls in estimators.items():
+            est_n_mc = _env_int(f"ATLAS_{_env_key_for_estimator(est_name)}_N_MC_RUNS", n_mc_runs, minimum=1)
+            est_n_cost = _env_int(f"ATLAS_{_env_key_for_estimator(est_name)}_N_COST_REPS", n_cost_reps, minimum=1)
+            out_est = sc_dir / est_name
+            out_est.mkdir(parents=True, exist_ok=True)
+            summary_csv = out_est / f"{sc.scenario_name}__{est_name}_summary.csv"
+            run_spec_path = out_est / "run_spec.json"
+            expected = {
+                "method_version": METHOD_VERSION,
+                "scenario": sc.scenario_name,
+                "estimator": est_name,
+                "sweep_key": sc.sweep_key,
+                "signed_value": sc.signed_value,
+                "policy": policy,
+                "n_mc_runs": int(est_n_mc),
+                "n_cost_reps": int(est_n_cost),
+                "base_seed": int(base_seed),
+                "capture_signals": bool(capture_signals),
+                "tune_trials": int(tune_trials),
+                "tune_eval_runs": int(tune_eval_runs),
+            }
+
+            if resume and _can_reuse(run_spec_path, summary_csv, expected):
+                summary_df = pd.read_csv(summary_csv)
+                timing = {}
+                spec_current = json.loads(run_spec_path.read_text(encoding="utf-8"))
+                best_params = spec_current.get("best_params", {})
+                tuning_meta = spec_current.get("tuning_meta", {})
+            else:
+                if policy == "fixed_policy":
+                    best_params = dict(fixed_params.get((sc.sweep_key, est_name), {}))
+                    tuning_meta = dict(fixed_meta.get((sc.sweep_key, est_name), {}))
+                elif policy == "per_scenario_oracle":
+                    eval_scenarios = _build_eval_scenarios([sc], base_seed + 200000, max(1, tune_eval_runs))
+                    best_params, tuning_meta = _tune_estimator(
+                        est_name,
+                        est_cls,
+                        eval_scenarios,
+                        n_trials=tune_trials,
+                        tune_eval_runs=tune_eval_runs,
+                        mode="per_scenario_oracle",
+                        frequency_bounds=frequency_bounds,
+                    )
+                else:
+                    best_params = _apply_frequency_bounds(est_name, est_cls, _estimator_defaults(est_cls), frequency_bounds)
+                    tuning_meta = {"mode": "default", "n_trials_requested": 0, "n_trials_executed": 0}
+
+                print(f"  - {est_name}", flush=True)
+                run_start = time.perf_counter()
+                engine = MonteCarloEngine(
+                    scenario_cls=sc.scenario_cls,
+                    estimator_cls=est_cls,
+                    estimator_params=best_params,
+                    n_runs=est_n_mc,
+                    base_seed=base_seed,
+                    n_cost_reps=est_n_cost,
+                    enforce_standardized_step=est_name not in {"PI-GRU", "Koopman (RK-DPMU)"},
+                    capture_signals=capture_signals,
+                )
+                result = _run_engine_local(engine)
+                summary_df = result.summary_df
+                summary_df.to_csv(summary_csv, index=False)
+                if capture_signals and not result.signals_df.empty:
+                    result.signals_df.to_csv(out_est / f"{sc.scenario_name}__{est_name}_signals.csv", index=False)
+                timing = {"total_elapsed_s": float(time.perf_counter() - run_start)}
+                spec_current = {
+                    **expected,
+                    "family": ESTIMATOR_FAMILIES.get(est_name, "Unknown"),
+                    "best_params": benchmark._to_builtin(best_params),
+                    "tuning_meta": benchmark._to_builtin(tuning_meta),
+                    "timing": timing,
+                    "frequency_bounds_hz": list(frequency_bounds) if frequency_bounds else None,
+                }
+                run_spec_path.write_text(json.dumps(benchmark._to_builtin(spec_current), indent=2, ensure_ascii=False), encoding="utf-8")
+
+            agg = _aggregate_summary(summary_df)
+            row = {
+                "sweep_key": sc.sweep_key,
+                "sweep_label": sc.sweep_label,
+                "scenario": sc.scenario_name,
+                "signed_value": sc.signed_value,
+                "abs_value": sc.abs_value,
+                "direction": sc.direction,
+                **sc.params,
+                "estimator": est_name,
+                "family": ESTIMATOR_FAMILIES.get(est_name, "Unknown"),
+                "n_mc_runs": int(len(summary_df)),
+                "policy": policy,
+                "best_params_json": json.dumps(benchmark._to_builtin(best_params), sort_keys=True, ensure_ascii=False),
+                **agg,
+            }
+            rows.append(row)
+            timing_rows.append(
+                {
+                    "sweep_key": sc.sweep_key,
+                    "scenario": sc.scenario_name,
+                    "estimator": est_name,
+                    "family": ESTIMATOR_FAMILIES.get(est_name, "Unknown"),
+                    "n_mc_runs": int(len(summary_df)),
+                    "n_cost_reps": int(est_n_cost),
+                    "tune_trials": int(tune_trials),
+                    "tune_eval_runs": int(tune_eval_runs),
+                    "policy": policy,
+                    "total_elapsed_s": timing.get("total_elapsed_s") if isinstance(timing, dict) else None,
+                }
+            )
+
+    df_global = pd.DataFrame(rows).sort_values(["sweep_key", "abs_value", "direction", "family", "estimator"])
+    global_csv, rmse_est, rmse_family, timing_csv = save_summary_tables(df_global, timing_rows, out_dir)
+    plot_paths, color_map = save_rmse_family_plot(df_global, out_dir)
+    plot_paths.extend(save_method_map(df_global, out_dir))
+    plot_paths.extend(save_sign_asymmetry(df_global, out_dir))
+    plot_paths.extend(save_pareto_plot(df_global, out_dir))
+    dashboard_pdf = save_multipage_dashboard(df_global, out_dir)
+    hypothesis_csv = save_hypothesis_results(df_global, out_dir)
+
+    legend_path = out_dir / LEGEND_CSV_NAME
+    pd.DataFrame(
+        [
+            {"estimator": est, "hex_color": matplotlib.colors.to_hex(rgba), "family": ESTIMATOR_FAMILIES.get(est, "Unknown")}
+            for est, rgba in sorted(color_map.items())
+        ]
+    ).to_csv(legend_path, index=False)
+
+    report_path = out_dir / BENCHMARK_REPORT_NAME
+    manifest_path = out_dir / MANIFEST_NAME
+    readme_path = out_dir / "README.md"
+    env_path = out_dir / "environment_report.json"
+    trace_path = out_dir / "paper_traceability.csv"
+    artifact_index_path = out_dir / "artifact_index.csv"
+    evidence_path = out_dir / "evidence_manifest.json"
+
+    artifacts = {
+        "aggregated_metrics_csv": str(global_csv),
+        "rmse_by_estimator_csv": str(rmse_est),
+        "rmse_by_family_csv": str(rmse_family),
+        "timing_profile_csv": str(timing_csv),
+        "hypothesis_results_csv": str(hypothesis_csv),
+        "metrics_dashboard_pdf": str(dashboard_pdf),
+        "rmse_family_pdf": str(out_dir / RMSE_FAMILY_PDF_NAME),
+        "method_map_pdf": str(out_dir / METHOD_MAP_PDF_NAME),
+        "sign_asymmetry_pdf": str(out_dir / ASYMMETRY_PDF_NAME),
+        "pareto_pdf": str(out_dir / PARETO_PDF_NAME),
+        "benchmark_report_json": str(report_path),
+        "manifest_json": str(manifest_path),
+        "readme": str(readme_path),
+        "environment_report": str(env_path),
+        "paper_traceability_csv": str(trace_path),
+        "artifact_index_csv": str(artifact_index_path),
+        "evidence_manifest_json": str(evidence_path),
+    }
+    report_path = build_benchmark_report(df_global, artifacts, settings, out_dir)
+    readme_path = write_readme(out_dir, settings)
+    env_path = write_environment_report(ROOT, env_path, source_root=SRC)
+    trace_path = write_paper_traceability(report_path, trace_path)
+    manifest_path = write_manifest(out_dir, scenarios, estimators, settings, artifacts)
+    evidence_path = write_evidence_manifest(out_dir, evidence_path, source_report=report_path)
+    manifest_path = write_manifest(out_dir, scenarios, estimators, settings, artifacts)
+    artifact_index_path = write_artifact_index(out_dir, artifact_index_path)
+
+    elapsed = (time.time() - t0) / 60.0
+    print("\nArtifacts:")
+    for path in [
+        global_csv,
+        rmse_est,
+        rmse_family,
+        timing_csv,
+        hypothesis_csv,
+        *plot_paths,
+        dashboard_pdf,
+        report_path,
+        manifest_path,
+        trace_path,
+        artifact_index_path,
+        evidence_path,
+    ]:
+        print(f"  - {path.relative_to(ROOT)}")
+    print(f"\n[DONE] ATLAS completed in {elapsed:.1f} min.")
+    return out_dir
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Unified OpenFreqBench ATLAS sweep runner.")
+    parser.add_argument("--sweeps", default=os.getenv("ATLAS_SWEEPS", "all"), help="Comma list: all,magnitude_step,rocof,frequency_step.")
+    parser.add_argument("--policy", default=os.getenv("ATLAS_POLICY", "default"), help="default, fixed_policy, or oracle/per_scenario_oracle.")
+    parser.add_argument("--n-runs", type=int, default=None, help="Monte Carlo runs per scenario/estimator.")
+    parser.add_argument("--base-seed", type=int, default=None)
+    parser.add_argument("--n-cost-reps", type=int, default=None)
+    parser.add_argument("--tune-trials", type=int, default=None)
+    parser.add_argument("--tune-eval-runs", type=int, default=None)
+    parser.add_argument("--output-subdir", default=None)
+    parser.add_argument("--run-id", default=None)
+    parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--capture-signals", action="store_true")
+    return parser
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    run_atlas(args)
+
+
+if __name__ == "__main__":
+    main()

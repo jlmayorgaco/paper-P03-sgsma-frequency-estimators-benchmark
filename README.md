@@ -90,6 +90,35 @@ openfreqbench report build \
   --input-json artifacts/openfreqbench/compare-zcd-ipdft/benchmark_report.json
 ```
 
+## ATLAS sweeps
+
+Use ATLAS when you want the same Monte Carlo, tuning policy, manifests, and PDFs
+for magnitude-step, RoCoF, and frequency-step studies.
+
+```bash
+python -m pipelines.atlas_sweep \
+  --sweeps magnitude_step,rocof,frequency_step \
+  --policy fixed_policy \
+  --n-runs 100 \
+  --tune-trials 80 \
+  --output-subdir atlas-paper-v1
+```
+
+For a quick diagnostic run:
+
+```bash
+python -m pipelines.atlas_sweep \
+  --sweeps all \
+  --policy default \
+  --n-runs 1 \
+  --output-subdir atlas-smoke
+```
+
+ATLAS writes `metrics_dashboard_multipage.pdf`,
+`rmse_deterioration_by_family.pdf`, `atlas_method_map.pdf`,
+`atlas_sign_asymmetry.pdf`, `benchmark_report.json`, `manifest.json`,
+`artifact_index.csv`, `paper_traceability.csv`, and `evidence_manifest.json`.
+
 ## YAML workflows
 
 Most runs should live in YAML. Start from a template:

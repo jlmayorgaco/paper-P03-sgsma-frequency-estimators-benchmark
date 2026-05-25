@@ -138,7 +138,12 @@ def build_artifact_index(run_root: Path) -> list[dict[str, Any]]:
 
 def write_artifact_index(run_root: Path, output_path: Path | None = None) -> Path:
     output_path = output_path or (run_root / "artifact_index.csv")
-    rows = build_artifact_index(run_root)
+    output_resolved = output_path.resolve()
+    rows = [
+        row
+        for row in build_artifact_index(run_root)
+        if Path(str(row["artifact_path"])).resolve() != output_resolved
+    ]
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fieldnames = ["relative_path", "artifact_path", "type", "size_bytes", "modified_utc", "sha256"]
     with output_path.open("w", encoding="utf-8", newline="") as fh:
@@ -149,10 +154,26 @@ def write_artifact_index(run_root: Path, output_path: Path | None = None) -> Pat
 
 
 def _report_command(report: dict[str, Any]) -> str:
+    command = report.get("reproducibility", {}).get("command") or report.get("settings", {}).get("command")
+    if command:
+        return str(command)
     config = report.get("reproducibility", {}).get("config", {})
     config_path = config.get("path")
     if config_path:
         return f"openfreqbench run --config {config_path}"
+    if report.get("mode") == "atlas":
+        settings = report.get("settings", {})
+        return (
+            "python -m pipelines.atlas_sweep "
+            f"--sweeps {settings.get('sweeps_arg', ','.join(settings.get('sweeps', [])) or 'all')} "
+            f"--policy {settings.get('policy', 'default')} "
+            f"--n-runs {settings.get('n_mc_runs', '<n>')} "
+            f"--base-seed {settings.get('base_seed', '<seed>')} "
+            f"--n-cost-reps {settings.get('n_cost_reps', '<reps>')} "
+            f"--tune-trials {settings.get('tune_trials', '<trials>')} "
+            f"--tune-eval-runs {settings.get('tune_eval_runs', '<runs>')} "
+            f"--output-subdir {settings.get('output_subdir', '<output>')}"
+        )
     return "openfreqbench run --config <unknown>"
 
 
@@ -203,7 +224,12 @@ def write_evidence_manifest(
     output_path = output_path or (run_root / "evidence_manifest.json")
     report_path = source_report or (run_root / "benchmark_report.json")
     report_hash = sha256_file(report_path) if report_path.exists() else None
-    artifact_rows = build_artifact_index(run_root)
+    output_resolved = output_path.resolve()
+    artifact_rows = [
+        row
+        for row in build_artifact_index(run_root)
+        if Path(str(row["artifact_path"])).resolve() != output_resolved
+    ]
     payload = {
         "schema_version": "openfreqbench-evidence-manifest-v1",
         "created_utc": datetime.now(timezone.utc).isoformat(),

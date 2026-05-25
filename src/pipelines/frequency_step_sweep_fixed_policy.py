@@ -1257,5 +1257,38 @@ def main() -> None:
     print(f"\n[DONE] Frequency-step sweep completed in {elapsed:.1f} min.")
 
 
+_legacy_frequency_step_main = main
+
+
+def main() -> None:
+    """Compatibility entry point; the canonical implementation is ATLAS."""
+    from pipelines.atlas_sweep import main as run_atlas
+
+    output_subdir = (
+        os.getenv("ATLAS_OUTPUT_SUBDIR")
+        or os.getenv("FREQSTEP_OUTPUT_SUBDIR")
+        or "atlas_frequency_step_fixed_policy"
+    )
+    policy = os.getenv("ATLAS_POLICY") or os.getenv("FREQSTEP_TUNING_POLICY") or "fixed_policy"
+    argv = ["--sweeps", "frequency_step", "--policy", policy, "--output-subdir", output_subdir]
+    if os.getenv("FREQSTEP_SWEEP_N_MC_RUNS"):
+        argv.extend(["--n-runs", os.environ["FREQSTEP_SWEEP_N_MC_RUNS"]])
+    if os.getenv("FREQSTEP_SWEEP_N_COST_REPS"):
+        argv.extend(["--n-cost-reps", os.environ["FREQSTEP_SWEEP_N_COST_REPS"]])
+    if os.getenv("FREQSTEP_SWEEP_TUNE_TRIALS"):
+        argv.extend(["--tune-trials", os.environ["FREQSTEP_SWEEP_TUNE_TRIALS"]])
+    if os.getenv("FREQSTEP_SWEEP_TUNE_EVAL_RUNS"):
+        argv.extend(["--tune-eval-runs", os.environ["FREQSTEP_SWEEP_TUNE_EVAL_RUNS"]])
+    if os.getenv("FREQSTEP_SWEEP_RESUME"):
+        os.environ.setdefault("ATLAS_RESUME", os.environ["FREQSTEP_SWEEP_RESUME"])
+    if os.getenv("FREQSTEP_SWEEP_INCLUDE_ESTIMATORS"):
+        os.environ.setdefault("ATLAS_INCLUDE_ESTIMATORS", os.environ["FREQSTEP_SWEEP_INCLUDE_ESTIMATORS"])
+    if os.getenv("FREQSTEP_LEVELS_HZ"):
+        os.environ.setdefault("ATLAS_FREQSTEP_LEVELS_HZ", os.environ["FREQSTEP_LEVELS_HZ"])
+    if os.getenv("FREQSTEP_SWEEP_DIRECTIONS"):
+        os.environ.setdefault("ATLAS_FREQUENCY_STEP_DIRECTIONS", os.environ["FREQSTEP_SWEEP_DIRECTIONS"])
+    run_atlas(argv)
+
+
 if __name__ == "__main__":
     main()

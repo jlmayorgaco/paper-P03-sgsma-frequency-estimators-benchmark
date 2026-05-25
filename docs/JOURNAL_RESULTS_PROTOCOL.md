@@ -32,11 +32,14 @@ Use three layers of evidence.
    This keeps the original full Monte Carlo workflow alive. Use it when the
    paper figures or legacy artifact structure need to be regenerated.
 
-3. `python -m pipelines.rocof_sweep_fixed_policy`
+3. `python -m pipelines.atlas_sweep --sweeps magnitude_step,rocof,frequency_step --policy fixed_policy --n-runs 100 --tune-trials 80 --output-subdir atlas-paper-v1`
 
-   This produces the RoCoF atlas. It answers whether tracking error grows
-   smoothly with ramp stress, whether methods saturate, and whether positive and
-   negative ramps behave differently.
+   This produces the unified ATLAS sweep set. Magnitude Step, RoCoF, and
+   Frequency Step use the same scenario factory, estimator selection, Monte
+   Carlo aggregation, tuning/oracle policy, manifests, traceability tables, and
+   PDF plotting code. It answers whether tracking error grows smoothly with
+   stress, whether methods saturate, and whether positive and negative events
+   behave differently.
 
 Do not replace these runs with a smoke test. Smoke tests check software. They do
 not support paper claims.
@@ -53,7 +56,8 @@ Every claim must point to files, not memory or old notes. Keep these files:
 - hypothesis outputs
 - plots used in the paper
 - reproducibility manifest with source and checkpoint hashes
-- sweep manifests and aggregate CSVs for RoCoF, voltage, and magnitude-step runs
+- ATLAS manifests and aggregate CSVs for magnitude-step, RoCoF, and
+  frequency-step runs
 
 Generated per-run folders can stay out of git if the aggregate files and
 manifests are archived.
@@ -92,7 +96,7 @@ The result set is Journal-ready when:
 
 - OpenFreqBench 2.0.0 can regenerate the main tables and plots from a public branch.
 - The report includes source hashes and checkpoint hashes.
-- The RoCoF atlas has aggregate CSV, manifest, PDF/PNG figures, and hypothesis
-  classifications.
+- The ATLAS run has aggregate CSV, manifest, artifact index, traceability table,
+  PDF/PNG figures, and hypothesis classifications.
 - A fresh clone or wheel install can reproduce at least one confirmatory subset.
 - The paper cites artifact paths or hashes for every quantitative claim.

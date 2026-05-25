@@ -1670,5 +1670,38 @@ def main() -> None:
     print(f"\n[DONE] RoCoF sweep completed in {elapsed:.1f} min.")
 
 
+_legacy_rocof_main = main
+
+
+def main() -> None:
+    """Compatibility entry point; the canonical implementation is ATLAS."""
+    from pipelines.atlas_sweep import main as run_atlas
+
+    output_subdir = (
+        os.getenv("ATLAS_OUTPUT_SUBDIR")
+        or os.getenv("FREQRAMP_OUTPUT_SUBDIR")
+        or "atlas_rocof_fixed_policy"
+    )
+    policy = os.getenv("ATLAS_POLICY") or os.getenv("FREQRAMP_TUNING_POLICY") or "fixed_policy"
+    argv = ["--sweeps", "rocof", "--policy", policy, "--output-subdir", output_subdir]
+    if os.getenv("FREQRAMP_SWEEP_N_MC_RUNS"):
+        argv.extend(["--n-runs", os.environ["FREQRAMP_SWEEP_N_MC_RUNS"]])
+    if os.getenv("FREQRAMP_SWEEP_N_COST_REPS"):
+        argv.extend(["--n-cost-reps", os.environ["FREQRAMP_SWEEP_N_COST_REPS"]])
+    if os.getenv("FREQRAMP_SWEEP_TUNE_TRIALS"):
+        argv.extend(["--tune-trials", os.environ["FREQRAMP_SWEEP_TUNE_TRIALS"]])
+    if os.getenv("FREQRAMP_SWEEP_TUNE_EVAL_RUNS"):
+        argv.extend(["--tune-eval-runs", os.environ["FREQRAMP_SWEEP_TUNE_EVAL_RUNS"]])
+    if os.getenv("FREQRAMP_SWEEP_RESUME"):
+        os.environ.setdefault("ATLAS_RESUME", os.environ["FREQRAMP_SWEEP_RESUME"])
+    if os.getenv("FREQRAMP_SWEEP_INCLUDE_ESTIMATORS"):
+        os.environ.setdefault("ATLAS_INCLUDE_ESTIMATORS", os.environ["FREQRAMP_SWEEP_INCLUDE_ESTIMATORS"])
+    if os.getenv("FREQRAMP_LEVELS_HZ_S"):
+        os.environ.setdefault("ATLAS_ROCOF_LEVELS_HZ_S", os.environ["FREQRAMP_LEVELS_HZ_S"])
+    if os.getenv("FREQRAMP_SWEEP_DIRECTIONS"):
+        os.environ.setdefault("ATLAS_ROCOF_DIRECTIONS", os.environ["FREQRAMP_SWEEP_DIRECTIONS"])
+    run_atlas(argv)
+
+
 if __name__ == "__main__":
     main()
