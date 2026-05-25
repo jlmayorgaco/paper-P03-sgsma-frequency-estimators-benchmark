@@ -1,8 +1,9 @@
 # ATLAS pipeline
 
 ATLAS is the canonical sweep runner for OpenFreqBench 2.0.0 stress atlases.
-Magnitude Step, RoCoF, Frequency Step, Harmonics, Interharmonics, and
-White-Noise/SNR studies use the same code path.
+Magnitude Step, RoCoF, Frequency Step, Phase Jump, AM Modulation, FM
+Modulation, Harmonics, Interharmonics, and White-Noise/SNR studies use the same
+code path.
 
 ## Command
 
@@ -19,7 +20,7 @@ python -m pipelines.atlas_sweep \
 Useful sweep aliases:
 
 - `core`: magnitude-step, RoCoF, and frequency-step.
-- `p0`: harmonics, interharmonics, and white-noise/SNR.
+- `p0`: phase-jump, AM, FM, harmonics, interharmonics, and white-noise/SNR.
 - `all`: every ATLAS sweep currently implemented.
 
 Policies:
@@ -41,6 +42,12 @@ The P0 sweeps are intentionally isolated:
   RoCoF disabled. Added white noise is also disabled by default.
 - `noise_snr` uses a constant-frequency single tone and varies only additive
   white noise.
+- `phase_jump_sweep` changes voltage phase instantaneously while true frequency
+  remains nominal.
+- `modulation_am_sweep` varies AM modulation frequency at fixed AM depth, so
+  frequency error measures AM-to-FM cross-coupling.
+- `modulation_fm_sweep` varies FM modulation frequency at fixed peak frequency
+  deviation, so curves expose tracking bandwidth and latency effects.
 
 These sweeps should not be interpreted as complete IBR event models. They are
 causal stress tests that reveal which disturbance variable changes the ranking.

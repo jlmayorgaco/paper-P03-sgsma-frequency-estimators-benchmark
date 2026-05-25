@@ -35,16 +35,17 @@ Use three layers of evidence.
 3. `python -m pipelines.atlas_sweep --sweeps all --policy fixed_policy --n-runs 100 --n-cost-reps 3 --tune-trials 80 --output-subdir atlas-paper-v1`
 
    This produces the unified ATLAS sweep set. Magnitude Step, RoCoF, Frequency
-   Step, Harmonics, Interharmonics, and White-Noise/SNR use the same scenario
-   factory, estimator selection, Monte Carlo aggregation, tuning/oracle policy,
-   manifests, traceability tables, and PDF plotting code. It answers whether
-   tracking error grows smoothly with stress, whether methods saturate, whether
-   positive and negative events behave differently, and whether ranking changes
-   under isolated distortion/noise mechanisms.
+   Step, Phase Jump, AM Modulation, FM Modulation, Harmonics, Interharmonics,
+   and White-Noise/SNR use the same scenario factory, estimator selection,
+   Monte Carlo aggregation, tuning/oracle policy, manifests, traceability
+   tables, and PDF plotting code. It answers whether tracking error grows
+   smoothly with stress, whether methods saturate, whether positive and
+   negative events behave differently, and whether ranking changes under
+   isolated phase, modulation, distortion, or noise mechanisms.
 
-   For a smaller confirmatory slice, use `--sweeps p0` for harmonics,
-   interharmonics, and noise, or `--sweeps core` for magnitude-step, RoCoF, and
-   frequency-step.
+   For a smaller confirmatory slice, use `--sweeps p0` for phase-jump, AM, FM,
+   harmonics, interharmonics, and noise, or `--sweeps core` for magnitude-step,
+   RoCoF, and frequency-step.
 
 Do not replace these runs with a smoke test. Smoke tests check software. They do
 not support paper claims.
@@ -68,7 +69,8 @@ Every claim must point to files, not memory or old notes. Keep these files:
 - plots used in the paper
 - reproducibility manifest with source and checkpoint hashes
 - ATLAS manifests and aggregate CSVs for magnitude-step, RoCoF, frequency-step,
-  harmonics, interharmonics, and noise/SNR runs
+  phase-jump, AM modulation, FM modulation, harmonics, interharmonics, and
+  noise/SNR runs
 - `atlas_readiness_report.json` and `atlas_readiness_report.md`
 
 Generated per-run folders can stay out of git if the aggregate files and

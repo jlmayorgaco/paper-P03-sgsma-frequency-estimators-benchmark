@@ -90,8 +90,8 @@ openfreqbench report build \
 ## ATLAS sweeps
 
 Use ATLAS when you want the same Monte Carlo, tuning policy, manifests, and PDFs
-for magnitude-step, RoCoF, frequency-step, harmonics, interharmonics, and
-white-noise/SNR studies.
+for magnitude-step, RoCoF, frequency-step, phase-jump, AM modulation, FM
+modulation, harmonics, interharmonics, and white-noise/SNR studies.
 
 ```bash
 python -m pipelines.atlas_sweep \
@@ -104,7 +104,8 @@ python -m pipelines.atlas_sweep \
 ```
 
 Use `--sweeps core` for only magnitude-step/RoCoF/frequency-step, or
-`--sweeps p0` for harmonics/interharmonics/noise.
+`--sweeps p0` for isolated phase-jump, AM, FM, harmonics, interharmonics, and
+noise.
 
 For a quick diagnostic run:
 

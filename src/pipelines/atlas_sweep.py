@@ -52,10 +52,13 @@ from scenarios.ibr_harmonics_medium import IBRHarmonicsMediumScenario
 from scenarios.ieee_freq_ramp import IEEEFreqRampScenario
 from scenarios.ieee_freq_step import IEEEFreqStepScenario
 from scenarios.ieee_mag_step import IEEEMagStepScenario
+from scenarios.ieee_modulation_am import IEEEModulationAMScenario
+from scenarios.ieee_modulation_fm import IEEEModulationFMScenario
+from scenarios.ieee_phase_jump_20 import IEEEPhaseJump20Scenario
 from scenarios.ieee_single_sinwave import IEEESingleSinWaveScenario
 
 
-METHOD_VERSION = "atlas_sweep_v2_2026_05_25_method_audit"
+METHOD_VERSION = "atlas_sweep_v2_2026_05_25_phase_modulation_p0"
 
 GLOBAL_CSV_NAME = "global_metrics_report.csv"
 RMSE_EST_CSV_NAME = "rmse_by_estimator.csv"
@@ -86,6 +89,9 @@ REQUIRED_ATLAS_SWEEPS = (
     "magnitude_step",
     "rocof",
     "frequency_step",
+    "phase_jump_sweep",
+    "modulation_am_sweep",
+    "modulation_fm_sweep",
     "harmonics",
     "interharmonics",
     "noise_snr",
@@ -225,6 +231,24 @@ SEVERITY_REGIONS: dict[str, tuple[tuple[str, float, float, str], ...]] = {
         ("Severe", 1.00, 3.00, "#FFB74D"),
         ("Extreme", 3.00, 5.00, "#EF5350"),
     ),
+    "phase_jump_sweep": (
+        ("Small", 5.0, 10.0, "#66BB6A"),
+        ("IEEE 1547", 10.0, 20.0, "#DCE775"),
+        ("Stress", 20.0, 45.0, "#FDD835"),
+        ("Severe", 45.0, 60.0, "#EF5350"),
+    ),
+    "modulation_am_sweep": (
+        ("Slow", 0.10, 0.50, "#66BB6A"),
+        ("Reference", 0.50, 2.00, "#DCE775"),
+        ("Fast", 2.00, 5.00, "#FDD835"),
+        ("Severe", 5.00, 10.00, "#EF5350"),
+    ),
+    "modulation_fm_sweep": (
+        ("Slow", 0.10, 0.50, "#66BB6A"),
+        ("Reference", 0.50, 2.00, "#DCE775"),
+        ("Fast", 2.00, 5.00, "#FDD835"),
+        ("Severe", 5.00, 10.00, "#EF5350"),
+    ),
     "harmonics": (
         ("Low THD", 1.0, 3.0, "#66BB6A"),
         ("Reference", 3.0, 5.0, "#DCE775"),
@@ -313,6 +337,50 @@ SWEEP_SPECS: dict[str, SweepSpec] = {
             "C0-continuous frequency-step atlas: true frequency changes abruptly without an "
             "artificial phase jump. Curves expose transient tracking, overshoot and settling."
         ),
+    ),
+    "phase_jump_sweep": SweepSpec(
+        key="phase_jump_sweep",
+        label="Phase Jump",
+        x_col="abs_phase_jump_deg",
+        x_label="|Phase jump| [deg]",
+        signed_col="phase_jump_deg",
+        default_levels=(5.0, 10.0, 20.0, 30.0, 45.0, 60.0),
+        reference_value=20.0,
+        methodology=(
+            "Phase-jump atlas: true frequency remains nominal while voltage phase changes "
+            "instantaneously. Frequency errors quantify phase-discontinuity rejection, "
+            "post-event recovery and sign asymmetry."
+        ),
+    ),
+    "modulation_am_sweep": SweepSpec(
+        key="modulation_am_sweep",
+        label="AM Modulation",
+        x_col="modulation_frequency_hz",
+        x_label="AM modulation frequency [Hz]",
+        signed_col="modulation_frequency_hz",
+        default_levels=(0.1, 0.2, 0.5, 1.0, 2.0, 3.0, 5.0, 8.0, 10.0),
+        reference_value=2.0,
+        methodology=(
+            "Pure AM atlas: true frequency is fixed at nominal while the voltage envelope "
+            "is sinusoidally modulated at a fixed depth. Frequency error is AM-to-FM "
+            "cross-coupling rather than tracking error."
+        ),
+        directional=False,
+    ),
+    "modulation_fm_sweep": SweepSpec(
+        key="modulation_fm_sweep",
+        label="FM Modulation",
+        x_col="modulation_frequency_hz",
+        x_label="FM modulation frequency [Hz]",
+        signed_col="modulation_frequency_hz",
+        default_levels=(0.1, 0.2, 0.5, 1.0, 2.0, 3.0, 5.0, 8.0, 10.0),
+        reference_value=2.0,
+        methodology=(
+            "Pure FM atlas: amplitude is fixed and true frequency oscillates sinusoidally "
+            "with a fixed peak deviation. Curves expose estimator bandwidth, attenuation, "
+            "phase lag and latency-driven tracking limits."
+        ),
+        directional=False,
     ),
     "harmonics": SweepSpec(
         key="harmonics",
@@ -496,9 +564,26 @@ def _apply_atlas_overrides(cls: type, params: dict[str, Any], run_idx: int, n_ru
     noise_lo, noise_hi = _noise_bounds()
     out = dict(params)
     sweep_key = getattr(cls, "ATLAS_SWEEP_KEY", "")
-    if sweep_key in {"magnitude_step", "rocof", "frequency_step", "harmonics", "interharmonics", "noise_snr"}:
+    if sweep_key in {
+        "magnitude_step",
+        "rocof",
+        "frequency_step",
+        "phase_jump_sweep",
+        "modulation_am_sweep",
+        "modulation_fm_sweep",
+        "harmonics",
+        "interharmonics",
+        "noise_snr",
+    }:
         out["phase_rad"] = float(2.0 * math.pi * phase_u)
-    if sweep_key in {"magnitude_step", "rocof", "frequency_step"}:
+    if sweep_key in {
+        "magnitude_step",
+        "rocof",
+        "frequency_step",
+        "phase_jump_sweep",
+        "modulation_am_sweep",
+        "modulation_fm_sweep",
+    }:
         noise = float(noise_lo + (noise_hi - noise_lo) * u)
         if sweep_key == "magnitude_step":
             mode = os.getenv("ATLAS_MAG_NOISE_MODE", "fixed_absolute").strip().lower()
@@ -515,6 +600,8 @@ def _apply_atlas_overrides(cls: type, params: dict[str, Any], run_idx: int, n_ru
         out["t_step_s"] = float(float(out["t_step_s"]) - 0.025 + 0.050 * time_u)
     if "t_start_s" in out:
         out["t_start_s"] = float(float(out["t_start_s"]) - 0.025 + 0.050 * time_u)
+    if "t_jump_s" in out:
+        out["t_jump_s"] = float(float(out["t_jump_s"]) - 0.025 + 0.050 * time_u)
     out["seed"] = int(out.get("seed", 0) or 0)
     return out
 
@@ -581,6 +668,73 @@ def _make_scenario_variant(sweep_key: str, signed_value: float) -> AtlasScenario
         }
         base_cls = IEEEFreqStepScenario
         signed_col = {"step_hz": value, "abs_step_hz": abs_value}
+        monte_carlo_space = {
+            "phase_rad": {"kind": "uniform", "low": 0.0, "high": 2.0 * math.pi},
+            "noise_sigma": {"kind": "uniform", "low": _noise_bounds()[0], "high": _noise_bounds()[1]},
+        }
+    elif sweep_key == "phase_jump_sweep":
+        jump_rad = math.radians(value)
+        scenario_name = f"Atlas_PhaseJump_{direction}_{token}deg"
+        class_name = f"AtlasPhaseJump{direction.title()}{token}"
+        default_params = {
+            **IEEEPhaseJump20Scenario.DEFAULT_PARAMS,
+            "duration_s": _env_float("ATLAS_PHASE_JUMP_DURATION_S", 1.5, minimum=0.3),
+            "freq_hz": 60.0,
+            "phase_jump_rad": jump_rad,
+            "t_jump_s": _env_float("ATLAS_PHASE_JUMP_T_S", 0.70, minimum=0.0),
+            "noise_sigma": 0.001,
+        }
+        base_cls = IEEEPhaseJump20Scenario
+        signed_col = {
+            "phase_jump_deg": value,
+            "abs_phase_jump_deg": abs_value,
+            "phase_jump_rad": jump_rad,
+        }
+        monte_carlo_space = {
+            "phase_rad": {"kind": "uniform", "low": 0.0, "high": 2.0 * math.pi},
+            "noise_sigma": {"kind": "uniform", "low": _noise_bounds()[0], "high": _noise_bounds()[1]},
+        }
+    elif sweep_key == "modulation_am_sweep":
+        am_depth_pct = _env_float("ATLAS_AM_DEPTH_PCT", 10.0, minimum=0.0)
+        scenario_name = f"Atlas_ModulationAM_{token}Hz"
+        class_name = f"AtlasModulationAm{token}"
+        default_params = {
+            **IEEEModulationAMScenario.DEFAULT_PARAMS,
+            "duration_s": _env_float("ATLAS_AM_DURATION_S", 2.0, minimum=0.3),
+            "freq_nom_hz": 60.0,
+            "kx": am_depth_pct / 100.0,
+            "fm_hz": abs_value,
+            "noise_sigma": 0.001,
+        }
+        base_cls = IEEEModulationAMScenario
+        signed_col = {
+            "modulation_frequency_hz": abs_value,
+            "am_depth_percent": am_depth_pct,
+            "am_depth_pu": am_depth_pct / 100.0,
+        }
+        monte_carlo_space = {
+            "phase_rad": {"kind": "uniform", "low": 0.0, "high": 2.0 * math.pi},
+            "noise_sigma": {"kind": "uniform", "low": _noise_bounds()[0], "high": _noise_bounds()[1]},
+        }
+    elif sweep_key == "modulation_fm_sweep":
+        peak_dev_hz = _env_float("ATLAS_FM_PEAK_DEV_HZ", 0.20, minimum=0.0)
+        ka_rad = peak_dev_hz / max(abs_value, 1e-12)
+        scenario_name = f"Atlas_ModulationFM_{token}Hz"
+        class_name = f"AtlasModulationFm{token}"
+        default_params = {
+            **IEEEModulationFMScenario.DEFAULT_PARAMS,
+            "duration_s": _env_float("ATLAS_FM_DURATION_S", 2.0, minimum=0.3),
+            "freq_nom_hz": 60.0,
+            "ka": ka_rad,
+            "fm_hz": abs_value,
+            "noise_sigma": 0.001,
+        }
+        base_cls = IEEEModulationFMScenario
+        signed_col = {
+            "modulation_frequency_hz": abs_value,
+            "peak_freq_dev_hz": peak_dev_hz,
+            "ka_rad": ka_rad,
+        }
         monte_carlo_space = {
             "phase_rad": {"kind": "uniform", "low": 0.0, "high": 2.0 * math.pi},
             "noise_sigma": {"kind": "uniform", "low": _noise_bounds()[0], "high": _noise_bounds()[1]},
@@ -664,7 +818,13 @@ def _make_scenario_variant(sweep_key: str, signed_value: float) -> AtlasScenario
         "SCENARIO_NAME": scenario_name,
         "DEFAULT_PARAMS": default_params,
         "MONTE_CARLO_SPACE": monte_carlo_space,
-        "DISABLE_EVENT_METRICS": sweep_key in {"harmonics", "interharmonics", "noise_snr"},
+        "DISABLE_EVENT_METRICS": sweep_key in {
+            "harmonics",
+            "interharmonics",
+            "noise_snr",
+            "modulation_am_sweep",
+            "modulation_fm_sweep",
+        },
         "ATLAS_SWEEP_KEY": sweep_key,
         "ATLAS_SWEEP_VALUE": value,
         "ATLAS_ABS_VALUE": abs_value,
@@ -693,6 +853,9 @@ def _levels_for_sweep(sweep_key: str) -> list[float]:
         "magnitude_step": "ATLAS_MAG_LEVELS_PCT",
         "rocof": "ATLAS_ROCOF_LEVELS_HZ_S",
         "frequency_step": "ATLAS_FREQSTEP_LEVELS_HZ",
+        "phase_jump_sweep": "ATLAS_PHASE_JUMP_LEVELS_DEG",
+        "modulation_am_sweep": "ATLAS_AM_MOD_FREQ_LEVELS_HZ",
+        "modulation_fm_sweep": "ATLAS_FM_MOD_FREQ_LEVELS_HZ",
         "harmonics": "ATLAS_HARMONICS_THD_LEVELS_PCT",
         "interharmonics": "ATLAS_INTERHARMONIC_LEVELS_PCT",
         "noise_snr": "ATLAS_NOISE_SIGMA_LEVELS_PU",
@@ -717,6 +880,20 @@ def _directions_for_sweep(sweep_key: str) -> list[str]:
 
 def _expand_sweep_keys(requested: list[str]) -> list[str]:
     expanded: list[str] = []
+    aliases = {
+        "phase_jump": "phase_jump_sweep",
+        "phase_jump_sweep": "phase_jump_sweep",
+        "modulation_am": "modulation_am_sweep",
+        "modulation_am_sweep": "modulation_am_sweep",
+        "modlation_am_sweep": "modulation_am_sweep",
+        "am_modulation": "modulation_am_sweep",
+        "am_modulation_sweep": "modulation_am_sweep",
+        "modulation_fm": "modulation_fm_sweep",
+        "modulation_fm_sweep": "modulation_fm_sweep",
+        "modlation_fm_sweep": "modulation_fm_sweep",
+        "fm_modulation": "modulation_fm_sweep",
+        "fm_modulation_sweep": "modulation_fm_sweep",
+    }
     for item in requested:
         key = item.strip().lower().replace("-", "_")
         if key == "all":
@@ -724,9 +901,18 @@ def _expand_sweep_keys(requested: list[str]) -> list[str]:
         elif key == "core":
             expanded.extend(["magnitude_step", "rocof", "frequency_step"])
         elif key == "p0":
-            expanded.extend(["harmonics", "interharmonics", "noise_snr"])
+            expanded.extend(
+                [
+                    "phase_jump_sweep",
+                    "modulation_am_sweep",
+                    "modulation_fm_sweep",
+                    "harmonics",
+                    "interharmonics",
+                    "noise_snr",
+                ]
+            )
         else:
-            expanded.append(key)
+            expanded.append(aliases.get(key, key))
     return list(dict.fromkeys(expanded))
 
 
@@ -928,6 +1114,14 @@ def _frequency_bounds_for_sweep(scenarios: list[AtlasScenario]) -> tuple[float, 
             values.extend([float(params.get("freq_nom_hz", 60.0)), float(params.get("freq_cap_hz", 60.0))])
         elif sc.sweep_key == "frequency_step":
             values.extend([float(params.get("freq_pre_hz", 60.0)), float(params.get("freq_post_hz", 60.0))])
+        elif sc.sweep_key == "phase_jump_sweep":
+            values.append(float(params.get("freq_hz", 60.0)))
+        elif sc.sweep_key == "modulation_am_sweep":
+            values.append(float(params.get("freq_nom_hz", 60.0)))
+        elif sc.sweep_key == "modulation_fm_sweep":
+            f_nom = float(params.get("freq_nom_hz", 60.0))
+            peak_dev = abs(float(params.get("ka", 0.0)) * float(params.get("fm_hz", 0.0)))
+            values.extend([f_nom - peak_dev, f_nom + peak_dev])
         elif sc.sweep_key in {"harmonics", "interharmonics"}:
             values.append(float(params.get("freq_nom_hz", 60.0)))
         elif sc.sweep_key == "noise_snr":
@@ -1091,9 +1285,16 @@ def _plot_reference_panel(ax: plt.Axes, sweep_key: str) -> None:
             ax.text(0.5, 0.5, f"Reference unavailable: {exc}", ha="center", va="center", wrap=True)
             continue
         x = np.asarray(data.t, dtype=float)
-        if sweep_key in {"magnitude_step", "harmonics", "interharmonics", "noise_snr"}:
+        if sweep_key in {
+            "magnitude_step",
+            "phase_jump_sweep",
+            "modulation_am_sweep",
+            "harmonics",
+            "interharmonics",
+            "noise_snr",
+        }:
             y = np.asarray(data.v, dtype=float)
-            if sweep_key in {"harmonics", "interharmonics", "noise_snr"} and len(x):
+            if sweep_key in {"harmonics", "interharmonics", "noise_snr", "modulation_am_sweep"} and len(x):
                 keep = x <= min(float(x[0]) + 0.12, float(x[-1]))
                 x = x[keep]
                 y = y[keep]
@@ -2222,7 +2423,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--sweeps",
         default=os.getenv("ATLAS_SWEEPS", "all"),
-        help="Comma list: all,core,p0,magnitude_step,rocof,frequency_step,harmonics,interharmonics,noise_snr.",
+        help=(
+            "Comma list: all, core, p0, magnitude_step, rocof, frequency_step, "
+            "phase_jump_sweep, modulation_am_sweep, modulation_fm_sweep, "
+            "harmonics, interharmonics, noise_snr."
+        ),
     )
     parser.add_argument("--policy", default=os.getenv("ATLAS_POLICY", "default"), help="default, fixed_policy, or oracle/per_scenario_oracle.")
     parser.add_argument("--n-runs", type=int, default=None, help="Monte Carlo runs per scenario/estimator.")

@@ -22,10 +22,11 @@ results. The goal is to prevent software artifacts from becoming paper claims.
    Carlo phase stratification instead of evaluating every distortion case at
    one fixed fundamental phase.
 
-4. P0 sweeps disable event metrics.
-   Harmonics, interharmonics, and noise/SNR are level-only stress tests. They
-   should not report post-event RMSE or event settling time because there is no
-   physical event in those isolated sweeps.
+4. Level-only P0 sweeps disable event metrics.
+   Harmonics, interharmonics, noise/SNR, AM modulation, and FM modulation are
+   level-only or continuous stress tests. They should not report post-event
+   RMSE or event settling time because there is no physical event time in those
+   isolated sweeps. Phase-jump sweeps keep event metrics enabled.
 
 5. Cache invalidation was forced.
    `METHOD_VERSION` was bumped so older ATLAS cached summaries cannot be reused
@@ -45,6 +46,11 @@ results. The goal is to prevent software artifacts from becoming paper claims.
 - `harmonics` isolates integer THD. It is not a complete IBR event model.
 - `interharmonics` isolates one off-bin 75 Hz component.
 - `noise_snr` isolates additive white noise on a fixed 60 Hz sine wave.
+- `phase_jump_sweep` isolates phase discontinuity; true frequency stays
+  nominal.
+- `modulation_am_sweep` isolates AM-to-FM cross-coupling at fixed AM depth.
+- `modulation_fm_sweep` isolates tracking bandwidth at fixed peak frequency
+  deviation.
 - `oracle` is a lower-bound diagnostic, not a deployable tuning policy.
 - Runs with `n_runs < 30` are software diagnostics only.
 - Journal claims should use `n_runs >= 100`, archived artifacts, hashes, and

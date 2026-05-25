@@ -291,7 +291,10 @@ class MonteCarloEngine:
 
             struct_samples = est_out.get("struct_samples", 0)
             noise_sigma = params.get("noise_sigma", params.get("white_noise_sigma", 0.0))
-            event_time_s = params.get("t_step_s", params.get("t_start_s", params.get("t_event_s")))
+            event_time_s = params.get(
+                "t_step_s",
+                params.get("t_start_s", params.get("t_event_s", params.get("t_jump_s"))),
+            )
             if getattr(self.scenario_cls, "DISABLE_EVENT_METRICS", False):
                 event_time_s = None
             interharmonic_hz = 75.0 if float(params.get("ih75_pct", 0.0) or 0.0) > 0.0 else 32.5

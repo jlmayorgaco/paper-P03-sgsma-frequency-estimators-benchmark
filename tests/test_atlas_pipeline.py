@@ -26,6 +26,15 @@ def test_atlas_parser_accepts_oracle_policy() -> None:
     assert args.n_runs == 2
 
 
+def test_atlas_accepts_phase_modulation_aliases(monkeypatch) -> None:
+    monkeypatch.setenv("ATLAS_PHASE_JUMP_LEVELS_DEG", "20")
+    monkeypatch.setenv("ATLAS_FM_MOD_FREQ_LEVELS_HZ", "2")
+
+    scenarios = atlas_sweep.build_atlas_scenarios(["phase_jump", "modlation_fm_sweep"])
+
+    assert {item.sweep_key for item in scenarios} == {"phase_jump_sweep", "modulation_fm_sweep"}
+
+
 def test_atlas_builds_p0_nondirectional_sweeps(monkeypatch) -> None:
     monkeypatch.setenv("ATLAS_HARMONICS_THD_LEVELS_PCT", "5")
     monkeypatch.setenv("ATLAS_INTERHARMONIC_LEVELS_PCT", "2")
@@ -39,15 +48,49 @@ def test_atlas_builds_p0_nondirectional_sweeps(monkeypatch) -> None:
     assert all(item.scenario_name.startswith("Atlas_") for item in scenarios)
 
 
+def test_atlas_builds_phase_and_modulation_sweeps(monkeypatch) -> None:
+    monkeypatch.setenv("ATLAS_PHASE_JUMP_LEVELS_DEG", "20")
+    monkeypatch.setenv("ATLAS_AM_MOD_FREQ_LEVELS_HZ", "2")
+    monkeypatch.setenv("ATLAS_FM_MOD_FREQ_LEVELS_HZ", "2")
+
+    scenarios = atlas_sweep.build_atlas_scenarios(
+        ["phase_jump_sweep", "modulation_am_sweep", "modulation_fm_sweep"]
+    )
+
+    assert len(scenarios) == 4
+    assert {item.sweep_key for item in scenarios} == {
+        "phase_jump_sweep",
+        "modulation_am_sweep",
+        "modulation_fm_sweep",
+    }
+    assert {item.direction for item in scenarios if item.sweep_key == "phase_jump_sweep"} == {"pos", "neg"}
+    assert {item.direction for item in scenarios if item.sweep_key != "phase_jump_sweep"} == {"level"}
+    phase = [item for item in scenarios if item.sweep_key == "phase_jump_sweep" and item.direction == "pos"][0]
+    am = [item for item in scenarios if item.sweep_key == "modulation_am_sweep"][0]
+    fm = [item for item in scenarios if item.sweep_key == "modulation_fm_sweep"][0]
+    assert phase.params["abs_phase_jump_deg"] == 20.0
+    assert phase.scenario_cls.get_default_params()["phase_jump_rad"] > 0.0
+    assert am.scenario_cls.get_default_params()["kx"] == 0.10
+    assert am.scenario_cls.get_default_params()["fm_hz"] == 2.0
+    assert fm.scenario_cls.get_default_params()["fm_hz"] == 2.0
+    assert fm.scenario_cls.get_default_params()["ka"] == 0.10
+
+
 def test_atlas_p0_scenarios_isolate_primary_disturbance(monkeypatch) -> None:
     monkeypatch.setenv("ATLAS_HARMONICS_THD_LEVELS_PCT", "5")
     monkeypatch.setenv("ATLAS_INTERHARMONIC_LEVELS_PCT", "2")
     monkeypatch.setenv("ATLAS_NOISE_SIGMA_LEVELS_PU", "0.001")
+    monkeypatch.setenv("ATLAS_PHASE_JUMP_LEVELS_DEG", "20")
+    monkeypatch.setenv("ATLAS_AM_MOD_FREQ_LEVELS_HZ", "2")
+    monkeypatch.setenv("ATLAS_FM_MOD_FREQ_LEVELS_HZ", "2")
 
     scenarios = {item.sweep_key: item for item in atlas_sweep.build_atlas_scenarios(["p0"])}
     harmonics = scenarios["harmonics"].scenario_cls.get_default_params()
     interharmonics = scenarios["interharmonics"].scenario_cls.get_default_params()
     noise = scenarios["noise_snr"].scenario_cls.get_default_params()
+    phase = scenarios["phase_jump_sweep"].scenario_cls.get_default_params()
+    am = scenarios["modulation_am_sweep"].scenario_cls.get_default_params()
+    fm = scenarios["modulation_fm_sweep"].scenario_cls.get_default_params()
 
     assert harmonics["freq_step_hz"] == 0.0
     assert harmonics["ih325_pct"] == 0.0
@@ -64,6 +107,15 @@ def test_atlas_p0_scenarios_isolate_primary_disturbance(monkeypatch) -> None:
 
     assert noise["freq_hz"] == 60.0
     assert noise["noise_sigma"] == 0.001
+
+    assert phase["freq_hz"] == 60.0
+    assert "phase_rad" in scenarios["phase_jump_sweep"].scenario_cls.get_monte_carlo_space()
+    assert am["freq_nom_hz"] == 60.0
+    assert am["kx"] == 0.10
+    assert am["fm_hz"] == 2.0
+    assert fm["freq_nom_hz"] == 60.0
+    assert fm["fm_hz"] == 2.0
+    assert fm["ka"] == 0.10
 
 
 def test_atlas_readiness_marks_preview_as_diagnostic() -> None:
