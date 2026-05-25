@@ -49,6 +49,10 @@ Use three layers of evidence.
 Do not replace these runs with a smoke test. Smoke tests check software. They do
 not support paper claims.
 
+Before moving ATLAS numbers into the paper, check
+`docs/ATLAS_METHOD_AUDIT.md` and confirm that the run was generated with the
+current ATLAS method version.
+
 ## Artifact standard
 
 Every claim must point to files, not memory or old notes. Keep these files:

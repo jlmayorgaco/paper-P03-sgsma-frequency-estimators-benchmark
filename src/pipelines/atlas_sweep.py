@@ -55,7 +55,7 @@ from scenarios.ieee_mag_step import IEEEMagStepScenario
 from scenarios.ieee_single_sinwave import IEEESingleSinWaveScenario
 
 
-METHOD_VERSION = "atlas_sweep_v1_2026_05_25"
+METHOD_VERSION = "atlas_sweep_v2_2026_05_25_method_audit"
 
 GLOBAL_CSV_NAME = "global_metrics_report.csv"
 RMSE_EST_CSV_NAME = "rmse_by_estimator.csv"
@@ -378,7 +378,7 @@ def _apply_atlas_overrides(cls: type, params: dict[str, Any], run_idx: int, n_ru
     noise_lo, noise_hi = _noise_bounds()
     out = dict(params)
     sweep_key = getattr(cls, "ATLAS_SWEEP_KEY", "")
-    if sweep_key in {"magnitude_step", "rocof", "frequency_step", "noise_snr"}:
+    if sweep_key in {"magnitude_step", "rocof", "frequency_step", "harmonics", "interharmonics", "noise_snr"}:
         out["phase_rad"] = float(2.0 * math.pi * phase_u)
     if sweep_key in {"magnitude_step", "rocof", "frequency_step"}:
         noise = float(noise_lo + (noise_hi - noise_lo) * u)
@@ -483,14 +483,17 @@ def _make_scenario_variant(sweep_key: str, signed_value: float) -> AtlasScenario
             "sub_pct": 0.0,
             "ih325_pct": 0.0,
             "ih85_pct": 0.0,
-            "white_noise_sigma": _env_float("ATLAS_DISTORTION_NOISE_SIGMA", 0.001, minimum=0.0),
+            "phase_rad": 0.0,
+            "white_noise_sigma": _env_float("ATLAS_DISTORTION_NOISE_SIGMA", 0.0, minimum=0.0),
             "brown_noise_sigma": 0.0,
             "impulse_prob": 0.0,
             "impulse_mag": 0.0,
         }
         base_cls = IBRHarmonicsLargeScenario
         signed_col = {"thd_percent": abs_value, "thd_pu": thd_pu, **harmonic_coeffs}
-        monte_carlo_space = {}
+        monte_carlo_space = {
+            "phase_rad": {"kind": "uniform", "low": 0.0, "high": 2.0 * math.pi},
+        }
     elif sweep_key == "interharmonics":
         interharmonic_pu = abs_value / 100.0
         scenario_name = f"Atlas_Interharmonics_75Hz_{token}pct"
@@ -509,12 +512,15 @@ def _make_scenario_variant(sweep_key: str, signed_value: float) -> AtlasScenario
             "h11_pct": 0.0,
             "h13_pct": 0.0,
             "ih75_pct": interharmonic_pu,
-            "white_noise_sigma": _env_float("ATLAS_DISTORTION_NOISE_SIGMA", 0.001, minimum=0.0),
+            "phase_rad": 0.0,
+            "white_noise_sigma": _env_float("ATLAS_DISTORTION_NOISE_SIGMA", 0.0, minimum=0.0),
             "brown_noise_sigma": 0.0,
         }
         base_cls = IBRHarmonicsMediumScenario
         signed_col = {"interharmonic_percent": abs_value, "interharmonic_pu": interharmonic_pu, "interharmonic_hz": 75.0}
-        monte_carlo_space = {}
+        monte_carlo_space = {
+            "phase_rad": {"kind": "uniform", "low": 0.0, "high": 2.0 * math.pi},
+        }
     elif sweep_key == "noise_snr":
         sigma = abs_value
         snr_db = _snr_db_from_sigma(sigma, amplitude_peak=1.0)
@@ -684,15 +690,25 @@ def _run_engine_local(engine: MonteCarloEngine) -> MonteCarloResult:
     )
 
 
-def _score_params(est_cls: type, params: dict[str, Any], scenarios: list[Any], eval_start_s: float) -> float:
+def _score_params(est_name: str, est_cls: type, params: dict[str, Any], scenarios: list[Any], eval_start_s: float) -> float:
     try:
         rmses: list[float] = []
         peaks: list[float] = []
         late_rmses: list[float] = []
         rfes: list[float] = []
         for sc in scenarios:
-            est = est_cls(**params)
-            f_hat = benchmark._run_estimator(est, sc.v)
+            scoring_engine = MonteCarloEngine(
+                scenario_cls=IEEESingleSinWaveScenario,
+                estimator_cls=est_cls,
+                estimator_params=params,
+                n_runs=1,
+                base_seed=0,
+                n_cost_reps=1,
+                enforce_standardized_step=est_name not in {"PI-GRU", "Koopman (RK-DPMU)"},
+                capture_signals=False,
+            )
+            est_out = scoring_engine._run_estimator(sc.v, t=sc.t)
+            f_hat = np.asarray(est_out.get("f_hat", []), dtype=float)
             f_true = np.asarray(sc.f_true, dtype=float)
             if len(f_hat) != len(f_true):
                 return 1e9
@@ -770,7 +786,7 @@ def _tune_estimator(
     def objective(trial: optuna.Trial) -> float:
         suggested = raw_space_fn(trial)
         params = _apply_frequency_bounds(est_name, est_cls, {**defaults, **suggested}, frequency_bounds)
-        return _score_params(est_cls, params, eval_scenarios, eval_start_s=0.15)
+        return _score_params(est_name, est_cls, params, eval_scenarios, eval_start_s=0.15)
 
     study, n_exec, sampler_mode = benchmark._build_optuna_study(raw_space_fn, n_trials=int(n_trials))
     meta["n_trials_executed"] = int(n_exec)
@@ -1287,6 +1303,9 @@ def write_manifest(
                 "signed_value": sc.signed_value,
                 "abs_value": sc.abs_value,
                 "direction": sc.direction,
+                "default_params": benchmark._to_builtin(sc.scenario_cls.get_default_params()),
+                "monte_carlo_space": benchmark._to_builtin(sc.scenario_cls.get_monte_carlo_space()),
+                "event_metrics_enabled": not bool(getattr(sc.scenario_cls, "DISABLE_EVENT_METRICS", False)),
             }
             for sc in scenarios
         ],
@@ -1525,6 +1544,17 @@ def run_atlas(args: argparse.Namespace) -> Path:
                 "family": ESTIMATOR_FAMILIES.get(est_name, "Unknown"),
                 "n_mc_runs": int(len(summary_df)),
                 "policy": policy,
+                "scenario_default_params_json": json.dumps(
+                    benchmark._to_builtin(sc.scenario_cls.get_default_params()),
+                    sort_keys=True,
+                    ensure_ascii=False,
+                ),
+                "monte_carlo_space_json": json.dumps(
+                    benchmark._to_builtin(sc.scenario_cls.get_monte_carlo_space()),
+                    sort_keys=True,
+                    ensure_ascii=False,
+                ),
+                "event_metrics_enabled": not bool(getattr(sc.scenario_cls, "DISABLE_EVENT_METRICS", False)),
                 "best_params_json": json.dumps(benchmark._to_builtin(best_params), sort_keys=True, ensure_ascii=False),
                 **agg,
             }

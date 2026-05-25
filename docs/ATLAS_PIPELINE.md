@@ -34,15 +34,18 @@ Policies:
 The P0 sweeps are intentionally isolated:
 
 - `harmonics` scales integer-harmonic THD with frequency held fixed. It disables
-  interharmonics, subharmonics, impulses, and frequency events.
+  interharmonics, subharmonics, impulses, frequency events, and added white
+  noise by default.
 - `interharmonics` scales a 75 Hz off-bin component with integer harmonics and
-  RoCoF disabled.
+  RoCoF disabled. Added white noise is also disabled by default.
 - `noise_snr` uses a constant-frequency single tone and varies only additive
   white noise.
 
 These sweeps should not be interpreted as complete IBR event models. They are
 causal stress tests that reveal which disturbance variable changes the ranking.
 Use later mixed-event IBR sweeps to test deployment realism.
+
+The active methodological audit is in `docs/ATLAS_METHOD_AUDIT.md`.
 
 ## Outputs
 

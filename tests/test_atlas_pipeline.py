@@ -51,10 +51,14 @@ def test_atlas_p0_scenarios_isolate_primary_disturbance(monkeypatch) -> None:
     assert harmonics["ih325_pct"] == 0.0
     assert harmonics["ih85_pct"] == 0.0
     assert harmonics["impulse_prob"] == 0.0
+    assert harmonics["white_noise_sigma"] == 0.0
+    assert "phase_rad" in scenarios["harmonics"].scenario_cls.get_monte_carlo_space()
 
     assert interharmonics["rocof_hz_s"] == 0.0
     assert interharmonics["h5_pct"] == 0.0
     assert interharmonics["ih75_pct"] == 0.02
+    assert interharmonics["white_noise_sigma"] == 0.0
+    assert "phase_rad" in scenarios["interharmonics"].scenario_cls.get_monte_carlo_space()
 
     assert noise["freq_hz"] == 60.0
     assert noise["noise_sigma"] == 0.001

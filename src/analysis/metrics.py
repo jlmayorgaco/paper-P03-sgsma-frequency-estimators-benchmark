@@ -172,7 +172,7 @@ def m11_rnaf_db(f_hat_steady: np.ndarray, f_true_steady: np.ndarray, dt: float, 
     
     if var_noise > 0 and var_rfe > 0:
         return float(10.0 * np.log10(var_rfe / var_noise))
-    return 0.0
+    return float("nan")
 
 def m12_isi_pu(error: np.ndarray, fs_dsp: float, target_freq_hz: float = 32.5) -> float:
     """Interharmonic Susceptibility Index (ISI)."""
