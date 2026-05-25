@@ -1,9 +1,6 @@
 # OpenFreqBench
 
 <p align="center">
-  <a href="https://github.com/jlmayorgaco/paper-P03-sgsma-frequency-estimators-benchmark/actions/workflows/ci.yml">
-    <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/jlmayorgaco/paper-P03-sgsma-frequency-estimators-benchmark/ci.yml?branch=MVP2.0.0&label=CI&color=2563eb">
-  </a>
   <img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-111827">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-16a34a">
   <img alt="Metric profile" src="https://img.shields.io/badge/metrics-locked-b91c1c">
