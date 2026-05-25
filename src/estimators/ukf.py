@@ -374,7 +374,7 @@ class UKF_Estimator(BaseFrequencyEstimator):
     @staticmethod
     def describe_params(params: dict[str, float]) -> str:
         return (
-            f"f_nom={params.get('nominal_f', 50.0)}Hz, "
+            f"f_nom={params.get('nominal_f', 60.0)}Hz, "
             f"q_omega={params.get('q_omega', 5e-2):.1e}, "
             f"R={params.get('r_meas', 1e-3):.1e}, "
             f"alpha_ut={params.get('alpha_ut', 0.1)}, "
