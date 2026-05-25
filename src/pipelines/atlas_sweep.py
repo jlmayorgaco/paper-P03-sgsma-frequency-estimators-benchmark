@@ -128,6 +128,50 @@ FAMILY_PALETTE = {
     "Unknown": "#616161",
 }
 
+FAMILY_ORDER = ["Loop-based", "Model-based", "Window-based", "Adaptive", "Data-driven", "Exotic"]
+
+SEVERITY_REGIONS: dict[str, tuple[tuple[str, float, float, str], ...]] = {
+    "magnitude_step": (
+        ("Voltage PMU", 1.0, 10.0, "#66BB6A"),
+        ("Grid stress", 10.0, 25.0, "#DCE775"),
+        ("IBR normal", 25.0, 100.0, "#FDD835"),
+        ("IBR stress", 100.0, 500.0, "#FFB74D"),
+        ("Mega stress", 500.0, 1000.0, "#EF5350"),
+    ),
+    "rocof": (
+        ("Low", 0.10, 1.00, "#66BB6A"),
+        ("Standard-like", 1.00, 3.00, "#DCE775"),
+        ("IBR stress", 3.00, 10.00, "#FDD835"),
+        ("Severe", 10.00, 30.00, "#FFB74D"),
+        ("Extreme", 30.00, 50.00, "#EF5350"),
+    ),
+    "frequency_step": (
+        ("Small", 0.05, 0.20, "#66BB6A"),
+        ("Nominal", 0.20, 1.00, "#FDD835"),
+        ("Severe", 1.00, 3.00, "#FFB74D"),
+        ("Extreme", 3.00, 5.00, "#EF5350"),
+    ),
+    "harmonics": (
+        ("Low THD", 1.0, 3.0, "#66BB6A"),
+        ("Reference", 3.0, 5.0, "#DCE775"),
+        ("High THD", 5.0, 10.0, "#FDD835"),
+        ("Severe", 10.0, 20.0, "#FFB74D"),
+        ("Extreme", 20.0, 30.0, "#EF5350"),
+    ),
+    "interharmonics": (
+        ("Trace", 0.5, 2.0, "#66BB6A"),
+        ("Reference", 2.0, 5.0, "#DCE775"),
+        ("High", 5.0, 10.0, "#FDD835"),
+        ("Severe", 10.0, 20.0, "#EF5350"),
+    ),
+    "noise_snr": (
+        ("Low noise", 0.0001, 0.001, "#66BB6A"),
+        ("Nominal", 0.001, 0.003, "#DCE775"),
+        ("High", 0.003, 0.03, "#FDD835"),
+        ("Severe", 0.03, 0.10, "#EF5350"),
+    ),
+}
+
 
 @dataclass(frozen=True)
 class SweepSpec:
@@ -909,14 +953,100 @@ def _estimator_color_map(estimators: list[str]) -> dict[str, Any]:
     return out
 
 
+def _dominant_policy_label(df: pd.DataFrame) -> str:
+    if "policy" not in df.columns or df["policy"].dropna().empty:
+        return "policy"
+    raw = str(df["policy"].dropna().astype(str).mode().iloc[0]).replace("_", " ")
+    return raw.strip() or "policy"
+
+
+def _metric_interval_columns(metric_col: str, df: pd.DataFrame) -> tuple[str | None, str | None]:
+    for lo_col, hi_col in [
+        (metric_col.replace("_mean", "_p10"), metric_col.replace("_mean", "_p90")),
+        (metric_col.replace("_mean", "_p05"), metric_col.replace("_mean", "_p95")),
+        (metric_col.replace("_mean", "_ci95_low"), metric_col.replace("_mean", "_ci95_high")),
+    ]:
+        if lo_col in df.columns and hi_col in df.columns:
+            return lo_col, hi_col
+    return None, None
+
+
+def _shade_severity_regions(ax: plt.Axes, spec: SweepSpec, x_lo: float, x_hi: float, *, labels: bool = True) -> None:
+    for idx, (label, lo, hi, color) in enumerate(SEVERITY_REGIONS.get(spec.key, ())):
+        band_lo = max(float(lo), float(x_lo))
+        band_hi = min(float(hi), float(x_hi))
+        if band_hi <= band_lo:
+            continue
+        ax.axvspan(band_lo, band_hi, color=color, alpha=0.075 if idx < 3 else 0.055, zorder=0)
+        if labels:
+            x_mid = math.sqrt(max(band_lo, 1e-12) * max(band_hi, 1e-12))
+            ax.text(
+                x_mid,
+                0.985 - 0.04 * (idx % 3),
+                label,
+                transform=ax.get_xaxis_transform(),
+                va="top",
+                ha="center",
+                fontsize=6.4,
+                color="#263238",
+                bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.65),
+            )
+
+
+def _reference_cases_for_sweep(sweep_key: str) -> list[tuple[AtlasScenario, str, str]]:
+    spec = SWEEP_SPECS[sweep_key]
+    if spec.directional:
+        return [
+            (_make_scenario_variant(sweep_key, spec.reference_value), "-", f"+{spec.reference_value:g}"),
+            (_make_scenario_variant(sweep_key, -spec.reference_value), "--", f"-{spec.reference_value:g}"),
+        ]
+    return [(_make_scenario_variant(sweep_key, spec.reference_value), "-", f"{spec.reference_value:g}")]
+
+
+def _plot_reference_panel(ax: plt.Axes, sweep_key: str) -> None:
+    spec = SWEEP_SPECS[sweep_key]
+    ylabel = "Signal [pu]"
+    for scenario, line_style, label in _reference_cases_for_sweep(sweep_key):
+        try:
+            data = scenario.scenario_cls.run(seed=0)
+        except Exception as exc:
+            ax.text(0.5, 0.5, f"Reference unavailable: {exc}", ha="center", va="center", wrap=True)
+            continue
+        x = np.asarray(data.t, dtype=float)
+        if sweep_key in {"magnitude_step", "harmonics", "interharmonics", "noise_snr"}:
+            y = np.asarray(data.v, dtype=float)
+            if sweep_key in {"harmonics", "interharmonics", "noise_snr"} and len(x):
+                keep = x <= min(float(x[0]) + 0.12, float(x[-1]))
+                x = x[keep]
+                y = y[keep]
+            ylabel = "Signal [pu]"
+        else:
+            y = np.asarray(data.f_true, dtype=float)
+            ylabel = "Frequency [Hz]"
+        ax.plot(x, y, color="#111111", linestyle=line_style, linewidth=1.25, label=label)
+    ax.set_title(f"Reference {spec.label}", loc="left", fontweight="bold")
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(ylabel)
+    ax.grid(True, which="both", alpha=0.25)
+    ax.legend(loc="best", fontsize=7, frameon=True)
+
+
 def _plot_metric_page(df: pd.DataFrame, sweep_key: str, metric_col: str, metric_label: str, yscale: str = "log") -> tuple[plt.Figure, dict[str, Any]]:
     spec = SWEEP_SPECS[sweep_key]
     df_sweep = df[df["sweep_key"] == sweep_key].copy()
-    fig, axes = plt.subplots(2, 3, figsize=(13.8, 8.0), sharex=False, sharey=False)
+    if df_sweep.empty or metric_col not in df_sweep.columns:
+        fig, _ax = plt.subplots(figsize=(8.0, 4.0))
+        return fig, {}
+
+    fig, axes = plt.subplots(3, 2, figsize=(12.0, 10.95), sharex=False, sharey=False)
     axes_arr = axes.flatten()
-    families = [fam for fam in ["Loop-based", "Window-based", "Model-based", "Adaptive", "Data-driven", "Exotic"] if fam in set(df_sweep["family"])]
+    families = [fam for fam in FAMILY_ORDER if fam in set(df_sweep["family"])]
     color_map = _estimator_color_map(sorted(df_sweep["estimator"].unique()))
-    for ax, family in zip(axes_arr, families):
+    ticks = sorted(pd.to_numeric(df_sweep[spec.x_col], errors="coerce").dropna().unique().tolist())
+    lo_col, hi_col = _metric_interval_columns(metric_col, df_sweep)
+
+    _plot_reference_panel(axes_arr[0], sweep_key)
+    for ax, family in zip(axes_arr[1:], families):
         part = df_sweep[df_sweep["family"] == family]
         for (estimator, direction), df_est in part.sort_values([spec.x_col, "estimator"]).groupby(["estimator", "direction"], sort=True):
             x = pd.to_numeric(df_est[spec.x_col], errors="coerce").to_numpy(dtype=float)
@@ -928,9 +1058,7 @@ def _plot_metric_page(df: pd.DataFrame, sweep_key: str, metric_col: str, metric_
             y = y[valid_xy]
             if yscale == "log":
                 y = np.maximum(y, 1e-12)
-            lo_col = metric_col.replace("_mean", "_ci95_low")
-            hi_col = metric_col.replace("_mean", "_ci95_high")
-            if lo_col in df_est.columns and hi_col in df_est.columns:
+            if lo_col and hi_col and len(df_est) > 1:
                 lo = pd.to_numeric(df_est[lo_col], errors="coerce").to_numpy(dtype=float)[valid_xy]
                 hi = pd.to_numeric(df_est[hi_col], errors="coerce").to_numpy(dtype=float)[valid_xy]
                 if np.any(np.isfinite(lo)) and np.any(np.isfinite(hi)):
@@ -948,36 +1076,47 @@ def _plot_metric_page(df: pd.DataFrame, sweep_key: str, metric_col: str, metric_
                 linestyle=_line_style(str(direction)),
                 label=f"{estimator}{_direction_label_suffix(str(direction))}",
             )
-        ticks = sorted(df_sweep[spec.x_col].dropna().unique().tolist())
         if ticks:
+            _shade_severity_regions(ax, spec, min(ticks), max(ticks), labels=True)
             ax.set_xscale("log")
             ax.xaxis.set_major_locator(FixedLocator(ticks))
             ax.xaxis.set_major_formatter(FuncFormatter(lambda x, _pos: f"{x:g}" if x in ticks else ""))
             for tick in ax.get_xticklabels():
-                tick.set_rotation(65)
+                tick.set_rotation(70)
+                tick.set_ha("right")
                 tick.set_fontsize(6)
         if yscale == "log":
             ax.set_yscale("log")
-        ax.axvline(spec.reference_value, color="#6A1B9A", linestyle=":", linewidth=0.9, label="reference")
+        ax.axvline(spec.reference_value, color="#7B1FA2", linestyle=":", linewidth=0.9, label=f"{spec.reference_value:g} ref")
         ax.grid(True, which="both", alpha=0.25)
         ax.set_title(family, loc="left", fontweight="bold")
         ax.set_ylabel(metric_label)
-        ax.legend(loc="best", fontsize=5.6, frameon=True)
-    for idx in range(len(families), len(axes_arr)):
+        ax.legend(loc="best", fontsize=5.8, frameon=True)
+    for idx in range(1 + len(families), len(axes_arr)):
         axes_arr[idx].set_visible(False)
-    for ax in axes_arr[: len(families)]:
+    for ax in axes_arr[1 : 1 + len(families)]:
         ax.set_xlabel(spec.x_label)
-    fig.suptitle(f"{spec.label}: {metric_label} by estimator family", fontsize=13, y=0.995)
+    fig.suptitle(f"{spec.label}: {metric_label} by estimator family ({_dominant_policy_label(df_sweep)})", fontsize=13, y=0.995)
+    fig.text(
+        0.5,
+        0.965,
+        spec.methodology,
+        ha="center",
+        va="top",
+        fontsize=7.2,
+        color="#263238",
+        wrap=True,
+    )
     fig.text(
         0.5,
         0.006,
-        "Solid/dashed lines mark event sign where the sweep has signed perturbations. Shaded bands are bootstrap CI95 when n>1.",
+        "Solid/dashed lines mark perturbation sign when applicable. Bands show available run intervals; thresholds and regions are interpretation guides.",
         ha="center",
         va="bottom",
-        fontsize=7.5,
+        fontsize=7,
         color="#37474F",
     )
-    fig.tight_layout(rect=[0.02, 0.03, 0.98, 0.94])
+    fig.tight_layout(rect=[0.02, 0.03, 0.98, 0.92])
     return fig, color_map
 
 
@@ -1046,34 +1185,92 @@ def save_multipage_dashboard(df_global: pd.DataFrame, out_dir: Path) -> Path:
     return pdf_path
 
 
+def _plot_method_map_page(df_global: pd.DataFrame, sweep_key: str) -> plt.Figure:
+    spec = SWEEP_SPECS[sweep_key]
+    part = df_global[df_global["sweep_key"] == sweep_key].copy()
+    pivot = (
+        part.groupby(["estimator", spec.x_col], as_index=False)["m1_rmse_hz_mean"]
+        .mean()
+        .pivot(index="estimator", columns=spec.x_col, values="m1_rmse_hz_mean")
+    )
+    families = part[["estimator", "family"]].drop_duplicates().set_index("estimator")["family"].to_dict()
+    family_order = {name: idx for idx, name in enumerate(FAMILY_ORDER)}
+    ordered = sorted(pivot.index, key=lambda est: (family_order.get(families.get(est, ""), 99), str(est)))
+    pivot = pivot.loc[ordered]
+    x_vals = [float(x) for x in pivot.columns]
+    values = np.log10(np.maximum(pivot.to_numpy(dtype=float), 1e-12))
+
+    fig, axes = plt.subplots(2, 1, figsize=(13.0, 8.2), gridspec_kw={"height_ratios": [3.2, 1.15]})
+    ax = axes[0]
+    finite = values[np.isfinite(values)]
+    vmax = float(np.percentile(finite, 95)) if finite.size else 0.0
+    im = ax.imshow(values, aspect="auto", cmap="magma_r", vmin=-4.0, vmax=max(vmax, -4.0 + 1e-6))
+    ax.set_title(f"{spec.label} Method Stress Map", loc="left", fontweight="bold")
+    ax.set_yticks(np.arange(len(pivot.index)))
+    ax.set_yticklabels(pivot.index, fontsize=7)
+    ax.set_xticks(np.arange(len(x_vals)))
+    ax.set_xticklabels([f"{v:g}" for v in x_vals], rotation=45, ha="right", fontsize=7)
+    ax.set_xlabel(spec.x_label)
+    ax.set_ylabel("Estimator")
+    cbar = fig.colorbar(im, ax=ax, fraction=0.024, pad=0.012)
+    cbar.set_label("log10 mean RMSE [Hz]")
+
+    ax2 = axes[1]
+    guide = _env_float("ATLAS_LIMIT_RMSE_GUIDE", 0.05, minimum=0.0)
+    rows = []
+    for est, df_est in part.sort_values(spec.x_col).groupby("estimator", sort=False):
+        reduced = df_est.groupby(spec.x_col, as_index=False)["m1_rmse_hz_mean"].mean().sort_values(spec.x_col)
+        fail = reduced[reduced["m1_rmse_hz_mean"] > guide]
+        critical = float(fail.iloc[0][spec.x_col]) if not fail.empty else float("nan")
+        rows.append((est, families.get(est, ""), critical, float(reduced[spec.x_col].max())))
+    summary = pd.DataFrame(rows, columns=["estimator", "family", "critical_level", "max_level"])
+    summary = summary.sort_values(["family", "critical_level"], na_position="last")
+    y = np.arange(len(summary))
+    x = summary["critical_level"].fillna(summary["max_level"] * 1.05).to_numpy(dtype=float)
+    ax2.scatter(x, y, s=24, color="#263238")
+    for i, row in enumerate(summary.itertuples(index=False)):
+        ax2.text(float(x[i]) * 1.03, i, str(row.estimator), va="center", fontsize=6.4)
+    ax2.axvline(guide, color="#303F9F", linestyle="--", linewidth=0.9, label=f"RMSE guide {guide:g} Hz")
+    if x_vals:
+        ax2.set_xscale("log")
+        ax2.set_xlim(min(x_vals), max(x_vals) * 1.4)
+        _shade_severity_regions(ax2, spec, min(x_vals), max(x_vals), labels=True)
+    ax2.set_yticks([])
+    ax2.set_xlabel(f"First {spec.x_label} where mean RMSE exceeds guide")
+    ax2.set_title(f"Critical {spec.label} Summary", loc="left", fontweight="bold")
+    ax2.grid(True, which="both", alpha=0.22)
+    ax2.legend(loc="best", fontsize=6.4, frameon=True)
+
+    fig.suptitle(f"{spec.label} Method Atlas ({_dominant_policy_label(part)})", fontsize=13, y=0.995)
+    fig.text(0.5, 0.965, spec.methodology, ha="center", va="top", fontsize=7.2, color="#263238", wrap=True)
+    fig.tight_layout(rect=[0.06, 0.04, 0.98, 0.93])
+    return fig
+
+
 def save_method_map(df_global: pd.DataFrame, out_dir: Path) -> list[Path]:
     sweeps = sorted(df_global["sweep_key"].unique())
-    fig, axes = plt.subplots(len(sweeps), 1, figsize=(12.5, max(4.0, 4.2 * len(sweeps))), squeeze=False)
-    for ax, sweep_key in zip(axes.flatten(), sweeps):
-        spec = SWEEP_SPECS[str(sweep_key)]
-        part = df_global[df_global["sweep_key"] == sweep_key].copy()
-        pivot = (
-            part.groupby(["estimator", spec.x_col], as_index=False)["m1_rmse_hz_mean"]
-            .mean()
-            .pivot(index="estimator", columns=spec.x_col, values="m1_rmse_hz_mean")
-        )
-        ordered = pivot.mean(axis=1).sort_values().index.tolist()
-        pivot = pivot.loc[ordered]
-        data = np.log10(np.maximum(pivot.to_numpy(dtype=float), 1e-12))
-        im = ax.imshow(data, aspect="auto", cmap="viridis")
-        ax.set_title(f"{spec.label}: log10 mean RMSE", loc="left", fontweight="bold")
-        ax.set_yticks(np.arange(len(pivot.index)))
-        ax.set_yticklabels(pivot.index, fontsize=7)
-        ax.set_xticks(np.arange(len(pivot.columns)))
-        ax.set_xticklabels([f"{float(x):g}" for x in pivot.columns], rotation=45, ha="right", fontsize=7)
-        ax.set_xlabel(spec.x_label)
-        fig.colorbar(im, ax=ax, fraction=0.025, pad=0.01)
-    fig.tight_layout()
     png = out_dir / METHOD_MAP_PNG_NAME
     pdf = out_dir / METHOD_MAP_PDF_NAME
-    fig.savefig(png, dpi=240)
-    fig.savefig(pdf)
-    plt.close(fig)
+    first_fig: plt.Figure | None = None
+    with PdfPages(pdf) as pages:
+        for sweep_key in sweeps:
+            fig = _plot_method_map_page(df_global, str(sweep_key))
+            if first_fig is None:
+                first_fig = fig
+            pages.savefig(fig)
+            if fig is not first_fig:
+                plt.close(fig)
+    if first_fig is not None:
+        first_fig.savefig(png, dpi=240)
+        if len(sweeps) == 1:
+            sweep_key = str(sweeps[0])
+            alias_png = out_dir / f"{sweep_key}_method_map.png"
+            alias_pdf = out_dir / f"{sweep_key}_method_map.pdf"
+            first_fig.savefig(alias_png, dpi=240)
+            first_fig.savefig(alias_pdf)
+            plt.close(first_fig)
+            return [png, pdf, alias_png, alias_pdf]
+        plt.close(first_fig)
     return [png, pdf]
 
 
@@ -1093,7 +1290,50 @@ def save_sign_asymmetry(df_global: pd.DataFrame, out_dir: Path) -> list[Path]:
     df = pd.DataFrame(rows)
     fig, ax = plt.subplots(figsize=(12.0, 6.0))
     if df.empty:
-        ax.text(0.5, 0.5, "No paired positive/negative events available.", ha="center", va="center")
+        level_rows: list[dict[str, Any]] = []
+        for (sweep_key, estimator), part in df_global.groupby(["sweep_key", "estimator"], sort=True):
+            spec = SWEEP_SPECS[str(sweep_key)]
+            if spec.directional:
+                continue
+            reduced = (
+                part.groupby(spec.x_col, as_index=False)["m1_rmse_hz_mean"]
+                .mean()
+                .sort_values(spec.x_col)
+            )
+            x = pd.to_numeric(reduced[spec.x_col], errors="coerce").to_numpy(dtype=float)
+            y = pd.to_numeric(reduced["m1_rmse_hz_mean"], errors="coerce").to_numpy(dtype=float)
+            ok = np.isfinite(x) & np.isfinite(y) & (x > 0.0) & (y > 0.0)
+            if np.count_nonzero(ok) < 2:
+                continue
+            lx = np.log10(x[ok])
+            ly = np.log10(np.maximum(y[ok], 1e-12))
+            slope, _intercept = np.polyfit(lx, ly, 1)
+            ratio = float(np.max(y[ok]) / max(float(np.min(y[ok])), 1e-12))
+            level_rows.append(
+                {
+                    "sweep_key": sweep_key,
+                    "estimator": estimator,
+                    "family": str(part["family"].iloc[0]),
+                    "slope": float(slope),
+                    "ratio": ratio,
+                }
+            )
+        df_level = pd.DataFrame(level_rows)
+        if df_level.empty:
+            ax.text(0.5, 0.5, "No paired sign or level-sensitivity diagnostic available.", ha="center", va="center")
+        else:
+            df_level = df_level.sort_values(["family", "ratio"], ascending=[True, False])
+            colors = [FAMILY_PALETTE.get(str(fam), "#616161") for fam in df_level["family"]]
+            x = np.arange(len(df_level))
+            ax.bar(x, df_level["ratio"].to_numpy(dtype=float), color=colors, alpha=0.88)
+            ax.axhline(2.0, color="#303F9F", linestyle="--", linewidth=0.95, label="2x ratio guide")
+            ax.set_yscale("log")
+            ax.set_xticks(x)
+            ax.set_xticklabels(df_level["estimator"], rotation=70, ha="right", fontsize=7)
+            ax.set_ylabel("max RMSE / min RMSE across level sweep")
+            ax.set_title("Level-only sensitivity by estimator", loc="left", fontweight="bold")
+            ax.grid(True, which="both", axis="y", alpha=0.25)
+            ax.legend(fontsize=7)
     else:
         pivot = df.pivot(index="estimator", columns="sweep_key", values="max_asymmetry_ratio").fillna(1.0)
         pivot = pivot.loc[pivot.max(axis=1).sort_values(ascending=False).index]
@@ -1113,8 +1353,17 @@ def save_sign_asymmetry(df_global: pd.DataFrame, out_dir: Path) -> list[Path]:
     pdf = out_dir / ASYMMETRY_PDF_NAME
     fig.savefig(png, dpi=240)
     fig.savefig(pdf)
+    sweep_keys = sorted(df_global["sweep_key"].unique())
+    extra_paths: list[Path] = []
+    if len(sweep_keys) == 1:
+        suffix = "sign_asymmetry" if SWEEP_SPECS[str(sweep_keys[0])].directional else "level_sensitivity"
+        alias_png = out_dir / f"{sweep_keys[0]}_{suffix}.png"
+        alias_pdf = out_dir / f"{sweep_keys[0]}_{suffix}.pdf"
+        fig.savefig(alias_png, dpi=240)
+        fig.savefig(alias_pdf)
+        extra_paths.extend([alias_png, alias_pdf])
     plt.close(fig)
-    return [png, pdf]
+    return [png, pdf, *extra_paths]
 
 
 def save_pareto_plot(df_global: pd.DataFrame, out_dir: Path) -> list[Path]:
