@@ -1509,8 +1509,9 @@ def save_rmse_family_plot(df_global: pd.DataFrame, out_dir: Path) -> tuple[list[
     png_path = out_dir / RMSE_FAMILY_PNG_NAME
     color_map: dict[str, Any] = {}
     first_fig: plt.Figure | None = None
+    sweeps = sorted(df_global["sweep_key"].unique())
     with PdfPages(pdf_path) as pdf:
-        for sweep_key in sorted(df_global["sweep_key"].unique()):
+        for sweep_key in sweeps:
             fig, cmap = _plot_metric_page(df_global, str(sweep_key), "m1_rmse_hz_mean", "RMSE [Hz]", "log")
             color_map.update(cmap)
             if first_fig is None:
@@ -1518,10 +1519,18 @@ def save_rmse_family_plot(df_global: pd.DataFrame, out_dir: Path) -> tuple[list[
             pdf.savefig(fig)
             if fig is not first_fig:
                 plt.close(fig)
+    paths = [png_path, pdf_path]
     if first_fig is not None:
         first_fig.savefig(png_path, dpi=240)
+        if len(sweeps) == 1:
+            sweep_key = str(sweeps[0])
+            alias_png = out_dir / f"{sweep_key}_rmse_deterioration_by_family.png"
+            alias_pdf = out_dir / f"{sweep_key}_rmse_deterioration_by_family.pdf"
+            first_fig.savefig(alias_png, dpi=240)
+            first_fig.savefig(alias_pdf)
+            paths.extend([alias_png, alias_pdf])
         plt.close(first_fig)
-    return [png_path, pdf_path], color_map
+    return paths, color_map
 
 
 def _plot_all_estimators_page(
@@ -2362,7 +2371,6 @@ def write_readme(out_dir: Path, settings: dict[str, Any], readiness: dict[str, A
         f"- `{GLOBAL_CSV_NAME}`",
         f"- `{MULTIPAGE_PDF_NAME}`",
         f"- `{RMSE_FAMILY_PDF_NAME}`",
-        f"- `{RMSE_ALL_ESTIMATORS_PDF_NAME}`",
         f"- `{METHOD_MAP_PDF_NAME}`",
         f"- `{ASYMMETRY_PDF_NAME}`",
         f"- `{PARETO_PDF_NAME}`",
@@ -2421,6 +2429,7 @@ def run_atlas(args: argparse.Namespace) -> Path:
         "fixed_policy_eval_runs_per_level": fixed_eval_runs,
         "resume": resume,
         "capture_signals": capture_signals,
+        "write_small_multiples": _env_bool("ATLAS_WRITE_SMALL_MULTIPLES", False),
     }
     settings["command"] = reproduce_command(settings)
 
@@ -2584,7 +2593,10 @@ def run_atlas(args: argparse.Namespace) -> Path:
     df_global = pd.DataFrame(rows).sort_values(["sweep_key", "abs_value", "direction", "family", "estimator"])
     global_csv, rmse_est, rmse_family, timing_csv = save_summary_tables(df_global, timing_rows, out_dir)
     plot_paths, color_map = save_rmse_family_plot(df_global, out_dir)
-    plot_paths.extend(save_rmse_all_estimators_plot(df_global, out_dir))
+    small_multiples_paths: list[Path] = []
+    if settings["write_small_multiples"]:
+        small_multiples_paths = save_rmse_all_estimators_plot(df_global, out_dir)
+        plot_paths.extend(small_multiples_paths)
     plot_paths.extend(save_method_map(df_global, out_dir))
     plot_paths.extend(save_sign_asymmetry(df_global, out_dir))
     plot_paths.extend(save_pareto_plot(df_global, out_dir))
@@ -2616,7 +2628,6 @@ def run_atlas(args: argparse.Namespace) -> Path:
         "hypothesis_results_csv": str(hypothesis_csv),
         "metrics_dashboard_pdf": str(dashboard_pdf),
         "rmse_family_pdf": str(out_dir / RMSE_FAMILY_PDF_NAME),
-        "rmse_all_estimators_pdf": str(out_dir / RMSE_ALL_ESTIMATORS_PDF_NAME),
         "method_map_pdf": str(out_dir / METHOD_MAP_PDF_NAME),
         "sign_asymmetry_pdf": str(out_dir / ASYMMETRY_PDF_NAME),
         "pareto_pdf": str(out_dir / PARETO_PDF_NAME),
@@ -2630,6 +2641,8 @@ def run_atlas(args: argparse.Namespace) -> Path:
         "artifact_index_csv": str(artifact_index_path),
         "evidence_manifest_json": str(evidence_path),
     }
+    if small_multiples_paths:
+        artifacts["rmse_all_estimators_pdf"] = str(out_dir / RMSE_ALL_ESTIMATORS_PDF_NAME)
     report_path = build_benchmark_report(df_global, artifacts, settings, out_dir)
     readme_path = write_readme(out_dir, settings, readiness_report)
     env_path = write_environment_report(ROOT, env_path, source_root=SRC)

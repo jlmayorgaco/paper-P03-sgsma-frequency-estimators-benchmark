@@ -183,6 +183,36 @@ def test_atlas_small_multiples_plot_writes_all_estimator_artifacts(tmp_path) -> 
     assert len(paths) == 4
 
 
+def test_atlas_family_plot_writes_single_sweep_aliases(tmp_path) -> None:
+    rows = []
+    for estimator in ["PLL", "EKF", "PI-GRU"]:
+        for direction in ["pos", "neg"]:
+            for level in [0.0, 1.0, 2.0]:
+                if level == 0.0 and direction == "neg":
+                    continue
+                rows.append(
+                    {
+                        "sweep_key": "phase_jump_sweep",
+                        "estimator": estimator,
+                        "family": atlas_sweep.ESTIMATOR_FAMILIES[estimator],
+                        "direction": direction,
+                        "abs_phase_jump_deg": level,
+                        "policy": "default",
+                        "m1_rmse_hz_mean": 0.01 + level / 1000.0,
+                    }
+                )
+    df = pd.DataFrame(rows)
+
+    paths, color_map = atlas_sweep.save_rmse_family_plot(df, tmp_path)
+
+    assert tmp_path.joinpath(atlas_sweep.RMSE_FAMILY_PDF_NAME).exists()
+    assert tmp_path.joinpath(atlas_sweep.RMSE_FAMILY_PNG_NAME).exists()
+    assert tmp_path.joinpath("phase_jump_sweep_rmse_deterioration_by_family.pdf").exists()
+    assert tmp_path.joinpath("phase_jump_sweep_rmse_deterioration_by_family.png").exists()
+    assert len(paths) == 4
+    assert set(color_map) == {"EKF", "PI-GRU", "PLL"}
+
+
 def test_atlas_readiness_accepts_full_fixed_policy_paper_grade() -> None:
     rows = []
     canonical_estimators = atlas_sweep._csv(atlas_sweep.CANONICAL_ESTIMATORS)

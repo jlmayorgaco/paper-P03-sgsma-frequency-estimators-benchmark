@@ -88,7 +88,6 @@ Each ATLAS run writes:
 - `hypothesis_results.csv`
 - `metrics_dashboard_multipage.pdf`
 - `rmse_deterioration_by_family.pdf`
-- `rmse_all_estimators_small_multiples.pdf`
 - `atlas_method_map.pdf`
 - `atlas_sign_asymmetry.pdf`
 - `atlas_accuracy_latency_cpu_pareto.pdf`

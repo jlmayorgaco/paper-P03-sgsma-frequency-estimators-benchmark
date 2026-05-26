@@ -120,8 +120,7 @@ python -m pipelines.atlas_sweep \
 ```
 
 ATLAS writes `metrics_dashboard_multipage.pdf`,
-`rmse_deterioration_by_family.pdf`,
-`rmse_all_estimators_small_multiples.pdf`, `atlas_method_map.pdf`,
+`rmse_deterioration_by_family.pdf`, `atlas_method_map.pdf`,
 `atlas_sign_asymmetry.pdf`, `benchmark_report.json`, `manifest.json`,
 `artifact_index.csv`, `paper_traceability.csv`, `evidence_manifest.json`, and
 `atlas_readiness_report.json/md`.
