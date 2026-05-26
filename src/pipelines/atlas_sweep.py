@@ -71,6 +71,8 @@ MANIFEST_NAME = "manifest.json"
 MULTIPAGE_PDF_NAME = "metrics_dashboard_multipage.pdf"
 RMSE_FAMILY_PDF_NAME = "rmse_deterioration_by_family.pdf"
 RMSE_FAMILY_PNG_NAME = "rmse_deterioration_by_family.png"
+RMSE_ALL_ESTIMATORS_PDF_NAME = "rmse_all_estimators_small_multiples.pdf"
+RMSE_ALL_ESTIMATORS_PNG_NAME = "rmse_all_estimators_small_multiples.png"
 METHOD_MAP_PDF_NAME = "atlas_method_map.pdf"
 METHOD_MAP_PNG_NAME = "atlas_method_map.png"
 ASYMMETRY_PDF_NAME = "atlas_sign_asymmetry.pdf"
@@ -1294,6 +1296,12 @@ def _plot_reference_panel(ax: plt.Axes, sweep_key: str) -> None:
             "noise_snr",
         }:
             y = np.asarray(data.v, dtype=float)
+            if sweep_key == "phase_jump_sweep" and len(x):
+                event_t = float(scenario.scenario_cls.get_default_params().get("t_jump_s", 0.70))
+                keep = (x >= max(float(x[0]), event_t - 0.055)) & (x <= min(float(x[-1]), event_t + 0.085))
+                x = x[keep]
+                y = y[keep]
+                ax.axvline(event_t, color="#B71C1C", linestyle=":", linewidth=1.1, label="jump")
             if sweep_key in {"harmonics", "interharmonics", "noise_snr", "modulation_am_sweep"} and len(x):
                 keep = x <= min(float(x[0]) + 0.12, float(x[-1]))
                 x = x[keep]
@@ -1303,7 +1311,8 @@ def _plot_reference_panel(ax: plt.Axes, sweep_key: str) -> None:
             y = np.asarray(data.f_true, dtype=float)
             ylabel = "Frequency [Hz]"
         ax.plot(x, y, color="#111111", linestyle=line_style, linewidth=1.25, label=label)
-    ax.set_title(f"Reference {spec.label}", loc="left", fontweight="bold")
+    title_suffix = " (zoom)" if sweep_key == "phase_jump_sweep" else ""
+    ax.set_title(f"Reference {spec.label}{title_suffix}", loc="left", fontweight="bold")
     ax.set_xlabel("Time [s]")
     ax.set_ylabel(ylabel)
     ax.grid(True, which="both", alpha=0.25)
@@ -1419,6 +1428,143 @@ def save_rmse_family_plot(df_global: pd.DataFrame, out_dir: Path) -> tuple[list[
         first_fig.savefig(png_path, dpi=240)
         plt.close(first_fig)
     return [png_path, pdf_path], color_map
+
+
+def _plot_all_estimators_page(
+    df_global: pd.DataFrame,
+    sweep_key: str,
+    metric_col: str,
+    metric_label: str,
+    yscale: str = "log",
+) -> plt.Figure:
+    spec = SWEEP_SPECS[sweep_key]
+    part = df_global[df_global["sweep_key"] == sweep_key].copy()
+    estimators = sorted(
+        part["estimator"].dropna().astype(str).unique().tolist(),
+        key=lambda est: (
+            FAMILY_ORDER.index(ESTIMATOR_FAMILIES.get(est, "Exotic"))
+            if ESTIMATOR_FAMILIES.get(est, "Exotic") in FAMILY_ORDER
+            else 99,
+            est,
+        ),
+    )
+    n_estimators = max(1, len(estimators))
+    n_cols = 3
+    n_rows = int(math.ceil(n_estimators / n_cols))
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(4.25 * n_cols, 2.45 * n_rows + 0.55), squeeze=False)
+    axes_flat = axes.flatten()
+    color_map = _estimator_color_map(estimators)
+    ticks = sorted(pd.to_numeric(part[spec.x_col], errors="coerce").dropna().unique().tolist())
+    lo_col, hi_col = _metric_interval_columns(metric_col, part)
+    signed = spec.directional and "direction" in part.columns
+
+    for idx, (ax, estimator) in enumerate(zip(axes_flat, estimators)):
+        df_est_all = part[part["estimator"].astype(str) == estimator].copy()
+        fallback_family = "Unknown"
+        if "family" in df_est_all and not df_est_all["family"].dropna().empty:
+            fallback_family = str(df_est_all["family"].dropna().iloc[0])
+        family = ESTIMATOR_FAMILIES.get(estimator, fallback_family)
+        group_cols = ["direction"] if signed else ["estimator"]
+        for group_key, df_est in df_est_all.sort_values(spec.x_col).groupby(group_cols, sort=True):
+            direction = str(group_key[0] if isinstance(group_key, tuple) else group_key)
+            x = pd.to_numeric(df_est[spec.x_col], errors="coerce").to_numpy(dtype=float)
+            y = pd.to_numeric(df_est[metric_col], errors="coerce").to_numpy(dtype=float)
+            valid_xy = np.isfinite(x) & np.isfinite(y)
+            if not np.any(valid_xy):
+                continue
+            x = x[valid_xy]
+            y = y[valid_xy]
+            if yscale == "log":
+                y = np.maximum(y, 1e-12)
+            if lo_col and hi_col and len(df_est) > 1:
+                lo = pd.to_numeric(df_est[lo_col], errors="coerce").to_numpy(dtype=float)[valid_xy]
+                hi = pd.to_numeric(df_est[hi_col], errors="coerce").to_numpy(dtype=float)[valid_xy]
+                if np.any(np.isfinite(lo)) and np.any(np.isfinite(hi)):
+                    if yscale == "log":
+                        lo = np.maximum(lo, 1e-12)
+                        hi = np.maximum(hi, 1e-12)
+                    ax.fill_between(x, lo, hi, color=color_map[estimator], alpha=0.10, linewidth=0)
+            ax.plot(
+                x,
+                y,
+                marker=_estimator_marker(estimator),
+                markersize=3.0,
+                markeredgecolor="#111111",
+                markeredgewidth=0.25,
+                linewidth=1.25,
+                color=color_map[estimator],
+                linestyle=_line_style(direction) if signed else "-",
+                label=_direction_label_suffix(direction).strip() if signed else estimator,
+            )
+        if ticks:
+            _shade_severity_regions(ax, spec, min(ticks), max(ticks), labels=False)
+            ax.set_xscale("log")
+            ax.xaxis.set_major_locator(FixedLocator(ticks))
+            ax.xaxis.set_major_formatter(FuncFormatter(lambda x, _pos: f"{x:g}" if x in ticks else ""))
+            for tick in ax.get_xticklabels():
+                tick.set_rotation(55)
+                tick.set_ha("right")
+                tick.set_fontsize(6.2)
+        if yscale == "log":
+            ax.set_yscale("log")
+        ax.axvline(spec.reference_value, color="#7B1FA2", linestyle=":", linewidth=0.85)
+        ax.set_title(f"{estimator}\n{family}", loc="left", fontsize=8.2, fontweight="bold", pad=2.5)
+        ax.set_ylabel(metric_label if idx % n_cols == 0 else "", fontsize=7.2)
+        ax.set_xlabel(spec.x_label if idx >= (n_rows - 1) * n_cols else "", fontsize=7.2)
+        ax.tick_params(axis="both", labelsize=6.4)
+        ax.grid(True, which="both", alpha=0.24)
+        if signed:
+            ax.legend(loc="best", fontsize=5.8, frameon=True, title="sign", title_fontsize=5.8)
+    for ax in axes_flat[n_estimators:]:
+        ax.set_visible(False)
+    fig.suptitle(f"{spec.label}: all canonical estimators ({_dominant_policy_label(part)})", fontsize=13.0, y=0.997)
+    fig.text(
+        0.5,
+        0.975,
+        f"Small multiples use one panel per estimator to avoid hiding methods in crowded family legends. Metric: {metric_label}.",
+        ha="center",
+        va="top",
+        fontsize=7.2,
+        color="#263238",
+    )
+    fig.text(
+        0.5,
+        0.006,
+        "Solid/dashed lines mark positive/negative events when applicable. Violet dotted line marks the canonical reference level.",
+        ha="center",
+        va="bottom",
+        fontsize=7.0,
+        color="#37474F",
+    )
+    fig.tight_layout(rect=[0.02, 0.03, 0.99, 0.95])
+    return fig
+
+
+def save_rmse_all_estimators_plot(df_global: pd.DataFrame, out_dir: Path) -> list[Path]:
+    sweeps = sorted(df_global["sweep_key"].unique())
+    pdf_path = out_dir / RMSE_ALL_ESTIMATORS_PDF_NAME
+    png_path = out_dir / RMSE_ALL_ESTIMATORS_PNG_NAME
+    first_fig: plt.Figure | None = None
+    with PdfPages(pdf_path) as pdf:
+        for sweep_key in sweeps:
+            fig = _plot_all_estimators_page(df_global, str(sweep_key), "m1_rmse_hz_mean", "RMSE [Hz]", "log")
+            if first_fig is None:
+                first_fig = fig
+            pdf.savefig(fig)
+            if fig is not first_fig:
+                plt.close(fig)
+    paths = [png_path, pdf_path]
+    if first_fig is not None:
+        first_fig.savefig(png_path, dpi=240)
+        if len(sweeps) == 1:
+            sweep_key = str(sweeps[0])
+            alias_png = out_dir / f"{sweep_key}_all_estimators_rmse.png"
+            alias_pdf = out_dir / f"{sweep_key}_all_estimators_rmse.pdf"
+            first_fig.savefig(alias_png, dpi=240)
+            first_fig.savefig(alias_pdf)
+            paths.extend([alias_png, alias_pdf])
+        plt.close(first_fig)
+    return paths
 
 
 def save_multipage_dashboard(df_global: pd.DataFrame, out_dir: Path) -> Path:
@@ -2117,6 +2263,7 @@ def write_readme(out_dir: Path, settings: dict[str, Any], readiness: dict[str, A
         f"- `{GLOBAL_CSV_NAME}`",
         f"- `{MULTIPAGE_PDF_NAME}`",
         f"- `{RMSE_FAMILY_PDF_NAME}`",
+        f"- `{RMSE_ALL_ESTIMATORS_PDF_NAME}`",
         f"- `{METHOD_MAP_PDF_NAME}`",
         f"- `{ASYMMETRY_PDF_NAME}`",
         f"- `{PARETO_PDF_NAME}`",
@@ -2338,6 +2485,7 @@ def run_atlas(args: argparse.Namespace) -> Path:
     df_global = pd.DataFrame(rows).sort_values(["sweep_key", "abs_value", "direction", "family", "estimator"])
     global_csv, rmse_est, rmse_family, timing_csv = save_summary_tables(df_global, timing_rows, out_dir)
     plot_paths, color_map = save_rmse_family_plot(df_global, out_dir)
+    plot_paths.extend(save_rmse_all_estimators_plot(df_global, out_dir))
     plot_paths.extend(save_method_map(df_global, out_dir))
     plot_paths.extend(save_sign_asymmetry(df_global, out_dir))
     plot_paths.extend(save_pareto_plot(df_global, out_dir))
@@ -2369,6 +2517,7 @@ def run_atlas(args: argparse.Namespace) -> Path:
         "hypothesis_results_csv": str(hypothesis_csv),
         "metrics_dashboard_pdf": str(dashboard_pdf),
         "rmse_family_pdf": str(out_dir / RMSE_FAMILY_PDF_NAME),
+        "rmse_all_estimators_pdf": str(out_dir / RMSE_ALL_ESTIMATORS_PDF_NAME),
         "method_map_pdf": str(out_dir / METHOD_MAP_PDF_NAME),
         "sign_asymmetry_pdf": str(out_dir / ASYMMETRY_PDF_NAME),
         "pareto_pdf": str(out_dir / PARETO_PDF_NAME),

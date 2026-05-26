@@ -144,6 +144,33 @@ def test_atlas_readiness_marks_preview_as_diagnostic() -> None:
     }
 
 
+def test_atlas_small_multiples_plot_writes_all_estimator_artifacts(tmp_path) -> None:
+    rows = []
+    for estimator in ["PLL", "EKF", "PI-GRU"]:
+        for direction in ["pos", "neg"]:
+            for level in [10.0, 20.0]:
+                rows.append(
+                    {
+                        "sweep_key": "phase_jump_sweep",
+                        "estimator": estimator,
+                        "family": atlas_sweep.ESTIMATOR_FAMILIES[estimator],
+                        "direction": direction,
+                        "abs_phase_jump_deg": level,
+                        "policy": "default",
+                        "m1_rmse_hz_mean": 0.01 + level / 1000.0,
+                    }
+                )
+    df = pd.DataFrame(rows)
+
+    paths = atlas_sweep.save_rmse_all_estimators_plot(df, tmp_path)
+
+    assert tmp_path.joinpath(atlas_sweep.RMSE_ALL_ESTIMATORS_PDF_NAME).exists()
+    assert tmp_path.joinpath(atlas_sweep.RMSE_ALL_ESTIMATORS_PNG_NAME).exists()
+    assert tmp_path.joinpath("phase_jump_sweep_all_estimators_rmse.pdf").exists()
+    assert tmp_path.joinpath("phase_jump_sweep_all_estimators_rmse.png").exists()
+    assert len(paths) == 4
+
+
 def test_atlas_readiness_accepts_full_fixed_policy_paper_grade() -> None:
     rows = []
     canonical_estimators = atlas_sweep._csv(atlas_sweep.CANONICAL_ESTIMATORS)
