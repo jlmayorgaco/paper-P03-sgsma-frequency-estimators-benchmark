@@ -2001,24 +2001,36 @@ def save_hypothesis_results(df_global: pd.DataFrame, out_dir: Path) -> Path:
             .mean()
             .sort_values(spec.x_col)
         )
-        x = reduced[spec.x_col].to_numpy(dtype=float)
-        y = np.maximum(reduced["m1_rmse_hz_mean"].to_numpy(dtype=float), 1e-12)
+        x_all = reduced[spec.x_col].to_numpy(dtype=float)
+        y_all = np.maximum(reduced["m1_rmse_hz_mean"].to_numpy(dtype=float), 1e-12)
+        finite = np.isfinite(x_all) & np.isfinite(y_all) & (x_all > 0.0) & (y_all > 0.0)
+        x = x_all[finite]
+        y = y_all[finite]
         if len(x) < 4:
-            regime = "too_few_points"
+            regime = "too_few_finite_points"
             slope = float("nan")
-            ratio = float("nan")
+            ratio = float(y[-1] / max(y[0], 1e-12)) if len(y) >= 2 else float("nan")
         else:
-            slope, _intercept = np.polyfit(np.log10(x), np.log10(y), 1)
-            ratio = float(y[-1] / max(y[0], 1e-12))
-            diffs = np.diff(np.log10(y))
-            if ratio <= 1.35 and abs(float(slope)) <= 0.12:
-                regime = "flat"
-            elif float(slope) > 0.15 and float(np.mean(diffs >= -0.08)) >= 0.75:
-                regime = "monotone_deterioration"
-            elif float(slope) < -0.12:
-                regime = "improves_with_severity"
-            else:
-                regime = "nonmonotone_or_noise_limited"
+            try:
+                log_x = np.log10(x)
+                log_y = np.log10(y)
+                slope, _intercept = np.polyfit(log_x, log_y, 1)
+                ratio = float(y[-1] / max(y[0], 1e-12))
+                diffs = np.diff(log_y)
+                if not math.isfinite(float(slope)) or not math.isfinite(ratio):
+                    regime = "nonfinite_or_unstable"
+                elif ratio <= 1.35 and abs(float(slope)) <= 0.12:
+                    regime = "flat"
+                elif float(slope) > 0.15 and float(np.mean(diffs >= -0.08)) >= 0.75:
+                    regime = "monotone_deterioration"
+                elif float(slope) < -0.12:
+                    regime = "improves_with_severity"
+                else:
+                    regime = "nonmonotone_or_noise_limited"
+            except (FloatingPointError, np.linalg.LinAlgError, ValueError):
+                regime = "nonfinite_or_unstable"
+                slope = float("nan")
+                ratio = float(y[-1] / max(y[0], 1e-12)) if len(y) >= 2 else float("nan")
         rows.append(
             {
                 "hypothesis_id": f"{sweep_key}_{estimator}_severity_trend",

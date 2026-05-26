@@ -213,6 +213,35 @@ def test_atlas_family_plot_writes_single_sweep_aliases(tmp_path) -> None:
     assert set(color_map) == {"EKF", "PI-GRU", "PLL"}
 
 
+def test_atlas_hypothesis_results_tolerate_nonfinite_rmse(tmp_path) -> None:
+    rows = [
+        {
+            "sweep_key": "phase_jump_sweep",
+            "estimator": "EKF",
+            "family": atlas_sweep.ESTIMATOR_FAMILIES["EKF"],
+            "direction": "pos",
+            "abs_phase_jump_deg": float(level),
+            "policy": "default",
+            "n_mc_runs": 1,
+            "m1_rmse_hz_mean": value,
+        }
+        for level, value in [(1, 0.01), (5, 0.02), (10, float("inf")), (15, 0.03), (20, 0.04)]
+    ]
+    df = pd.DataFrame(rows)
+
+    path = atlas_sweep.save_hypothesis_results(df, tmp_path)
+    result = pd.read_csv(path)
+
+    assert len(result) == 1
+    assert result.loc[0, "classification"] in {
+        "flat",
+        "monotone_deterioration",
+        "nonmonotone_or_noise_limited",
+        "too_few_finite_points",
+        "nonfinite_or_unstable",
+    }
+
+
 def test_atlas_readiness_accepts_full_fixed_policy_paper_grade() -> None:
     rows = []
     canonical_estimators = atlas_sweep._csv(atlas_sweep.CANONICAL_ESTIMATORS)
