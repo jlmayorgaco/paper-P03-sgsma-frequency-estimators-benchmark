@@ -31,6 +31,28 @@ Policies:
 - `oracle`: per-scenario tuning. Use as a lower-bound diagnostic, not as a
   deployable estimator policy.
 
+## Dense phase-jump sweep
+
+For high-resolution phase-jump curves, level variables accept inclusive range
+syntax:
+
+```powershell
+$env:ATLAS_PHASE_JUMP_LEVELS_DEG = "0:180:1"
+$env:ATLAS_PHASE_JUMP_DIRECTIONS = "pos"
+python -m pipelines.atlas_sweep `
+  --sweeps phase_jump_sweep `
+  --policy default `
+  --n-runs 1 `
+  --n-cost-reps 1 `
+  --tune-trials 0 `
+  --output-subdir atlas-phase-jump-0-180deg-1deg-all18
+```
+
+This produces 181 phase-jump scenarios and 3258 scenario-estimator pairs for
+the 18 canonical estimators. The 0 degree baseline is included once even if both
+signs are requested. Use `ATLAS_PHASE_JUMP_DIRECTIONS=pos,neg` only when signed
+asymmetry is part of the question; that doubles the nonzero phase-jump workload.
+
 ## P0 methodological guardrails
 
 The P0 sweeps are intentionally isolated:
@@ -66,6 +88,7 @@ Each ATLAS run writes:
 - `hypothesis_results.csv`
 - `metrics_dashboard_multipage.pdf`
 - `rmse_deterioration_by_family.pdf`
+- `rmse_all_estimators_small_multiples.pdf`
 - `atlas_method_map.pdf`
 - `atlas_sign_asymmetry.pdf`
 - `atlas_accuracy_latency_cpu_pareto.pdf`

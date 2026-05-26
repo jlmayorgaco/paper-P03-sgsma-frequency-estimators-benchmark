@@ -234,10 +234,13 @@ SEVERITY_REGIONS: dict[str, tuple[tuple[str, float, float, str], ...]] = {
         ("Extreme", 3.00, 5.00, "#EF5350"),
     ),
     "phase_jump_sweep": (
+        ("Baseline", 0.0, 5.0, "#ECEFF1"),
         ("Small", 5.0, 10.0, "#66BB6A"),
         ("IEEE 1547", 10.0, 20.0, "#DCE775"),
         ("Stress", 20.0, 45.0, "#FDD835"),
-        ("Severe", 45.0, 60.0, "#EF5350"),
+        ("Severe", 45.0, 60.0, "#FFB74D"),
+        ("Extreme", 60.0, 120.0, "#EF5350"),
+        ("Half-cycle", 120.0, 180.0, "#B71C1C"),
     ),
     "modulation_am_sweep": (
         ("Slow", 0.10, 0.50, "#66BB6A"),
@@ -474,11 +477,55 @@ def _csv(raw: str | None) -> list[str]:
 def _float_csv(raw: str | None) -> list[float]:
     out: list[float] = []
     for item in _csv(raw):
-        try:
-            out.append(float(item))
-        except ValueError:
-            continue
+        out.extend(_parse_float_item(item))
     return out
+
+
+def _parse_float_item(item: str) -> list[float]:
+    text = item.strip()
+    if not text:
+        return []
+    if ".." in text:
+        start_text, rest = text.split("..", 1)
+        if ":" in rest:
+            stop_text, step_text = rest.split(":", 1)
+        else:
+            stop_text, step_text = rest, ""
+        return _float_range(start_text, stop_text, step_text)
+    if ":" in text:
+        parts = text.split(":")
+        if len(parts) in {2, 3}:
+            return _float_range(parts[0], parts[1], parts[2] if len(parts) == 3 else "")
+    try:
+        return [float(text)]
+    except ValueError:
+        return []
+
+
+def _float_range(start_text: str, stop_text: str, step_text: str) -> list[float]:
+    try:
+        start = float(start_text)
+        stop = float(stop_text)
+        if step_text.strip():
+            step = float(step_text)
+        else:
+            step = 1.0 if stop >= start else -1.0
+    except ValueError:
+        return []
+    if step == 0.0 or (stop - start) * step < 0.0:
+        return []
+    values: list[float] = []
+    current = start
+    limit = 10000
+    eps = abs(step) * 1e-9 + 1e-12
+    for _idx in range(limit):
+        if step > 0.0 and current > stop + eps:
+            break
+        if step < 0.0 and current < stop - eps:
+            break
+        values.append(round(float(current), 12))
+        current += step
+    return values
 
 
 def _sanitize_token(value: float) -> str:
@@ -864,13 +911,17 @@ def _levels_for_sweep(sweep_key: str) -> list[float]:
     }[sweep_key]
     configured = _float_csv(os.getenv(env_name))
     values = configured if configured else list(spec.default_levels)
-    return sorted({round(abs(float(v)), 9) for v in values if abs(float(v)) > 0.0})
+    allow_zero = sweep_key == "phase_jump_sweep"
+    return sorted({round(abs(float(v)), 9) for v in values if allow_zero or abs(float(v)) > 0.0})
 
 
 def _directions_for_sweep(sweep_key: str) -> list[str]:
     if not SWEEP_SPECS[sweep_key].directional:
         return ["level"]
-    raw = os.getenv(f"ATLAS_{sweep_key.upper()}_DIRECTIONS") or os.getenv("ATLAS_DIRECTIONS", "pos,neg")
+    env_names = [f"ATLAS_{sweep_key.upper()}_DIRECTIONS"]
+    if sweep_key == "phase_jump_sweep":
+        env_names.append("ATLAS_PHASE_JUMP_DIRECTIONS")
+    raw = next((os.getenv(name) for name in env_names if os.getenv(name)), None) or os.getenv("ATLAS_DIRECTIONS", "pos,neg")
     requested = [item.lower() for item in _csv(raw)]
     out: list[str] = []
     if any(item in {"pos", "+", "up", "positive", "swell"} for item in requested):
@@ -926,6 +977,8 @@ def build_atlas_scenarios(sweep_keys: list[str]) -> list[AtlasScenario]:
         levels = _levels_for_sweep(sweep_key)
         for direction in _directions_for_sweep(sweep_key):
             for level in levels:
+                if SWEEP_SPECS[sweep_key].directional and abs(float(level)) <= 1e-12 and direction != "pos":
+                    continue
                 if sweep_key == "magnitude_step" and direction == "neg" and level >= 100.0:
                     continue
                 signed = level if direction in {"pos", "level"} else -level
@@ -1245,6 +1298,49 @@ def _metric_interval_columns(metric_col: str, df: pd.DataFrame) -> tuple[str | N
     return None, None
 
 
+def _use_log_x_axis(sweep_key: str, ticks: list[float]) -> bool:
+    if sweep_key == "phase_jump_sweep":
+        return False
+    return bool(ticks) and min(ticks) > 0.0
+
+
+def _display_ticks(ticks: list[float], sweep_key: str) -> list[float]:
+    values = sorted({float(v) for v in ticks if math.isfinite(float(v))})
+    if len(values) <= 10:
+        return values
+    lo = values[0]
+    hi = values[-1]
+    if sweep_key == "phase_jump_sweep":
+        candidates = [lo, 0.0, 20.0, 45.0, 60.0, 90.0, 120.0, 150.0, 180.0, hi]
+    else:
+        spec = SWEEP_SPECS[sweep_key]
+        stride = max(1, int(math.ceil(len(values) / 8)))
+        candidates = [lo, spec.reference_value, hi, *values[::stride]]
+    return sorted({float(v) for v in candidates if lo <= float(v) <= hi})
+
+
+def _format_tick_value(value: float) -> str:
+    if abs(value) >= 1.0:
+        return f"{value:g}"
+    return f"{value:.3g}"
+
+
+def _apply_sweep_x_axis(ax: plt.Axes, sweep_key: str, ticks: list[float], *, rotation: float = 70.0) -> None:
+    if not ticks:
+        return
+    axis_ticks = _display_ticks(ticks, sweep_key)
+    if _use_log_x_axis(sweep_key, ticks):
+        ax.set_xscale("log")
+    else:
+        ax.set_xscale("linear")
+    ax.xaxis.set_major_locator(FixedLocator(axis_ticks))
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda x, _pos: _format_tick_value(float(x))))
+    for tick in ax.get_xticklabels():
+        tick.set_rotation(rotation)
+        tick.set_ha("right")
+        tick.set_fontsize(6)
+
+
 def _shade_severity_regions(ax: plt.Axes, spec: SweepSpec, x_lo: float, x_hi: float, *, labels: bool = True) -> None:
     for idx, (label, lo, hi, color) in enumerate(SEVERITY_REGIONS.get(spec.key, ())):
         band_lo = max(float(lo), float(x_lo))
@@ -1253,7 +1349,10 @@ def _shade_severity_regions(ax: plt.Axes, spec: SweepSpec, x_lo: float, x_hi: fl
             continue
         ax.axvspan(band_lo, band_hi, color=color, alpha=0.075 if idx < 3 else 0.055, zorder=0)
         if labels:
-            x_mid = math.sqrt(max(band_lo, 1e-12) * max(band_hi, 1e-12))
+            if spec.key == "phase_jump_sweep" or band_lo <= 0.0:
+                x_mid = 0.5 * (band_lo + band_hi)
+            else:
+                x_mid = math.sqrt(max(band_lo, 1e-12) * max(band_hi, 1e-12))
             ax.text(
                 x_mid,
                 0.985 - 0.04 * (idx % 3),
@@ -1368,16 +1467,11 @@ def _plot_metric_page(df: pd.DataFrame, sweep_key: str, metric_col: str, metric_
             )
         if ticks:
             _shade_severity_regions(ax, spec, min(ticks), max(ticks), labels=True)
-            ax.set_xscale("log")
-            ax.xaxis.set_major_locator(FixedLocator(ticks))
-            ax.xaxis.set_major_formatter(FuncFormatter(lambda x, _pos: f"{x:g}" if x in ticks else ""))
-            for tick in ax.get_xticklabels():
-                tick.set_rotation(70)
-                tick.set_ha("right")
-                tick.set_fontsize(6)
+            _apply_sweep_x_axis(ax, sweep_key, ticks, rotation=70)
         if yscale == "log":
             ax.set_yscale("log")
-        ax.axvline(spec.reference_value, color="#7B1FA2", linestyle=":", linewidth=0.9, label=f"{spec.reference_value:g} ref")
+        if ticks and min(ticks) <= spec.reference_value <= max(ticks):
+            ax.axvline(spec.reference_value, color="#7B1FA2", linestyle=":", linewidth=0.9, label=f"{spec.reference_value:g} ref")
         ax.grid(True, which="both", alpha=0.25)
         ax.set_title(family, loc="left", fontweight="bold")
         ax.set_ylabel(metric_label)
@@ -1498,16 +1592,11 @@ def _plot_all_estimators_page(
             )
         if ticks:
             _shade_severity_regions(ax, spec, min(ticks), max(ticks), labels=False)
-            ax.set_xscale("log")
-            ax.xaxis.set_major_locator(FixedLocator(ticks))
-            ax.xaxis.set_major_formatter(FuncFormatter(lambda x, _pos: f"{x:g}" if x in ticks else ""))
-            for tick in ax.get_xticklabels():
-                tick.set_rotation(55)
-                tick.set_ha("right")
-                tick.set_fontsize(6.2)
+            _apply_sweep_x_axis(ax, sweep_key, ticks, rotation=55)
         if yscale == "log":
             ax.set_yscale("log")
-        ax.axvline(spec.reference_value, color="#7B1FA2", linestyle=":", linewidth=0.85)
+        if ticks and min(ticks) <= spec.reference_value <= max(ticks):
+            ax.axvline(spec.reference_value, color="#7B1FA2", linestyle=":", linewidth=0.85)
         ax.set_title(f"{estimator}\n{family}", loc="left", fontsize=8.2, fontweight="bold", pad=2.5)
         ax.set_ylabel(metric_label if idx % n_cols == 0 else "", fontsize=7.2)
         ax.set_xlabel(spec.x_label if idx >= (n_rows - 1) * n_cols else "", fontsize=7.2)
@@ -1635,8 +1724,10 @@ def _plot_method_map_page(df_global: pd.DataFrame, sweep_key: str) -> plt.Figure
     ax.set_title(f"{spec.label} Method Stress Map", loc="left", fontweight="bold")
     ax.set_yticks(np.arange(len(pivot.index)))
     ax.set_yticklabels(pivot.index, fontsize=7)
-    ax.set_xticks(np.arange(len(x_vals)))
-    ax.set_xticklabels([f"{v:g}" for v in x_vals], rotation=45, ha="right", fontsize=7)
+    display_x = _display_ticks(x_vals, sweep_key)
+    display_positions = [min(range(len(x_vals)), key=lambda idx: abs(x_vals[idx] - value)) for value in display_x] if x_vals else []
+    ax.set_xticks(display_positions)
+    ax.set_xticklabels([_format_tick_value(v) for v in display_x], rotation=45, ha="right", fontsize=7)
     ax.set_xlabel(spec.x_label)
     ax.set_ylabel("Estimator")
     cbar = fig.colorbar(im, ax=ax, fraction=0.024, pad=0.012)
@@ -1657,16 +1748,24 @@ def _plot_method_map_page(df_global: pd.DataFrame, sweep_key: str) -> plt.Figure
     ax2.scatter(x, y, s=24, color="#263238")
     for i, row in enumerate(summary.itertuples(index=False)):
         ax2.text(float(x[i]) * 1.03, i, str(row.estimator), va="center", fontsize=6.4)
-    ax2.axvline(guide, color="#303F9F", linestyle="--", linewidth=0.9, label=f"RMSE guide {guide:g} Hz")
     if x_vals:
-        ax2.set_xscale("log")
-        ax2.set_xlim(min(x_vals), max(x_vals) * 1.4)
+        if _use_log_x_axis(sweep_key, x_vals):
+            ax2.set_xscale("log")
+            ax2.set_xlim(min(v for v in x_vals if v > 0.0), max(x_vals) * 1.4)
+        else:
+            ax2.set_xscale("linear")
+            ax2.set_xlim(min(0.0, min(x_vals)), max(x_vals) * 1.08)
+        _apply_sweep_x_axis(ax2, sweep_key, x_vals, rotation=0)
         _shade_severity_regions(ax2, spec, min(x_vals), max(x_vals), labels=True)
+    if x_vals and min(x_vals) <= spec.reference_value <= max(x_vals):
+        ax2.axvline(spec.reference_value, color="#7B1FA2", linestyle=":", linewidth=0.9, label=f"{spec.reference_value:g} ref")
     ax2.set_yticks([])
     ax2.set_xlabel(f"First {spec.x_label} where mean RMSE exceeds guide")
     ax2.set_title(f"Critical {spec.label} Summary", loc="left", fontweight="bold")
     ax2.grid(True, which="both", alpha=0.22)
-    ax2.legend(loc="best", fontsize=6.4, frameon=True)
+    handles, labels = ax2.get_legend_handles_labels()
+    if handles:
+        ax2.legend(handles, labels, loc="best", fontsize=6.4, frameon=True)
 
     fig.suptitle(f"{spec.label} Method Atlas ({_dominant_policy_label(part)})", fontsize=13, y=0.995)
     fig.text(0.5, 0.965, spec.methodology, ha="center", va="top", fontsize=7.2, color="#263238", wrap=True)

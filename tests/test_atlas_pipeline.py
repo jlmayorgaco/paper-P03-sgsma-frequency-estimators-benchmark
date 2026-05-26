@@ -35,6 +35,18 @@ def test_atlas_accepts_phase_modulation_aliases(monkeypatch) -> None:
     assert {item.sweep_key for item in scenarios} == {"phase_jump_sweep", "modulation_fm_sweep"}
 
 
+def test_atlas_phase_jump_dense_range_keeps_zero_once(monkeypatch) -> None:
+    monkeypatch.setenv("ATLAS_PHASE_JUMP_LEVELS_DEG", "0:3:1")
+    monkeypatch.setenv("ATLAS_PHASE_JUMP_DIRECTIONS", "pos,neg")
+
+    scenarios = atlas_sweep.build_atlas_scenarios(["phase_jump_sweep"])
+
+    assert len(scenarios) == 7
+    assert [item.abs_value for item in scenarios if item.abs_value == 0.0] == [0.0]
+    assert {item.abs_value for item in scenarios} == {0.0, 1.0, 2.0, 3.0}
+    assert {item.direction for item in scenarios if item.abs_value > 0.0} == {"pos", "neg"}
+
+
 def test_atlas_builds_p0_nondirectional_sweeps(monkeypatch) -> None:
     monkeypatch.setenv("ATLAS_HARMONICS_THD_LEVELS_PCT", "5")
     monkeypatch.setenv("ATLAS_INTERHARMONIC_LEVELS_PCT", "2")

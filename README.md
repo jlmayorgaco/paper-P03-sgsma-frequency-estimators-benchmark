@@ -120,10 +120,23 @@ python -m pipelines.atlas_sweep \
 ```
 
 ATLAS writes `metrics_dashboard_multipage.pdf`,
-`rmse_deterioration_by_family.pdf`, `atlas_method_map.pdf`,
+`rmse_deterioration_by_family.pdf`,
+`rmse_all_estimators_small_multiples.pdf`, `atlas_method_map.pdf`,
 `atlas_sign_asymmetry.pdf`, `benchmark_report.json`, `manifest.json`,
 `artifact_index.csv`, `paper_traceability.csv`, `evidence_manifest.json`, and
 `atlas_readiness_report.json/md`.
+
+Dense phase-jump scans can use inclusive range syntax:
+
+```powershell
+$env:ATLAS_PHASE_JUMP_LEVELS_DEG = "0:180:1"
+$env:ATLAS_PHASE_JUMP_DIRECTIONS = "pos"
+python -m pipelines.atlas_sweep `
+  --sweeps phase_jump_sweep `
+  --policy default `
+  --n-runs 1 `
+  --output-subdir atlas-phase-jump-0-180deg-1deg-all18
+```
 
 Read `atlas_readiness_report.md` before using results in the paper. Preview runs
 are marked `diagnostic`; full publication evidence must pass the readiness gate
