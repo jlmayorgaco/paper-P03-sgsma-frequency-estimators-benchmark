@@ -137,7 +137,7 @@
       inner xsep=5pt,
       inner ysep=3pt
     ] at (0,0)
-    {COMPOSITE READINESS METRIC: proposed weighting for event-class qualification};
+    {EVENT READINESS METRIC: weighted event-class qualification score};
   \end{tikzpicture}\par\vspace{-0.10cm}%
 }
 \newcommand{\extendedresultsbanner}{%
@@ -193,20 +193,20 @@
 \end{frame}
 }
 
-\begin{frame}{Central thesis}
+\begin{frame}{Main claim}
 \begin{columns}[T,onlytextwidth]
 \column{0.53\linewidth}
 \small
 \begin{itemize}
   \item Frequency estimation under grid disturbances is a \textbf{multi-objective measurement problem}.
-  \item Rankings change with the objective: frequency RMSE, RoCoF error, latency, CPU cost, and stress robustness do not induce the same order.
+  \item Rankings change with the objective: frequency RMSE, RoCoF error, latency, CPU cost, and disturbance sensitivity produce different orders.
   \item IBR-era disturbances make this operational: distorted waveforms and fast controls can turn a measurement artifact into a ride-through or forensic diagnosis problem.
-  \item The contribution is therefore not a single winner, but a reproducible protocol for \textbf{evidence-based estimator selection}.
+  \item The result is a reproducible selection protocol: choose by event family, metric, and compute budget.
 \end{itemize}
 \column{0.42\linewidth}
 \callout{
-\textbf{Main message}\\
-A frequency estimator should be evaluated as a deployable measurement system, not as an algorithm summarized by one scalar error.
+\textbf{Core result}\\
+A frequency estimator must be evaluated as a deployable measurement system with error, latency, stability, and cost reported separately.
 }
 \end{columns}
 \end{frame}
@@ -224,14 +224,14 @@ A frequency estimator should be evaluated as a deployable measurement system, no
 \column{0.29\linewidth}
 \begin{block}{Main result}
 \small
-RA-EKF improves dynamic tracking and false-trip exposure under IBR composite stress; compliance-style tests are necessary but not sufficient for protection-class frequency measurement.
+RA-EKF improves dynamic tracking and false-trip exposure under IBR composite stress; protection-class frequency measurement needs tests beyond compliance-style cases.
 \end{block}
 \end{columns}
 \vspace{0.4em}
 \callout{\textbf{Experimental scope}: 9 principal estimators, 2 legacy baselines, 5 stress scenarios, standard and IBR-specific metrics, and a separate expanded sweep for sensitivity analysis.}
 \end{frame}
 
-\begin{frame}{Evidence thread}
+\begin{frame}{Evidence map}
 \scriptsize
 \renewcommand{\arraystretch}{1.22}
 \begin{tabular}{>{\bfseries\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.36\linewidth}>{\raggedright\arraybackslash}p{0.36\linewidth}}
@@ -239,15 +239,15 @@ RA-EKF improves dynamic tracking and false-trip exposure under IBR composite str
 Stage & Technical content & Evidence shown \\
 \midrule
 Problem & Low-inertia IBR grids compress disturbance timescales and combine stress modes. & Field motivation, research problem, and measurement gap. \\
-Prior work & Standards, PMU measurement, spectral, PLL/SOGI, Kalman, reduced-order, and data-driven estimators. & Benchmark landscape and estimator-family taxonomy. \\
+Prior work & Standards, PMU measurement, spectral, PLL/SOGI, Kalman, reduced-order, and data-driven estimators. & Benchmark gap and estimator-family taxonomy. \\
 Method & 1 MHz waveform generation, 10 kHz estimator stream, 5 scenarios, grid-search tuning, metrics, and CPU timing. & Scenario table, metric equations, RA-EKF mechanism, and traceability. \\
 Results & Standard tests, composite islanding, multi-event trip-risk, CPU, and response dashboards. & Quantitative tables, event plots, Pareto view, and compliance heatmap. \\
-Interpretation & Latency--robustness trade-off, state-space advantage, and insufficiency of standard tests. & Findings, recommendation map, and qualification workflow. \\
+Interpretation & Latency and disturbance sensitivity, state-space advantage, and insufficiency of standard tests. & Findings, recommendation map, and qualification workflow. \\
 \bottomrule
 \end{tabular}
 \end{frame}
 
-\begin{frame}{Argument flow}
+\begin{frame}{Claim chain}
 \begin{center}
 \begin{tikzpicture}[
   every node/.style={font=\scriptsize},
@@ -258,7 +258,7 @@ Interpretation & Latency--robustness trade-off, state-space advantage, and insuf
 \node[claim, fill=ofbBlue!12, draw=ofbBlue] (b) at (2.35,0.85) {Benchmark\\9+2 estimators};
 \node[claim, fill=ofbGreen!12, draw=ofbGreen] (s) at (4.70,0.85) {Scope\\5 scenarios};
 \node[claim, fill=ofbGold!18, draw=ofbGold] (m) at (7.05,0.85) {RA-EKF\\state + gate};
-\node[claim, fill=ofbViolet!12, draw=ofbViolet] (r) at (9.40,0.85) {Finding\\latency--robustness};
+\node[claim, fill=ofbViolet!12, draw=ofbViolet] (r) at (9.40,0.85) {Finding\\latency + stress};
 \draw[arr] (p) -- (b);
 \draw[arr] (b) -- (s);
 \draw[arr] (s) -- (m);
@@ -306,12 +306,12 @@ Interpretation & Latency--robustness trade-off, state-space advantage, and insuf
   \item a stress-test benchmark for relay-class frequency estimators;
   \item an adapted RA-EKF with explicit $\dot\omega$ state, covariance scaling, and event gating;
   \item a metric-complete comparison: RMSE, peak error, $T_{\mathrm{trip}}$, settling, and CPU;
-  \item evidence that standard compliance tests do not expose all IBR failure modes.
+  \item evidence that standard compliance tests miss IBR failure modes.
 \end{itemize}
 \end{block}
 \end{columns}
 \vspace{0.35em}
-\callout{The benchmark protocol and the adapted RA-EKF mechanism are evaluated together, so the results connect algorithm design to phase-jump false-trip exposure.}
+\callout{The stress-test protocol links RA-EKF design choices to phase-jump false-trip exposure.}
 \end{frame}
 
 \begin{frame}{Scenario waveforms}
@@ -331,7 +331,7 @@ Scenario A & 10\% voltage magnitude step. & Does amplitude change contaminate fr
 Scenario B & Sustained $+5$ Hz/s frequency ramp. & Can the estimator track RoCoF without excessive lag? \\
 Scenario C & 10\% AM modulation at 2 Hz. & Does the estimator preserve steady-state accuracy under modulation? \\
 Scenario D & Composite islanding with $+60^\circ$ phase jump, harmonics, interharmonic, and elevated noise. & Does the method recover phase lock without false-trip exposure? \\
-Scenario E & Five-second IBR multi-event sequence with harmonics, jumps, negative ramp, ringdown, and impulsive noise. & What happens when realistic stress modes stack inside one decision window? \\
+Scenario E & Five-second IBR multi-event sequence with harmonics, jumps, negative ramp, ringdown, and impulsive noise. & Response under stacked stress inside one decision window. \\
 \bottomrule
 \end{tabular}
 \vspace{0.35em}
@@ -365,7 +365,7 @@ Scenario E & Five-second IBR multi-event sequence with harmonics, jumps, negativ
 \draw[arr] (cost.south) to[out=-110,in=10] (decision.east);
 \draw[arr] (evidence.south) to[out=-105,in=5] (decision.east);
 \node[result, fill=ofbBlue!7, draw=ofbBlue, minimum width=10.2cm] at (4.72,-2.28)
-{Example: RA-EKF is recommended for ramp/phase-jump protection metrics under DSP/FPGA-class cost; it is not claimed as a universal RMSE winner.};
+{Example: RA-EKF is recommended for ramp/phase-jump protection metrics under DSP/FPGA-class cost; global RMSE leadership remains scenario-dependent.};
 \end{tikzpicture}%
 }
 \end{frame}
@@ -387,7 +387,7 @@ Scenario E & Five-second IBR multi-event sequence with harmonics, jumps, negativ
 \end{tikzpicture}
 \end{center}
 \vspace{0.2em}
-\callout{The evidence is organized from controlled benchmark results to wider stress sweeps, so each conclusion remains tied to its replication depth and scenario scope.}
+\callout{Controlled cases support the main claims; wider sweeps expose severity trends and replication gaps.}
 \end{frame}
 
 \begin{frame}{From field forensics to estimator tests}
@@ -403,7 +403,7 @@ Scenario E & Five-second IBR multi-event sequence with harmonics, jumps, negativ
 \node[box, fill=ofbGold!18, draw=ofbGold] (wave) at (2.75,1.75) {distorted\\waveform};
 \node[box, fill=ofbBlue!12, draw=ofbBlue] (est) at (2.75,0.45) {frequency\\estimator};
 \node[box, fill=ofbViolet!12, draw=ofbViolet] (decision) at (0,0.45) {relay, inverter,\\operator model};
-\node[box, fill=ofbGreen!12, draw=ofbGreen, minimum width=4.9cm] (bench) at (1.38,-0.85) {controlled benchmark: known truth + latency + robustness};
+\node[box, fill=ofbGreen!12, draw=ofbGreen, minimum width=4.9cm] (bench) at (1.38,-0.85) {controlled benchmark: known truth + latency + stress};
 \draw[arr] (fault) -- (wave);
 \draw[arr] (wave) -- (est);
 \draw[arr] (est) -- (decision);
@@ -429,8 +429,8 @@ p_{\mathrm{invalid}}
 \]
 \vspace{-0.2em}
 \begin{itemize}
-  \item A good estimator is not only accurate after the event.
-  \item It must be stable during the event, fast enough to be useful, and explicit when the waveform violates its assumptions.
+  \item A deployable estimator must stay stable during the event, recover quickly, and expose invalid outputs.
+  \item It must remain useful when the waveform violates its assumptions.
 \end{itemize}
 \end{columns}
 \end{frame}
@@ -441,10 +441,10 @@ p_{\mathrm{invalid}}
 \setlength{\tabcolsep}{3pt}
 \begin{tabular}{>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.27\linewidth}>{\raggedright\arraybackslash}p{0.23\linewidth}}
 \toprule
-\textbf{Event} & \textbf{Observed behavior} & \textbf{Why ordinary monitoring was not enough} & \textbf{Benchmark implication} \\
+\textbf{Event} & \textbf{Observed behavior} & \textbf{Monitoring limitation} & \textbf{Benchmark implication} \\
 \midrule
-Blue Cut Fire, CA 2016 & Transmission faults caused nearly 1,200 MW of solar PV output loss; NERC linked part of the behavior to near-instantaneous frequency or voltage response. & The critical interval was a distorted, fault-clearing transient, not a slow frequency excursion. & Test whether estimators confuse waveform distortion with real frequency collapse. \\
-Canyon 2 Fire, CA 2017 & Two cleared faults produced 682 MW and 937 MW solar PV reductions. & NERC noted 4 s SCADA could not distinguish momentary cessation from tripping in some cases. & Report latency, settling, invalid samples, and event-window behavior, not only aggregate error. \\
+Blue Cut Fire, CA 2016 & Transmission faults caused nearly 1,200 MW of solar PV output loss; NERC linked part of the behavior to near-instantaneous frequency or voltage response. & The critical interval was a distorted, fault-clearing transient on a subsecond timescale. & Test whether estimators confuse waveform distortion with real frequency collapse. \\
+Canyon 2 Fire, CA 2017 & Two cleared faults produced 682 MW and 937 MW solar PV reductions. & NERC noted 4 s SCADA could not distinguish momentary cessation from tripping in some cases. & Report latency, settling, invalid samples, event-window behavior, and aggregate error. \\
 Odessa events, TX 2021--2022 & More than 1 GW-scale solar reductions followed normally cleared faults far from affected plants. & NERC found controls, protection, and model-fidelity gaps, including effects not captured well by positive-sequence models. & Stress tests must include control-like discontinuities, phase jumps, and model-mismatch regimes. \\
 California BESS, 2022 & Normally cleared faults caused abnormal BESS active-power reductions and inverter trips. & Causes included ac overcurrent/overvoltage, dc bus issues, unbalanced currents, and data-quality limits. & Frequency estimators should be evaluated under unbalance and non-sinusoidal contamination. \\
 \bottomrule
@@ -453,7 +453,7 @@ California BESS, 2022 & Normally cleared faults caused abnormal BESS active-powe
 \artifact{NERC disturbance reports; NERC IBR disturbance monitoring white paper}
 \end{frame}
 
-\begin{frame}{When standard PMU streams are not enough}
+\begin{frame}{Standard PMU stream limits}
 \begin{columns}[T,onlytextwidth]
 \column{0.52\linewidth}
 \begin{block}{Fast fault and ride-through}
@@ -490,7 +490,7 @@ Standard synchrophasor outputs summarize the fundamental component; harmonic and
 \artifact{Kaua'i 18--20 Hz IBR oscillation analysis; NERC IBR monitoring white paper; IEC/IEEE 60255-118-1}
 \end{frame}
 
-\begin{frame}{What these cases demand from a benchmark}
+\begin{frame}{Benchmark requirements from field cases}
 \begin{columns}[T,onlytextwidth]
 \column{0.48\linewidth}
 \begin{block}{Field-forensic need}
@@ -507,14 +507,14 @@ Standard synchrophasor outputs summarize the fundamental component; harmonic and
 \small
 \begin{itemize}
   \item known-truth synthetic scenarios with steps, ramps, phase jumps, THD, and interharmonics;
-  \item estimator outputs logged as time series, not only scalar summaries;
+  \item estimator outputs logged as time series and scalar summaries;
   \item latency, CPU, invalid outputs, and settling treated as first-class metrics;
   \item CSV/JSON artifacts regenerated into figures and tables.
 \end{itemize}
 \end{block}
 \end{columns}
 \vspace{0.25em}
-\callout{The benchmark cannot replace field oscillography; it provides the controlled laboratory needed to decide which estimator families are credible before they enter forensic or protection workflows.}
+\callout{Field oscillography gives realism; controlled synthetic truth isolates which estimator family fails first.}
 \end{frame}
 
 \begin{frame}{Graphical abstract}
@@ -528,7 +528,7 @@ Standard synchrophasor outputs summarize the fundamental component; harmonic and
 \node[box, fill=ofbGold!18, draw=ofbGold, minimum width=2.55cm] (stress) at (2.9,0.8) {controlled stress\\step, ramp, THD};
 \node[box, fill=ofbGreen!12, draw=ofbGreen, minimum width=2.55cm] (est) at (5.9,0.8) {estimator pool\\common API};
 \node[box, fill=ofbViolet!12, draw=ofbViolet, minimum width=2.75cm] (metric) at (8.95,0.8) {metric vector\\$\mathbf{J}_i$};
-\node[box, fill=ofbRed!10, draw=ofbRed, minimum width=3.25cm] (select) at (4.45,-1.15) {deployment-aware selection\\not a single leaderboard};
+\node[box, fill=ofbRed!10, draw=ofbRed, minimum width=3.25cm] (select) at (4.45,-1.15) {deployment-aware\\estimator selection};
 \draw[arr] (grid) -- (stress);
 \draw[arr] (stress) -- (est);
 \draw[arr] (est) -- (metric);
@@ -550,7 +550,7 @@ Standard synchrophasor outputs summarize the fundamental component; harmonic and
 \end{columns}
 \end{frame}
 
-\begin{frame}{Research narrative}
+\begin{frame}{Study logic}
 \begin{center}
 \begin{tikzpicture}[
   every node/.style={font=\scriptsize},
@@ -560,8 +560,8 @@ Standard synchrophasor outputs summarize the fundamental component; harmonic and
 \node[stage, fill=ofbBlue!12, draw=ofbBlue, minimum width=1.9cm] (p) at (0,0) {Why\\problem};
 \node[stage, fill=ofbViolet!12, draw=ofbViolet, minimum width=1.9cm] (l) at (2.2,0) {What\\literature gap};
 \node[stage, fill=ofbGreen!12, draw=ofbGreen, minimum width=1.9cm] (m) at (4.4,0) {How\\method};
-\node[stage, fill=ofbGold!18, draw=ofbGold, minimum width=1.9cm] (r) at (6.6,0) {What found\\results};
-\node[stage, fill=ofbRed!10, draw=ofbRed, minimum width=1.9cm] (d) at (8.8,0) {So what\\insights};
+\node[stage, fill=ofbGold!18, draw=ofbGold, minimum width=1.9cm] (r) at (6.6,0) {Results\\measured};
+\node[stage, fill=ofbRed!10, draw=ofbRed, minimum width=1.9cm] (d) at (8.8,0) {Insights\\deployment};
 \draw[arr] (p) -- (l);
 \draw[arr] (l) -- (m);
 \draw[arr] (m) -- (r);
@@ -607,9 +607,9 @@ The literature needs a reproducible benchmark that connects estimator error to p
 \callout{The central result is conditional selection: there is no universal estimator; the defensible choice depends on disturbance family, objective metric, and compute budget.}
 \end{frame}
 
-\sectionframe{ofbViolet}{2. Benchmark Landscape}{Standards, datasets, benchmark gap.}
+\sectionframe{ofbViolet}{2. Benchmark Gap}{Standards, datasets, estimator evidence.}
 
-\begin{frame}{Mini literature review: benchmark landscape}
+\begin{frame}{Benchmark literature gap}
 \begin{center}
 \begin{tikzpicture}[
   every node/.style={font=\scriptsize},
@@ -640,25 +640,25 @@ The literature needs a reproducible benchmark that connects estimator error to p
 \artifact{IEC/IEEE 60255-118-1:2018; NISTIR 8106; OpenPMU; openPDC; FNET/GridEye; LBNL Open micro-PMU; PNNL open PMU event library}
 \end{frame}
 
-\begin{frame}{Why current benchmarks fall short}
+\begin{frame}{Benchmark gaps in prior work}
 \scriptsize
 \renewcommand{\arraystretch}{1.18}
 \begin{tabular}{>{\raggedright\arraybackslash}p{0.21\linewidth}>{\raggedright\arraybackslash}p{0.31\linewidth}>{\raggedright\arraybackslash}p{0.37\linewidth}}
 \toprule
-\textbf{Prior benchmark type} & \textbf{What it does well} & \textbf{Gap for estimator-family comparison} \\
+\textbf{Prior benchmark type} & \textbf{Strength} & \textbf{Gap for estimator-family comparison} \\
 \midrule
-IEC/IEEE PMU compliance & Defines synchrophasor, frequency, ROCOF, static/dynamic compliance tests & Does not prescribe algorithms, compare families, or report CPU/latency as estimator variables. \\
-NIST PMU assessment/calibration & Provides metrological evaluation of PMU devices against standard requirements & Tests instruments and compliance behavior, not a large matrix of open estimator implementations under controlled tuning policy. \\
-OpenPMU / openPDC ecosystem & Enables open PMU construction and synchrophasor stream processing & Infrastructure-oriented; not a controlled benchmark of frequency estimators with matched seeds and stress sweeps. \\
+IEC/IEEE PMU compliance & Defines synchrophasor, frequency, ROCOF, static/dynamic compliance tests & Leaves algorithm choice, family comparison, and CPU/latency outside the estimator report. \\
+NIST PMU assessment/calibration & Provides metrological evaluation of PMU devices against standard requirements & Focuses on instruments and compliance behavior rather than a large matrix of open estimator implementations under controlled tuning policy. \\
+OpenPMU / openPDC ecosystem & Enables open PMU construction and synchrophasor stream processing & Infrastructure-oriented, with no controlled estimator matrix using matched seeds and stress sweeps. \\
 Open real PMU datasets & Supply realistic events for detection and application development & Truth is partially latent; hard to isolate causal stress factors or compute estimator error against known $f_{\mathrm{true}}[k]$. \\
 Single-study algorithm comparisons & Give detailed evidence for selected methods or scenarios & Usually limited estimator sets, limited artifact contract, and incomplete deployability metrics. \\
 \bottomrule
 \end{tabular}
 \vspace{0.4em}
-\callout{This benchmark complements standards and datasets: compliance tests define requirements, operational data define realism, and controlled synthetic truth isolates estimator behavior under reproducible stress.}
+\callout{Compliance tests define requirements, operational data define realism, and controlled synthetic truth isolates estimator behavior under reproducible stress.}
 \end{frame}
 
-\begin{frame}{Positioning: what the benchmark adds}
+\begin{frame}{Benchmark contribution}
 \begin{center}
 \begin{tikzpicture}[
   every node/.style={font=\scriptsize},
@@ -678,7 +678,7 @@ Single-study algorithm comparisons & Give detailed evidence for selected methods
 \end{tikzpicture}
 \end{center}
 \vspace{0.15em}
-\callout{The contribution is not another compliance test; it is an experimental system for explaining why estimator rankings change across objectives and regimes.}
+\callout{The experimental system explains why estimator rankings change across objectives and regimes.}
 \end{frame}
 
 \begin{frame}{Benchmark comparison axes}
@@ -694,7 +694,7 @@ Evidence source & Known truth & IBR composite stress & Trip-risk & CPU/latency &
 IEC/IEEE-style compliance & \cellcolor{ofbGreen!22}Yes & \cellcolor{ofbRed!18}Limited & \cellcolor{ofbRed!18}No & \cellcolor{ofbRed!18}No & \cellcolor{ofbGold!22}Device-dependent \\
 Field PMU/DFR data & \cellcolor{ofbRed!18}No & \cellcolor{ofbGreen!22}Yes & \cellcolor{ofbGold!22}Possible & \cellcolor{ofbRed!18}No & \cellcolor{ofbGold!22}Dataset-dependent \\
 Single-method studies & \cellcolor{ofbGreen!22}Often & \cellcolor{ofbGold!22}Partial & \cellcolor{ofbGold!22}Partial & \cellcolor{ofbGold!22}Partial & \cellcolor{ofbRed!18}Often limited \\
-This benchmark & \cellcolor{ofbGreen!22}Yes & \cellcolor{ofbGreen!22}Yes & \cellcolor{ofbGreen!22}Yes & \cellcolor{ofbGreen!22}Yes & \cellcolor{ofbGreen!22}Yes \\
+Estimator benchmark & \cellcolor{ofbGreen!22}Yes & \cellcolor{ofbGreen!22}Yes & \cellcolor{ofbGreen!22}Yes & \cellcolor{ofbGreen!22}Yes & \cellcolor{ofbGreen!22}Yes \\
 \bottomrule
 \end{tabular}%
 }
@@ -702,12 +702,12 @@ This benchmark & \cellcolor{ofbGreen!22}Yes & \cellcolor{ofbGreen!22}Yes & \cell
 \vspace{0.35em}
 \begin{columns}[T,onlytextwidth]
 \column{0.48\linewidth}
-\begin{block}{What becomes measurable}
+\begin{block}{Measured outputs}
 \small
 The same voltage trace is scored by RMSE, peak error, RoCoF error, trip exposure, settling, CPU, and structural latency.
 \end{block}
 \column{0.47\linewidth}
-\begin{block}{Why it changes interpretation}
+\begin{block}{Interpretive effect}
 \small
 An estimator can pass standard cases and still fail a composite IBR event; it can also be accurate but too delayed or costly for protection-adjacent use.
 \end{block}
@@ -769,7 +769,7 @@ x_k=[\theta_k,\omega_k,A_k,\dot\omega_k]^\top,\qquad \omega=2\pi f
 \]
 \end{block}
 \column{0.45\linewidth}
-\begin{block}{IBR-specific robustness}
+\begin{block}{IBR-specific stress response}
 \small
 \[
 Q_k=\mathrm{clip}(r_k,0.25,4)\,Q_{\mathrm{base}},
@@ -783,7 +783,7 @@ r_k=\frac{|\nu_k|}{\hat\sigma_\nu}
 \end{block}
 \end{columns}
 \vspace{0.25em}
-\callout{RA-EKF extends the EKF baseline with an explicit RoCoF state and event-aware covariance behavior, targeting phase-jump recovery rather than only steady-state tracking.}
+\callout{RA-EKF extends the EKF baseline with an explicit RoCoF state and event-aware covariance behavior for phase-jump recovery and steady-state tracking.}
 \end{frame}
 
 \begin{frame}{Metrics and decision variables}
@@ -815,7 +815,7 @@ C_{\mathrm{CPU}}=\mathrm{mean\ time/sample}
 \end{block}
 \end{columns}
 \vspace{0.2em}
-\callout{The 0.5 Hz threshold is a protection-oriented risk proxy, not a universal trip criterion. The metric set separates average error, transient severity, trip exposure, settling, and compute cost.}
+\callout{The 0.5 Hz threshold is a protection-oriented risk proxy. The metric set separates average error, transient severity, trip exposure, settling, and compute cost.}
 \end{frame}
 
 \begin{frame}{Scenario design: five stress cases}
@@ -828,7 +828,7 @@ C_{\mathrm{CPU}}=\mathrm{mean\ time/sample}
 \midrule
 A & $+10\%$ voltage magnitude step. & Standard-style amplitude decoupling test. \\
 B & $+5$ Hz/s frequency ramp. & RoCoF tracking and lag under sustained acceleration. \\
-C & 10\% AM modulation at 2 Hz. & Steady-state modulation and noise robustness. \\
+C & 10\% AM modulation at 2 Hz. & Steady-state modulation and noise sensitivity. \\
 D & Composite islanding: $+60^\circ$ phase jump with harmonics/interharmonic and elevated noise. & Phase-jump recovery and false-trip exposure beyond standard tests. \\
 E & IBR multi-event: harmonics, $+40^\circ$ jump, $-6$ Hz/s ramp, $+80^\circ$ jump, ringdown, impulsive noise. & Stacked stress resembling local IBR event records. \\
 \bottomrule
@@ -844,7 +844,7 @@ E & IBR multi-event: harmonics, $+40^\circ$ jump, $-6$ Hz/s ramp, $+80^\circ$ ju
 \centering
 \includegraphics[width=\linewidth]{figures/doc1_fig1_scenarios.png}
 \column{0.31\linewidth}
-\begin{block}{Why this figure matters}
+\begin{block}{Scenario structure}
 \scriptsize
 \begin{itemize}
   \item A--C are standard-style references.
@@ -879,11 +879,11 @@ VFF-RLS, Koopman (RK-DPMU), PI-GRU.
 \column{0.33\linewidth}
 \begin{block}{Legacy baselines}
 \small
-RLS and TKEO are retained for reference, not as recommended deployable estimators.
+RLS and TKEO are retained as comparison references outside the recommended deployment set.
 \end{block}
 \begin{block}{Interpretation rule}
 \small
-These families occupy different latency--robustness positions. The benchmark asks where each fails, not only where each wins.
+These families occupy different latency and stress-sensitivity positions. The comparison tracks where each family wins, degrades, and fails.
 \end{block}
 \end{columns}
 \end{frame}
@@ -928,7 +928,7 @@ v[k] ={}&
 \end{center}
 \end{columns}
 \vspace{0.25em}
-\callout{The benchmark controls the latent truth $f_{\mathrm{true}}[k]$ and tests whether each estimator recovers it under controlled violations of ideal sinusoidal conditions.}
+\callout{Known $f_{\mathrm{true}}[k]$ lets each estimator be tested under explicit violations of ideal sinusoidal assumptions.}
 \end{frame}
 
 \begin{frame}{Experimental design factors}
@@ -954,7 +954,7 @@ v[k] ={}&
 \vspace{0.2em}
 \begin{itemize}
   \item The design is factorial in stress type, stress level, estimator family, policy, and Monte Carlo seed.
-  \item The response is multi-dimensional; a method is not reduced to a single accuracy statistic.
+  \item The response vector keeps accuracy, recovery, latency, and cost as separate outputs.
 \end{itemize}
 \end{frame}
 
@@ -979,7 +979,7 @@ v[k] ={}&
 \vspace{0.35em}
 \begin{itemize}
   \item Common sampling profile: $f_s=10$ kHz under \texttt{canonical-single-phase-v1}.
-  \item Metrics are defined in code and documentation; configuration files select scenarios but do not redefine the science.
+  \item Metrics are defined in code and documentation; scenario configuration is separate from metric definitions.
   \item Every result traces back to reports, manifests, CSV tables, and benchmark metadata.
 \end{itemize}
 \artifact{docs/METHODS.md}
@@ -1010,7 +1010,7 @@ v[k] ={}&
 \vspace{0.2em}
 \begin{itemize}
   \item Fairness is enforced through identical input traces, matched random seeds, common warm-up handling, and a uniform output interface.
-  \item Computational performance is measured as a response variable, not treated as external implementation detail.
+  \item Computational performance is measured as a response variable for deployability.
 \end{itemize}
 \end{frame}
 
@@ -1065,7 +1065,7 @@ i \prec j
   \item 9 principal estimators plus 2 legacy baselines.
   \item 5 scenarios: A--C standard-style, D--E IBR-specific.
   \item Standard, islanding, multi-event, and CPU results use the same scenario definitions and metric engine.
-  \item Main results: RA-EKF transient performance, latency--robustness trade-off, and compliance-test limits.
+  \item Main results: RA-EKF transient performance, latency/stress trade-off, and compliance-test limits.
 \end{itemize}
 \end{block}
 \column{0.46\linewidth}
@@ -1136,7 +1136,7 @@ Family-level analysis separates algorithmic principles from implementation-speci
   \item \metric{M1 RMSE}{frequency tracking error.}
   \item \metric{M5 trip risk}{time outside protection deadband.}
   \item \metric{M8 settling}{post-event recovery.}
-  \item \metric{M9/M10 RFE}{robust RoCoF tracking error.}
+  \item \metric{M9/M10 RFE}{RoCoF tracking error.}
 \end{itemize}
 \column{0.48\linewidth}
 \begin{itemize}
@@ -1321,7 +1321,7 @@ T_{\mathrm{trip}}=0.6\ \mathrm{ms}
 0.165\ \mathrm{s}/0.0006\ \mathrm{s}\approx 275\times
 \]
 \vspace{0.1em}
-The gain comes from explicit $\dot\omega$ modeling plus event gating, not from post-hoc filtering.
+The gain comes from explicit $\dot\omega$ modeling plus event gating rather than post-hoc filtering.
 \end{block}
 \end{columns}
 \vspace{0.15em}
@@ -1352,10 +1352,10 @@ SOGI-FLL & 0.568 & 0.422 & 25 \\
 \column{0.48\linewidth}
 \begin{block}{Main reading}
 \small
-RA-EKF is not the minimum in every column, but it sits in the practical protection region: low trip exposure, moderate RMSE, and embedded-feasible CPU.
+RA-EKF sits in the practical protection region: low trip exposure, moderate RMSE, and embedded-feasible CPU.
 \end{block}
 \column{0.47\linewidth}
-\begin{block}{Why scalar ranking fails}
+\begin{block}{Scalar ranking failure}
 \small
 SRF-PLL has low CPU and good RMSE but much higher $T_{\mathrm{trip}}$; EKF has lower $T_{\mathrm{trip}}$ but worse RMSE; Koopman is accurate but costlier.
 \end{block}
@@ -1369,15 +1369,15 @@ SRF-PLL has low CPU and good RMSE but much higher $T_{\mathrm{trip}}$; EKF has l
 \centering
 \includegraphics[width=\linewidth,height=0.58\textheight,keepaspectratio]{figures/core_trip_risk_comparison.pdf}
 \column{0.28\linewidth}
-\begin{block}{What the plot says}
+\begin{block}{Result reading}
 \scriptsize
 \begin{itemize}
   \item Scenario D exposes phase-reset behavior: RA-EKF reduces EKF exposure from 165 ms to 0.6 ms.
-  \item Scenario E is multi-objective: RMSE and trip-risk do not select the same method.
+  \item Scenario E is multi-objective: RMSE and trip-risk select different methods.
   \item SRF-PLL is strong in Scenario D but reaches 471 ms in Scenario E.
 \end{itemize}
 \end{block}
-{\scriptsize\color{ofbMuted}\textbf{Use:} $T_{\mathrm{trip}}$ is a first-class metric, not a footnote below RMSE.}
+{\scriptsize\color{ofbMuted}\textbf{Result:} $T_{\mathrm{trip}}$ separates protection exposure from average error.}
 \end{columns}
 \end{frame}
 
@@ -1389,13 +1389,13 @@ SRF-PLL has low CPU and good RMSE but much higher $T_{\mathrm{trip}}$; EKF has l
 \resizebox{0.98\linewidth}{!}{%
 \begin{tabular}{>{\bfseries\raggedright\arraybackslash}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.23\linewidth}>{\raggedright\arraybackslash}p{0.20\linewidth}>{\raggedright\arraybackslash}p{0.27\linewidth}}
 \toprule
-Question & Best-supported answer & Evidence & What it does not imply \\
+Question & Best-supported answer & Evidence & Boundary \\
 \midrule
 Clean step/modulation accuracy & Koopman and SRF-PLL are strongest point cases & Step RMSE 0.000207 Hz; modulation peak 0.000441 Hz & Not enough for islanding or multi-event survival \\
 Ramp and RoCoF tracking & RA-EKF is strongest in the standard ramp & Ramp RMSE 0.0113 Hz & Not a universal RMSE winner \\
 Composite islanding exposure & RA-EKF removes long EKF exposure & 0.6 ms vs 165 ms for EKF & SRF-PLL is also strong in this specific phase-jump case \\
 Multi-event RMSE & Koopman and SRF-PLL are competitive & 0.476 Hz and 0.400 Hz & RMSE hides trip-risk and compute trade-offs \\
-Embedded protection feasibility & SRF-PLL, EKF, SOGI-FLL, RA-EKF remain plausible & 11--54 $\mu$s/sample range & Python timing is not final hardware latency \\
+Embedded protection feasibility & SRF-PLL, EKF, SOGI-FLL, RA-EKF remain plausible & 11--54 $\mu$s/sample range & Python timing is a software-cost proxy \\
 \bottomrule
 \end{tabular}%
 }
@@ -1428,11 +1428,11 @@ PI-GRU & $\approx$136{,}000 $\mu$s & -- & GPU only \\
 \column{0.46\linewidth}
 \begin{block}{Deployment interpretation}
 \small
-The Python baseline is not final hardware latency, but it separates feasible estimator families from clearly prohibitive ones.
+The Python baseline separates feasible estimator families from clearly prohibitive ones; hardware latency requires platform timing.
 \end{block}
 \begin{block}{Key comparison}
 \small
-RA-EKF is roughly three times EKF cost in Python but remains below the millisecond scale by a wide margin; PI-GRU is retained as a reference, not as an embedded protection candidate.
+RA-EKF is roughly three times EKF cost in Python but remains below the millisecond scale by a wide margin; PI-GRU is retained as a computational reference outside embedded protection targets.
 \end{block}
 \end{columns}
 \artifact{Table V}
@@ -1452,10 +1452,10 @@ RA-EKF is roughly three times EKF cost in Python but remains below the milliseco
 \vspace{0.15em}
 \includegraphics[width=0.84\linewidth]{figures/doc1_fig2_h_error.png}
 \column{0.40\linewidth}
-\begin{exampleblock}{Reading the dashboard}
+\begin{exampleblock}{Dashboard reading}
 \begin{itemize}
 \setlength\itemsep{0.22em}
-\item RMSE alone does not determine deployment risk.
+\item Deployment risk requires RMSE, trip exposure, settling, and delay.
 \item Trip-risk exposes the cost of estimator transients in composite events.
 \item Windowed methods can be accurate but delayed.
 \item RA-EKF occupies the main protection-oriented trade-off point.
@@ -1470,7 +1470,7 @@ RA-EKF is roughly three times EKF cost in Python but remains below the milliseco
 \centering
 \includegraphics[width=\linewidth]{figures/doc1_fig2_f_radar.png}
 \column{0.38\linewidth}
-\begin{block}{What the radar adds}
+\begin{block}{Radar profile}
 \begin{itemize}
 \setlength\itemsep{0.32em}
 \item Accuracy, speed, noise immunity, safety, and transient behavior are conflicting axes.
@@ -1504,7 +1504,7 @@ RA-EKF & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGre
 \end{tabular}
 \end{center}
 \vspace{0.30em}
-\callout{Several methods pass the standard-style Step/Ramp/Mod columns and still fail under composite islanding or multi-event IBR stress. Standard tests do not fully characterize IBR event readiness.}
+\callout{Several methods pass the standard-style Step/Ramp/Mod columns and still fail under composite islanding or multi-event IBR stress. Standard tests leave IBR event readiness partially untested.}
 \end{frame}
 
 \begin{frame}{High-value empirical claims}
@@ -1517,7 +1517,7 @@ Scenario D gives $T_{\mathrm{trip}}=0.6$ ms for RA-EKF versus 0.165 s for EKF, w
 \end{block}
 \begin{block}{Standard-test limitation}
 \scriptsize
-\textbf{Passing simple cases is not event readiness.}\\
+\textbf{Simple-case pass/fail leaves event readiness unresolved.}\\
 The heatmap shows methods that pass Step/Ramp/Mod but fail islanding or multi-event IBR stress.
 \end{block}
 \column{0.48\linewidth}
@@ -1529,11 +1529,11 @@ Table IV separates Koopman/SRF-PLL accuracy, EKF/UKF trip exposure, and low-cost
 \begin{block}{Deployability}
 \scriptsize
 \textbf{Feasibility must be scored with accuracy.}\\
-RA-EKF remains in a 54 $\mu$s/sample software-cost regime; PI-GRU is retained as a reference, not a relay-class baseline.
+RA-EKF remains in a 54 $\mu$s/sample software-cost regime; PI-GRU is retained as a computational reference outside relay-class timing.
 \end{block}
 \end{columns}
 \vspace{0.15em}
-{\scriptsize\color{ofbMuted}\textbf{Presentation rule:} every result is tied to a scenario, metric, and compute envelope rather than to an absolute ``best estimator'' statement.}
+{\scriptsize\color{ofbMuted}\textbf{Guardrail:} report scenario, metric, and compute envelope before naming a preferred estimator.}
 \end{frame}
 
 \begin{frame}{Composite IBR sequence: why it is hardest}
@@ -1550,10 +1550,10 @@ RA-EKF remains in a 54 $\mu$s/sample software-cost regime; PI-GRU is retained as
 \end{itemize}
 \end{block}
 \column{0.47\linewidth}
-\begin{block}{Why a standard test is insufficient}
+\begin{block}{Standard-test gap}
 \small
 \begin{itemize}
-  \item The estimator sees a nonstationary waveform, not one clean disturbance.
+  \item The estimator sees a nonstationary waveform with stacked disturbances.
   \item Spectral leakage, loop re-lock, state-model mismatch, and recovery delay occur together.
   \item A method can be good on RMSE and still undesirable on trip exposure or CPU.
 \end{itemize}
@@ -1573,7 +1573,7 @@ RA-EKF remains in a 54 $\mu$s/sample software-cost regime; PI-GRU is retained as
   \item 9 principal estimators + 2 legacy baselines.
   \item 5 scenarios: A--E.
   \item Standard, islanding, multi-event, and CPU results.
-  \item RA-EKF is the proposed estimator mechanism.
+  \item RA-EKF supplies the tested estimator mechanism.
 \end{itemize}
 \end{block}
 \column{0.47\linewidth}
@@ -1631,7 +1631,7 @@ IBR multi-event & 1 & PLL & 173.5 mHz & IpDFT, 0.0439 s \\
 \draw[arr] (sev) -- (sign);
 \draw[arr] (sign) -- (policy);
 \draw[arr] (policy) -- (gate);
-\node[align=center, text width=2.1cm] at (0,-0.25) {What failed in A--E?};
+\node[align=center, text width=2.1cm] at (0,-0.25) {A--E failure mode};
 \node[align=center, text width=2.1cm] at (2.5,-0.25) {When does error start to grow?};
 \node[align=center, text width=2.1cm] at (5.0,-0.25) {Are positive and negative events symmetric?};
 \node[align=center, text width=2.1cm] at (7.5,-0.25) {Does tuning policy change the rank?};
@@ -1677,7 +1677,7 @@ IBR multi-event & 1 & PLL & 173.5 mHz & IpDFT, 0.0439 s \\
 \column{0.46\linewidth}
 \begin{itemize}
   \item Power-law-like growth indicates a measurable stress response.
-  \item A nearly flat curve is not automatically robustness; it may reflect a high baseline error.
+  \item A nearly flat curve can still mean high baseline error.
   \item Type-3 SOGI-PLL has weak average frequency RMSE but favorable worst-case behavior under selected RoCoF conditions.
 \end{itemize}
 \column{0.50\linewidth}
@@ -1687,7 +1687,7 @@ IBR multi-event & 1 & PLL & 173.5 mHz & IpDFT, 0.0439 s \\
 \end{center}
 \end{columns}
 \vspace{0.35em}
-\callout{Methodological rule: classify curves as robust-flat, failed-flat, monotone-sensitive, or sign-asymmetric before interpreting aggregate error.}
+\callout{Classify curves as stable-flat, failed-flat, monotone-sensitive, or sign-asymmetric before interpreting aggregate error.}
 \end{frame}
 
 \begin{frame}{Frequency and RoCoF disagree}
@@ -1714,7 +1714,7 @@ IBR multi-event & 1 & PLL & 173.5 mHz & IpDFT, 0.0439 s \\
 \begin{itemize}
   \item UKF, EKF, TFT, SOGI-FLL, and RA-EKF move upward when the metric is RoCoF error.
   \item ESPRIT and Koopman remain competitive, but they no longer dominate the ranking.
-  \item RoCoF error needs its own ranking because derivative performance does not follow frequency RMSE.
+  \item RoCoF error needs its own ranking because derivative performance has a separate order from frequency RMSE.
 \end{itemize}
 \end{frame}
 
@@ -1761,9 +1761,9 @@ A single leaderboard would hide deployment constraints that matter in grid instr
 \vspace{0.35em}
 \begin{itemize}
   \item ZCD is unexpectedly strong under isolated integer-harmonic stress in the pilot harmonic run.
-  \item That result should not be generalized to interharmonics, noise, IBR-rich events, or mixed disturbances without additional runs.
-  \item RA-EKF, TFT, EKF, SOGI-PLL, and UKF remain plausible secondary robust candidates.
-  \item Low slope without low RMSE is not useful robustness; baseline error must be reported.
+  \item Generalization to interharmonics, noise, IBR-rich events, or mixed disturbances requires additional runs.
+  \item RA-EKF, TFT, EKF, SOGI-PLL, and UKF remain secondary candidates for harmonic stress.
+  \item Low slope must be read with baseline RMSE; both values are needed.
 \end{itemize}
 \end{frame}
 
@@ -1771,12 +1771,12 @@ A single leaderboard would hide deployment constraints that matter in grid instr
 
 \begin{frame}{Three findings}
 \begin{enumerate}
-  \item \textbf{Latency--robustness trade-off}: IpDFT/TFT provide strong steady-state accuracy but carry 3--5 cycle structural delay; loop methods are fast but can suffer elevated trip exposure.
+  \item \textbf{Latency and stress trade-off}: IpDFT/TFT provide strong steady-state accuracy but carry 3--5 cycle structural delay; loop methods are fast but can suffer elevated trip exposure.
   \item \textbf{State-space estimation matters}: RA-EKF's explicit $\dot\omega$ state plus event gating reduces Scenario-D trip exposure from 0.165 s for EKF to about 0.6 ms.
   \item \textbf{Compliance tests are insufficient}: estimators that pass standard-style Step/Ramp/Mod cases can fail under composite islanding and multi-event IBR stress.
 \end{enumerate}
 \vspace{0.4em}
-\callout{Estimator qualification must include transient recovery, trip exposure, and compute feasibility, not only standard-case RMSE.}
+\callout{Estimator qualification includes transient recovery, trip exposure, compute feasibility, and standard-case RMSE.}
 \end{frame}
 
 \begin{frame}{Validity limits and next steps}
@@ -1786,13 +1786,13 @@ A single leaderboard would hide deployment constraints that matter in grid instr
 \small
 \begin{itemize}
   \item Limited to the reported scenario set.
-  \item CPU is a software-level cost indicator, not hardware latency.
+  \item CPU is a software-level cost indicator; hardware latency requires platform timing.
   \item The study is simulation-only.
   \item Scenario-wise tuning can affect rank stability.
 \end{itemize}
 \end{block}
 \column{0.47\linewidth}
-\begin{block}{Natural follow-up program}
+\begin{block}{Validation program}
 \small
 \begin{itemize}
   \item Hardware-in-the-loop validation.
@@ -1810,12 +1810,12 @@ A single leaderboard would hide deployment constraints that matter in grid instr
 \begin{enumerate}
   \item Disturbance family changes the estimator ranking and must be the first axis of interpretation.
   \item RMSE, peak error, trip-risk duration, and settling time should be evaluated as separate objectives.
-  \item Latency and CPU cost are not implementation details; they are scientific response variables for deployability.
+  \item Latency and CPU cost are scientific response variables for deployability.
   \item Composite IBR stress is necessary because isolated compliance-style cases hide mixed-event failure modes.
   \item ATLAS readiness gates prevent pilot sweeps from being interpreted as final qualification evidence.
 \end{enumerate}
 \vspace{0.4em}
-\callout{The benchmark is a controlled experimental methodology, not only a collection of plots.}
+\callout{Controlled traces, locked metrics, and artifact manifests make estimator comparisons reproducible.}
 \end{frame}
 
 \begin{frame}{Evidence-based recommendation map}
@@ -1842,18 +1842,18 @@ A single leaderboard would hide deployment constraints that matter in grid instr
 \end{center}
 \end{frame}
 
-\begin{frame}{Four takeaways}
+\begin{frame}{Four results}
 \begin{itemize}
   \item \textbf{RA-EKF targets phase-jump recovery}: explicit $\dot\omega$, covariance scaling, and event gating reduce false-trip exposure.
-  \item \textbf{Trip-risk is not RMSE}: Scenario D and E show why cumulative time outside a protection band must be reported separately.
-  \item \textbf{CPU changes the answer}: SRF-PLL and EKF remain compelling low-cost references; PI-GRU is not protection-real-time in the reported baseline.
+  \item \textbf{Trip-risk separates from RMSE}: Scenario D and E show why cumulative time outside a protection band must be reported separately.
+  \item \textbf{CPU changes the answer}: SRF-PLL and EKF remain strong low-cost references; PI-GRU falls outside protection-real-time in the reported baseline.
   \item \textbf{ATLAS expands the stress space}: severity, sign, policy, latency, and reproducibility analyses explain ranking stability.
 \end{itemize}
 \end{frame}
 
-\sectionframe{ofbBlue}{6. Big Picture}{Benchmark evidence profiles.}
+\sectionframe{ofbBlue}{6. Evidence Profile}{Qualification logic and next validation.}
 
-\begin{frame}{Big-picture result: benchmark evidence profile}
+\begin{frame}{Benchmark evidence profile}
 \begin{center}
 \begin{tikzpicture}[
   every node/.style={font=\scriptsize},
@@ -1875,29 +1875,29 @@ A single leaderboard would hide deployment constraints that matter in grid instr
 \draw[arr] (s2) -- (s3);
 \draw[arr] (s3) -- (s4);
 \node[align=center, text width=10.8cm, color=ofbInk] at (5.1,-1.75) {
-The research opens a path from estimator comparison to \textbf{qualification}: an estimator should be selected for an IBR monitoring task only after it passes a declared event profile, metric profile, and latency--cost envelope.
+Estimator selection moves toward \textbf{qualification} when each method is tested against a declared event profile, metric profile, and latency-cost envelope.
 };
 \end{tikzpicture}
 \end{center}
 \end{frame}
 
-\begin{frame}{What this opens for standardization}
+\begin{frame}{Standardization profile}
 \begin{columns}[T,onlytextwidth]
 \column{0.48\linewidth}
 \begin{block}{Current standardization layer}
 \scriptsize
 \begin{itemize}
   \item PMU standards define phasor, frequency, and RoCoF measurement requirements.
-  \item Compliance tests are necessary, but they do not rank estimator families by IBR event survival.
+  \item Compliance tests are necessary, with estimator-family ranking by IBR event survival left outside scope.
   \item Device reports often hide algorithmic failure modes behind aggregate accuracy.
 \end{itemize}
 \end{block}
 \begin{block}{Standardization boundary}
 \scriptsize
-This work does not create a new IEEE/IEC standard; it identifies the evidence objects a dynamic-estimator profile would need.
+A dynamic-estimator profile needs declared signals, estimator I/O, metrics, evidence artifacts, and latency-cost reporting.
 \end{block}
 \column{0.47\linewidth}
-\begin{block}{Proposed benchmark profile}
+\begin{block}{Benchmark profile}
 \scriptsize
 \begin{itemize}
   \item Canonical events: steps, ramps, phase jumps, ringdown, harmonics, interharmonics, noise, and composite IBR sequences.
@@ -1907,7 +1907,7 @@ This work does not create a new IEEE/IEC standard; it identifies the evidence ob
 \end{block}
 \begin{block}{Standardization value}
 \scriptsize
-The benchmark can act as a reference test profile: same signals, estimator I/O, metrics, and machine-readable evidence.
+A reference test profile needs the same signals, estimator I/O, metrics, and machine-readable evidence.
 \end{block}
 \end{columns}
 \end{frame}
@@ -1916,7 +1916,7 @@ The benchmark can act as a reference test profile: same signals, estimator I/O, 
 \readinessmetricbanner
 \begin{columns}[T,onlytextwidth]
 \column{0.53\linewidth}
-\begin{block}{Proposed score for estimator $e$}
+\begin{block}{Score for estimator $e$}
 \scriptsize
 \begin{center}
 \resizebox{0.98\linewidth}{!}{$
@@ -1935,9 +1935,9 @@ $}
   \item $\tilde C_s,\tilde L_s$: compute and latency penalties.
 \end{itemize}
 \column{0.43\linewidth}
-\begin{block}{Why composite is needed}
+\begin{block}{Composite metric rationale}
 \small
-The results show that RMSE, trip-risk, transient recovery, and low-cost candidates are not the same decision. A readiness score makes the deployment objective explicit instead of hiding it inside a single leaderboard.
+The results show that RMSE, trip-risk, transient recovery, and low-cost candidates lead to different decisions. A readiness score makes the deployment objective explicit instead of hiding it inside a single leaderboard.
 \end{block}
 \begin{block}{Profile-specific weights}
 \small
@@ -1969,13 +1969,13 @@ Protection-adjacent use can raise $\gamma,\delta,\lambda$; forensic reconstructi
 \end{center}
 \vspace{0.35em}
 \begin{itemize}
-  \item The benchmark identifies which physical stressor breaks each estimator family.
+  \item The stress analysis identifies which physical stressor breaks each estimator family.
   \item That diagnosis supports hybrid estimators: event classifiers, harmonic-aware preprocessing, adaptive bandwidth, and self-reported confidence.
   \item Validation should combine synthetic truth, EMT replay, hardware-in-the-loop, and field oscillography.
 \end{itemize}
 \end{frame}
 
-\begin{frame}{Research agenda}
+\begin{frame}{Validation agenda}
 \begin{columns}[T,onlytextwidth]
 \column{0.48\linewidth}
 \begin{block}{Near-term extensions}
@@ -1992,7 +1992,7 @@ Protection-adjacent use can raise $\gamma,\delta,\lambda$; forensic reconstructi
 \begin{itemize}
   \item Three-phase, unbalance, and converter-control interaction profiles.
   \item Real-event replay from DFR/PMU/oscillography with synchronized ground-truth proxies.
-  \item Estimators that optimize an objective vector, not only instantaneous frequency error.
+  \item Estimators that optimize an objective vector: frequency error, RoCoF, trip exposure, settling, CPU, and latency.
 \end{itemize}
 \end{block}
 \end{columns}
@@ -2023,14 +2023,14 @@ Protection-adjacent use can raise $\gamma,\delta,\lambda$; forensic reconstructi
 \begin{columns}[T,onlytextwidth]
 \column{0.48\linewidth}
 \begin{itemize}
-  \item The benchmark supports a coherent academic argument: field disturbances motivate the measurement problem, and controlled synthetic truth makes estimator behavior explainable.
+  \item Field disturbances define the measurement problem; controlled synthetic truth makes estimator behavior explainable.
   \item The key contribution is controlled comparison across objectives, regimes, and deployment constraints, including IBR-relevant stress modes.
   \item Empirical conclusions remain tied to evidence level, stress regime, and replication depth.
 \end{itemize}
 \column{0.47\linewidth}
 \callout{
-\textbf{Takeaway}\\
-This benchmark should be presented as an experimental framework for selecting frequency estimators before they are trusted in forensic, PMU, or protection-adjacent workflows.
+\textbf{Result}\\
+The framework selects frequency estimators before they enter forensic, PMU, or protection-adjacent workflows.
 }
 \end{columns}
 \end{frame}
@@ -2048,7 +2048,7 @@ This benchmark should be presented as an experimental framework for selecting fr
   \item NERC recommended IBR disturbance monitoring: high-resolution DFR data, continuous PMU/DDR data, and inverter fault-code retention for post-mortem analysis.
 \end{itemize}
 \vspace{0.3em}
-\callout{These references motivate the gap: standards and datasets are necessary, but they do not replace a controlled, estimator-level benchmark with known truth and deployability metrics.}
+\callout{These references motivate the gap: standards and datasets leave room for controlled, estimator-level tests with known truth and deployability metrics.}
 \end{frame}
 
 \begin{frame}{Selected field-event references}
@@ -2063,7 +2063,7 @@ This benchmark should be presented as an experimental framework for selecting fr
   \item Ofgem/National Grid ESO 9 August 2019 GB outage reports and ENTSO-E 28 April 2025 Iberian incident report: grid-wide cascading events where fast dynamic visibility is central to diagnosis.
 \end{itemize}
 \vspace{0.25em}
-\callout{These cases motivate the stress modes. The benchmark does not imply that one estimator would have prevented a disturbance; it characterizes estimator behavior under non-ideal, fast, and distorted regimes.}
+\callout{The field cases define stress modes. No claim is made that a single estimator would have prevented a disturbance.}
 \end{frame}
 
 \appendix
@@ -2077,10 +2077,10 @@ Question & Short answer \\
 \midrule
 Why scenario-wise tuning? & It estimates best-in-range behavior under the tested search space. Fixed-policy replication is the next qualification layer. \\
 How is this different from IEC/IEEE compliance? & Compliance tests define device-level requirements. This study compares estimator algorithms under known truth, IBR-specific stress, trip-risk, and CPU cost. \\
-Why Python CPU times? & CPU is a relative deployability indicator, not a hardware latency claim. Embedded or FPGA timing requires implementation-specific replication. \\
+Why Python CPU times? & CPU reports relative software cost. Embedded or FPGA timing requires implementation-specific replication. \\
 What should be deployed? & For FFR and phase-jump anti-islanding, RA-EKF is the strongest benchmark-backed recommendation; SRF-PLL/EKF remain low-cost baselines; IpDFT/TFT are useful where observation delay is acceptable. \\
 How reliable are ATLAS pilots? & They are pilot sweeps: $n=1$, default policy. Final qualification requires fixed policy, full estimator coverage, and replication. \\
-Does this explain any blackout? & No. Field events motivate the stress modes; the benchmark does not claim a specific estimator would have prevented a disturbance. \\
+Does this explain any blackout? & No. Field events define the stress modes; no prevention claim is made. \\
 \bottomrule
 \end{tabular}
 \end{frame}
