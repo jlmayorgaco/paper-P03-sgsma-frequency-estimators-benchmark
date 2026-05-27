@@ -665,6 +665,39 @@ Single-study algorithm comparisons & Give detailed evidence for selected methods
 \callout{The contribution is not another compliance test; it is an experimental system for explaining why estimator rankings change across objectives and regimes.}
 \end{frame}
 
+\begin{frame}{Benchmark comparison axes}
+\scriptsize
+\setlength{\tabcolsep}{4.5pt}
+\renewcommand{\arraystretch}{1.16}
+\begin{center}
+\resizebox{0.98\linewidth}{!}{%
+\begin{tabular}{>{\bfseries\raggedright\arraybackslash}p{0.22\linewidth}ccccc}
+\toprule
+Evidence source & Known truth & IBR composite stress & Trip-risk & CPU/latency & Reproducible artifacts \\
+\midrule
+IEC/IEEE-style compliance & \cellcolor{ofbGreen!22}Yes & \cellcolor{ofbRed!18}Limited & \cellcolor{ofbRed!18}No & \cellcolor{ofbRed!18}No & \cellcolor{ofbGold!22}Device-dependent \\
+Field PMU/DFR data & \cellcolor{ofbRed!18}No & \cellcolor{ofbGreen!22}Yes & \cellcolor{ofbGold!22}Possible & \cellcolor{ofbRed!18}No & \cellcolor{ofbGold!22}Dataset-dependent \\
+Single-method studies & \cellcolor{ofbGreen!22}Often & \cellcolor{ofbGold!22}Partial & \cellcolor{ofbGold!22}Partial & \cellcolor{ofbGold!22}Partial & \cellcolor{ofbRed!18}Often limited \\
+This benchmark & \cellcolor{ofbGreen!22}Yes & \cellcolor{ofbGreen!22}Yes & \cellcolor{ofbGreen!22}Yes & \cellcolor{ofbGreen!22}Yes & \cellcolor{ofbGreen!22}Yes \\
+\bottomrule
+\end{tabular}%
+}
+\end{center}
+\vspace{0.35em}
+\begin{columns}[T,onlytextwidth]
+\column{0.48\linewidth}
+\begin{block}{What becomes measurable}
+\small
+The same voltage trace is scored by RMSE, peak error, RoCoF error, trip exposure, settling, CPU, and structural latency.
+\end{block}
+\column{0.47\linewidth}
+\begin{block}{Why it changes interpretation}
+\small
+An estimator can pass standard cases and still fail a composite IBR event; it can also be accurate but too delayed or costly for protection-adjacent use.
+\end{block}
+\end{columns}
+\end{frame}
+
 \sectionframe{ofbGreen}{3. Experimental Method}{Signals, scenarios, I/O, metrics.}
 
 \begin{frame}{Experimental method}
@@ -1314,6 +1347,29 @@ SRF-PLL has low CPU and good RMSE but much higher $T_{\mathrm{trip}}$; EKF has l
 \artifact{Table IV}
 \end{frame}
 
+\begin{frame}{Result comparison: winners depend on the question}
+\scriptsize
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.16}
+\begin{center}
+\resizebox{0.98\linewidth}{!}{%
+\begin{tabular}{>{\bfseries\raggedright\arraybackslash}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.23\linewidth}>{\raggedright\arraybackslash}p{0.20\linewidth}>{\raggedright\arraybackslash}p{0.27\linewidth}}
+\toprule
+Question & Best-supported answer & Evidence & What it does not imply \\
+\midrule
+Clean step/modulation accuracy & Koopman and SRF-PLL are strongest point cases & Step RMSE 0.000207 Hz; modulation peak 0.000441 Hz & Not enough for islanding or multi-event survival \\
+Ramp and RoCoF tracking & RA-EKF is strongest in the standard ramp & Ramp RMSE 0.0113 Hz & Not a universal RMSE winner \\
+Composite islanding exposure & RA-EKF removes long EKF exposure & 0.6 ms vs 165 ms for EKF & SRF-PLL is also strong in this specific phase-jump case \\
+Multi-event RMSE & Koopman and SRF-PLL are competitive & 0.476 Hz and 0.400 Hz & RMSE hides trip-risk and compute trade-offs \\
+Embedded protection feasibility & SRF-PLL, EKF, SOGI-FLL, RA-EKF remain plausible & 11--54 $\mu$s/sample range & Python timing is not final hardware latency \\
+\bottomrule
+\end{tabular}%
+}
+\end{center}
+\vspace{0.28em}
+\callout{The result is a conditional selection rule: choose by event family, objective metric, and compute envelope. A scalar leaderboard would misrepresent the benchmark.}
+\end{frame}
+
 \begin{frame}{Computational feasibility}
 \scriptsize
 \setlength{\tabcolsep}{5pt}
@@ -1415,6 +1471,35 @@ RA-EKF & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGre
 \end{center}
 \vspace{0.30em}
 \callout{Several methods pass the standard-style Step/Ramp/Mod columns and still fail under composite islanding or multi-event IBR stress. Standard tests do not fully characterize IBR event readiness.}
+\end{frame}
+
+\begin{frame}{High-value empirical claims}
+\begin{columns}[T,onlytextwidth]
+\column{0.48\linewidth}
+\begin{block}{Protection behavior}
+\scriptsize
+\textbf{RA-EKF turns EKF exposure from long to sub-cycle.}\\
+Scenario D gives $T_{\mathrm{trip}}=0.6$ ms for RA-EKF versus 0.165 s for EKF, while preserving an explicit dynamic state model.
+\end{block}
+\begin{block}{Standard-test limitation}
+\scriptsize
+\textbf{Passing simple cases is not event readiness.}\\
+The heatmap shows methods that pass Step/Ramp/Mod but fail islanding or multi-event IBR stress.
+\end{block}
+\column{0.48\linewidth}
+\begin{block}{Metric disagreement}
+\scriptsize
+\textbf{RMSE, trip-risk, and CPU select different winners.}\\
+Table IV separates Koopman/SRF-PLL accuracy, EKF/UKF trip exposure, and low-cost loop/filter deployment.
+\end{block}
+\begin{block}{Deployability}
+\scriptsize
+\textbf{Feasibility must be scored with accuracy.}\\
+RA-EKF remains in a 54 $\mu$s/sample software-cost regime; PI-GRU is retained as a reference, not a relay-class baseline.
+\end{block}
+\end{columns}
+\vspace{0.15em}
+{\scriptsize\color{ofbMuted}\textbf{Presentation rule:} every result is tied to a scenario, metric, and compute envelope rather than to an absolute ``best estimator'' statement.}
 \end{frame}
 
 \begin{frame}{Composite IBR sequence: why it is hardest}
