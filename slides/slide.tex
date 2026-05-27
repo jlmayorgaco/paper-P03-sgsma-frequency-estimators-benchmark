@@ -171,6 +171,8 @@
 \author{Jorge L. Mayorga Taborda, Yessica Africano Rodriguez, Fernando Jimenez}
 \institute{Universidad de los Andes}
 \date{May 25, 2026}
+\newif\ifbackupframes
+\backupframesfalse
 
 \begin{document}
 
@@ -231,6 +233,7 @@ RA-EKF improves dynamic tracking and false-trip exposure under IBR composite str
 \callout{\textbf{Experimental scope}: 9 principal estimators, 2 legacy baselines, 5 stress scenarios, standard and IBR-specific metrics, and a separate expanded sweep for sensitivity analysis.}
 \end{frame}
 
+\ifbackupframes
 \begin{frame}{Evidence map}
 \scriptsize
 \renewcommand{\arraystretch}{1.22}
@@ -287,6 +290,7 @@ Interpretation & Latency and disturbance sensitivity, state-space advantage, and
 \end{block}
 \end{columns}
 \end{frame}
+\fi
 
 \begin{frame}{Technical contributions}
 \begin{columns}[T,onlytextwidth]
@@ -314,6 +318,7 @@ Interpretation & Latency and disturbance sensitivity, state-space advantage, and
 \callout{The stress-test protocol links RA-EKF design choices to phase-jump false-trip exposure.}
 \end{frame}
 
+\ifbackupframes
 \begin{frame}{Scenario waveforms}
 \centering
 \vspace{-0.25em}
@@ -337,6 +342,7 @@ Scenario E & Five-second IBR multi-event sequence with harmonics, jumps, negativ
 \vspace{0.35em}
 \callout{The scenario suite pairs three standard-style references with two IBR-specific composite stress tests.}
 \end{frame}
+\fi
 
 \begin{frame}{Estimator selection logic}
 \centering
@@ -370,6 +376,7 @@ Scenario E & Five-second IBR multi-event sequence with harmonics, jumps, negativ
 }
 \end{frame}
 
+\ifbackupframes
 \begin{frame}{Evidence layers: benchmark + ATLAS}
 \begin{center}
 \begin{tikzpicture}[
@@ -389,7 +396,9 @@ Scenario E & Five-second IBR multi-event sequence with harmonics, jumps, negativ
 \vspace{0.2em}
 \callout{Controlled cases support the main claims; wider sweeps expose severity trends and replication gaps.}
 \end{frame}
+\fi
 
+\ifbackupframes
 \begin{frame}{From field forensics to estimator tests}
 \begin{columns}[T,onlytextwidth]
 \column{0.49\linewidth}
@@ -434,6 +443,7 @@ p_{\mathrm{invalid}}
 \end{itemize}
 \end{columns}
 \end{frame}
+\fi
 
 \begin{frame}{IBR disturbances expose the gap}
 \scriptsize
@@ -490,6 +500,7 @@ Standard synchrophasor outputs summarize the fundamental component; harmonic and
 \artifact{Kaua'i 18--20 Hz IBR oscillation analysis; NERC IBR monitoring white paper; IEC/IEEE 60255-118-1}
 \end{frame}
 
+\ifbackupframes
 \begin{frame}{Benchmark requirements from field cases}
 \begin{columns}[T,onlytextwidth]
 \column{0.48\linewidth}
@@ -576,6 +587,7 @@ Standard synchrophasor outputs summarize the fundamental component; harmonic and
 \vspace{0.35em}
 \callout{The argument moves from grid events to estimator qualification: define the stress, run matched estimators, evaluate multiple metrics, and map the result to deployment regimes.}
 \end{frame}
+\fi
 
 \sectionframe{ofbBlue}{1. Research Problem}{Event-aware frequency metrics for low-inertia grids.}
 
@@ -595,6 +607,7 @@ The literature needs a reproducible benchmark that connects estimator error to p
 \end{columns}
 \end{frame}
 
+\ifbackupframes
 \begin{frame}{Research questions}
 \begin{enumerate}
   \item Which estimator families lead each disturbance family: ramps, magnitude steps, modulation, phase jumps, OOB interference, harmonics, ringdown, and composite IBR events?
@@ -606,6 +619,7 @@ The literature needs a reproducible benchmark that connects estimator error to p
 \vspace{0.4em}
 \callout{The central result is conditional selection: there is no universal estimator; the defensible choice depends on disturbance family, objective metric, and compute budget.}
 \end{frame}
+\fi
 
 \sectionframe{ofbViolet}{2. Benchmark Gap}{Standards, datasets, estimator evidence.}
 
@@ -658,6 +672,7 @@ Single-study algorithm comparisons & Give detailed evidence for selected methods
 \callout{Compliance tests define requirements, operational data define realism, and controlled synthetic truth isolates estimator behavior under reproducible stress.}
 \end{frame}
 
+\ifbackupframes
 \begin{frame}{Benchmark contribution}
 \begin{center}
 \begin{tikzpicture}[
@@ -680,6 +695,7 @@ Single-study algorithm comparisons & Give detailed evidence for selected methods
 \vspace{0.15em}
 \callout{The experimental system explains why estimator rankings change across objectives and regimes.}
 \end{frame}
+\fi
 
 \begin{frame}{Benchmark comparison axes}
 \scriptsize
@@ -818,6 +834,7 @@ C_{\mathrm{CPU}}=\mathrm{mean\ time/sample}
 \callout{The 0.5 Hz threshold is a protection-oriented risk proxy. The metric set separates average error, transient severity, trip exposure, settling, and compute cost.}
 \end{frame}
 
+\ifbackupframes
 \begin{frame}{Scenario design: five stress cases}
 \scriptsize
 \setlength{\tabcolsep}{4pt}
@@ -837,6 +854,7 @@ E & IBR multi-event: harmonics, $+40^\circ$ jump, $-6$ Hz/s ramp, $+80^\circ$ ju
 \callout{The design deliberately separates standard-style cases (A--C) from IBR-specific composite stress (D--E), which is where compliance pass/fail alone becomes inadequate.}
 \artifact{Scenario definitions and Fig. 1}
 \end{frame}
+\fi
 
 \begin{frame}{Scenario suite}
 \begin{columns}[T,onlytextwidth]
@@ -888,6 +906,7 @@ These families occupy different latency and stress-sensitivity positions. The co
 \end{columns}
 \end{frame}
 
+\ifbackupframes
 \begin{frame}{Signal and disturbance model}
 \begin{columns}[T,onlytextwidth]
 \column{0.52\linewidth}
@@ -1206,6 +1225,7 @@ Family-level analysis separates algorithmic principles from implementation-speci
 \end{itemize}
 \end{frame}
 
+\fi
 \begin{frame}{Full benchmark workflow}
 \centering
 \vspace{-0.35em}
@@ -1650,6 +1670,7 @@ IBR multi-event & 1 & PLL & 173.5 mHz & IpDFT, 0.0439 s \\
 \end{center}
 \end{frame}
 
+\ifbackupframes
 \begin{frame}{Frequency RMSE: leading estimators}
 \atlaspreviewbanner
 \begin{center}
@@ -1663,6 +1684,7 @@ IBR multi-event & 1 & PLL & 173.5 mHz & IpDFT, 0.0439 s \\
   \item PI-GRU is accurate but its CPU cost changes its deployment interpretation.
 \end{itemize}
 \end{frame}
+\fi
 
 \begin{frame}{Sensitivity to disturbance severity}
 \atlaspreviewbanner
@@ -1671,6 +1693,7 @@ IBR multi-event & 1 & PLL & 173.5 mHz & IpDFT, 0.0439 s \\
 \end{center}
 \end{frame}
 
+\ifbackupframes
 \begin{frame}{Interpreting sensitivity curves}
 \atlaspreviewbanner
 \begin{columns}[T,onlytextwidth]
@@ -1696,6 +1719,7 @@ IBR multi-event & 1 & PLL & 173.5 mHz & IpDFT, 0.0439 s \\
 \includegraphics[width=0.94\linewidth,height=0.70\textheight,keepaspectratio]{figures/accuracy_rfe_tradeoff.pdf}
 \end{center}
 \end{frame}
+\fi
 
 \begin{frame}{Rank shift when the metric changes}
 \atlaspreviewbanner
@@ -1704,6 +1728,7 @@ IBR multi-event & 1 & PLL & 173.5 mHz & IpDFT, 0.0439 s \\
 \end{center}
 \end{frame}
 
+\ifbackupframes
 \begin{frame}{Derivative tracking: top RoCoF results}
 \atlaspreviewbanner
 \begin{center}
@@ -1717,6 +1742,7 @@ IBR multi-event & 1 & PLL & 173.5 mHz & IpDFT, 0.0439 s \\
   \item RoCoF error needs its own ranking because derivative performance has a separate order from frequency RMSE.
 \end{itemize}
 \end{frame}
+\fi
 
 \begin{frame}{CPU--accuracy Pareto analysis}
 \atlaspreviewbanner
@@ -1725,6 +1751,7 @@ IBR multi-event & 1 & PLL & 173.5 mHz & IpDFT, 0.0439 s \\
 \end{center}
 \end{frame}
 
+\ifbackupframes
 \begin{frame}{Interpreting the Pareto front}
 \atlaspreviewbanner
 \begin{columns}[T,onlytextwidth]
@@ -1744,6 +1771,7 @@ A single leaderboard would hide deployment constraints that matter in grid instr
 \end{block}
 \end{columns}
 \end{frame}
+\fi
 
 \begin{frame}{Harmonic-stress response}
 \atlaspreviewbanner
@@ -1752,6 +1780,7 @@ A single leaderboard would hide deployment constraints that matter in grid instr
 \end{center}
 \end{frame}
 
+\ifbackupframes
 \begin{frame}{Harmonic sweep interpretation}
 \atlaspreviewbanner
 \begin{center}
@@ -1766,6 +1795,7 @@ A single leaderboard would hide deployment constraints that matter in grid instr
   \item Low slope must be read with baseline RMSE; both values are needed.
 \end{itemize}
 \end{frame}
+\fi
 
 \sectionframe{ofbViolet}{5. Insights and Validity}{Rankings, recommendations, validity.}
 
@@ -1806,6 +1836,7 @@ A single leaderboard would hide deployment constraints that matter in grid instr
 \callout{These limits define the validation path: broader event coverage, hardware timing, fixed-policy replication, and field replay.}
 \end{frame}
 
+\ifbackupframes
 \begin{frame}{Methodological findings}
 \begin{enumerate}
   \item Disturbance family changes the estimator ranking and must be the first axis of interpretation.
@@ -1817,6 +1848,7 @@ A single leaderboard would hide deployment constraints that matter in grid instr
 \vspace{0.4em}
 \callout{Controlled traces, locked metrics, and artifact manifests make estimator comparisons reproducible.}
 \end{frame}
+\fi
 
 \begin{frame}{Evidence-based recommendation map}
 \begin{center}
@@ -1842,6 +1874,7 @@ A single leaderboard would hide deployment constraints that matter in grid instr
 \end{center}
 \end{frame}
 
+\ifbackupframes
 \begin{frame}{Four results}
 \begin{itemize}
   \item \textbf{RA-EKF targets phase-jump recovery}: explicit $\dot\omega$, covariance scaling, and event gating reduce false-trip exposure.
@@ -1850,6 +1883,7 @@ A single leaderboard would hide deployment constraints that matter in grid instr
   \item \textbf{ATLAS expands the stress space}: severity, sign, policy, latency, and reproducibility analyses explain ranking stability.
 \end{itemize}
 \end{frame}
+\fi
 
 \sectionframe{ofbBlue}{6. Evidence Profile}{Qualification logic and next validation.}
 
@@ -2000,6 +2034,7 @@ Protection-adjacent use can raise $\gamma,\delta,\lambda$; forensic reconstructi
 \callout{The broader goal is a reproducible science of \textbf{dynamic frequency observability}, where estimators are evaluated by the event regimes they can survive in real time.}
 \end{frame}
 
+\ifbackupframes
 \begin{frame}{Full-scale experimental protocol}
 \begin{columns}[T,onlytextwidth]
 \column{0.52\linewidth}
@@ -2018,6 +2053,7 @@ Protection-adjacent use can raise $\gamma,\delta,\lambda$; forensic reconstructi
 \end{columns}
 \artifact{docs/ATLAS\_PIPELINE.md}
 \end{frame}
+\fi
 
 \begin{frame}{Conclusion}
 \begin{columns}[T,onlytextwidth]
@@ -2035,6 +2071,7 @@ The framework selects frequency estimators before they enter forensic, PMU, or p
 \end{columns}
 \end{frame}
 
+\ifbackupframes
 \begin{frame}{Selected benchmark references}
 \scriptsize
 \begin{itemize}
@@ -2108,5 +2145,6 @@ Does this explain any blackout? & No. Field events define the stress modes; no p
 \texttt{pdflatex slide.tex}
 \end{block}
 \end{frame}
+\fi
 
 \end{document}
