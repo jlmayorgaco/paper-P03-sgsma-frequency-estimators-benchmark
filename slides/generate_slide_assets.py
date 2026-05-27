@@ -380,6 +380,114 @@ def plot_regime_summary() -> None:
     _savefig("regime_summary")
 
 
+def plot_core_trip_risk_comparison() -> None:
+    islanding = pd.DataFrame(
+        [
+            ("SRF-PLL", 0.0, "Loop-based"),
+            ("RA-EKF", 0.0006, "Model-based"),
+            ("EKF", 0.165, "Model-based"),
+            ("UKF", 0.165, "Model-based"),
+        ],
+        columns=["estimator", "trip_s", "family"],
+    )
+    multievent = pd.DataFrame(
+        [
+            ("EKF", 0.118, "Model-based"),
+            ("UKF", 0.119, "Model-based"),
+            ("Koopman", 0.137, "Data-driven"),
+            ("RA-EKF", 0.141, "Model-based"),
+            ("IpDFT", 0.335, "Window-based"),
+            ("SOGI-FLL", 0.422, "Loop-based"),
+            ("SRF-PLL", 0.471, "Loop-based"),
+        ],
+        columns=["estimator", "trip_s", "family"],
+    )
+    fig, axes = plt.subplots(1, 2, figsize=(10.8, 4.6))
+    for ax, df, title in [
+        (axes[0], islanding, "Scenario D: composite islanding"),
+        (axes[1], multievent, "Scenario E: IBR multi-event"),
+    ]:
+        df = df.sort_values("trip_s", ascending=True)
+        colors = [FAMILY_COLORS.get(f, FAMILY_COLORS["Unknown"]) for f in df["family"]]
+        bars = ax.barh(df["estimator"], df["trip_s"] * 1000, color=colors, alpha=0.9)
+        ax.invert_yaxis()
+        ax.set_xlabel("Trip-risk duration [ms]")
+        ax.set_title(title)
+        ax.grid(axis="x", alpha=0.24)
+        xmax = max((df["trip_s"] * 1000).max() * 1.22, 1.0)
+        ax.set_xlim(0, xmax)
+        for bar, value_s in zip(bars, df["trip_s"]):
+            value_ms = value_s * 1000
+            label = "0" if value_ms == 0 else (f"{value_ms:.1f}" if value_ms < 10 else f"{value_ms:.0f}")
+            ax.text(
+                bar.get_width() + xmax * 0.015,
+                bar.get_y() + bar.get_height() / 2,
+                f"{label} ms",
+                va="center",
+                fontsize=8,
+            )
+    axes[0].annotate(
+        "EKF / RA-EKF = 275x",
+        xy=(0.6, 1),
+        xytext=(42, 1.7),
+        arrowprops={"arrowstyle": "->", "color": "#B23A48", "lw": 1.2},
+        color="#B23A48",
+        fontsize=9,
+        fontweight="bold",
+    )
+    fig.suptitle("Trip-risk is an event metric, not an average-error metric", y=1.02)
+    _savefig("core_trip_risk_comparison")
+
+
+def plot_metric_rank_shift() -> None:
+    summary = _dynamic_summary().copy()
+    summary["rmse_rank"] = summary["geom_rmse_hz"].rank(method="min", ascending=True)
+    summary["rfe_rank"] = summary["geom_rfe_rms_hz_s"].rank(method="min", ascending=True)
+    selected = [
+        "ESPRIT",
+        "Koopman (RK-DPMU)",
+        "TFT",
+        "IpDFT",
+        "IPDFT",
+        "SOGI-FLL",
+        "SOGI-PLL",
+        "UKF",
+        "EKF",
+        "RA-EKF",
+        "PI-GRU",
+    ]
+    sub = summary[summary["estimator"].isin(selected)].copy()
+    sub["display"] = sub["estimator"].replace({"IPDFT": "IpDFT"})
+    sub = sub.sort_values("rmse_rank")
+    fig, ax = plt.subplots(figsize=(10.6, 5.5))
+    y = np.arange(len(sub))
+    for i, (_, row) in enumerate(sub.iterrows()):
+        color = FAMILY_COLORS.get(row["family"], FAMILY_COLORS["Unknown"])
+        ax.plot([row["rmse_rank"], row["rfe_rank"]], [i, i], color="#CBD7DF", linewidth=2.5, zorder=1)
+        ax.scatter(row["rmse_rank"], i, color=color, s=80, edgecolor="white", linewidth=0.8, zorder=2)
+        ax.scatter(row["rfe_rank"], i, color=color, marker="s", s=78, edgecolor="white", linewidth=0.8, zorder=2)
+        delta = int(row["rfe_rank"] - row["rmse_rank"])
+        ax.text(
+            max(row["rmse_rank"], row["rfe_rank"]) + 0.35,
+            i,
+            f"{delta:+d}",
+            va="center",
+            fontsize=8,
+            color="#5B677A",
+        )
+    ax.set_yticks(y)
+    ax.set_yticklabels(sub["display"], fontsize=8)
+    ax.invert_yaxis()
+    ax.set_xlim(0.4, max(summary["rmse_rank"].max(), summary["rfe_rank"].max()) + 2.6)
+    ax.set_xlabel("Rank among dynamic sweep estimators (lower is better)")
+    ax.set_title("Metric choice changes the leaderboard: RMSE rank vs RoCoF-error rank")
+    ax.grid(axis="x", alpha=0.22)
+    ax.scatter([], [], color="#2F6B8F", marker="o", label="Frequency RMSE rank")
+    ax.scatter([], [], color="#2F6B8F", marker="s", label="RoCoF-error rank")
+    ax.legend(loc="upper right", fontsize=8, frameon=False)
+    _savefig("metric_rank_shift")
+
+
 def _tex_escape(value: object) -> str:
     text = str(value)
     return (
@@ -451,6 +559,8 @@ def generate_tables() -> None:
             for col, _, kind in columns:
                 value = row[col]
                 if kind == "text":
+                    if col == "estimator" and value == "IPDFT":
+                        value = "IpDFT"
                     cells.append(_tex_escape(value))
                 elif kind == "int":
                     cells.append(str(int(round(float(value)))))
@@ -581,6 +691,8 @@ def main() -> None:
     plot_cpu_accuracy_pareto()
     plot_harmonics_sensitivity()
     plot_regime_summary()
+    plot_core_trip_risk_comparison()
+    plot_metric_rank_shift()
     generate_tables()
     write_summary_json()
     print(f"Wrote slide figures and generated tables to {SLIDE_DIR}")
