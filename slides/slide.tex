@@ -729,9 +729,9 @@ An estimator can pass standard cases and still fail a composite IBR event; it ca
   arr/.style={-{Latex[length=2mm]}, thick, color=ofbInk}
 ]
 \node[box, fill=ofbBlue!12, draw=ofbBlue] (method) at (0,1.10) {researcher\\estimator};
-\node[box, fill=ofbGreen!12, draw=ofbGreen] (api) at (2.60,1.10) {public\\I/O contract};
-\node[box, fill=ofbGold!18, draw=ofbGold] (scen) at (5.20,1.10) {canonical\\scenario suite};
-\node[wide, fill=ofbViolet!12, draw=ofbViolet] (metrics) at (8.35,1.10) {locked metric profile\\RMSE, RoCoF, trip risk, CPU, latency};
+\node[box, fill=ofbGreen!12, draw=ofbGreen] (api) at (2.50,1.10) {public\\I/O contract};
+\node[box, fill=ofbGold!18, draw=ofbGold] (scen) at (4.80,1.10) {canonical\\scenario suite};
+\node[wide, fill=ofbViolet!12, draw=ofbViolet, minimum width=4.2cm] (metrics) at (8.55,1.10) {locked metric profile\\RMSE, RoCoF, $T_{\mathrm{trip}}$, CPU, latency};
 \node[box, fill=ofbRed!10, draw=ofbRed] (art) at (6.90,-0.15) {CSV/JSON\\artifacts};
 \node[box, fill=ofbSoft, draw=ofbInk] (plots) at (9.80,-0.15) {plots +\\rank tables};
 \node[wide, fill=white, draw=ofbInk] (compare) at (8.35,-1.25) {standardized comparison across methods, events, seeds, and policies};
@@ -2095,13 +2095,13 @@ EKF wins small phase jumps; ZCD wins harmonics-only; RA-EKF wins ramps and the s
   box/.style={draw, rounded corners=3pt, minimum height=0.92cm, align=center, very thick},
   arr/.style={-{Latex[length=2mm]}, thick, color=ofbInk}
 ]
-\node[box, fill=ofbBlue!12, draw=ofbBlue, minimum width=2.55cm] (paper) at (0,1.25) {Core\\benchmark};
-\node[box, fill=ofbGreen!12, draw=ofbGreen, minimum width=2.9cm] (result) at (3.2,1.25) {Conditional\\estimator ranking};
-\node[box, fill=ofbGold!18, draw=ofbGold, minimum width=3.0cm] (metric) at (6.65,1.25) {Metric-weighted\\event score};
-\node[box, fill=ofbViolet!12, draw=ofbViolet, minimum width=3.2cm] (profile) at (10.2,1.25) {Dynamic estimator\\benchmark profile};
+\node[box, fill=ofbBlue!12, draw=ofbBlue, minimum width=2.65cm] (paper) at (0,1.25) {Core\\benchmark};
+\node[box, fill=ofbGreen!12, draw=ofbGreen, minimum width=2.65cm] (result) at (3.2,1.25) {Conditional\\estimator ranking};
+\node[box, fill=ofbGold!18, draw=ofbGold, minimum width=2.65cm] (metric) at (6.65,1.25) {Metric-weighted\\event score};
+\node[box, fill=ofbViolet!12, draw=ofbViolet, minimum width=2.65cm] (profile) at (10.2,1.25) {Dynamic estimator\\benchmark profile};
 \draw[arr] (paper) -- (result);
-\draw[arr] (result) -- node[above, font=\tiny] {ATLAS stress sweeps} (metric);
-\draw[arr] (metric) -- node[above, font=\tiny] {reproducible reporting} (profile);
+\draw[arr] (result) -- (metric);
+\draw[arr] (metric) -- (profile);
 \node[box, fill=ofbSoft, draw=ofbBlue, minimum width=2.65cm] (s1) at (0,-0.45) {Known truth\\signals};
 \node[box, fill=ofbSoft, draw=ofbGreen, minimum width=2.65cm] (s2) at (3.2,-0.45) {Estimator I/O\\contract};
 \node[box, fill=ofbSoft, draw=ofbGold, minimum width=2.65cm] (s3) at (6.65,-0.45) {Locked metric\\registry};
@@ -2195,19 +2195,21 @@ Protection-adjacent use can raise $\gamma,\delta,\lambda$; forensic reconstructi
 \draw[arr] (atlas) -- (diag);
 \draw[arr] (diag) -- (design);
 \draw[arr] (design) -- (deploy);
-\draw[arr, bend left=27] (deploy.north) to node[above, font=\tiny] {field replay + HIL} (atlas.north);
+\draw[arr] (deploy.north) to[out=105, in=75, looseness=0.38] node[above, font=\tiny, text=ofbMuted] {field replay + HIL} (atlas.north);
 \node[box, fill=ofbSoft, draw=ofbBlue, minimum width=2.5cm] at (0,-0.75) {severity and\\sign sweeps};
 \node[box, fill=ofbSoft, draw=ofbGreen, minimum width=2.5cm] at (3.1,-0.75) {ramp lag, phase\\reset, ringing};
 \node[box, fill=ofbSoft, draw=ofbGold, minimum width=2.5cm] at (6.2,-0.75) {hybrid, adaptive,\\confidence-aware};
 \node[box, fill=ofbSoft, draw=ofbViolet, minimum width=2.5cm] at (9.3,-0.75) {latency, CPU,\\invalid outputs};
 \end{tikzpicture}
 \end{center}
-\vspace{0.35em}
+\vspace{0.1em}
+{\small
 \begin{itemize}
   \item The stress analysis identifies which physical stressor breaks each estimator family.
   \item That diagnosis supports hybrid estimators: event classifiers, harmonic-aware preprocessing, adaptive bandwidth, and self-reported confidence.
   \item Validation should combine synthetic truth, EMT replay, hardware-in-the-loop, and field oscillography.
 \end{itemize}
+}
 \end{frame}
 
 \begin{frame}{Conclusion and validation agenda}
@@ -2273,6 +2275,26 @@ M22 invalid rate & fraction of samples the estimator flags invalid / NaN. \\
 \includegraphics[width=0.94\linewidth,height=0.72\textheight,keepaspectratio]{figures/frequency_step_method_map.pdf}
 \end{center}
 \artifact{frequency\_step\_mvp2\_all18\_representative}
+\end{frame}
+
+\begin{frame}{Backup: magnitude-step stress map ($n=30$, fixed policy)}
+\diagbanner
+\begin{columns}[T,onlytextwidth]
+\column{0.64\linewidth}
+\centering
+\includegraphics[width=\linewidth,height=0.66\textheight,keepaspectratio]{figures/magnitude_step_method_map.pdf}
+\column{0.32\linewidth}
+\begin{block}{Reading}
+\scriptsize
+\begin{itemize}
+  \item \textbf{EKF leads} every step size (0.17--7.8 mHz).
+  \item \textbf{TKEO is flat-broken} ($\approx$18 Hz at all levels).
+  \item \textbf{ZCD fails on deep sags}: 374 Hz at $-90\%$ vs 0.009 Hz at $+90\%$.
+  \item Voltage \emph{sags} are $\sim$2$\times$ harder than swells of equal size.
+\end{itemize}
+\end{block}
+\end{columns}
+\artifact{atlas-magnitude-step-paper-v1 (17 estimators, PI-GRU excluded)}
 \end{frame}
 
 \begin{frame}{Backup: noise robustness ranking}
