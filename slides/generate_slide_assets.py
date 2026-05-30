@@ -48,6 +48,42 @@ METHOD_COLORS = {
 }
 
 
+# Publication ("paper") look shared with the scenario-suite dashboards:
+# serif fonts, full black box frame, faint grid, ticks pointing in, hi-res.
+PAPER_STYLE = {
+    "font.family": "serif",
+    "mathtext.fontset": "cm",
+    "axes.spines.top": True,
+    "axes.spines.right": True,
+    "axes.edgecolor": "black",
+    "axes.linewidth": 0.9,
+    "figure.facecolor": "white",
+    "axes.facecolor": "white",
+    "axes.labelcolor": "black",
+    "axes.titlecolor": "black",
+    "axes.titleweight": "bold",
+    "text.color": "black",
+    "xtick.color": "black",
+    "ytick.color": "black",
+    "xtick.direction": "in",
+    "ytick.direction": "in",
+    "grid.color": "#c7c7c7",
+    "grid.linewidth": 0.55,
+    "axes.titlesize": 12,
+    "figure.titlesize": 13,
+    "axes.labelsize": 10,
+    "xtick.labelsize": 8,
+    "ytick.labelsize": 8,
+    "legend.frameon": False,
+    "legend.fontsize": 8.5,
+    "lines.antialiased": True,
+}
+
+
+def _apply_style() -> None:
+    plt.rcParams.update(PAPER_STYLE)
+
+
 def _ensure_dirs() -> None:
     FIG_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -96,7 +132,7 @@ def _dynamic_summary() -> pd.DataFrame:
 
 def _savefig(name: str) -> None:
     for ext in ("pdf", "png"):
-        plt.savefig(FIG_DIR / f"{name}.{ext}", bbox_inches="tight", dpi=220)
+        plt.savefig(FIG_DIR / f"{name}.{ext}", bbox_inches="tight", dpi=300)
     plt.close()
 
 
@@ -428,12 +464,13 @@ def plot_core_trip_risk_comparison() -> None:
             )
     axes[0].annotate(
         "EKF / RA-EKF = 275x",
-        xy=(0.6, 1),
-        xytext=(42, 1.7),
+        xy=(1.2, 1.0),
+        xytext=(48, 0.42),
         arrowprops={"arrowstyle": "->", "color": "#B23A48", "lw": 1.2},
         color="#B23A48",
         fontsize=9,
         fontweight="bold",
+        va="center",
     )
     fig.suptitle("Trip-risk is an event metric, not an average-error metric", y=1.02)
     _savefig("core_trip_risk_comparison")
@@ -662,29 +699,7 @@ def write_summary_json() -> None:
 
 def main() -> None:
     _ensure_dirs()
-    plt.rcParams.update(
-        {
-            "font.family": "DejaVu Sans",
-            "axes.spines.top": False,
-            "axes.spines.right": False,
-            "figure.facecolor": "#FAFBFC",
-            "axes.facecolor": "white",
-            "axes.edgecolor": "#D9E1E8",
-            "axes.labelcolor": "#1F2933",
-            "axes.titlecolor": "#123047",
-            "text.color": "#1F2933",
-            "xtick.color": "#5B677A",
-            "ytick.color": "#5B677A",
-            "grid.color": "#D9E1E8",
-            "grid.linewidth": 0.7,
-            "axes.titlesize": 12,
-            "figure.titlesize": 13,
-            "axes.labelsize": 10,
-            "xtick.labelsize": 8,
-            "ytick.labelsize": 8,
-            "legend.frameon": False,
-        }
-    )
+    _apply_style()
     plot_dynamic_rank()
     plot_dynamic_curves()
     plot_accuracy_rfe_tradeoff()
