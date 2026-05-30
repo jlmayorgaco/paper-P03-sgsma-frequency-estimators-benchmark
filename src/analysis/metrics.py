@@ -108,6 +108,14 @@ def m4_std_error_hz(error: np.ndarray) -> float:
     """Desviación estándar del error absoluto (Variabilidad)."""
     return float(np.std(np.abs(error)))
 
+def m34_p95_error_hz(error: np.ndarray) -> float:
+    """95th percentile of absolute frequency error within run."""
+    return float(np.percentile(np.abs(error), 95.0)) if len(error) > 0 else float("nan")
+
+def m35_p99_error_hz(error: np.ndarray) -> float:
+    """99th percentile of absolute frequency error within run."""
+    return float(np.percentile(np.abs(error), 99.0)) if len(error) > 0 else float("nan")
+
 
 # =====================================================================
 # Bloque 2: Riesgo de Protecciones (Protective Relay Risk)
@@ -161,14 +169,14 @@ def m9_m10_rfe_metrics(f_hat_steady: np.ndarray, f_true_steady: np.ndarray, dt: 
     rfe_rms = float(np.sqrt(np.mean(rfe_array**2)))
     return rfe_max, rfe_rms
 
-def m11_rnaf_db(f_hat_steady: np.ndarray, f_true_steady: np.ndarray, dt: float, noise_sigma: float) -> float:
+def m11_rnaf_db(f_hat_steady: np.ndarray, f_true_steady: np.ndarray, dt: float, noise_sigma: float | None) -> float:
     """RoCoF Noise Amplification Factor [dB]."""
     rocof_hat = np.gradient(f_hat_steady, dt)
     rocof_true = np.gradient(f_true_steady, dt)
     rfe_array = rocof_hat - rocof_true
     
     var_rfe = float(np.var(rfe_array))
-    var_noise = noise_sigma**2
+    var_noise = float(noise_sigma or 0.0) ** 2
     
     if var_noise > 0 and var_rfe > 0:
         return float(10.0 * np.log10(var_rfe / var_noise))
@@ -240,6 +248,8 @@ def calculate_all_metrics(
     mae        = m2_mae_hz(error_st)
     max_peak   = m3_max_peak_hz(error_st)
     std_error  = m4_std_error_hz(error_st)
+    p95_error  = m34_p95_error_hz(error_st)
+    p99_error  = m35_p99_error_hz(error_st)
 
     # 2. Riesgo de Protecciones
     trip_risk  = m5_trip_risk_s(error_st, dt)
@@ -307,7 +317,10 @@ def calculate_all_metrics(
         "m15_pcb_compliant":    compliant,
         
         "m16_heatmap_pass":     hmap_pass,
-        "m17_hw_class":         hw_class
+        "m17_hw_class":         hw_class,
+
+        "m34_p95_error_hz":     p95_error,
+        "m35_p99_error_hz":     p99_error,
     }
     metrics.update(event_metrics)
     return metrics

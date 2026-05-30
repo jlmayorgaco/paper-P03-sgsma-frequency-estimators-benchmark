@@ -73,7 +73,7 @@ ESTIMATOR_FAMILIES: dict[str, str] = {
 
 
 def active_estimator_specs() -> list[EstimatorSpec]:
-    include_experimental = os.getenv("BENCHMARK_INCLUDE_EXPERIMENTAL", "1").strip().lower() in {"1", "true", "yes", "on"}
+    include_experimental = os.getenv("BENCHMARK_INCLUDE_EXPERIMENTAL", "0").strip().lower() in {"1", "true", "yes", "on"}
     if not include_experimental:
         return list(ACTIVE_ESTIMATOR_SPECS)
     experimental = [spec for spec in EXCLUDED_ESTIMATOR_SPECS if spec.status == "experimental"]

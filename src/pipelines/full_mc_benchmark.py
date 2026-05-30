@@ -87,6 +87,13 @@ from pipelines.benchmark_definition import (
     load_active_estimators,
 )
 
+try:
+    from openfreqbench.registry import CANONICAL_METRIC_PROFILE
+    from openfreqbench.reproducibility import build_reproducibility_manifest
+except Exception:
+    CANONICAL_METRIC_PROFILE = "canonical-single-phase-v1"
+    build_reproducibility_manifest = None
+
 # â”€â”€ Project imports â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 from analysis.monte_carlo_engine import MonteCarloEngine
 from analysis.advanced_benchmark_analysis import AdvancedBenchmarkAnalyzer, AdvancedStatsConfig
@@ -155,6 +162,7 @@ def _env_csv_list(name: str) -> list[str]:
 
 N_TRIALS_TUNING = _env_int("BENCHMARK_N_TRIALS_TUNING", 500, minimum=0)
 N_MC_RUNS = _env_int("BENCHMARK_N_MC_RUNS", 100, minimum=1)
+N_COST_REPS = _env_int("BENCHMARK_N_COST_REPS", 20, minimum=1)
 OPTUNA_SAMPLER_MODE = _env_choice(
     "BENCHMARK_OPTUNA_SAMPLER",
     "tpe",
@@ -165,6 +173,7 @@ APPLY_TRIAL_OVERRIDES = _env_bool("BENCHMARK_APPLY_TRIAL_OVERRIDES", True)
 EXCLUDED_ESTIMATOR_LABELS = _env_csv_list("BENCHMARK_EXCLUDE_ESTIMATORS")
 INCLUDED_ESTIMATOR_LABELS = _env_csv_list("BENCHMARK_INCLUDE_ESTIMATORS")
 INCLUDED_SCENARIO_NAMES = set(_env_csv_list("BENCHMARK_INCLUDE_SCENARIOS"))
+INCLUDE_COMPAT_BASE_SCENARIOS = _env_bool("BENCHMARK_INCLUDE_COMPAT_BASE_SCENARIOS", False)
 ADV_BOOTSTRAP_ITERS = _env_int("BENCHMARK_ADV_BOOTSTRAP_ITERS", 2000, minimum=200)
 RUN_ANDES_IEEE39 = _env_bool("BENCHMARK_RUN_ANDES_IEEE39", False)
 
@@ -255,8 +264,17 @@ ringdown_variants = [
     for noise_lvl, ih_lvl, suffix in ringdown_stress_tests
 ]
 
-# Lista final unificada
-SCENARIOS = BASE_SCENARIOS + mag_variants + ramp_variants + ringdown_variants
+# Lista final unificada. The two base ramp/magnitude-step classes are kept as
+# an opt-in compatibility extension because the canonical MVP2 matrix is the
+# 32-scenario variant catalog.
+COMPAT_BASE_SCENARIOS = [IEEEFreqRampScenario, IEEEMagStepScenario]
+SCENARIOS = (
+    BASE_SCENARIOS
+    + (COMPAT_BASE_SCENARIOS if INCLUDE_COMPAT_BASE_SCENARIOS else [])
+    + mag_variants
+    + ramp_variants
+    + ringdown_variants
+)
 if INCLUDED_SCENARIO_NAMES:
     SCENARIOS = [sc for sc in SCENARIOS if sc.get_name() in INCLUDED_SCENARIO_NAMES]
     if not SCENARIOS:
@@ -581,6 +599,14 @@ SEARCH_SPACES.update(
         },
         "MUSIC": lambda trial: {
             "n_cycles": trial.suggest_float("n_cycles", 0.5, 2.0),
+            "signal_order": trial.suggest_int("signal_order", 1, 4),
+            "update_decimation": trial.suggest_int("update_decimation", 5, 50),
+            "search_span_hz": trial.suggest_float("search_span_hz", 10.0, 25.0),
+            "coarse_step_hz": trial.suggest_float("coarse_step_hz", 0.5, 2.0),
+            "fine_span_hz": trial.suggest_float("fine_span_hz", 0.25, 2.0),
+            "fine_step_hz": trial.suggest_float("fine_step_hz", 0.025, 0.1, log=True),
+            "ultra_span_hz": trial.suggest_float("ultra_span_hz", 0.02, 0.10),
+            "ultra_step_hz": trial.suggest_float("ultra_step_hz", 0.003, 0.02, log=True),
         },
         "Matrix-Pencil": lambda trial: {
             "gain": trial.suggest_float("gain", 1e-4, 0.1, log=True),
@@ -599,6 +625,7 @@ N_TRIALS_OVERRIDES: dict[str, int] = {
     "Prony": _env_int("BENCHMARK_N_TRIALS_OVERRIDE_PRONY", 3, minimum=0),
     "ESPRIT": _env_int("BENCHMARK_N_TRIALS_OVERRIDE_ESPRIT", 3, minimum=0),
     "Koopman (RK-DPMU)": _env_int("BENCHMARK_N_TRIALS_OVERRIDE_KOOPMAN", 10, minimum=0),
+    "MUSIC": _env_int("BENCHMARK_N_TRIALS_OVERRIDE_MUSIC", 5, minimum=0),
 }
 
 
@@ -729,6 +756,47 @@ def _grid_cardinality(grid_space: dict[str, list[Any]]) -> int:
     for values in grid_space.values():
         total *= max(1, len(values))
     return int(total)
+
+
+def _seed_params_for_estimator(space_fn: Any, defaults: dict[str, Any]) -> dict[str, Any]:
+    """Return default params that are valid inside an Optuna search space."""
+    recorder = _SpaceRecorder()
+    try:
+        space_fn(recorder)
+    except Exception:
+        return {}
+
+    seed_params: dict[str, Any] = {}
+    for spec in recorder.specs:
+        name = str(spec["name"])
+        if name not in defaults:
+            continue
+        value = defaults[name]
+        kind = str(spec["kind"])
+        try:
+            if kind == "float":
+                value_f = float(value)
+                low = float(spec["low"])
+                high = float(spec["high"])
+                if bool(spec.get("log", False)) and value_f <= 0.0:
+                    continue
+                if low <= value_f <= high:
+                    seed_params[name] = value_f
+            elif kind == "int":
+                value_i = int(value)
+                low = int(spec["low"])
+                high = int(spec["high"])
+                if bool(spec.get("log", False)) and value_i <= 0:
+                    continue
+                if low <= value_i <= high:
+                    seed_params[name] = value_i
+            elif kind == "categorical":
+                choices = list(spec["choices"])
+                if value in choices:
+                    seed_params[name] = value
+        except Exception:
+            continue
+    return seed_params
 
 
 def _build_optuna_study(space_fn: Any, n_trials: int) -> tuple[optuna.Study, int, str]:
@@ -981,9 +1049,7 @@ def tune_estimator(
 
     if defaults:
         try:
-            dummy_trial = optuna.trial.FixedTrial({k: 0.5 for k in defaults.keys()})
-            dummy_suggested = space_fn(dummy_trial)
-            seed_params = {k: v for k, v in defaults.items() if k in dummy_suggested}
+            seed_params = _seed_params_for_estimator(space_fn, defaults)
             if seed_params:
                 study.enqueue_trial(seed_params, skip_if_exists=True)
         except Exception:
@@ -1232,6 +1298,7 @@ def run_phase_1(estimators: dict[str, type]) -> None:
                 estimator_cls=est_cls,
                 estimator_params=best_params,
                 n_runs=N_MC_RUNS,
+                n_cost_reps=N_COST_REPS,
             )
             result = engine.run()
             engine.save_csv(result, out_dir)
@@ -2446,6 +2513,22 @@ def _export_full_benchmark_json(estimators: dict[str, type]) -> Path:
     df_long = _load_long_run_dataframe(allowed_estimators=allowed_estimators)
     df_agg = _build_aggregated_dataframe(df_long)
     run_specs = _build_run_specs_manifest(allowed_estimators=allowed_estimators)
+    out_path = BASE_RESULTS_DIR / JSON_REPORT_NAME
+    artifacts = {
+        "run_root": str(BASE_RESULTS_DIR),
+        "global_metrics_report_csv": str(BASE_RESULTS_DIR / "global_metrics_report.csv"),
+        "aggregated_metrics_csv": str(BASE_RESULTS_DIR / "global_metrics_report.csv"),
+        "benchmark_report_json": str(out_path),
+        "figure_1_png": str(BASE_RESULTS_DIR / f"{FIGURE1_BASENAME}.png"),
+        "figure_1_pdf": str(BASE_RESULTS_DIR / f"{FIGURE1_BASENAME}.pdf"),
+        "figure_2_png": str(BASE_RESULTS_DIR / f"{FIGURE2_BASENAME}.png"),
+        "figure_2_pdf": str(BASE_RESULTS_DIR / f"{FIGURE2_BASENAME}.pdf"),
+    }
+    reproducibility = (
+        build_reproducibility_manifest(ROOT, None, source_root=ROOT)
+        if build_reproducibility_manifest is not None
+        else {}
+    )
 
     report: dict[str, Any] = {
         "metadata": {
@@ -2458,23 +2541,32 @@ def _export_full_benchmark_json(estimators: dict[str, type]) -> Path:
             "python_version": sys.version,
         },
         "run_configuration": {
+            "run_id": "full_mc_benchmark",
+            "mode": "full_mc_benchmark",
+            "metric_profile": CANONICAL_METRIC_PROFILE,
+            "metrics_locked": True,
             "benchmark_identity": BENCHMARK_IDENTITY,
             "benchmark_scope": BENCHMARK_SCOPE,
             "authority_statement": BENCHMARK_AUTHORITY_STATEMENT,
             "paper_alignment_policy": PAPER_ALIGNMENT_POLICY,
             "n_trials_tuning": N_TRIALS_TUNING,
             "n_mc_runs": N_MC_RUNS,
+            "n_cost_reps": N_COST_REPS,
             "optuna_sampler_mode": OPTUNA_SAMPLER_MODE,
             "optuna_seed": OPTUNA_SEED,
             "apply_trial_overrides": APPLY_TRIAL_OVERRIDES,
             "n_trials_overrides": _to_builtin(N_TRIALS_OVERRIDES),
             "excluded_estimators": _to_builtin(EXCLUDED_ESTIMATOR_LABELS),
+            "include_compat_base_scenarios": bool(INCLUDE_COMPAT_BASE_SCENARIOS),
             "base_results_dir": str(BASE_RESULTS_DIR),
             "scenarios": [sc.get_name() for sc in SCENARIOS],
+            "estimators": sorted(list(estimators.keys())),
+            "base_seed": 12345,
             "metrics": METRIC_COLUMNS,
             "metric_labels": METRIC_LABELS,
             "estimator_families": _ESTIMATOR_FAMILIES,
         },
+        "reproducibility": reproducibility,
         "estimators_loaded": sorted(list(estimators.keys())),
         "estimator_registry": build_estimator_registry_manifest(),
         "estimators_excluded": [spec.label for spec in excluded_estimator_specs()],
@@ -2492,16 +2584,10 @@ def _export_full_benchmark_json(estimators: dict[str, type]) -> Path:
             "robust_statistics": _build_robust_statistics(df_long, df_agg),
         },
         "andes_ieee39": _load_andes_ieee39_manifest(),
-        "artifacts_manifest": {
-            "global_metrics_report_csv": str(BASE_RESULTS_DIR / "global_metrics_report.csv"),
-            "figure_1_png": str(BASE_RESULTS_DIR / f"{FIGURE1_BASENAME}.png"),
-            "figure_1_pdf": str(BASE_RESULTS_DIR / f"{FIGURE1_BASENAME}.pdf"),
-            "figure_2_png": str(BASE_RESULTS_DIR / f"{FIGURE2_BASENAME}.png"),
-            "figure_2_pdf": str(BASE_RESULTS_DIR / f"{FIGURE2_BASENAME}.pdf"),
-        },
+        "artifacts": artifacts,
+        "artifacts_manifest": artifacts,
     }
 
-    out_path = BASE_RESULTS_DIR / JSON_REPORT_NAME
     out_path.write_text(
         json.dumps(_to_builtin(report), indent=2, ensure_ascii=False),
         encoding="utf-8",
@@ -2575,10 +2661,12 @@ def main() -> None:
     print(
         "Run config: "
         f"N_MC_RUNS={N_MC_RUNS}, "
+        f"N_COST_REPS={N_COST_REPS}, "
         f"N_TRIALS_TUNING={N_TRIALS_TUNING}, "
         f"OPTUNA_SAMPLER={OPTUNA_SAMPLER_MODE}, "
         f"APPLY_OVERRIDES={APPLY_TRIAL_OVERRIDES}, "
-        f"EXCLUDED={EXCLUDED_ESTIMATOR_LABELS}"
+        f"EXCLUDED={EXCLUDED_ESTIMATOR_LABELS}, "
+        f"COMPAT_BASE_SCENARIOS={INCLUDE_COMPAT_BASE_SCENARIOS}"
     )
 
     run_phase_1(estimators)

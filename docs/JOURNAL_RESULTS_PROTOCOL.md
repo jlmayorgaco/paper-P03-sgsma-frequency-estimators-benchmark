@@ -32,7 +32,12 @@ Use three layers of evidence.
    This keeps the original full Monte Carlo workflow alive. Use it when the
    paper figures or legacy artifact structure need to be regenerated.
 
-3. `python -m pipelines.atlas_sweep --sweeps all --policy fixed_policy --n-runs 100 --n-cost-reps 3 --tune-trials 80 --output-subdir atlas-paper-v1`
+3. `scripts/run_atlas_paper_grade.ps1` on Windows, or
+   `scripts/run_atlas_paper_grade.sh` on Linux/macOS.
+
+   The canonical command is:
+
+   `python -m pipelines.atlas_sweep --sweeps all --policy fixed_policy --n-runs 100 --base-seed 12345 --n-cost-reps 3 --tune-trials 80 --tune-eval-runs 5 --output-subdir atlas-paper-fixed-v2 --resume`
 
    This produces the unified ATLAS sweep set. Magnitude Step, RoCoF, Frequency
    Step, Phase Jump, AM Modulation, FM Modulation, Harmonics, Interharmonics,

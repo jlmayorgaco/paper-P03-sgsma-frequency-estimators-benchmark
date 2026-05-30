@@ -407,7 +407,11 @@ def build_parser() -> argparse.ArgumentParser:
     hypotheses = sub.add_parser("hypotheses", help="Generate or run preregistered hypotheses.")
     hypotheses_sub = hypotheses.add_subparsers(dest="hypotheses_cmd", required=True)
     hyp_generate = hypotheses_sub.add_parser("generate", help="Generate an organized hypothesis YAML bank.")
-    hyp_generate.add_argument("--scope", choices=["starter", "canonical"], default="starter")
+    hyp_generate.add_argument(
+        "--scope",
+        choices=["starter", "canonical", "mvp2_music_no_pigru"],
+        default="starter",
+    )
     hyp_generate.add_argument("--output", default="hypotheses.generated.yaml")
     hyp_generate.set_defaults(handler=_cmd_hypotheses_generate)
     hyp_run = hypotheses_sub.add_parser("run", help="Run hypotheses against a benchmark_report.json file.")

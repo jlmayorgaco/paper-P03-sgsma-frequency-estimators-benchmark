@@ -45,7 +45,7 @@ from openfreqbench.artifacts import (
     write_paper_traceability,
 )
 from openfreqbench.reproducibility import git_manifest, sha256_file
-from pipelines.benchmark_definition import ESTIMATOR_FAMILIES, load_active_estimators
+from pipelines.benchmark_definition import ACTIVE_ESTIMATOR_SPECS, ESTIMATOR_FAMILIES, load_active_estimators
 import pipelines.full_mc_benchmark as benchmark
 from scenarios.ibr_harmonics_large import IBRHarmonicsLargeScenario
 from scenarios.ibr_harmonics_medium import IBRHarmonicsMediumScenario
@@ -55,10 +55,13 @@ from scenarios.ieee_mag_step import IEEEMagStepScenario
 from scenarios.ieee_modulation_am import IEEEModulationAMScenario
 from scenarios.ieee_modulation_fm import IEEEModulationFMScenario
 from scenarios.ieee_phase_jump_20 import IEEEPhaseJump20Scenario
+from scenarios.ieee_impulsive_noise import IEEEImpulsiveNoiseScenario
+from scenarios.ieee_mixed_stress import IEEEMixedStressScenario
+from scenarios.ieee_nongaussian_noise import IEEENonGaussianNoiseScenario
 from scenarios.ieee_single_sinwave import IEEESingleSinWaveScenario
 
 
-METHOD_VERSION = "atlas_sweep_v2_2026_05_25_phase_modulation_p0"
+METHOD_VERSION = "atlas_sweep_v2_2026_05_27_mixed_ibr_stress_p0"
 
 GLOBAL_CSV_NAME = "global_metrics_report.csv"
 RMSE_EST_CSV_NAME = "rmse_by_estimator.csv"
@@ -77,16 +80,16 @@ METHOD_MAP_PDF_NAME = "atlas_method_map.pdf"
 METHOD_MAP_PNG_NAME = "atlas_method_map.png"
 ASYMMETRY_PDF_NAME = "atlas_sign_asymmetry.pdf"
 ASYMMETRY_PNG_NAME = "atlas_sign_asymmetry.png"
+ASYMMETRY_CSV_NAME = "atlas_sign_asymmetry.csv"
+WINNER_REGIONS_CSV_NAME = "atlas_winner_regions.csv"
+CRITICAL_THRESHOLDS_CSV_NAME = "atlas_critical_thresholds.csv"
 PARETO_PDF_NAME = "atlas_accuracy_latency_cpu_pareto.pdf"
 PARETO_PNG_NAME = "atlas_accuracy_latency_cpu_pareto.png"
 LEGEND_CSV_NAME = "rmse_plot_method_legend.csv"
 READINESS_JSON_NAME = "atlas_readiness_report.json"
 READINESS_MD_NAME = "atlas_readiness_report.md"
 
-CANONICAL_ESTIMATORS = (
-    "ZCD,IPDFT,TFT,RLS,PLL,SOGI-PLL,SOGI-FLL,Type-3 SOGI-PLL,"
-    "LKF,LKF2,EKF,UKF,RA-EKF,TKEO,Prony,ESPRIT,Koopman (RK-DPMU),PI-GRU"
-)
+CANONICAL_ESTIMATORS = ",".join(spec.label for spec in ACTIVE_ESTIMATOR_SPECS)
 REQUIRED_ATLAS_SWEEPS = (
     "magnitude_step",
     "rocof",
@@ -138,6 +141,8 @@ METRIC_COLUMNS = [
     "m31_freq_bound_hit_rate",
     "m32_freq_lower_bound_hit_rate",
     "m33_freq_upper_bound_hit_rate",
+    "m34_p95_error_hz",
+    "m35_p99_error_hz",
 ]
 
 FAMILY_PALETTE = {
@@ -273,6 +278,31 @@ SEVERITY_REGIONS: dict[str, tuple[tuple[str, float, float, str], ...]] = {
         ("High", 0.003, 0.03, "#FDD835"),
         ("Severe", 0.03, 0.10, "#EF5350"),
     ),
+    "noise_nongaussian": (
+        ("Low noise", 0.0001, 0.001, "#66BB6A"),
+        ("Nominal", 0.001, 0.003, "#DCE775"),
+        ("High", 0.003, 0.03, "#FDD835"),
+        ("Severe", 0.03, 0.10, "#EF5350"),
+    ),
+    "impulse_probability": (
+        ("Rare", 1e-4, 3e-4, "#66BB6A"),
+        ("Sparse", 3e-4, 1e-3, "#DCE775"),
+        ("Moderate", 1e-3, 3e-3, "#FDD835"),
+        ("Dense", 3e-3, 1e-2, "#EF5350"),
+    ),
+    "heavy_tail_noise": (
+        ("Low noise", 0.0001, 0.001, "#66BB6A"),
+        ("Nominal", 0.001, 0.003, "#DCE775"),
+        ("High", 0.003, 0.03, "#FDD835"),
+        ("Severe", 0.03, 0.10, "#EF5350"),
+    ),
+    "mixed_ibr_lhs": (
+        ("Low", 0.10, 1.00, "#66BB6A"),
+        ("Standard-like", 1.00, 3.00, "#DCE775"),
+        ("IBR stress", 3.00, 10.00, "#FDD835"),
+        ("Severe", 10.00, 30.00, "#FFB74D"),
+        ("Extreme", 30.00, 50.00, "#EF5350"),
+    ),
 }
 
 
@@ -287,6 +317,7 @@ class SweepSpec:
     reference_value: float
     methodology: str
     directional: bool = True
+    variants: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -352,9 +383,10 @@ SWEEP_SPECS: dict[str, SweepSpec] = {
         default_levels=(5.0, 10.0, 20.0, 30.0, 45.0, 60.0),
         reference_value=20.0,
         methodology=(
-            "Phase-jump atlas: true frequency remains nominal while voltage phase changes "
-            "instantaneously. Frequency errors quantify phase-discontinuity rejection, "
-            "post-event recovery and sign asymmetry."
+            "Phase-jump atlas (pure): true frequency remains nominal while voltage phase "
+            "changes instantaneously. Quantifies phase-discontinuity rejection, post-event "
+            "recovery and sign asymmetry. Composite islanding (simultaneous frequency "
+            "deviation + phase shift) is covered by IBR multi-event scenarios, not this sweep."
         ),
     ),
     "modulation_am_sweep": SweepSpec(
@@ -433,6 +465,104 @@ SWEEP_SPECS: dict[str, SweepSpec] = {
         ),
         directional=False,
     ),
+    "noise_nongaussian": SweepSpec(
+        key="noise_nongaussian",
+        label="Non-Gaussian Noise",
+        x_col="noise_sigma_pu",
+        x_label="Noise sigma [pu] (matched variance)",
+        signed_col="noise_model",
+        default_levels=(0.0001, 0.0003, 0.001, 0.003, 0.01, 0.03, 0.10),
+        reference_value=0.001,
+        methodology=(
+            "Non-Gaussian noise atlas: all four models (Gaussian, Laplace, Student-t df=3, "
+            "Bernoulli-Gaussian) are parametrised by sigma and scaled so that their variance "
+            "equals sigma^2. Comparing at matched variance isolates the effect of tail shape "
+            "and impulsive structure from noise power."
+        ),
+        directional=False,
+        variants=("gaussian", "laplace", "student_t_df3", "bernoulli_gaussian"),
+    ),
+    "impulse_probability": SweepSpec(
+        key="impulse_probability",
+        label="Impulsive Noise",
+        x_col="impulse_probability_pu",
+        x_label="Impulse probability [pu]",
+        signed_col="impulse_probability_pu",
+        default_levels=(1e-4, 3e-4, 1e-3, 3e-3, 1e-2),
+        reference_value=1e-3,
+        methodology=(
+            "Bernoulli-Gaussian impulsive noise atlas: a fixed background AWGN (0.001 pu) is "
+            "present at all levels. Sparse Bernoulli spikes are added with independent "
+            "probability and magnitude axes. Isolates peak sensitivity and post-spike recovery "
+            "from baseline noise floor."
+        ),
+        directional=False,
+        variants=("mag0p05", "mag0p10", "mag0p20", "mag0p50"),
+    ),
+    "heavy_tail_noise": SweepSpec(
+        key="heavy_tail_noise",
+        label="Heavy-Tail Noise",
+        x_col="noise_sigma_pu",
+        x_label="Noise sigma [pu] (matched variance)",
+        signed_col="noise_model",
+        default_levels=(0.0001, 0.0003, 0.001, 0.003, 0.01, 0.03, 0.10),
+        reference_value=0.001,
+        methodology=(
+            "Heavy-tail noise atlas: Gaussian, Laplace, and Student-t (df=3, 5, 10) models "
+            "are compared at matched variance. Isolates the effect of tail heaviness from "
+            "noise power. Student-t df→∞ converges to Gaussian; lower df means heavier "
+            "tails and more frequent extreme deviations — directly tests Kalman-family "
+            "Gaussian assumptions."
+        ),
+        directional=False,
+        variants=("gaussian", "laplace", "student_t_df3", "student_t_df5", "student_t_df10"),
+    ),
+    "mixed_ibr_lhs": SweepSpec(
+        key="mixed_ibr_lhs",
+        label="Mixed IBR Stress",
+        x_col="rocof_hz_s",
+        x_label="|RoCoF| [Hz/s]",
+        signed_col="rocof_hz_s",
+        default_levels=(1.0, 5.0, 10.0, 20.0, 50.0),
+        reference_value=5.0,
+        methodology=(
+            "Mixed IBR stress atlas: each level applies a concurrent RoCoF ramp, phase jump, "
+            "integer harmonic distortion, and additive noise. Three disturbance profiles "
+            "(low_dist, med_dist, high_dist) sweep phase-jump, THD, and noise severity while "
+            "the x-axis sweeps RoCoF. Quantifies multi-stressor degradation beyond single-axis "
+            "sweeps; RoCoF is the primary severity axis."
+        ),
+        directional=False,
+        variants=("low_dist", "med_dist", "high_dist"),
+    ),
+}
+
+IMPULSE_VARIANT_MAGNITUDES: dict[str, float] = {
+    "mag0p05": 0.05,
+    "mag0p10": 0.10,
+    "mag0p20": 0.20,
+    "mag0p50": 0.50,
+}
+
+MIXED_IBR_VARIANT_PROFILES: dict[str, dict[str, Any]] = {
+    "low_dist":  {
+        "phase_jump_deg": 5.0,
+        "thd_pct": 3.0,
+        "noise_sigma_pu": 0.001,
+        "noise_type": "gaussian",
+    },
+    "med_dist":  {
+        "phase_jump_deg": 20.0,
+        "thd_pct": 8.0,
+        "noise_sigma_pu": 0.003,
+        "noise_type": "gaussian",
+    },
+    "high_dist": {
+        "phase_jump_deg": 45.0,
+        "thd_pct": 15.0,
+        "noise_sigma_pu": 0.01,
+        "noise_type": "bernoulli_gaussian",
+    },
 }
 
 
@@ -623,6 +753,10 @@ def _apply_atlas_overrides(cls: type, params: dict[str, Any], run_idx: int, n_ru
         "harmonics",
         "interharmonics",
         "noise_snr",
+        "noise_nongaussian",
+        "heavy_tail_noise",
+        "impulse_probability",
+        "mixed_ibr_lhs",
     }:
         out["phase_rad"] = float(2.0 * math.pi * phase_u)
     if sweep_key in {
@@ -641,7 +775,7 @@ def _apply_atlas_overrides(cls: type, params: dict[str, Any], run_idx: int, n_ru
             elif mode in {"none", "noise_free", "no_noise"}:
                 noise = 0.0
         out["noise_sigma"] = noise
-    elif sweep_key == "noise_snr":
+    elif sweep_key in {"noise_snr", "noise_nongaussian", "heavy_tail_noise"}:
         out["noise_sigma"] = float(out.get("noise_sigma", 0.0))
     elif sweep_key in {"harmonics", "interharmonics"}:
         out["white_noise_sigma"] = float(out.get("white_noise_sigma", 0.0))
@@ -655,14 +789,18 @@ def _apply_atlas_overrides(cls: type, params: dict[str, Any], run_idx: int, n_ru
     return out
 
 
-def _make_scenario_variant(sweep_key: str, signed_value: float) -> AtlasScenario:
+def _make_scenario_variant(sweep_key: str, signed_value: float, variant: str = "") -> AtlasScenario:
     spec = SWEEP_SPECS[sweep_key]
     value = float(signed_value)
     abs_value = abs(value)
-    direction = "pos" if value >= 0.0 else "neg"
-    if not spec.directional:
+    if spec.variants and variant:
+        direction = variant
+        value = abs_value
+    elif not spec.directional:
         value = abs_value
         direction = "level"
+    else:
+        direction = "pos" if value >= 0.0 else "neg"
     token = _sanitize_token(value)
     monte_carlo_space: dict[str, Any]
 
@@ -860,6 +998,92 @@ def _make_scenario_variant(sweep_key: str, signed_value: float) -> AtlasScenario
         monte_carlo_space = {
             "phase_rad": {"kind": "uniform", "low": 0.0, "high": 2.0 * math.pi},
         }
+    elif sweep_key in {"noise_nongaussian", "heavy_tail_noise"}:
+        sigma = abs_value
+        snr_db = _snr_db_from_sigma(sigma, amplitude_peak=1.0)
+        noise_type = direction if direction not in {"pos", "neg", "level"} else "gaussian"
+        variant_token = noise_type.replace("_", "")
+        sweep_prefix = "NonGaussianNoise" if sweep_key == "noise_nongaussian" else "HeavyTailNoise"
+        scenario_name = f"Atlas_{sweep_prefix}_{variant_token}_{token}pu"
+        class_name = f"Atlas{sweep_prefix}{variant_token.title().replace('_', '')}{token}"
+        default_params = {
+            **IEEENonGaussianNoiseScenario.DEFAULT_PARAMS,
+            "duration_s": _env_float("ATLAS_NOISE_DURATION_S", 1.5, minimum=0.3),
+            "amplitude": 1.0,
+            "freq_hz": 60.0,
+            "phase_rad": 0.0,
+            "noise_sigma": sigma,
+            "noise_type": noise_type,
+        }
+        base_cls = IEEENonGaussianNoiseScenario
+        signed_col = {
+            "noise_sigma_pu": sigma,
+            "snr_db": snr_db,
+            "noise_model": noise_type,
+        }
+        monte_carlo_space = {
+            "phase_rad": {"kind": "uniform", "low": 0.0, "high": 2.0 * math.pi},
+        }
+    elif sweep_key == "impulse_probability":
+        prob = abs_value
+        mag = IMPULSE_VARIANT_MAGNITUDES.get(direction, 0.10)
+        mag_token = direction if direction in IMPULSE_VARIANT_MAGNITUDES else f"{mag:g}".replace(".", "p")
+        scenario_name = f"Atlas_ImpulseProb_{mag_token}_{token}pu"
+        class_name = f"AtlasImpulseProb{mag_token.title().replace('_', '')}{token}"
+        awgn_sigma = _env_float("ATLAS_IMPULSE_AWGN_SIGMA", 0.001, minimum=0.0)
+        default_params = {
+            **IEEEImpulsiveNoiseScenario.DEFAULT_PARAMS,
+            "duration_s": _env_float("ATLAS_NOISE_DURATION_S", 1.5, minimum=0.3),
+            "amplitude": 1.0,
+            "freq_hz": 60.0,
+            "phase_rad": 0.0,
+            "awgn_sigma": awgn_sigma,
+            "impulse_probability": prob,
+            "impulse_magnitude_pu": mag,
+        }
+        base_cls = IEEEImpulsiveNoiseScenario
+        signed_col = {
+            "impulse_probability_pu": prob,
+            "impulse_magnitude_pu": mag,
+            "awgn_sigma_pu": awgn_sigma,
+        }
+        monte_carlo_space = {
+            "phase_rad": {"kind": "uniform", "low": 0.0, "high": 2.0 * math.pi},
+        }
+    elif sweep_key == "mixed_ibr_lhs":
+        rocof = abs_value
+        profile = MIXED_IBR_VARIANT_PROFILES.get(direction, MIXED_IBR_VARIANT_PROFILES["med_dist"])
+        t_ramp = _env_float("ATLAS_MIXED_T_RAMP_S", 0.30, minimum=0.0)
+        ramp_dur = _env_float("ATLAS_MIXED_RAMP_DURATION_S", 0.40, minimum=0.0)
+        t_jump = _env_float("ATLAS_MIXED_T_JUMP_S", 0.50, minimum=0.0)
+        dist_token = direction
+        rocof_token = token
+        scenario_name = f"Atlas_MixedIBR_{dist_token}_{rocof_token}Hzs"
+        class_name = f"AtlasMixedIbr{dist_token.title().replace('_', '')}{rocof_token}"
+        default_params = {
+            **IEEEMixedStressScenario.DEFAULT_PARAMS,
+            "duration_s": _env_float("ATLAS_MIXED_DURATION_S", 2.0, minimum=0.5),
+            "freq_nom_hz": 60.0,
+            "amplitude": 1.0,
+            "phase_rad": 0.0,
+            "rocof_hz_s": rocof,
+            "t_ramp_s": t_ramp,
+            "ramp_duration_s": ramp_dur,
+            "t_jump_s": t_jump,
+            **profile,
+        }
+        base_cls = IEEEMixedStressScenario
+        signed_col = {
+            "rocof_hz_s": rocof,
+            "phase_jump_deg": profile["phase_jump_deg"],
+            "thd_pct": profile["thd_pct"],
+            "noise_sigma_pu": profile["noise_sigma_pu"],
+            "noise_type": profile["noise_type"],
+            "stress_profile": direction,
+        }
+        monte_carlo_space = {
+            "phase_rad": {"kind": "uniform", "low": 0.0, "high": 2.0 * math.pi},
+        }
     else:
         raise ValueError(f"Unknown atlas sweep: {sweep_key}")
 
@@ -871,6 +1095,9 @@ def _make_scenario_variant(sweep_key: str, signed_value: float) -> AtlasScenario
             "harmonics",
             "interharmonics",
             "noise_snr",
+            "noise_nongaussian",
+            "heavy_tail_noise",
+            "impulse_probability",
             "modulation_am_sweep",
             "modulation_fm_sweep",
         },
@@ -908,6 +1135,10 @@ def _levels_for_sweep(sweep_key: str) -> list[float]:
         "harmonics": "ATLAS_HARMONICS_THD_LEVELS_PCT",
         "interharmonics": "ATLAS_INTERHARMONIC_LEVELS_PCT",
         "noise_snr": "ATLAS_NOISE_SIGMA_LEVELS_PU",
+        "noise_nongaussian": "ATLAS_NOISE_NONGAUSSIAN_SIGMA_LEVELS_PU",
+        "heavy_tail_noise": "ATLAS_HEAVY_TAIL_SIGMA_LEVELS_PU",
+        "impulse_probability": "ATLAS_IMPULSE_PROBABILITY_LEVELS_PU",
+        "mixed_ibr_lhs": "ATLAS_MIXED_ROCOF_LEVELS_HZ_S",
     }[sweep_key]
     configured = _float_csv(os.getenv(env_name))
     values = configured if configured else list(spec.default_levels)
@@ -916,7 +1147,10 @@ def _levels_for_sweep(sweep_key: str) -> list[float]:
 
 
 def _directions_for_sweep(sweep_key: str) -> list[str]:
-    if not SWEEP_SPECS[sweep_key].directional:
+    spec = SWEEP_SPECS[sweep_key]
+    if spec.variants:
+        return list(spec.variants)
+    if not spec.directional:
         return ["level"]
     env_names = [f"ATLAS_{sweep_key.upper()}_DIRECTIONS"]
     if sweep_key == "phase_jump_sweep":
@@ -962,6 +1196,9 @@ def _expand_sweep_keys(requested: list[str]) -> list[str]:
                     "harmonics",
                     "interharmonics",
                     "noise_snr",
+                    "noise_nongaussian",
+                    "impulse_probability",
+                    "mixed_ibr_lhs",
                 ]
             )
         else:
@@ -974,10 +1211,14 @@ def build_atlas_scenarios(sweep_keys: list[str]) -> list[AtlasScenario]:
     for sweep_key in _expand_sweep_keys(sweep_keys):
         if sweep_key not in SWEEP_SPECS:
             raise ValueError(f"Unknown ATLAS sweep: {sweep_key}. Known: {sorted(SWEEP_SPECS)}")
+        spec = SWEEP_SPECS[sweep_key]
         levels = _levels_for_sweep(sweep_key)
         for direction in _directions_for_sweep(sweep_key):
             for level in levels:
-                if SWEEP_SPECS[sweep_key].directional and abs(float(level)) <= 1e-12 and direction != "pos":
+                if spec.variants:
+                    scenarios.append(_make_scenario_variant(sweep_key, level, variant=direction))
+                    continue
+                if spec.directional and abs(float(level)) <= 1e-12 and direction != "pos":
                     continue
                 if sweep_key == "magnitude_step" and direction == "neg" and level >= 100.0:
                     continue
@@ -1339,6 +1580,20 @@ def _apply_sweep_x_axis(ax: plt.Axes, sweep_key: str, ticks: list[float], *, rot
         tick.set_rotation(rotation)
         tick.set_ha("right")
         tick.set_fontsize(6)
+    if sweep_key in {"noise_snr", "noise_nongaussian", "heavy_tail_noise"}:
+        _rms = 1.0 / math.sqrt(2.0)
+        try:
+            secax = ax.secondary_xaxis(
+                "top",
+                functions=(
+                    lambda s: 20.0 * np.log10(np.maximum(s, 1e-30) / _rms) * -1.0,
+                    lambda d: _rms * np.power(10.0, -d / 20.0),
+                ),
+            )
+            secax.set_xlabel("SNR [dB]", fontsize=5.8, labelpad=1.5)
+            secax.tick_params(labelsize=5.5)
+        except Exception:
+            pass
 
 
 def _shade_severity_regions(ax: plt.Axes, spec: SweepSpec, x_lo: float, x_hi: float, *, labels: bool = True) -> None:
@@ -1393,15 +1648,21 @@ def _plot_reference_panel(ax: plt.Axes, sweep_key: str) -> None:
             "harmonics",
             "interharmonics",
             "noise_snr",
+            "noise_nongaussian",
+            "heavy_tail_noise",
+            "impulse_probability",
+            "mixed_ibr_lhs",
         }:
             y = np.asarray(data.v, dtype=float)
-            if sweep_key == "phase_jump_sweep" and len(x):
-                event_t = float(scenario.scenario_cls.get_default_params().get("t_jump_s", 0.70))
+            if sweep_key in {"phase_jump_sweep", "mixed_ibr_lhs"} and len(x):
+                t_jump_key = "t_jump_s"
+                default_jump = 0.50 if sweep_key == "mixed_ibr_lhs" else 0.70
+                event_t = float(scenario.scenario_cls.get_default_params().get(t_jump_key, default_jump))
                 keep = (x >= max(float(x[0]), event_t - 0.055)) & (x <= min(float(x[-1]), event_t + 0.085))
                 x = x[keep]
                 y = y[keep]
                 ax.axvline(event_t, color="#B71C1C", linestyle=":", linewidth=1.1, label="jump")
-            if sweep_key in {"harmonics", "interharmonics", "noise_snr", "modulation_am_sweep"} and len(x):
+            if sweep_key in {"harmonics", "interharmonics", "noise_snr", "noise_nongaussian", "heavy_tail_noise", "impulse_probability", "modulation_am_sweep"} and len(x):
                 keep = x <= min(float(x[0]) + 0.12, float(x[-1]))
                 x = x[keep]
                 y = y[keep]
@@ -1671,10 +1932,16 @@ def save_multipage_dashboard(df_global: pd.DataFrame, out_dir: Path) -> Path:
     pages = [
         ("m1_rmse_hz_mean", "RMSE [Hz]", "log"),
         ("m3_max_peak_hz_mean", "Peak FE [Hz]", "log"),
+        ("m25_post_1cy_rmse_hz_mean", "Post-event 1 cycle RMSE [Hz]", "log"),
+        ("m26_post_3cy_rmse_hz_mean", "Post-event 3 cycle RMSE [Hz]", "log"),
         ("m27_post_100ms_rmse_hz_mean", "Post-event 100 ms RMSE [Hz]", "log"),
         ("m29_late_event_rmse_hz_mean", "Late-window RMSE [Hz]", "log"),
         ("m30_event_settling_time_s_mean", "Settling time [s]", "linear"),
         ("m5_trip_risk_s_mean", "Trip-risk time [s]", "linear"),
+        ("m11_rnaf_db_mean", "RNAF [dB]", "linear"),
+        ("m22_invalid_output_rate_mean", "Invalid output rate", "linear"),
+        ("m34_p95_error_hz_mean", "p95 frequency error [Hz]", "log"),
+        ("m35_p99_error_hz_mean", "p99 frequency error [Hz]", "log"),
         ("m15_pass_rate_pct_mean", "Pass rate [%]", "linear"),
         ("m13_cpu_time_us_mean", "CPU time [us/pass]", "log"),
     ]
@@ -1820,6 +2087,9 @@ def save_sign_asymmetry(df_global: pd.DataFrame, out_dir: Path) -> list[Path]:
                 pos = max(float(vals["pos"]), 1e-12)
                 neg = max(float(vals["neg"]), 1e-12)
                 ratios.append(max(pos, neg) / min(pos, neg))
+            elif len(vals) >= 2:
+                all_vals = [max(float(v), 1e-12) for v in vals.values()]
+                ratios.append(max(all_vals) / min(all_vals))
         if ratios:
             rows.append({"sweep_key": sweep_key, "estimator": estimator, "max_asymmetry_ratio": max(ratios)})
     df = pd.DataFrame(rows)
@@ -1871,13 +2141,20 @@ def save_sign_asymmetry(df_global: pd.DataFrame, out_dir: Path) -> list[Path]:
             ax.grid(True, which="both", axis="y", alpha=0.25)
             ax.legend(fontsize=7)
     else:
+        df["above_1p5"] = df["max_asymmetry_ratio"] > 1.5
+        df["above_2p0"] = df["max_asymmetry_ratio"] > 2.0
+        df.sort_values(["sweep_key", "max_asymmetry_ratio"], ascending=[True, False]).to_csv(
+            out_dir / ASYMMETRY_CSV_NAME, index=False
+        )
         pivot = df.pivot(index="estimator", columns="sweep_key", values="max_asymmetry_ratio").fillna(1.0)
         pivot = pivot.loc[pivot.max(axis=1).sort_values(ascending=False).index]
         x = np.arange(len(pivot.index))
         width = 0.8 / max(1, len(pivot.columns))
         for idx, col in enumerate(pivot.columns):
             ax.bar(x + idx * width, pivot[col].to_numpy(dtype=float), width=width, label=str(col))
-        ax.axhline(3.0, color="#B71C1C", linestyle="--", linewidth=1.0, label="diagnostic threshold")
+        ax.axhline(1.5, color="#F57F17", linestyle=":", linewidth=0.9, label="1.5× warn")
+        ax.axhline(2.0, color="#E65100", linestyle="--", linewidth=0.95, label="2.0× flag")
+        ax.axhline(3.0, color="#B71C1C", linestyle="--", linewidth=1.0, label="3.0× diagnostic")
         ax.set_xticks(x + width * (len(pivot.columns) - 1) / 2)
         ax.set_xticklabels(pivot.index, rotation=70, ha="right", fontsize=7)
         ax.set_ylabel("max(pos, neg) / min(pos, neg)")
@@ -1900,6 +2177,76 @@ def save_sign_asymmetry(df_global: pd.DataFrame, out_dir: Path) -> list[Path]:
         extra_paths.extend([alias_png, alias_pdf])
     plt.close(fig)
     return [png, pdf, *extra_paths]
+
+
+def save_winner_regions(df_global: pd.DataFrame, out_dir: Path) -> Path:
+    rows: list[dict[str, Any]] = []
+    for sweep_key in sorted(df_global["sweep_key"].astype(str).unique()):
+        spec = SWEEP_SPECS.get(sweep_key)
+        if spec is None or spec.x_col not in df_global.columns:
+            continue
+        bands = SEVERITY_REGIONS.get(sweep_key)
+        if not bands:
+            continue
+        part = df_global[df_global["sweep_key"].astype(str) == sweep_key].copy()
+        part["_x"] = pd.to_numeric(part[spec.x_col], errors="coerce")
+        part = part.dropna(subset=["_x", "m1_rmse_hz_mean"])
+        for label, x_min, x_max, _color in bands:
+            band = part[(part["_x"] >= x_min) & (part["_x"] < x_max)]
+            if band.empty:
+                continue
+            summary = (
+                band.groupby(["estimator", "family"], as_index=False)
+                .agg(median_rmse_hz=("m1_rmse_hz_mean", "median"))
+                .sort_values("median_rmse_hz")
+            )
+            if summary.empty:
+                continue
+            best = summary.iloc[0]
+            rows.append({
+                "sweep_key": sweep_key,
+                "region": label,
+                "x_col": spec.x_col,
+                "x_min": x_min,
+                "x_max": x_max,
+                "best_estimator": str(best["estimator"]),
+                "family": str(best["family"]),
+                "median_rmse_hz": float(best["median_rmse_hz"]),
+            })
+    csv_path = out_dir / WINNER_REGIONS_CSV_NAME
+    pd.DataFrame(rows).to_csv(csv_path, index=False)
+    return csv_path
+
+
+def save_critical_thresholds(df_global: pd.DataFrame, out_dir: Path) -> Path:
+    guide = _env_float("ATLAS_LIMIT_RMSE_GUIDE", 0.05, minimum=0.0)
+    rows: list[dict[str, Any]] = []
+    for sweep_key in sorted(df_global["sweep_key"].astype(str).unique()):
+        spec = SWEEP_SPECS.get(sweep_key)
+        if spec is None or spec.x_col not in df_global.columns:
+            continue
+        part = df_global[df_global["sweep_key"].astype(str) == sweep_key].copy()
+        families = part[["estimator", "family"]].drop_duplicates().set_index("estimator")["family"].to_dict()
+        for estimator, df_est in part.sort_values(spec.x_col).groupby("estimator", sort=False):
+            reduced = (
+                df_est.groupby(spec.x_col, as_index=False)["m1_rmse_hz_mean"]
+                .mean()
+                .sort_values(spec.x_col)
+            )
+            fail = reduced[reduced["m1_rmse_hz_mean"] > guide]
+            critical = float(fail.iloc[0][spec.x_col]) if not fail.empty else float("nan")
+            rows.append({
+                "sweep_key": sweep_key,
+                "estimator": str(estimator),
+                "family": families.get(str(estimator), "Unknown"),
+                "x_col": spec.x_col,
+                "critical_level": critical,
+                "max_level_tested": float(reduced[spec.x_col].max()),
+                "rmse_guide_hz": guide,
+            })
+    csv_path = out_dir / CRITICAL_THRESHOLDS_CSV_NAME
+    pd.DataFrame(rows).to_csv(csv_path, index=False)
+    return csv_path
 
 
 def save_pareto_plot(df_global: pd.DataFrame, out_dir: Path) -> list[Path]:
@@ -1941,7 +2288,7 @@ def save_pareto_plot(df_global: pd.DataFrame, out_dir: Path) -> list[Path]:
         ax.grid(True, which="both", alpha=0.25)
     for ax in axes_flat[len(sweeps):]:
         ax.set_visible(False)
-    fig.suptitle("Accuracy vs CPU vs structural latency", fontsize=13)
+    fig.suptitle("Accuracy vs CPU vs structural latency\n(marker size ∝ structural latency [ms])", fontsize=11)
     fig.tight_layout()
     png = out_dir / PARETO_PNG_NAME
     pdf = out_dir / PARETO_PDF_NAME
@@ -2006,6 +2353,8 @@ def save_hypothesis_results(df_global: pd.DataFrame, out_dir: Path) -> Path:
         finite = np.isfinite(x_all) & np.isfinite(y_all) & (x_all > 0.0) & (y_all > 0.0)
         x = x_all[finite]
         y = y_all[finite]
+        median_rmse_hz = float(np.median(y)) if len(y) > 0 else float("nan")
+        _rmse_guide = _env_float("ATLAS_LIMIT_RMSE_GUIDE", 0.05, minimum=0.0)
         if len(x) < 4:
             regime = "too_few_finite_points"
             slope = float("nan")
@@ -2020,7 +2369,7 @@ def save_hypothesis_results(df_global: pd.DataFrame, out_dir: Path) -> Path:
                 if not math.isfinite(float(slope)) or not math.isfinite(ratio):
                     regime = "nonfinite_or_unstable"
                 elif ratio <= 1.35 and abs(float(slope)) <= 0.12:
-                    regime = "flat"
+                    regime = "flat_good" if median_rmse_hz < _rmse_guide else "flat_bad"
                 elif float(slope) > 0.15 and float(np.mean(diffs >= -0.08)) >= 0.75:
                     regime = "monotone_deterioration"
                 elif float(slope) < -0.12:
@@ -2041,6 +2390,8 @@ def save_hypothesis_results(df_global: pd.DataFrame, out_dir: Path) -> Path:
                 "x_axis": spec.x_col,
                 "trend_slope_loglog": float(slope) if math.isfinite(float(slope)) else "",
                 "high_low_ratio": float(ratio) if math.isfinite(float(ratio)) else "",
+                "median_rmse_hz": median_rmse_hz if math.isfinite(median_rmse_hz) else "",
+                "rmse_guide_hz": _rmse_guide,
                 "classification": regime,
                 "status": "diagnostic" if int(part["n_mc_runs"].median()) < 30 else "claimable_with_mc_support",
             }
@@ -2612,6 +2963,8 @@ def run_atlas(args: argparse.Namespace) -> Path:
     plot_paths.extend(save_method_map(df_global, out_dir))
     plot_paths.extend(save_sign_asymmetry(df_global, out_dir))
     plot_paths.extend(save_pareto_plot(df_global, out_dir))
+    winner_regions_csv = save_winner_regions(df_global, out_dir)
+    critical_thresholds_csv = save_critical_thresholds(df_global, out_dir)
     dashboard_pdf = save_multipage_dashboard(df_global, out_dir)
     hypothesis_csv = save_hypothesis_results(df_global, out_dir)
     readiness_json_path, readiness_md_path, readiness_report = write_atlas_readiness_report(df_global, settings, out_dir)
@@ -2638,10 +2991,13 @@ def run_atlas(args: argparse.Namespace) -> Path:
         "rmse_by_family_csv": str(rmse_family),
         "timing_profile_csv": str(timing_csv),
         "hypothesis_results_csv": str(hypothesis_csv),
+        "winner_regions_csv": str(winner_regions_csv),
+        "critical_thresholds_csv": str(critical_thresholds_csv),
         "metrics_dashboard_pdf": str(dashboard_pdf),
         "rmse_family_pdf": str(out_dir / RMSE_FAMILY_PDF_NAME),
         "method_map_pdf": str(out_dir / METHOD_MAP_PDF_NAME),
         "sign_asymmetry_pdf": str(out_dir / ASYMMETRY_PDF_NAME),
+        "sign_asymmetry_csv": str(out_dir / ASYMMETRY_CSV_NAME),
         "pareto_pdf": str(out_dir / PARETO_PDF_NAME),
         "atlas_readiness_json": str(readiness_json_path),
         "atlas_readiness_md": str(readiness_md_path),

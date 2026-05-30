@@ -290,7 +290,11 @@ class MonteCarloEngine:
                 signal_dict["f_hat_hz"] = f_hat
 
             struct_samples = est_out.get("struct_samples", 0)
-            noise_sigma = params.get("noise_sigma", params.get("white_noise_sigma", 0.0))
+            noise_sigma = params.get("noise_sigma")
+            if noise_sigma is None:
+                noise_sigma = params.get("white_noise_sigma", 0.0)
+            if noise_sigma is None:
+                noise_sigma = 0.0
             event_time_s = params.get(
                 "t_step_s",
                 params.get("t_start_s", params.get("t_event_s", params.get("t_jump_s"))),
@@ -410,6 +414,5 @@ class MonteCarloEngine:
         result.signals_df.to_csv(signals_path, index=False)
 
         return summary_path, signals_path
-
 
 

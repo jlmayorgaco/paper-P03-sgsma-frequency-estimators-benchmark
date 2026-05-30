@@ -95,13 +95,57 @@ def build_hypothesis_bank(scope: str = "starter") -> dict[str, list[dict[str, An
             "scenario:IBR_Harmonics_Small",
         ),
     ]
+    music_no_pigru_rows = [
+        _h(
+            "H_AUTO_MUSIC_001",
+            "MUSIC vs ESPRIT RMSE",
+            "m1_rmse_hz",
+            "estimator:MUSIC",
+            "estimator:ESPRIT",
+            "bh",
+        ),
+        _h(
+            "H_AUTO_MUSIC_002",
+            "MUSIC vs Prony RMSE",
+            "m1_rmse_hz",
+            "estimator:MUSIC",
+            "estimator:Prony",
+            "bh",
+        ),
+        _h(
+            "H_AUTO_MUSIC_003",
+            "MUSIC vs ESPRIT CPU",
+            "m13_cpu_time_us",
+            "estimator:MUSIC",
+            "estimator:ESPRIT",
+            "bh",
+        ),
+        _h(
+            "H_AUTO_MUSIC_004",
+            "Exotic vs Window-based RMSE",
+            "m1_rmse_hz",
+            "family:Exotic",
+            "family:Window-based",
+            "holm",
+        ),
+        _h(
+            "H_AUTO_MUSIC_005",
+            "Exotic vs Window-based CPU",
+            "m13_cpu_time_us",
+            "family:Exotic",
+            "family:Window-based",
+            "holm",
+        ),
+    ]
 
     if scope == "starter":
         rows = global_rows[:2] + estimator_rows[:2]
     elif scope == "canonical":
         rows = global_rows + estimator_rows + scenario_rows
+    elif scope == "mvp2_music_no_pigru":
+        rows = global_rows + estimator_rows + scenario_rows + music_no_pigru_rows
     else:
-        raise ValueError("scope must be `starter` or `canonical`.")
+        raise ValueError("scope must be `starter`, `canonical`, or `mvp2_music_no_pigru`.")
     return {"hypotheses": rows}
 
 
@@ -110,4 +154,3 @@ def write_hypothesis_bank(output_path: Path, scope: str = "starter") -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
     return output_path
-
