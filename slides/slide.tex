@@ -205,7 +205,7 @@
       inner xsep=5pt,
       inner ysep=3pt
     ] at (0,0)
-    {FULL MONTE-CARLO BENCHMARK: 18 estimators, 33 scenarios, $n=5$ per scenario};
+    {OPENFREQBENCH EXPANSION: 18 estimators, 33 scenarios, $n=5$ seeds per scenario};
   \end{tikzpicture}\par\vspace{-0.10cm}%
 }
 \newcommand{\diagbanner}{%
@@ -222,7 +222,7 @@
       inner xsep=5pt,
       inner ysep=3pt
     ] at (0,0)
-    {DIAGNOSTIC PILOT: small-$n$ Monte Carlo, per-scenario tuned --- paper-grade $n\ge30$ run pending};
+    {DIAGNOSTIC PILOT: limited-$n$ or subset sweep --- do not read as qualification evidence};
   \end{tikzpicture}\par\vspace{-0.10cm}%
 }
 \newcommand{\papergradebanner}{%
@@ -239,7 +239,7 @@
       inner xsep=5pt,
       inner ysep=3pt
     ] at (0,0)
-    {PAPER-GRADE SWEEP: $n=30$, fixed policy, both signs --- full-ATLAS readiness met (9/9 sweeps)};
+    {ATLAS VALIDATED SWEEP: $n=30$, fixed policy, both signs --- readiness gate passed (9/9 sweeps)};
   \end{tikzpicture}\par\vspace{-0.10cm}%
 }
 \newcommand{\sectionframe}[3]{%
@@ -303,7 +303,7 @@
 \node[event, fill=ofbBlue!8, draw=ofbBlue] at (0.6,-1.15) {
 \textbf{Blue Cut}\\
 CA, Aug. 16\\[0.25em]
-\textbf{$\sim$1.2 GW PV}\\
+\textbf{1,178 MW PV}\\
 false near-instantaneous frequency trips during distorted fault waveforms\\[0.25em]
 \textit{stress: distortion $\rightarrow$ frequency artifact}
 };
@@ -314,7 +314,7 @@ false near-instantaneous frequency trips during distorted fault waveforms\\[0.25
 \textbf{Canyon 2}\\
 CA, Oct. 9\\[0.25em]
 \textbf{682 / 937 MW}\\
-solar reductions; NERC states frequency tripping was not the cause\\[0.25em]
+solar reductions; erroneous frequency tripping was not the cause\\[0.25em]
 \textit{stress: PLL, voltage response, recovery}
 };
 
@@ -351,7 +351,7 @@ ac overcurrent/overvoltage, dc-bus, unbalance, data-quality issues\\[0.25em]
 \end{center}
 \vspace{-0.2em}
 \callout{\textbf{Benchmark implication:} the estimator must be tested against waveform distortion, phase jumps, control recovery, unbalance, noise, harmonics, interharmonics, and reporting-rate limits, not only steady-state frequency error.}
-\artifact{NERC Blue Cut 2017; NERC/WECC Canyon 2 2018; NERC Odessa 2021/2022; NERC/WECC CA BESS 2023; Dong et al. Kaua'i analysis}
+\artifact{NERC/WECC Blue Cut 2017; NERC/WECC Canyon 2 2018; NERC Odessa 2022; NERC/WECC CA BESS 2023; Dong et al. Kaua'i 2021 analysis}
 \end{frame}
 
 \begin{frame}{Standard PMU streams show consequences, not always causes}
@@ -453,13 +453,13 @@ Report error, transient exposure, settling, latency, and cost as separate output
 \begin{frame}{Experiment scale}
 \begin{columns}[T,onlytextwidth]
 \column{0.33\linewidth}
-\statcard{ofbBlue}{18}{estimators}
+\statcard{ofbBlue}{16}{estimators}
 \vspace{0.35em}
-\statcard{ofbGreen}{5}{scenarios}
+\statcard{ofbGreen}{34}{scenarios}
 \column{0.33\linewidth}
-\statcard{ofbGold}{4}{families}
+\statcard{ofbGold}{10}{families}
 \vspace{0.35em}
-\statcard{ofbViolet}{grid}{search}
+\statcard{ofbViolet}{60}{MC runs}
 \column{0.29\linewidth}
 \begin{block}{Central finding}
 \small
@@ -467,7 +467,8 @@ No single estimator wins across objectives: the ranking changes with scenario, m
 \end{block}
 \end{columns}
 \vspace{0.4em}
-\callout{\textbf{Dataset}: 18 estimators (incl.\ legacy baselines) across 33 scenarios, $n=5$ Monte Carlo per scenario, with standard and IBR-specific metrics, plus ATLAS severity sweeps.}
+\callout{\textbf{SGSMA benchmark matrix}: 544 estimator--scenario summaries and 32{,}640 records from 1 MHz synthetic truth, 10 kHz estimator outputs, scenario-wise tuning, and locked metric formulas. OpenFreqBench and ATLAS results later in the talk are labeled as extensions.}
+\artifact{SGSMA benchmark matrix, Sec. III--IV and Fig. 2 caption}
 \end{frame}
 
 \begin{frame}{Estimator selection logic}
@@ -489,7 +490,7 @@ No single estimator wins across objectives: the ranking changes with scenario, m
 \node<1->[result, fill=ofbSoft, draw=ofbBlue] (eventr) at (0,0.28) {Ramp / RoCoF\\phase jump\\harmonics\\multi-event};
 \node<2->[result, fill=ofbSoft, draw=ofbGreen] (metricr) at (3.15,0.28) {RMSE\\RoCoF error\\$T_{\mathrm{trip}}$\\settling};
 \node<3->[result, fill=ofbSoft, draw=ofbGold] (costr) at (6.30,0.28) {MCU/DSP\\FPGA\\CPU/GPU\\latency budget};
-\node<4->[result, fill=ofbSoft, draw=ofbViolet] (evidencer) at (9.45,0.28) {full sweep ($n{=}5$)\\ATLAS severity\\($n{=}30$ paper-grade)\\validation gate};
+\node<4->[result, fill=ofbSoft, draw=ofbViolet] (evidencer) at (9.45,0.28) {SGSMA matrix ($n{=}60$)\\OpenFreqBench\\ATLAS severity\\validation gate};
 \draw<2->[arr] (event) -- (metric);
 \draw<3->[arr] (metric) -- (cost);
 \draw<4->[arr] (cost) -- (evidence);
@@ -647,7 +648,7 @@ Benchmark reports, metric tables, plots, manifests, and readiness gates.
 ]
 \node[box, fill=ofbBlue!12, draw=ofbBlue] (wave) at (0,1.2) {1 MHz\\waveform truth};
 \node[box, fill=ofbGreen!12, draw=ofbGreen] (dec) at (2.8,1.2) {10 kHz\\DSP stream};
-\node[box, fill=ofbGold!18, draw=ofbGold] (est) at (5.6,1.2) {18 estimators\\common scenarios};
+\node[box, fill=ofbGold!18, draw=ofbGold] (est) at (5.6,1.2) {16 estimators\\34 scenarios};
 \node[box, fill=ofbViolet!12, draw=ofbViolet] (tune) at (1.4,-0.15) {scenario-wise\\grid search};
 \node[box, fill=ofbRed!10, draw=ofbRed] (met) at (4.2,-0.15) {metric vector\\error + risk + cost};
 \node[box, fill=ofbSoft, draw=ofbInk, minimum width=5.8cm] (paper) at (2.8,-1.45) {standard tests, IBR stress, CPU feasibility, response dashboard};
@@ -1072,28 +1073,26 @@ Embedded feasibility & PLL, SOGI-FLL, EKF, RA-EKF remain plausible & 9--17 $\mu$
 \toprule
 Method & Time/sample & Family & Target \\
 \midrule
-ZCD & 7 $\mu$s & Loop & MCU \\
-SOGI-FLL & 9 $\mu$s & Loop & MCU \\
-PLL & 9 $\mu$s & Loop & MCU \\
-EKF & 11 $\mu$s & Model & MCU/DSP \\
-UKF & 13 $\mu$s & Model & DSP \\
-RA-EKF & \textbf{15 $\mu$s} & \textbf{Model} & \textbf{DSP} \\
-IpDFT & 17 $\mu$s & Window & DSP/FPGA \\
-ESPRIT & $\approx$1{,}400 $\mu$s & Window & CPU \\
-Koopman & $\approx$15{,}000 $\mu$s & Data-driven & CPU/GPU \\
+SOGI-FLL & 0.0348 $\mu$s & Loop & MCU \\
+SOGI-PLL & 0.0867 $\mu$s & Loop & MCU \\
+EKF & 0.813 $\mu$s & Model & MCU/DSP \\
+RA-EKF & \textbf{1.61 $\mu$s} & \textbf{Model} & \textbf{DSP} \\
+TFT / IpDFT & 3--4 $\mu$s & Window & DSP/FPGA \\
+Koopman & 390 $\mu$s & Data-driven & CPU/GPU \\
+ESPRIT & 2{,}838 $\mu$s & Window & CPU \\
 \bottomrule
 \end{tabular}
 \column{0.46\linewidth}
 \begin{block}{Deployment interpretation}
 \small
-The Python baseline separates feasible estimator families from clearly prohibitive ones; hardware latency requires platform timing.
+CPU is a software-cost indicator from the benchmark harness, not a hardware-latency claim.
 \end{block}
 \begin{block}{Key comparison}
 \small
-The state-space and loop families all run at $\sim$10--17 $\mu$s/sample (embedded-feasible); spectral (ESPRIT, MUSIC) and data-driven (Koopman) methods are 100--1000$\times$ costlier and data-dependent.
+The practical low-cost cluster is SOGI-FLL, SOGI-PLL, EKF, and RA-EKF. Koopman and ESPRIT sit far to the right on cost without a global RMSE gain.
 \end{block}
 \end{columns}
-\artifact{full\_mc\_benchmark, $n=5$: mean \texttt{m13\_cpu\_time\_us}}
+\artifact{SGSMA benchmark matrix, Sec. IV-D and Fig. 2(g)--(h)}
 \end{frame}
 
 \begin{frame}{Deployment limits}
@@ -1107,12 +1106,13 @@ The state-space and loop families all run at $\sim$10--17 $\mu$s/sample (embedde
 \begin{itemize}
 \setlength\itemsep{0.14em}
 \item Deployment combines RMSE, trip exposure, CPU, and divergence robustness.
-\item State-space + loop methods cluster at low cost ($\le17\,\mu$s) and low trip.
-\item Spectral/data-driven methods trade lower error for 100--1000$\times$ higher CPU.
+\item In the OpenFreqBench expansion, state-space + loop methods cluster at low cost ($\le17\,\mu$s) and low trip.
+\item Spectral/data-driven methods trade lower error for much higher CPU in this artifact.
 \item RA-EKF stays low-cost with no ramp divergence in this run.
 \end{itemize}
 \end{exampleblock}
 \end{columns}
+\artifact{OpenFreqBench expansion: artifacts/full\_mc\_benchmark, $n=5$}
 \end{frame}
 
 \begin{frame}{Balance profile}
@@ -1176,16 +1176,17 @@ The heatmap shows methods that pass Step/Ramp/Mod but fail islanding or multi-ev
 \begin{block}{Metric disagreement}
 \scriptsize
 \textbf{RMSE, trip-risk, and CPU select different winners.}\\
-Under multi-event stress UKF has the lowest RMSE/trip, SOGI-FLL the lowest usable CPU, and Koopman is $1000\times$ costlier.
+In the OpenFreqBench multi-event run, UKF has the lowest RMSE/trip, SOGI-FLL the lowest usable CPU, and Koopman is $1000\times$ costlier.
 \end{block}
 \begin{block}{Deployability}
 \scriptsize
 \textbf{Feasibility changes the accuracy ranking.}\\
-RA-EKF runs at $\sim$15 $\mu$s/sample; the spectral and data-driven methods are 100--1000$\times$ costlier and sit outside relay-class timing.
+In that same expansion, RA-EKF runs at $\sim$15 $\mu$s/sample; selected spectral and data-driven methods move far outside that cost range.
 \end{block}
 \end{columns}
 \vspace{-0.10cm}
 {\scriptsize\color{ofbMuted}\textbf{Guardrail:} report scenario, metric, and compute envelope before naming a preferred estimator.}
+\artifact{OpenFreqBench expansion: artifacts/full\_mc\_benchmark, $n=5$}
 \end{frame}
 
 \section{Expanded \& ATLAS}
@@ -1209,7 +1210,7 @@ RA-EKF runs at $\sim$15 $\mu$s/sample; the spectral and data-driven methods are 
 \small
 \begin{itemize}
   \item Severity, sign, and policy curves per stress family.
-  \item Fixed-policy, paper-grade $n=30$ across all 9 required sweeps (both signs).
+  \item Fixed-policy $n=30$ across all 9 required sweeps (both signs).
   \item Harmonic, RoCoF, phase-jump, and noise atlases.
   \item Tests sensitivity, scaling, and family stability.
 \end{itemize}
@@ -1219,28 +1220,27 @@ RA-EKF runs at $\sim$15 $\mu$s/sample; the spectral and data-driven methods are 
 \callout{Two evidence layers on the same truth: a replicated Monte-Carlo benchmark, plus ATLAS severity sweeps that trace where each estimator family degrades.}
 \end{frame}
 
-\begin{frame}{Expanded benchmark: family winners}
-\extendedresultsbanner
+\begin{frame}{SGSMA benchmark: family winners}
 \scriptsize
-\setlength{\tabcolsep}{3.5pt}
+\setlength{\tabcolsep}{3.2pt}
 \renewcommand{\arraystretch}{1.08}
-\begin{tabular}{>{\raggedright\arraybackslash}p{0.20\linewidth}c>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.23\linewidth}}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.19\linewidth}c>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.21\linewidth}>{\raggedright\arraybackslash}p{0.23\linewidth}}
 \toprule
-\textbf{Family} & \textbf{Count} & \textbf{RMSE leader} & \textbf{RMSE} & \textbf{Trip-risk leader} \\
+\textbf{Family} & \textbf{Count} & \textbf{RMSE leader} & \textbf{RMSE mean} & \textbf{Trip-risk leader} \\
 \midrule
-IEEE ramps & 9 & RA-EKF & 11 mHz & 0 s (state-space) \\
-Magnitude steps & 7 & UKF & $<$1 mHz & 0 s (state-space) \\
-Modulation & 3 & LKF2 & 15 mHz & 0 s (state-space) \\
-Phase jumps & 3 & UKF & $<$1 mHz & 0 s (state-space) \\
-Frequency step & 1 & RA-EKF & 52 mHz & RA-EKF, 3 ms \\
-OOB interference & 1 & UKF & $<$1 mHz & 0 s (state-space) \\
-IBR harmonics & 3 & SOGI-FLL & 61 mHz & SOGI-PLL, 10 ms \\
-IBR ringdown & 4 & LKF2 & 202 mHz & ESPRIT, 87 ms \\
-IBR multi-event & 1 & UKF & 1.09 Hz & UKF, 780 ms \\
+IEEE ramps & 9 & SOGI-PLL & 19.4 $\pm$ 6.4 mHz & 0 s (multiple) \\
+Magnitude steps & 7 & EKF & 0.388 $\pm$ 0.143 mHz & 0 s (multiple) \\
+Modulation & 3 & RA-EKF & 17.8 $\pm$ 21.4 mHz & 0 s (multiple) \\
+Phase jumps & 3 & SOGI-FLL & 174 $\pm$ 67.5 mHz & ZCD: 0.0194 s \\
+OOB interference & 1 & EKF & 13.6 $\pm$ 11.1 mHz & EKF / RA-EKF: 0 s \\
+IBR harmonics & 3 & EKF & 70.5 $\pm$ 27.3 mHz & TFT / Prony: 0.00947 s \\
+IBR ringdown & 5 & UKF & 313 $\pm$ 23.2 mHz & ESPRIT: 0.0989 s \\
+IBR multi-event & 1 & PLL & 173.5 $\pm$ 66.7 mHz & IpDFT: 0.0439 s \\
 \bottomrule
 \end{tabular}
 \vspace{0.25em}
-\callout{The full Monte-Carlo sweep confirms the central pattern: the RMSE leader rotates (RA-EKF, UKF, LKF2, SOGI-FLL) by disturbance family, and error grows from sub-mHz on clean cases to $\sim$1 Hz under multi-event stress.}
+\callout{The paper result is conditional: SOGI-PLL leads ramps, EKF leads magnitude steps/OOB/harmonics, RA-EKF leads modulation, UKF leads ringdown, and PLL leads the composite IBR case. Trip-risk often points elsewhere.}
+\artifact{SGSMA benchmark matrix, Table II}
 \end{frame}
 
 \begin{frame}{ATLAS severity analysis}
@@ -1275,35 +1275,34 @@ IBR multi-event & 1 & UKF & 1.09 Hz & UKF, 780 ms \\
 \begin{frame}{ATLAS result: metric choice changes the answer}
 \papergradebanner
 \begin{columns}[T,onlytextwidth]
-\column{0.52\linewidth}
+\column{0.54\linewidth}
 \scriptsize
-\setlength{\tabcolsep}{4pt}
+\setlength{\tabcolsep}{3.5pt}
 \renewcommand{\arraystretch}{1.18}
-\begin{tabular}{>{\bfseries}lcc}
+\begin{tabular}{>{\bfseries\raggedright\arraybackslash}p{0.38\linewidth}cc}
 \toprule
-Comparison & Different winner & Levels tested \\
+Metric objective & Unique metric winner & Different from RMSE \\
 \midrule
-RMSE vs trip-risk & \cellcolor{ofbRed!18}83 & 113 \\
-RMSE vs RoCoF max error & \cellcolor{ofbGold!18}55 & 113 \\
-RMSE vs RoCoF RMS error & \cellcolor{ofbGold!18}50 & 113 \\
+Trip-risk exposure & 26 / 113 & \cellcolor{ofbGreen!18}5 / 26 \\
+RoCoF max error & 112 / 113 & \cellcolor{ofbGold!18}53 / 112 \\
+RoCoF RMS error & 112 / 113 & \cellcolor{ofbGold!18}48 / 112 \\
 \bottomrule
 \end{tabular}
 \vspace{0.35em}
-\begin{block}{Winner concentration}
+\begin{block}{Tie handling}
 \scriptsize
-RMSE is led mostly by EKF and ESPRIT. Trip-risk is led mostly by Koopman, EKF, SOGI-FLL, ZCD, and ESPRIT. CPU is always led by ZCD.
+Trip-risk has tied zero-exposure minima in 87/113 levels. It is an exposure screen first, not a single-winner leaderboard.
 \end{block}
-\column{0.44\linewidth}
+\column{0.42\linewidth}
 \begin{block}{Why this matters}
 \small
-For protection-adjacent use, a low average error is not enough. The estimator must avoid long deadband exposure, track RoCoF, and remain computable.
+For protection-adjacent use, low average error is not enough. The estimator must avoid long deadband exposure, track RoCoF, and remain computable.
 \end{block}
 \begin{block}{Operational implication}
 \small
-The benchmark output is not a leaderboard. It is a metric-conditioned selection map.
+RoCoF metrics change the preferred estimator in nearly half the severity map; trip-risk removes estimators with long exposure.
 \end{block}
 \end{columns}
-{\small\textbf{Result:} across 113 severity levels, the preferred estimator changes when the objective changes.}
 \artifact{atlas-papergrade-missing-v1/global\_metrics\_report.csv}
 \end{frame}
 
@@ -1340,8 +1339,8 @@ Broadband noise & $\sigma=0.1$ pu & 0 & Noise robustness is a first-class stress
 Stress & Winner pattern & Threshold behavior \\
 \midrule
 AM modulation & EKF wins slow, reference, fast, and severe regions. & Ten methods stay below 0.05 Hz through 10 Hz envelope modulation. \\
-FM modulation & TFT leads slow; ESPRIT leads reference/fast/severe; SOGI-PLL reaches the best threshold. & No method stays below 0.05 Hz at 10 Hz FM modulation. \\
-Interharmonics & EKF wins trace, reference, high, and severe levels. & EKF crosses the 0.05 Hz guide around 8\%; most other families cross earlier. \\
+FM modulation & SOGI-FLL, TFT, and Koopman split the low-rate points; ESPRIT leads from 1--10 Hz. & No method stays below 0.05 Hz at 10 Hz FM modulation. \\
+Interharmonics & EKF leads 0.5--15\%; PLL leads at 20\%. & EKF crosses the 0.05 Hz guide between 5\% and 8\%; most families cross earlier. \\
 \bottomrule
 \end{tabular}
 \column{0.41\linewidth}
@@ -1388,7 +1387,7 @@ Covariance scaling and event gating remove the divergence: stable on \textbf{eve
 \end{columns}
 \end{frame}
 
-\begin{frame}{RoCoF has a sign: down-ramps are harder}
+\begin{frame}{RoCoF has a sign: several methods are down-ramp sensitive}
 \papergradebanner
 \begin{columns}[T,onlytextwidth]
 \column{0.56\linewidth}
@@ -1405,7 +1404,7 @@ Covariance scaling and event gating remove the divergence: stable on \textbf{eve
 \end{itemize}
 \end{block}
 \begin{block}{Why it matters}
-A $+$RoCoF-only test can certify a method that fails on frequency \emph{decline} --- the protection-critical direction. Both signs must be swept.
+For LKF, TKEO, RLS, and SOGI-FLL, a $+$RoCoF-only test can certify behavior that does not hold on frequency \emph{decline}. Both signs must be swept.
 \end{block}
 \end{columns}
 \artifact{atlas-papergrade-missing-v1/atlas\_sign\_asymmetry.csv ($n=30$, both signs)}
@@ -1427,6 +1426,7 @@ One exception: TFT rises gently, then jumps \textbf{2.5\,$\rightarrow$\,21.9 Hz}
 \end{block}
 \end{columns}
 {\scriptsize\color{ofbMuted}\textbf{Result:} Severity is non-monotone; sweep the jump angle rather than qualify one nominal point.}
+\artifact{atlas-phase-jump-1-180deg-5deg-all18/global\_metrics\_report.csv (diagnostic, $n=1$, default policy, positive sign)}
 \end{frame}
 
 \begin{frame}{No estimator owns the whole stress space}
@@ -1440,10 +1440,10 @@ One exception: TFT rises gently, then jumps \textbf{2.5\,$\rightarrow$\,21.9 Hz}
 \toprule
 RoCoF regime & Best & med.\ RMSE \\
 \midrule
-Low (0.1--1 Hz/s) & Koopman & 4.1 mHz \\
-Standard (1--3) & ESPRIT & 7.6 mHz \\
-IBR stress (3--10) & ESPRIT & 22.3 mHz \\
-Severe (10--30) & SOGI-PLL & 70.4 mHz \\
+Low (0.1--1 Hz/s) & Koopman & 5.5 mHz \\
+Standard (1--3) & ESPRIT & 12.2 mHz \\
+IBR stress (3--10) & ESPRIT & 33.0 mHz \\
+Severe (10--30) & SOGI-PLL & 70.3 mHz \\
 \bottomrule
 \end{tabular}
 \vspace{0.35em}
@@ -1455,6 +1455,7 @@ EKF wins phase jumps, the magnitude step and interharmonics; ESPRIT/Koopman win 
 \includegraphics[width=\linewidth,height=0.68\textheight,keepaspectratio]{figures/rocof_method_map.pdf}
 \end{columns}
 \resultclaim{ofbBlue}{The deliverable is a selection map: event class $\times$ metric $\times$ compute budget.}
+\artifact{atlas-papergrade-missing-v1/global\_metrics\_report.csv; RoCoF regimes averaged across both signs}
 \end{frame}
 
 \begin{frame}{ZCD is a narrow instrument, not a general estimator}
@@ -1579,6 +1580,7 @@ ZCD is elegant at clean high-SNR crossings, but deep sags convert amplitude loss
 \vspace{0.25em}
 \insightcard{ofbRust}{Accuracy premium}{Spectral and data-driven methods can move right by $100$--$1000\times$ CPU cost.}
 \end{columns}
+\artifact{OpenFreqBench expansion: artifacts/full\_mc\_benchmark, $n=5$}
 \end{frame}
 
 \section{Deployment}
@@ -1588,11 +1590,11 @@ ZCD is elegant at clean high-SNR crossings, but deep sags convert amplitude loss
 \vspace{0.15em}
 \begin{columns}[T,onlytextwidth]
 \column{0.32\linewidth}
-\insightcard{ofbBlue}{1. Metric-conditioned}{The RMSE leader often differs from the trip-risk and RoCoF leader across ATLAS severity levels.}
+\insightcard{ofbBlue}{1. Metric-conditioned}{The SGSMA matrix and ATLAS both show that RMSE, trip exposure, RoCoF, and CPU can select different methods.}
 \column{0.32\linewidth}
 \insightcard{ofbRust}{2. Stress-bounded}{AM remains survivable for many methods; severe FM, RoCoF, interharmonics, noise, and extreme THD break the 0.05 Hz guide.}
 \column{0.32\linewidth}
-\insightcard{ofbGreen}{3. Robustness over point accuracy}{EKF, UKF, and IpDFT can diverge on ramps; RA-EKF keeps the ramp family stable across seeds.}
+\insightcard{ofbGreen}{3. Robustness over point accuracy}{The OpenFreqBench ramp seeds expose silent divergence; RA-EKF removes that failure mode in the tested run.}
 \end{columns}
 \vspace{0.5em}
 \resultclaim{ofbBlue}{Dynamic frequency estimators should be qualified by event family, sign, severity, recovery, trip exposure, and compute envelope.}
@@ -1824,7 +1826,7 @@ $\tilde C_s,\tilde L_s$ & compute and latency penalties
 \begin{tikzpicture}[remember picture,overlay]
   \node[anchor=center] at (current page.center) {\includegraphics[width=\paperwidth,height=\paperheight]{\sgsmaDividerBg}};
   \node[anchor=east, text=white, align=right, font=\fontsize{27}{32}\selectfont\rmfamily, text width=0.64\paperwidth] at ([xshift=-0.075\paperwidth,yshift=0.25cm]current page.east) {Backup};
-  \node[anchor=east, text=white, align=right, font=\large, text width=0.62\paperwidth] at ([xshift=-0.075\paperwidth,yshift=-1.00cm]current page.east) {Metrics, extra stress maps, the journal-grade plan, references.};
+  \node[anchor=east, text=white, align=right, font=\large, text width=0.62\paperwidth] at ([xshift=-0.075\paperwidth,yshift=-1.00cm]current page.east) {Metrics, extra stress maps, replication plan, references.};
 \end{tikzpicture}
 \end{frame}
 
@@ -1920,28 +1922,28 @@ M22 invalid rate & fraction of samples the estimator flags invalid / NaN. \\
 \artifact{atlas-noise-snr-diag-v1}
 \end{frame}
 
-\begin{frame}{Backup: from paper-grade (done) to journal-grade}
+\begin{frame}{Backup: ATLAS replication ladder}
 \begin{columns}[T,onlytextwidth]
 \column{0.50\linewidth}
-\begin{block}{Completed --- paper-grade}
+\begin{block}{Completed --- validated $n=30$}
 \scriptsize
 $n=30$, fixed policy, both signs, \textbf{9/9} required sweeps; 17-estimator canonical set (PI-GRU experimental, separate sweep). Readiness gate: \texttt{status=paper\_grade}, \texttt{scope=full\_atlas}.
 \end{block}
-\begin{block}{Next --- journal-grade}
+\begin{block}{Next --- $n\ge100$ replication}
 \scriptsize
 \texttt{--sweeps all --policy fixed\_policy --n-runs 100 --n-cost-reps 3 --tune-trials 80 --output-subdir atlas-full-v1}
 \end{block}
 \column{0.46\linewidth}
 \scriptsize
 \begin{itemize}
-  \item Paper-grade $n=30$ campaign: \textbf{done} (readiness gate passed).
-  \item Journal-grade lifts to $n\ge100$ with archived seeds, manifests, and hashes.
+  \item Validated $n=30$ campaign: \textbf{done} (readiness gate passed).
+  \item The $n\ge100$ replication layer adds archived seeds, manifests, and hashes.
   \item Subspace/ML methods (MUSIC, ESPRIT, PI-GRU) run as a separate full-ATLAS sweep.
   \item Every table and figure regenerates from artifacts.
 \end{itemize}
 \end{columns}
 \vspace{0.2em}
-\callout{Paper-grade ($n=30$, full ATLAS) is complete; the $n\ge100$ journal-grade run and the subspace/ML sweep are the remaining steps.}
+\callout{The validated $n=30$ ATLAS run is complete; the $n\ge100$ replication run and the subspace/ML sweep are the remaining steps.}
 \artifact{docs/ATLAS\_PIPELINE.md; docs/ATLAS\_ROADMAP.md}
 \end{frame}
 
@@ -1978,7 +1980,7 @@ Stage & Technical content & Evidence shown \\
 \midrule
 Problem & Low-inertia IBR grids compress disturbance timescales and combine stress modes. & Field motivation, research problem, and measurement gap. \\
 Prior work & Standards, PMU measurement, spectral, PLL/SOGI, Kalman, reduced-order, and data-driven estimators. & Benchmark gap and estimator-family taxonomy. \\
-Method & 1 MHz waveform generation, 10 kHz estimator stream, 5 scenarios, grid-search tuning, metrics, and CPU timing. & Scenario table, metric equations, RA-EKF mechanism, and traceability. \\
+Method & 1 MHz waveform generation, 10 kHz estimator stream, 34 scenarios, scenario-wise tuning, metrics, and CPU timing. & Scenario table, metric equations, estimator taxonomy, and traceability. \\
 Results & Standard tests, composite islanding, multi-event trip-risk, CPU, and response dashboards. & Quantitative tables, event plots, Pareto view, and compliance heatmap. \\
 Interpretation & Latency and disturbance sensitivity, state-space advantage, and insufficiency of standard tests. & Findings, recommendation map, and qualification workflow. \\
 \bottomrule
@@ -1993,9 +1995,9 @@ Interpretation & Latency and disturbance sensitivity, state-space advantage, and
   arr/.style={-{Latex[length=2mm]}, thick, color=ofbInk}
 ]
 \node[claim, fill=ofbRed!10, draw=ofbRed] (p) at (0,0.85) {Problem\\fast IBR stress};
-\node[claim, fill=ofbBlue!12, draw=ofbBlue] (b) at (2.35,0.85) {Benchmark\\18 estimators};
-\node[claim, fill=ofbGreen!12, draw=ofbGreen] (s) at (4.70,0.85) {Scope\\5 scenarios};
-\node[claim, fill=ofbGold!18, draw=ofbGold] (m) at (7.05,0.85) {RA-EKF\\state + gate};
+\node[claim, fill=ofbBlue!12, draw=ofbBlue] (b) at (2.35,0.85) {Benchmark\\16 base / 18 expansion};
+\node[claim, fill=ofbGreen!12, draw=ofbGreen] (s) at (4.70,0.85) {Scope\\34 scenarios};
+\node[claim, fill=ofbGold!18, draw=ofbGold] (m) at (7.05,0.85) {Estimators\\risk + cost};
 \node[claim, fill=ofbViolet!12, draw=ofbViolet] (r) at (9.40,0.85) {Finding\\latency + stress};
 \draw[arr] (p) -- (b);
 \draw[arr] (b) -- (s);
@@ -2061,8 +2063,8 @@ Scenario E & Five-second IBR multi-event sequence with harmonics, jumps, negativ
   layer/.style={draw, rounded corners=3pt, very thick, align=center, minimum width=9.6cm, minimum height=0.78cm},
   arr/.style={-{Latex[length=2mm]}, thick, color=ofbInk}
 ]
-\node[layer, fill=ofbBlue!10, draw=ofbBlue] (paper) at (0,1.25) {Core experiment: 9 principal estimators + 2 legacy baselines, 5 scenarios, standard and IBR-specific metrics};
-\node[layer, fill=ofbGold!16, draw=ofbGold] (atlas) at (0,0.25) {Expanded stress analysis: 18 estimators, 32 scenarios, severity curves, harmonic sweeps, and CPU--accuracy maps};
+\node[layer, fill=ofbBlue!10, draw=ofbBlue] (paper) at (0,1.25) {SGSMA matrix: 16 estimators, 34 scenarios, 10 families, 60 Monte Carlo runs};
+\node[layer, fill=ofbGold!16, draw=ofbGold] (atlas) at (0,0.25) {OpenFreqBench expansion: 18 estimators, 33 scenarios, severity curves, harmonic sweeps, and CPU--accuracy maps};
 \node[layer, fill=ofbGreen!10, draw=ofbGreen] (gate) at (0,-0.75) {Validation layer: replication depth, fixed policies, artifact manifests, and metric consistency checks};
 \node[layer, fill=ofbRed!10, draw=ofbRed] (message) at (0,-1.75) {Engineering output: select estimator families by event regime, metric target, and compute envelope};
 \draw[arr] (paper) -- (atlas);
@@ -2447,10 +2449,10 @@ i \prec j
 \begin{block}{Core benchmark evidence}
 \scriptsize
 \begin{itemize}
-  \item 9 principal estimators plus 2 legacy baselines.
-  \item 5 scenarios: A--C standard-style, D--E IBR-specific.
-  \item Standard, islanding, multi-event, and CPU results use the same scenario definitions and metric engine.
-  \item Main results: RA-EKF transient performance, latency/stress trade-off, and compliance-test limits.
+  \item 16 estimators across loop, window, Kalman/model, adaptive, and data-driven families.
+  \item 34 scenarios in 10 disturbance families, each with 60 Monte Carlo runs.
+  \item Standard, IBR-specific, trip-risk, RoCoF, settling, and CPU results use the same metric engine.
+  \item Main result: estimator ranking is conditional on disturbance family, metric objective, and compute envelope.
 \end{itemize}
 \end{block}
 \column{0.46\linewidth}
@@ -2485,7 +2487,7 @@ i \prec j
 \end{block}
 \end{columns}
 \vspace{0.45em}
-\callout{The core benchmark supports the main empirical conclusions; the paper-grade ATLAS sweeps ($n=30$) explain mechanisms, with the journal-grade run as the next step.}
+\callout{The core benchmark supports the main empirical conclusions; the validated ATLAS sweeps ($n=30$) explain mechanisms, with the $n\ge100$ replication layer as the next step.}
 \end{frame}
 
 \begin{frame}{Estimator taxonomy}
@@ -2546,10 +2548,10 @@ Family-level analysis separates algorithmic principles from implementation-speci
   ok/.style={state, fill=ofbBlue!12, draw=ofbBlue},
   arr/.style={-{Latex[length=2mm]}, thick, color=gray}
 ]
-\node[bad] (diag) {Observed status:\\\CurrentAtlasStatus};
-\node[bad, below=of diag] (runs) {$n=\CurrentAtlasRuns$ MC, \CurrentAtlasEstimators/\CanonicalEstimatorCount\ estimators};
-\node[bad, below=of runs] (policy) {policy: \CurrentAtlasPolicy};
-\node[ok, below=of policy] (target) {target: fixed policy\\$n\ge 100$, full ATLAS};
+\node[ok] (diag) {Observed status:\\\CurrentAtlasStatus};
+\node[ok, below=of diag] (runs) {$n=\CurrentAtlasRuns$ MC, \CurrentAtlasEstimators/\CanonicalEstimatorCount\ estimators};
+\node[ok, below=of runs] (policy) {policy: \CurrentAtlasPolicy};
+\node[bad, below=of policy] (target) {replication target:\\$n\ge 100$, full ATLAS};
 \draw[arr] (diag) -- (runs);
 \draw[arr] (runs) -- (policy);
 \draw[arr] (policy) -- (target);
@@ -2558,11 +2560,11 @@ Family-level analysis separates algorithmic principles from implementation-speci
 \begin{itemize}
   \item ATLAS smoke status: \textbf{\CurrentAtlasStatus}.
   \item Reported readiness issues: \textbf{\ReadinessIssueCount}.
-  \item Full benchmark evidence requires complete sweeps, the canonical estimator set, fixed policy, and at least $n\ge30$.
-  \item High-confidence qualification should repeat the same protocol with $n\ge100$.
+  \item Validated ATLAS requires complete sweeps, the canonical estimator set, fixed policy, and at least $n\ge30$.
+  \item Higher-replication qualification should repeat the same protocol with $n\ge100$.
 \end{itemize}
 \end{columns}
-\artifact{artifacts/atlas-readiness-smoke/atlas\_readiness\_report.json}
+\artifact{artifacts/atlas-papergrade-missing-v1/atlas\_readiness\_report.json}
 \end{frame}
 
 \begin{frame}{Experimental process and traceability}
@@ -2684,7 +2686,7 @@ A single leaderboard would hide deployment constraints that matter in grid instr
 \end{center}
 \vspace{0.35em}
 \begin{itemize}
-  \item ZCD is the strongest method under isolated integer-harmonic stress at low THD, but the paper-grade $n=30$ sweep shows it collapses to tens of Hz above $\sim$20\% THD.
+  \item ZCD is the strongest method under isolated integer-harmonic stress at low THD, but the validated $n=30$ sweep shows it collapses to tens of Hz above $\sim$20\% THD.
   \item Generalization to interharmonics, noise, IBR-rich events, or mixed disturbances requires additional runs.
   \item RA-EKF, TFT, EKF, SOGI-PLL, and UKF remain secondary candidates for harmonic stress.
   \item Low slope must be read with baseline RMSE; both values are needed.
@@ -2783,7 +2785,7 @@ Why scenario-wise tuning? & It estimates best-in-range behavior under the tested
 How is this different from IEC/IEEE compliance? & Compliance tests define device-level requirements. This study compares estimator algorithms under known truth, IBR-specific stress, trip-risk, and CPU cost. \\
 Why Python CPU times? & CPU reports relative software cost. Embedded or FPGA timing requires implementation-specific replication. \\
 What should be deployed? & For FFR and phase-jump anti-islanding, RA-EKF is the strongest benchmark-backed recommendation; PLL/EKF remain low-cost baselines; IpDFT/TFT are useful where observation delay is acceptable. \\
-How reliable are the ATLAS sweeps? & Paper-grade: $n=30$, fixed policy, both signs, 9/9 required sweeps (full-ATLAS readiness met). Journal-grade ($n\ge100$) and the subspace/ML sweep remain. \\
+How reliable are the ATLAS sweeps? & Validated $n=30$: fixed policy, both signs, 9/9 required sweeps. The $n\ge100$ replication and the subspace/ML sweep remain. \\
 Does this explain any blackout? & No. Field events define the stress modes; no prevention claim is made. \\
 \bottomrule
 \end{tabular}

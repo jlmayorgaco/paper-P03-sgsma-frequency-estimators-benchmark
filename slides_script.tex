@@ -81,12 +81,12 @@
 
 \s{7}{Technical contributions}{Position the contribution cleanly.}{
 \item Say what is not claimed: not device certification, not hardware latency measurement, not one universal leaderboard.
-\item Contributions: OpenFreqBench, metric-complete comparison, evidence that compliance-style tests miss IBR failure modes, and RA-EKF as one tested estimator.
+\item Contributions: OpenFreqBench, metric-complete comparison, evidence that compliance-style tests miss IBR failure modes, and RA-EKF as one tested Kalman-family variant.
 \item Emphasize intellectual honesty: the benchmark explains when rankings change.
 }
 
 \s{8}{Experiment scale}{Give the audience the scale early.}{
-\item The deck uses 18 estimators, 33 scenarios, and Monte Carlo plus ATLAS sweeps.
+\item Keep evidence layers separate: the SGSMA benchmark matrix uses 16 estimators, 34 scenarios, and 60 Monte Carlo runs; the OpenFreqBench expansion uses 18 estimators, 33 scenarios, five seeds, and ATLAS sweeps.
 \item Explain that "grid search" means each method is given a fair chance within the tested parameter range.
 \item Key phrase: same truth signals, same I/O contract, same metrics.
 }
@@ -110,7 +110,7 @@
 }
 
 \s{12}{Selection logic: evidence level}{Separate pilot and validated evidence.}{
-\item Evidence level matters. A pilot sweep can diagnose a failure mode; a paper-grade sweep supports a stronger claim.
+\item Evidence level matters. A pilot sweep can diagnose a failure mode; a validated replicated sweep supports a stronger claim.
 \item This is why ATLAS slides are labeled by sweep type.
 \item Avoid defensive language. Say: the labels keep the evidence contract explicit.
 }
@@ -320,8 +320,8 @@
 }
 
 \s{47}{Metric choice changes the answer}{Make this a headline result.}{
-\item Across 113 severity levels, RMSE, trip-risk, and RoCoF metrics often select different winners.
-\item For protection-adjacent use, low average error is not enough; deadband exposure and RoCoF tracking matter.
+\item Across 113 severity levels, RoCoF metrics frequently change the leader.
+\item Trip-risk must be read tie-aware: 87 levels have tied zero-exposure minima, so it is an exposure screen before it is a leaderboard.
 \item Key line: the benchmark output is a metric-conditioned selection map.
 }
 
@@ -350,6 +350,7 @@
 }
 
 \s{52}{Phase-jump non-monotonicity}{Explain why one nominal point is weak.}{
+\item This is a diagnostic dense sweep, not a qualification result.
 \item Worst-case phase jump is not necessarily 180 degrees.
 \item Many methods peak around 90--120 degrees and recover toward 180 degrees.
 \item Therefore, qualification should sweep jump angle, not test one nominal point.

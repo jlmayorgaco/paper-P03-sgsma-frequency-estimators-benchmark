@@ -644,8 +644,8 @@
 {\large\bfseries\color{ofbTeal} Expanded stress analysis}\\[5pt]
 {\small\itshape\color{ofbMuted}Say:}\\[1pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=2.5pt,topsep=1.5pt]
-\item We scale up to a full Monte-Carlo benchmark, eighteen estimators, thirty-three scenarios, five seeds.
-\item And then we add the ATLAS severity sweeps on top of that.
+\item Separate the evidence layers: the SGSMA benchmark matrix is sixteen estimators, thirty-four scenarios, and sixty Monte Carlo runs; the OpenFreqBench expansion is eighteen estimators, thirty-three scenarios, five seeds.
+\item ATLAS then adds severity and sign sweeps on top of those benchmark results.
 \end{itemize}
 \vspace{2pt}{\small\color{ofbBlue}$\rightarrow$ \itshape First question: do the family winners stay fixed?}\\[1pt]
 \vspace{3pt}
@@ -680,12 +680,12 @@
 {\small\itshape\color{ofbMuted}Say:}\\[1pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=2.5pt,topsep=1.5pt]
 \item ATLAS sweeps each stress by severity and by sign, under a fixed policy, at thirty Monte-Carlo runs.
-\item And this is now paper-grade across all nine of the required sweeps.
+\item And this is now validated across all nine required sweeps.
 \end{itemize}
 \vspace{2pt}{\small\color{ofbBlue}$\rightarrow$ \itshape And the headline result here is genuinely striking.}\\[1pt]
 \vspace{3pt}
 \begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=2.5pt,bottom=2.5pt]
-{\small\bfseries Key line: }{\small This is paper-grade severity evidence, not a pilot.}
+{\small\bfseries Key line: }{\small This is replicated severity evidence, not a pilot.}
 \end{tcolorbox}
 \end{minipage}
 \clearpage
@@ -698,7 +698,7 @@
 {\small\itshape\color{ofbMuted}Say:}\\[1pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=2.5pt,topsep=1.5pt]
 \item Across a hundred and thirteen severity levels, the preferred estimator changes the moment the objective changes.
-\item In eighty-three of them, RMSE and trip-risk point you to different methods.
+\item Trip-risk has many tied zero-exposure minima, so I read it as an exposure screen. RoCoF is the stronger rank-changing metric: it differs from the RMSE leader in roughly half the severity map.
 \end{itemize}
 \vspace{2pt}{\small\color{ofbBlue}$\rightarrow$ \itshape ATLAS also tells us where each method gives up.}\\[1pt]
 \vspace{3pt}
@@ -943,13 +943,13 @@
 {\large\bfseries\color{ofbTeal} Validity limits and next steps}\\[5pt]
 {\small\itshape\color{ofbMuted}Say:}\\[1pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=2.5pt,topsep=1.5pt]
-\item On validity: the core means are five seeds, and the ATLAS sweeps are paper-grade at thirty.
-\item The next step is journal-grade at a hundred, plus the subspace and machine-learning methods.
+\item On validity: the SGSMA benchmark matrix is sixty runs, the OpenFreqBench expansion is five seeds, and the ATLAS sweeps are validated at thirty.
+\item The next step is an $n\ge100$ replication, plus the subspace and machine-learning methods.
 \end{itemize}
 \vspace{2pt}{\small\color{ofbBlue}$\rightarrow$ \itshape And from there it becomes a concrete recommendation.}\\[1pt]
 \vspace{3pt}
 \begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=2.5pt,bottom=2.5pt]
-{\small\bfseries Key line: }{\small We are explicit about what is diagnostic and what is paper-grade.}
+{\small\bfseries Key line: }{\small We are explicit about what is diagnostic and what is replicated.}
 \end{tcolorbox}
 \end{minipage}
 \clearpage
