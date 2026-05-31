@@ -102,29 +102,30 @@ S = [
    "And I want to stress this: every single figure in this talk traces straight back to those artifacts. Nothing here is hand-drawn."],
    "Now let me introduce the scenarios themselves.",
    "One reproducible pipeline, end to end."),
- ("Standard stresses: controlled waveform", "CORE", [
-   "We start with the standard stresses: a magnitude step, a frequency ramp, and amplitude modulation.",
-   "Because we generate the waveform ourselves, we know the true frequency at every single sample.",
-   "That means the error is not estimated, it is exact, and that is what makes a fair score possible."],
-   "Here is what those standard cases actually look like.",
-   "Known truth is what lets us score the error with no ambiguity."),
- ("Scenario suite I (dashboard)", "FIG", [
-   "This dashboard shows the standard suite. Voltage is on the top row, the true frequency on the bottom, one column per scenario.",
-   "And here is a subtle but important point: for the magnitude step and the AM case, the frequency stays perfectly flat at sixty hertz.",
-   "The stress is not a frequency event at all, and yet, as we will see, the estimators still react to it."],
-   "Now let us make the scenarios realistic.",
-   "The stress is not always a frequency event, but estimators react anyway."),
- ("Composite IBR stresses", "CORE", [
-   "Now we stack the disturbances on top of one another: harmonics, phase jumps, a rate-of-change segment, and a ringdown, all inside one waveform.",
-   "This is far closer to what a real, inverter-dominated fault actually produces in the field.",
-   "It is messy on purpose, because the grid is messy."],
-   "Here is that composite suite.",
-   "Composite stress is the realistic, and the revealing, case."),
- ("Scenario suite II (dashboard)", "FIG", [
-   "Same layout as before, voltage on top and frequency below, but now these cases are deliberately harder than anything you would find in a compliance test.",
-   "If a method can stay accurate here, it has genuinely earned our trust."],
-   "Before we look at methods, let me name the three mechanisms that actually break estimators.",
-   "If a method survives here, it has earned our trust."),
+ ("Standard stresses (1 of 2): magnitude, ramp, step", "CORE", [
+   "We start with the standard stresses. On this slide the top row is the voltage waveform, and the bottom row is the true frequency, for three cases: a magnitude step, a frequency ramp, and a frequency step.",
+   "Because we generate the waveform ourselves, we know that true frequency at every single sample, so the error is exact.",
+   "And notice the magnitude step on the left: the voltage clearly changes, but the frequency below it stays flat at sixty hertz."],
+   "Modulation gives us the other two standard cases.",
+   "Top row is voltage; bottom row is the true frequency we score against."),
+ ("Standard stresses (2 of 2): modulation AM and FM", "FIG", [
+   "Here are the two modulation cases, again voltage on top and true frequency below.",
+   "Amplitude modulation, on the left, leaves the frequency perfectly flat at sixty hertz. Only frequency modulation, on the right, actually moves it.",
+   "So an estimator can be disturbed by a signal whose true frequency never changed at all."],
+   "Now let us make the scenarios composite and realistic.",
+   "AM leaves the frequency flat; only FM truly moves it."),
+ ("Composite IBR stresses (1 of 2): harmonics, jump, OOB", "CORE", [
+   "Now we stack the physics. Top row voltage, bottom row true frequency, for three composite cases: harmonic distortion, a phase jump, and out-of-band interference.",
+   "These badly distort the voltage waveform, and yet in several of them the true frequency stays essentially flat.",
+   "That gap, an ugly voltage but a calm true frequency, is exactly what trips up the wrong estimator."],
+   "The last two composite cases are the genuinely nonstationary ones.",
+   "A distorted voltage does not mean the true frequency moved."),
+ ("Composite IBR stresses (2 of 2): ringdown, multi-event", "FIG", [
+   "And here are the two hardest cases: a power-imbalance ringdown, and the stacked multi-event sequence, voltage on top and true frequency below.",
+   "Now the frequency really does move, through damped oscillations and then a whole chain of events.",
+   "The estimator has to track through these nonstationary segments, not just settle down afterward."],
+   "Before the methods, let me name the three mechanisms that actually break estimators.",
+   "Recovery through nonstationary segments is the real test."),
  ("Scenario families: distortion, leakage, and low SNR", "CORE", [
    "It helps to group the hard scenarios into three families, because each one breaks an estimator in a different way.",
    "Harmonic distortion attacks any method that assumes a pure sinusoid. Spectral leakage hurts the window-based methods when the frequency does not sit neatly inside a bin.",

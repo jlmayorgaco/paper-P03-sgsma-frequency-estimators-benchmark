@@ -493,7 +493,7 @@ Report error, transient exposure, settling, latency, and cost as separate output
   every node/.style={font=\scriptsize},
   test/.style={draw, rounded corners=3pt, very thick, align=center, minimum width=2.55cm, minimum height=0.88cm, inner sep=4pt},
   result/.style={draw, rounded corners=2pt, align=center, minimum width=2.42cm, minimum height=0.72cm, inner sep=3pt, font=\tiny},
-  arr/.style={-{Latex[length=2mm]}, thick, color=ofbInk}
+  arr/.style={-{Latex[length=2.8mm,width=2.2mm]}, line width=1.1pt, color=ofbInk}
 ]
 % fixed canvas so the resized diagram does not rescale/jump between overlays
 \useasboundingbox (-1.45,-2.80) rectangle (10.95,2.05);
@@ -757,44 +757,44 @@ Benchmark reports, metric tables, plots, manifests, and readiness gates.
 \callout{The benchmark is an evidence pipeline, not just a test script: every figure traces back to a locked manifest, a fixed I/O contract, and the readiness gate.}
 \end{frame}
 
-\begin{frame}{Standard stresses: the waveform is controlled}
+\begin{frame}{Standard stresses (1 of 2): magnitude, ramp, frequency step}
 \vspace{-0.15em}
 \evidencetag{ofbBlue}{CORE SCENARIO SUITE}
 \begin{center}
-\includegraphics[width=0.96\linewidth,height=0.56\textheight,keepaspectratio,trim=0 166 0 0,clip]{figures/scenario_suite_1.pdf}
+\includegraphics[width=0.9\linewidth,height=0.72\textheight,keepaspectratio]{figures/scenario_suite_1a.pdf}
 \end{center}
 \vspace{-0.3em}
-\resultclaim{ofbBlue}{Each standard test changes one physical ingredient at a time: magnitude, ramp, frequency step, AM, or FM.}
+\resultclaim{ofbBlue}{Top row is the voltage waveform $v(t)$; bottom row is the true frequency $f(t)$. Each test changes one physical ingredient at a time.}
 \end{frame}
 
-\begin{frame}{Standard stresses: the frequency truth is simple}
+\begin{frame}{Standard stresses (2 of 2): modulation (AM and FM)}
 \vspace{-0.15em}
 \evidencetag{ofbBlue}{CORE SCENARIO SUITE}
 \begin{center}
-\includegraphics[width=0.96\linewidth,height=0.56\textheight,keepaspectratio,trim=0 0 0 185,clip]{figures/scenario_suite_1.pdf}
+\includegraphics[width=0.72\linewidth,height=0.72\textheight,keepaspectratio]{figures/scenario_suite_1b.pdf}
 \end{center}
 \vspace{-0.3em}
-\resultclaim{ofbGreen}{The clean reference traces make estimator failure visible: divergence is an algorithmic response, not ambiguity in ground truth.}
+\resultclaim{ofbGreen}{Voltage on top, true frequency below: AM leaves $f(t)$ flat at 60 Hz, while only FM actually moves it. Failure is algorithmic, not ground-truth ambiguity.}
 \end{frame}
 
-\begin{frame}{Composite IBR stresses: waveform physics are stacked}
+\begin{frame}{Composite IBR stresses (1 of 2): harmonics, phase jump, out-of-band}
 \vspace{-0.15em}
 \evidencetag{ofbRust}{IBR STRESS SUITE}
 \begin{center}
-\includegraphics[width=0.96\linewidth,height=0.56\textheight,keepaspectratio,trim=0 166 0 0,clip]{figures/scenario_suite_2.pdf}
+\includegraphics[width=0.9\linewidth,height=0.72\textheight,keepaspectratio]{figures/scenario_suite_2a.pdf}
 \end{center}
 \vspace{-0.3em}
-\resultclaim{ofbRust}{Composite cases combine harmonic distortion, phase jumps, out-of-band tones, ringdown recovery, and multi-event amplitude dynamics.}
+\resultclaim{ofbRust}{Top row voltage, bottom row true frequency: harmonics, a phase jump and out-of-band tones distort $v(t)$ while $f(t)$ often stays flat.}
 \end{frame}
 
-\begin{frame}{Composite IBR stresses: frequency truth becomes diagnostic}
+\begin{frame}{Composite IBR stresses (2 of 2): ringdown and multi-event}
 \vspace{-0.15em}
 \evidencetag{ofbRust}{IBR STRESS SUITE}
 \begin{center}
-\includegraphics[width=0.96\linewidth,height=0.56\textheight,keepaspectratio,trim=0 0 0 185,clip]{figures/scenario_suite_2.pdf}
+\includegraphics[width=0.72\linewidth,height=0.72\textheight,keepaspectratio]{figures/scenario_suite_2b.pdf}
 \end{center}
 \vspace{-0.3em}
-\resultclaim{ofbRed}{The estimator must recover through nonstationary segments, not just report low steady-state error after the event.}
+\resultclaim{ofbRed}{Voltage on top, true frequency below: the estimator must recover through nonstationary segments, not just report low steady-state error after the event.}
 \end{frame}
 
 \begin{frame}{Scenario families: distortion, leakage, and low SNR}

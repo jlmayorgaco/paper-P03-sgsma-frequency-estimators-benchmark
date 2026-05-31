@@ -1,0 +1,2415 @@
+Benchmarking Dynamic Frequency
+Estimators for Low-Inertia IBR Grids
+Jorge L. Mayorga Taborda, Yessica Africano Rodriguez, Fernando Jimenez
+Universidad de los Andes   |   SGSMA 2026
+                                 Motivation
+Why frequency estimation in low-inertia IBR grids is hard
+        Field events define the benchmark stress model
+                       2016                        2017                              2021                            2021                       2022
+
+                                                                                                                                       CA BESS
+              Blue Cut                    Canyon 2                          Odessa I/II                   Kaua’i
+                                                                                                                                       Mar. 9 / Apr. 6
+              CA, Aug. 16                 CA, Oct. 9                        TX faults, 2021/22            Nov. 21
+                                                                                                                                       BESS/IBR reductions
+              1,178 MW PV                 682 / 937 MW                      1,112 / 1,711 MW              18–20 Hz oscillation
+                                                                                                                                       ac overcur-
+              false near-instantaneous    solar reductions; erro-           remote solar reductions       near or beyond ordinary
+                                                                                                                                       rent/overvoltage, dc-bus,
+              frequency trips during      neous frequency tripping          after normally cleared        30 fps phasor-rate observ-
+                                                                                                                                       unbalance, data-quality
+              distorted fault waveforms   was not the cause                 faults                        ability
+                                                                                                                                       issues
+              stress: distortion → fre-   stress: PLL, voltage re-          stress: phase jumps, con-     stress: oscillation and
+                                                                                                                                       stress: low-SNR and non-
+              quency artifact             sponse, recovery                  trols, model mismatch         aliasing
+                                                                                                                                       sinusoidal
+
+
+
+
+  Benchmark implication: the estimator must be tested against waveform distortion, phase jumps,
+  control recovery, unbalance, noise, harmonics, interharmonics, and reporting-rate limits, not only
+  steady-state frequency error.
+Source: NERC/WECC Blue Cut 2017; NERC/WECC Canyon 2 2018; NERC Odessa 2022; NERC/WECC CA BESS 2023; Dong et al.                   Kaua’i 2021 analysis
+
+
+
+
+                                                                     3/61                               Motivation
+       Standard PMU streams show consequences, not
+       always causes
+Fast fault and ride-through                                                observability
+IBR controls can react within cycles. A low-rate or heavily filtered                                    18–20 Hz case
+frequency estimate may miss the subcycle cause while still showing
+the delayed consequence.                                                               tracked           aliasing /
+                                                                                     comfortably border beating risk
+
+Oscillation near reporting-rate limits
+                                                                                                                        Hz
+                                                                                                 15 Hz at 30 fps
+The Kaua’i Island event on Nov. 21, 2021 exhibited 18–20 Hz
+oscillations after an oil-power-plant trip. A 30 frame/s phasor
+stream has a 15 Hz Nyquist limit for phasor-time variations, so
+oscillations near this range can alias or appear as beating.           Harmonics and interharmonics
+                                                                       Standard synchrophasor outputs summarize the
+                                                                       fundamental component; harmonic and interharmonic
+                                                                       contamination can still dominate estimator failure
+                                                                       modes.
+
+
+                                                     4/61               Motivation
+    Research problem
+•   Low-inertia IBR grids require reliable local
+                                                         Research gap
+    frequency estimates during ramps, phase jumps,
+    harmonic distortion, ringdown, and mixed             The literature needs a reproducible
+    dynamic events.                                      benchmark that connects estimator
+                                                         error to protection-oriented risk,
+•   Classical estimators often trade off
+                                                         settling behavior, and deployability.
+    responsiveness, noise rejection, latency, and
+    computational load.
+•   Modern model-based and data-driven estimators
+    improve some regimes, but can be difficult to
+    compare fairly.
+•   Existing comparisons often under-specify seeds,
+    disturbance families, tuning policy, trip-risk,
+    structural latency, or computational cost.
+
+                                       5/61           Motivation
+    Operating claim
+
+•   Frequency estimation under grid disturbances is a
+                                                           Measurement rule
+    multi-objective measurement problem.
+                                                          Report error, transient exposure, settling,
+•   Rankings change with the objective: frequency         latency, and cost as separate outputs for
+    RMSE, RoCoF error, latency, CPU cost, and             each estimator.
+    disturbance sensitivity produce different orders.
+•   IBR-era disturbances make this operational:
+    distorted waveforms and fast controls can turn a
+    measurement artifact into a ride-through or
+    forensic diagnosis problem.
+•   Estimator choice is conditional: event family,
+    objective metric, and compute budget determine
+    the preferred method.
+
+
+                                          6/61          Motivation
+      Technical contributions
+Not claimed here                                     Contributions
+  •   PMU time-stamp certification;                     •   OpenFreqBench: a reproducible stress-test
+  •   a single universal leaderboard;                       benchmark and platform for relay-class
+                                                            estimators;
+  •   hardware latency measurements.
+                                                        •   a metric-complete comparison protocol:
+                                                            RMSE, peak error, RoCoF error, Ttrip ,
+                                                            settling, and CPU;
+                                                        •   evidence that standard compliance tests
+                                                            miss IBR failure modes;
+                                                        • an adapted RA-EKF as a tested estimator,
+                                                          with explicit ω̇ state and event gating.
+ The benchmark explains why estimator rankings change across objectives, regimes, and compute
+ budgets.
+
+                                        7/61            Motivation
+        Experiment scale
+
+  16
+  estimators                   34                             10
+                                                              families
+                                                                               60
+                               scenarios                                       MC runs
+  loop, window,                                               ramp to multi-   per pair
+                               standard + IBR
+  model                                                       event
+
+                    coverage                           replication                sampling
+                16 × 34 = 544                      544 × 60 = 32,640            1 MHz truth
+                   summaries                             records               10 kHz output
+
+        Experimental contract: same truth signal, scenario definition, tuning policy, met-
+        ric formulas, and timing contract before rankings are computed.
+
+        Central finding: no estimator dominates the full matrix; a single leaderboard hides
+        whether winners persist across event family, metric objective, and compute enve-
+        lope.
+Source: SGSMA benchmark matrix, Sec.   III–IV and Fig.   2 caption
+
+
+
+
+                                                                8/61            Motivation
+   Estimator selection logic
+    Event regime
+what stress dominates?
+
+
+     Ramp / RoCoF
+      phase jump
+       harmonics
+      multi-event
+
+
+
+
+                         9/61   Motivation
+   Estimator selection logic
+    Event regime           Objective metric
+what stress dominates?   what failure matters?
+
+
+     Ramp / RoCoF                RMSE
+      phase jump               RoCoF error
+       harmonics                 Ttrip
+      multi-event                settling
+
+
+
+
+                                        9/61     Motivation
+   Estimator selection logic
+    Event regime           Objective metric       Compute envelope
+what stress dominates?   what failure matters?   what can run online?
+
+
+     Ramp / RoCoF                RMSE                   MCU/DSP
+      phase jump               RoCoF error                 FPGA
+       harmonics                 Ttrip                  CPU/GPU
+      multi-event                settling             latency budget
+
+
+
+
+                                        9/61          Motivation
+   Estimator selection logic
+    Event regime           Objective metric       Compute envelope        Evidence level
+what stress dominates?   what failure matters?   what can run online?   replicated or pilot?
+
+
+     Ramp / RoCoF                RMSE                   MCU/DSP          SGSMA matrix (n=60)
+      phase jump               RoCoF error                 FPGA             OpenFreqBench
+       harmonics                 Ttrip                  CPU/GPU             ATLAS severity
+      multi-event                settling             latency budget        validation gate
+
+
+
+
+                                        9/61          Motivation
+   Estimator selection logic
+    Event regime           Objective metric          Compute envelope        Evidence level
+what stress dominates?   what failure matters?      what can run online?   replicated or pilot?
+
+
+     Ramp / RoCoF                RMSE                      MCU/DSP          SGSMA matrix (n=60)
+      phase jump               RoCoF error                    FPGA             OpenFreqBench
+       harmonics                 Ttrip                     CPU/GPU             ATLAS severity
+      multi-event                settling                latency budget        validation gate
+
+
+
+
+                                   Defensible recommendation
+                           estimator family + scenario + metric + cost
+
+
+
+
+                                        9/61             Motivation
+       Estimator selection logic
+      Event regime                         Objective metric                    Compute envelope                        Evidence level
+  what stress dominates?                 what failure matters?                what can run online?                   replicated or pilot?
+
+
+          Ramp / RoCoF                             RMSE                                MCU/DSP                        SGSMA matrix (n=60)
+           phase jump                            RoCoF error                              FPGA                           OpenFreqBench
+            harmonics                              Ttrip                               CPU/GPU                           ATLAS severity
+           multi-event                             settling                          latency budget                      validation gate
+
+
+
+
+                                                    Defensible recommendation
+                                            estimator family + scenario + metric + cost
+
+
+Example: RA-EKF is recommended for ramp/phase-jump protection metrics under DSP/FPGA-class cost; global RMSE leadership remains scenario-dependent.
+
+
+
+
+                                                          9/61                        Motivation
+  Benchmark & platform
+What is missing in prior work — and OpenFreqBench
+       Benchmark literature gap
+ Standards
+ PMU compliance, metrology, calibra-                             Why existing evidence is not enough
+ tion
+                                                                 Standards define requirements; field events define realism; open
+                                                                 PMU ecosystems provide infrastructure. None alone answers which
+ Field data                                                      estimator family is defensible under the same disturbance, tuning
+ real events, PMU/DFR streams                                    policy, metric vector, and compute budget.
+
+
+ Open platforms                                                     known              IBR              trip           CPU /
+ OpenPMU, openPDC, event libraries                                   truth            stress            risk           latency
+
+
+ Single-method studies                                                 Estimator-level benchmark: one artifact contract
+ detailed but narrow comparisons                                       for algorithms, scenarios, seeds, metrics, and plots
+
+
+ Missing layer
+ many estimators, same truth, same
+ metrics, same policy
+Result: controlled synthetic truth isolates estimator behavior under reproducible stress while field events define realism.
+
+
+                                                     11/61                    Benchmark
+     Benchmark comparison axes
+
+  Evidence source             Known truth   IBR composite stress    Trip-risk   CPU/latency   Reproducible artifacts
+
+  IEC/IEEE-style compliance       Yes               Limited           No           No          Device-dependent
+  Field PMU/DFR data              No                  Yes           Possible       No          Dataset-dependent
+  Single-method studies          Often              Partial         Partial       Partial        Often limited
+  Estimator benchmark             Yes                 Yes             Yes          Yes                Yes
+
+
+
+Measured outputs                                              Interpretive effect
+The same voltage trace is scored by RMSE, peak                An estimator can pass standard cases and still fail
+error, RoCoF error, trip exposure, settling, CPU,             a composite IBR event; it can also be accurate
+and structural latency.                                       but too delayed or costly for protection-adjacent
+                                                              use.
+
+
+
+                                            12/61                  Benchmark
+       OpenFreqBench platform
+         researcher              public               canonical                    locked metric profile
+         estimator            I/O contract          scenario suite           RMSE, RoCoF, Ttrip , CPU, latency
+
+
+
+                                                                          CSV/JSON                     plots +
+                                                                           artifacts                 rank tables
+
+
+                                                            standardized comparison across methods, events, seeds, and policies
+
+
+
+Researchers add                              Platform fixes                                  Outputs
+Estimator code, parameters, and              Truth signals, sampling, seeds, tuning          Benchmark reports, metric tables, plots,
+hypotheses through the public contract.      policy, metric formulas, and schema.            manifests, and readiness gates.
+
+
+  OpenFreqBench turns a new estimator into a repeatable benchmark entry instead of a one-off
+  comparison.
+
+                                                    13/61                      Benchmark
+Experimental method
+    Same truth, same metrics, fair tuning
+         Experimental method
+
+      truth synthesis                    relay stream                       execution                             scoring                               evidence
+     1 MHz waveform                    10 kHz samples                     estimator API                      RMSE, peak, Ttrip                        tables, traces
+    known f (t), RoCoF                local voltage only               declared tuning grid                    settling, CPU                          Pareto fronts
+
+
+                                   input contract                                                          multi-objective                      decision use
+  controlled                                                          fair search
+                                   single-phase voltage; no syn-                                           accuracy, recovery, protection       standard compliance, IBR
+  scenario script, truth signal,                                      each estimator–scenario pair
+                                   chronized PMU timestamp                                                 exposure, and compute kept           stress, and deployment cost
+  sampling rate, seeds                                                tuned inside its declared grid
+                                   assumption                                                              separate                             compared together
+
+
+
+
+                                                                                          comparison rule                                   output rule
+                                        measurement scope
+                                                                                      same truth, same met-                          rankings reported by sce-
+                                    relay-class dynamic tracking
+                                                                                    rics, same timing contract                        nario, metric, and cost
+
+Source: Methodology and test framework
+
+
+
+
+                                                                   15/61                               Method
+     Full benchmark workflow
+  Research               Scenario          Truth-signal                      Estimator                       Estimator         Metric             Evidence
+   drivers                library           synthesis                      input stream                      execution         engine             products
+
+ IBR field events                            1 MHz truth                    10 kHz stream                    FFT/IpDFT       RMSE, peak          family rankings
+                         5 core cases
+ PMU standards                               steps, ramps                    timestamps                     EKF/RA-EKF       RoCoF error          Pareto fronts
+                      expanded families
+research questions                            harmonics                     window policy                     SOGI/PLL         trip risk           scorecards
+                       ATLAS sweeps
+measurement gap                            ringdowns, noise                 truth retained                  TFR, Koopman     CPU, latency      qualification profile
+
+
+
+                                                                                                                                               qualification profile
+                     locked run manifest                                 fixed estimator I/O                               aggregation audit
+                                                                                                                                                who/where/how
+                     JSON/CSV artifacts                                 same scenario stream                               replication gates
+                                                                                                                                                    to deploy
+
+
+
+
+                                                                  pilot sweeps refine scenario families
+
+
+
+The benchmark is an evidence pipeline, not just a test script: every figure traces back to a locked
+manifest, a fixed I/O contract, and the readiness gate.
+
+
+                                                              16/61                                       Method
+                    Standard stresses: the waveform is controlled
+CORE SCENARIO SUITE
+
+                                                                Scenario suite I standard stresses: voltage v(t) (top) vs. true frequency f(t) (bottom)
+                            A Magnitude step                                  B Frequency ramp                              Frequency step                                      C Modulation: AM                               C Modulation: FM
+                                                                  1.0                                            1.0                                                  1.0                                          1.0
+                  1.0
+                  0.5                                             0.5                                            0.5                                                  0.5                                          0.5
+v(t) [pu]
+
+
+
+
+                  0.0                                             0.0                                            0.0                                                  0.0                                          0.0
+                  0.5                                             0.5                                            0.5                                                  0.5                                          0.5
+                  1.0                                                                                                                                                 1.0
+                                    amplitude +25%                1.0          speeds up vs 60 Hz ref            1.0              slows after step                                amplitude modulated              1.0               constant amplitude
+                        0          50      100     150                  0       50      100      150    200            0         50        100         150                  0   100 200 300 400             500          0      50       100 150 200      250
+                             time from 0.42 s [ms]                            time from 0.30 s [ms]                        time from 0.46 s [ms]                                time from 0.50 s [ms]                          time from 0.50 s [ms]
+
+                                                                61.50                                          60.25                                                                                              60.2
+                 60.4                                                                                                                                                60.4
+Each standard test changes one physical ingredient at a time: magnitude,
+                 60.2
+                                                                61.25
+                                                                61.00
+                                                                                                               60.00
+                                                                                                               59.75                                                 60.2                                         60.1
+ftrue (t) [Hz]
+
+
+
+
+ramp, frequency step, AM, or FM.
+                 60.0                                           60.75                                          59.50                                                 60.0                                         60.0
+                 59.8                                           60.50                                          59.25                                                 59.8                                         59.9
+                                                                60.25                                          59.00
+                 59.6                                                                                                                                                59.6
+                                     f stays 60 Hz              60.00              ramp → 61.5 Hz                                   step −1 Hz                                          f stays 60 Hz             59.8                 ±0.2Hz swing
+                                                                                                                58.75
+                            0.45        0.50      0.55   0.60           0.0     0.2     0.4     0.6     0.8 17/61 0.0      0.2      0.4 0.6          0.8     1.0 Method 0.0       0.5        1.0      1.5   2.0          0.0    0.2     0.4 0.6 0.8       1.0
+                                      time [s]                                       time [s]                                        time [s]                                            time [s]                                        time [s]
+                                                                      Scenario suite I standard stresses: voltage v(t) (top) vs. true frequency f(t) (bottom)
+                             A Magnitude step                                       B Frequency ramp                                     Frequency step                                          C Modulation: AM                               C Modulation: FM
+                                                                        1.0                                                 1.0                                                                                                     1.0
+                     Standard stresses: the frequency truth is simple
+                   1.0
+                   0.5                                                  0.5                                                 0.5
+                                                                                                                                                                                     1.0
+
+                                                                                                                                                                                     0.5                                            0.5
+ v(t) [pu]
+
+
+                   0.0                                                  0.0                                                 0.0                                                      0.0                                            0.0
+                   0.5                                                  0.5                                                 0.5                                                      0.5                                            0.5
+                   1.0                                                                                                                                                               1.0
+        amplitude +25% SUITE
+CORE SCENARIO                                                           1.0          speeds up vs 60 Hz ref                 1.0                slows after step                                    amplitude modulated              1.0               constant amplitude
+                         0          50         100       150                  0       50      100      150    200                 0           50        100         150                    0     100 200 300 400             500          0      50       100 150 200      250
+                              time from 0.42 s [ms]                                 time from 0.30 s [ms]                               time from 0.46 s [ms]                                    time from 0.50 s [ms]                          time from 0.50 s [ms]
+
+                                                                      61.50                                             60.25                                                                                                      60.2
+                  60.4                                                                                                                                                              60.4
+                                                                      61.25                                             60.00
+                  60.2                                                                                                                                                              60.2                                           60.1
+                                                                      61.00                                             59.75
+ ftrue (t) [Hz]
+
+
+
+
+                  60.0                                                60.75                                             59.50                                                       60.0                                           60.0
+                  59.8                                                60.50                                             59.25                                                       59.8                                           59.9
+                                                                      60.25                                             59.00
+                  59.6                                                                                                                                                              59.6
+                                         f stays 60 Hz                60.00              ramp → 61.5 Hz                                          step −1 Hz                                              f stays 60 Hz             59.8                 ±0.2Hz swing
+                                                                                                                        58.75
+                             0.45           0.50      0.55     0.60           0.0     0.2     0.4     0.6     0.8                 0.0   0.2      0.4 0.6          0.8     1.0              0.0     0.5        1.0      1.5   2.0          0.0    0.2     0.4 0.6 0.8       1.0
+                                          time [s]                                         time [s]                                               time [s]                                                time [s]                                        time [s]
+
+
+
+ The clean reference traces make estimator failure visible: divergence is an al-
+ gorithmic response, not ambiguity in ground truth.
+
+                                                                                                                    18/61                                                       Method
+                    Composite IBR stresses: waveform physics are
+                    stacked
+IBR STRESS SUITE
+
+                                                                    Scenario suite II composite IBR stresses: voltage v(t) (top) vs. true frequency f(t) (bottom)
+                              Harmonic distortion                                   D Phase jump 60 ◦                               Out-of-band interference                         Power-imbalance ringdown                       E Multi-event IBR
+                                                                        1.0                                                   1.0                                                                                       1.0
+                  1.0                                                                                                                                                            1.0
+                  0.5                                                   0.5                                                   0.5                                                0.5                                    0.5
+v(t) [pu]
+
+
+
+
+                  0.0                                                   0.0                                                   0.0                                                0.0                                    0.0
+
+                  0.5                                                   0.5                                                   0.5                                                0.5                                    0.5
+
+                  1.0            THD-distorted shape                                   phase discontinuity                    1.0            beating waveform                    1.0           amplitude dip            1.0            stacked amplitude
+                                                                        1.0
+                        0         10         20          30                   0      5     10 15 20              25                 0     20     40     60    80      100              0   200 400 600 800 1000               0         500       1000        1500
+                               time from 1.00 s [ms]                                time from 0.69 s [ms]                                 time from 0.50 s [ms]                            time from 0.45 s [ms]                    time from 0.45 s [ms]
+
+                 60.8                                                                                                                                                           61.0                                   60.0
+                                                                       60.4                                                  60.4
+Composite cases combine harmonic distortion, phase jumps, out-of-band
+                 60.6                                                  60.2                                                  60.2                                               60.5                                   59.5
+ftrue (t) [Hz]
+
+
+
+
+tones, ringdown recovery, and multi-event amplitude dynamics.
+                 60.4                                                  60.0                                                  60.0                                               60.0                                   59.0
+
+                 60.2                                                  59.8                                                  59.8                                               59.5                                   58.5
+                                                                       59.6                                            19/6159.6                                            Method
+                 60.0              apparent f ripple                                 phase only: f stays 60 Hz                                    f stays 60 Hz                 59.0           damped 59 ↔ 61 Hz       58.0         ramp + jumps + ringdown
+                        0.0      0.5     1.0       1.5        2.0             0.0     0.5      1.0        1.5    2.0                0.0     0.5        1.0      1.5   2.0              0.50 0.75 1.00 1.25 1.50 1.75          0.5        1.0         1.5       2.0
+                                      time [s]                                              time [s]                                               time [s]                                      time [s]                                  time [s]
+                                                                    Scenario suite II composite IBR stresses: voltage v(t) (top) vs. true frequency f(t) (bottom)
+                     Composite
+                   1.0
+                      Harmonic distortion IBR
+                                            D Phasestresses:
+                                                   jump 60     frequency
+                                                            Out-of-band interference
+                                                                        1.0
+                                                                                     truth
+                                                                                     Power-imbalancebecomes
+                                                                                                    ringdown E Multi-event IBR
+                                                                                                                ◦
+
+
+                                                                                                                                  1.0                                                1.0                                    1.0
+
+
+                     diagnostic
+                   0.5                                                  0.5                                                       0.5                                                0.5                                    0.5
+ v(t) [pu]
+
+
+
+
+                   0.0                                                  0.0                                                       0.0                                                0.0                                    0.0
+
+                   0.5                                                  0.5                                                       0.5                                                0.5                                    0.5
+                                                                                                                                                                                     1.0                                    1.0
+IBR 1.0STRESS
+           THD-distorted
+                  SUITE  shape                                          1.0            phase discontinuity                        1.0            beating waveform                                  amplitude dip                           stacked amplitude
+                         0         10         20         30                   0      5     10 15 20                 25                  0     20     40     60    80      100              0   200 400 600 800 1000               0         500       1000        1500
+                               time from 1.00 s [ms]                                time from 0.69 s [ms]                                     time from 0.50 s [ms]                            time from 0.45 s [ms]                    time from 0.45 s [ms]
+
+                  60.8                                                                                                                                                              61.0                                   60.0
+                                                                       60.4                                                   60.4
+                  60.6                                                 60.2                                                   60.2                                                  60.5                                   59.5
+ ftrue (t) [Hz]
+
+
+
+
+                  60.4                                                 60.0                                                   60.0                                                  60.0                                   59.0
+
+                  60.2                                                 59.8                                                   59.8                                                  59.5                                   58.5
+                                                                       59.6                                                   59.6
+                  60.0             apparent f ripple                                phase only: f stays 60 Hz                                         f stays 60 Hz                 59.0           damped 59 ↔ 61 Hz       58.0         ramp + jumps + ringdown
+                         0.0     0.5     1.0       1.5        2.0             0.0    0.5      1.0        1.5        2.0                 0.0     0.5        1.0      1.5   2.0              0.50 0.75 1.00 1.25 1.50 1.75          0.5        1.0         1.5       2.0
+                                        time [s]                                           time [s]                                                    time [s]                                      time [s]                                  time [s]
+
+
+
+ The estimator must recover through nonstationary segments, not just report
+ low steady-state error after the event.
+                                                                                                                          20/61                                                 Method
+       Scenario families: distortion, leakage, and low SNR
+                                                                               Family                What it tests
+Compact signal model
+                                                                               Harmonics             Integer multiples of 60 Hz; THD
+            v (t) = A(t) sin θ(t) + vh (t) + vx (t) + n(t)                                           rejection with fixed true frequency.
+           H                                                                   Interharmonics        Non-integer tones; leakage and
+                                                                                                     beating that can mimic dynamics.
+           X                                       X
+vh (t) =         ah sin(hθ + ϕh ),      vx (t) =       bq sin(2πfq t + ψq )
+                                                                               OOB tones             Out-of-band interference; filter
+           h=2                                     q                                                 selectivity, aliasing margins, PLL
+                 qP                                                                                  leakage.
+                                                                               Noise / SNR           Controlled σn ; low-SNR crossings and
+                              Vh2                                √ 
+                                                                                                     covariance assumptions.
+                        h≥2
+                                                           
+                                                               1/ 2
+    THD =                           ,   SNRdB = 20 log10
+                       V1                                       σn
+
+                                                                              Why this slide matters
+Interpretation                                                                In these cases ftrue (t) can remain nominal. Any frequency
+The benchmark keeps the truth signal and the waveform                         excursion reported by the estimator is then a
+perturbation separate. When ftrue (t) is fixed, estimator error               waveform-induced measurement artifact.
+measures artifact rejection, not a physical frequency event.
+                                                               21/61                 Method
+       Estimator families
+Loop-based                                 Model-based / stochastic               Legacy baselines
+PLL, SOGI-PLL, SOGI-FLL,                   EKF, UKF, RA-EKF, LKF,                 TKEO and ZCD are retained as
+Type-3 SOGI-PLL.                           LKF2.                                  comparison references outside the
+                                                                                  recommended deployment set.
+Window / spectral                          Adaptive and data-driven
+IpDFT, TFT, ESPRIT, Prony,                 RLS, Koopman (RK-DPMU).                Interpretation rule
+MUSIC.                                                                            These families occupy different
+                                                                                  latency and stress-sensitivity
+                                                                                  positions. The comparison tracks
+                                                                                  where each family wins, degrades,
+                                                                                  and fails.
+LKF and LKF2 follow H. Ahmed, S. Biricik, M. Benbouzid, “Linear Kalman Filter-Based Grid Synchronization Technique: An
+Alternative Implementation,” IEEE, 2021.
+                                                 22/61                  Method
+     Metrics and decision variables
+
+Error and recovery                                     Protection-oriented risk
+                                                                            X
+                     f [k] − ftrue [k]
+              e[k] = b                                         Ttrip = ∆t       1{|e[k]| > 0.5 Hz}
+                                                                            k
+                       s
+                           1 X
+            RMSE =             e[k]2                            ts = min{t : |e[τ ]| ≤ ϵ, ∀τ ≥ t}
+                           N
+                               k
+                                                                   CCPU = mean time/sample
+                Emax = max |e[k]|
+                           k
+
+
+ The 0.5 Hz threshold is a protection-oriented risk proxy. The metric set separates average error,
+ transient severity, trip exposure, settling, and compute cost.
+
+
+                                         23/61                Method
+From standard cases to composite IBR stress
+          Standard scenario results
+ Method                       Step      Ramp           Mod.
+                                                                                                              What the heatmap shows
+ RA-EKF                      0.000      0.006          0.037
+ SOGI-FLL                    0.005      0.013          0.040
+                                                                                                              The standard step is easy for most
+ Koopman                     0.003      0.017          0.044                                                  methods. The ramp is the separator:
+ TFT                         0.001      0.019          0.046   RMSE [Hz], mean over 5 seeds. Green:           EKF and IpDFT can look excellent at a
+ UKF                         0.000      0.017          0.055                                                  point and still diverge in another seed.
+ LKF2                        0.138      0.015          0.028
+
+                                                                                                              Operational consequence
+                                                                                                              Robustness is not the same as point
+below 0.05 Hz guide; red: failure/divergence regime.                                                          accuracy. A standard scenario can pass
+                                                                                                              while the same estimator remains
+                                                                                                              unsafe for ramp-like IBR dynamics.
+
+
+                                                                       25/61                          Core evidence
+          Standard scenario results
+ Method                       Step      Ramp           Mod.
+                                                                                                      What the heatmap shows
+ RA-EKF                      0.000      0.006          0.037
+ SOGI-FLL                    0.005      0.013          0.040
+                                                                                                      The standard step is easy for most
+ Koopman                     0.003      0.017          0.044                                          methods. The ramp is the separator:
+ TFT                         0.001      0.019          0.046   RMSE [Hz], mean over 5 seeds. Green:   EKF and IpDFT can look excellent at a
+ UKF                         0.000      0.017          0.055                                          point and still diverge in another seed.
+ LKF2                        0.138      0.015          0.028
+ PLL                         0.033       1.47          0.227
+ IpDFT                       0.000       14.4          0.114                                          Operational consequence
+ EKF                         0.000       37.1          0.064                                          Robustness is not the same as point
+below 0.05 Hz guide; red: failure/divergence regime.                                                  accuracy. A standard scenario can pass
+                                                                                                      while the same estimator remains
+                                                                                                      unsafe for ramp-like IBR dynamics.
+
+   Result: RA-EKF, SOGI-FLL, Koopman, and TFT remain below 0.05 Hz across the three standard
+   cases; EKF and IpDFT fail through intermittent
+                                         25/61    ramp divergence.
+                                                           Core evidence
+  A clean phase jump is a family separator
+                         state-space          Ttrip = 0
+                      EKF/UKF/RA-EKF         near-zero error
+                                                                  EKF, UKF, RA-EKF:
+          +60◦                                                    RMSE ≈ 0 Hz
+        phase jump                                                Ttrip = 0
+                        loop methods        re-locks without
+                       PLL/SOGI-FLL           trip exposure
+
+
+                                                                  IpDFT: 1.56 Hz, 1.21 s
+                        window/spectral     window memory
+                                                                  RLS: 2.28 Hz, 1.30 s
+                      IpDFT/RLS/Prony     creates trip exposure
+                                                                  Prony: 2.39 Hz, 1.35 s
+
+
+The clean jump does not expose RA-EKF’s main advantage. It shows which
+estimator families carry memory through discontinuities.
+                                26/61             Core evidence
+       Composite IBR sequence: why it is hardest
+         v (t)
+                                           +40◦                        +80◦ + ringdown
+
+
+
+
+                                                                                                                      time
+
+
+
+
+                    5th/7th                phase            −6 Hz/s              ringdown            impulsive
+                   harmonics               jump             RoCoF                 recovery             noise
+
+
+
+Why standard tests miss it                                            Why ATLAS decomposes it
+The estimator sees spectral leakage, loop re-lock, state-model        The multi-event case proves the failure exists; severity sweeps
+mismatch, transient recovery, and noise in one nonstationary          identify which stressor actually breaks each estimator family.
+waveform.                                            27/61                 Core evidence
+        Scenario E: the leaderboard breaks
+                                      Method                  RMSE [Hz]      Ttrip [s]    CPU [µs]
+
+                                      UKF                          1.09           0.78          14
+                                      EKF                          1.13           0.87          11
+                                      SOGI-PLL                     1.14           0.78          11
+                                      SOGI-FLL                     1.14           0.84           9
+                                      IpDFT                        1.14           1.35          17
+                                      RA-EKF                       1.16           0.92          15
+                                      Koopman                      1.90           0.84      15 241
+                                      ZCD                           426           1.55           7
+
+
+No accurate winner                                                  Scalar ranking failure
+Under the stacked sequence every usable method                      UKF has the lowest RMSE and trip exposure,
+collapses to ≈ 1.1 Hz RMSE; ZCD diverges                            SOGI-FLL the lowest usable CPU, Koopman is
+catastrophically (426 Hz). High accuracy is simply                  1000× costlier; RA-EKF sits mid-pack but never
+not available here.                                                 diverges.
+Source: full_mc_benchmark, n = 5:   IBR_Multi_Event   28/61               Core evidence
+    Trip-risk evidence: core stress cases
+
+                           Trip-risk is an event metric, not an average-error metric
+              Scenario D: phase jump (NERC +60 ◦ )                  Scenario E: IBR multi-event                                                      Result reading
+ RA-EKF 0 ms                                                                 UKF                                780 ms
+                                                                                                                                                        • Scenario D: state-space filters
+                                                                                                                                                          and PLL keep Ttrip = 0;
+   EKF 0 ms                                                              SOGI-PLL                               780 ms                                    windowed/spectral methods
+   UKF 0 ms                                                                                                                                               (IpDFT, RLS) exceed 1.2 s.
+                                state-space + loops: 0 trip              SOGI-FLL                                    840 ms
+    PLL 0 ms
+                                                                                                                                                        • Scenario E: every method
+                                                                         Koopman                                     840 ms                               carries 0.8–1.4 s exposure —
+    TFT        93 ms                                                                                                                                      composite stress is
+                                                                             EKF                                      870 ms
+Koopman        112 ms                                                                                                                                     unavoidable.
+  IpDFT                                                    1214 ms        RA-EKF                                       920 ms                           • The trip-exposure ranking is
+                                                                                                                                                          not the RMSE ranking.
+   RLS                                                         1297 ms     IpDFT                                                        1350 ms
+                                                                                                                                                     Result: Ttrip separates protection
+          0     200     400      600    800    1000     1200   1400                 0     200   400     600    800     1000     1200   1400   1600
+                              Trip-risk duration [ms]                                                 Trip-risk duration [ms]
+                                                                                                                                                     exposure from average error.
+
+                                                                                        29/61                                     Core evidence
+                                                                  Event responses (full\_mc\_benchmark): intermittent divergence is the dominant failure mode
+                                                             (a) Frequency ramp --- EKF/IpDFT diverge                                                                                  (b) Multi-event --- all degrade to ≈ 1 Hz
+                                           70
+                                                                                                                    true                IpDFT                        62                                                                 true          EKF
+                                           65                                                                       EKF                 RA-EKF                                                                                          RA-EKF        UKF
+
+                                           60                                                                                                                        60
+
+
+      The failures are visible in the trace, not only in the
+                                           55                                                                                                                        58
+
+
+
+
+                                 f̂ [Hz]
+
+
+
+
+                                                                                                                                                           f̂ [Hz]
+                                           50
+                                                                                                                                                                     56
+
+      table                                45
+                                           40
+                                                                                                                 EKF, IpDFT leave the
+                                                                                                                   track (tens of Hz)
+                                                                                                                                                                     54
+
+                                           35                                                                                                                        52
+                                                0.0         0.2      0.4      0.6           0.8            1.0     1.2              1.4                                    0       1    2          3 4                                                 5
+                                RAMP DIVERGENCE                                        time [s]                                                                                MODULATION DIVERGENCE
+                                                                                                                                                                                          time [s]
+                               Event responses (full\_mc\_benchmark): intermittent divergence is the dominant failure mode
+                          (a) Frequency       Phase
+                                          (c) ---
+                                        ramp         jump ---diverge
+                                                  EKF/IpDFT  state-space recover, IpDFT trips                                                        (b) Multi-event            (d) Modulation
+                                                                                                                                                                     --- all degrade to ≈ 1 Hz --- LKF diverges
+              70                   63                                                                                                                       63
+                                                                                    true          IpDFT           true                EKF                                                                 true             EKF      true          RA-EKF
+                                                                                    EKF           RA-EKF          RA-EKF           62 IpDFT                                                               RA-EKF           UKF      LKF           SOGI-FLL
+              65                           62                                                                                                                        62
+              60                                                                                                                   60
+                                           61                                                                                                                        61
+              55
+                                 f̂ [Hz]
+
+
+
+
+                                                                                                                                                           f̂ [Hz]
+                                                                                                                                   58
+    f̂ [Hz]
+
+
+
+
+                                                                                                                         f̂ [Hz]
+                                           60                                                                                                                        60
+              50
+                                           59                                                                                      56                                59
+              45                                                              EKF, IpDFT leave the
+                                                                                track (tens of Hz)
+                                           58                                                                                      54                                58
+              40
+              35                       57                                                                                          521.4                             57
+                   0.0   0.2        0.4         0.00.6      0.20.8   0.41.0   0.61.2        0.81.4         1.0     1.2                   0             1                  0.002    0.25      30.50   0.75 4     1.00      1.25
+                                                                                                                                                                                                                            5    1.50      1.75       2.00
+                                                         time [s]                      time [s]                                                                                   time [s]                    time [s]
+
+              (c) Phase jump --- state-space recover, IpDFT trips
+Failure63 signature                                                                                                                                         Modulation --- LKF diverges
+                                                                                                                                                 Failure(d)signature
+                                                                                                                                   63
+                                                                               true                  EKF                                                                                                true           RA-EKF
+EKF 62and IpDFT leave the true ramp
+                                  RA-EKF almost
+                                          IpDFT
+                                                                                                                                   62            LKF stays plausible between
+                                                                                                                                                                       LKF      collapses, then
+                                                                                                                                                                            SOGI-FLL
+
+immediately;
+     61       after the event, the   estimate   is                                                                                 61            repeatedly drops out of the usable frequency
+    f̂ [Hz]
+
+
+
+
+                                                                                                                         f̂ [Hz]
+no longer
+     60    operationally usable.                                                                                                   60            band.
+              59                                                                                                                   59
+
+              58                                                                                                                   58
+                                                                                                      30/61                                             Core evidence
+              57                                                                                                                   57
+    Result comparison: winners depend on the question
+
+Question                  Best-supported answer         Evidence                   Boundary
+
+Clean step/modulation     State-space + SOGI-FLL        Step ≈ 0; mod              Clean cases do not predict
+accuracy                  near-zero; LKF2 best on mod   0.028–0.044 Hz             ramp/event survival
+Ramp and RoCoF tracking   RA-EKF is the most robust     0.006 Hz vs EKF 37 Hz,     Divergence is intermittent
+                          ramp tracker                  IpDFT 14 Hz (diverge)      (seed-dependent)
+Phase jump (Scenario D)   State-space filters recover   EKF/UKF/RA-EKF             Windowed/spectral carry the
+                          with zero trip                Ttrip = 0; IpDFT 1.21 s    exposure
+Multi-event RMSE          No accurate method — all      UKF 1.09 Hz best; ZCD      RMSE hides trip-risk and 1000×
+                          ≈ 1.1 Hz                      426 Hz diverges            CPU spread
+Embedded feasibility      PLL, SOGI-FLL, EKF,           9–17 µs/sample;            Python timing is a software-cost
+                          RA-EKF remain plausible       Koopman ∼15,000            proxy
+
+
+
+Selection changes with event family, objective metric, and compute envelope. A single leaderboard
+hides the deployment trade-off.
+                                           31/61                   Core evidence
+        Computational feasibility
+
+ Method                    Time/sample            Family                  Target
+                                                                                   Deployment interpretation
+ SOGI-FLL                      0.0348 µs          Loop                MCU
+ SOGI-PLL                      0.0867 µs          Loop                MCU          CPU is a software-cost indicator from the
+ EKF                            0.813 µs         Model              MCU/DSP        benchmark harness, not a hardware-latency
+ RA-EKF                          1.61 µs         Model                DSP          claim.
+ TFT / IpDFT                      3–4 µs        Window              DSP/FPGA
+ Koopman                          390 µs       Data-driven          CPU/GPU
+ ESPRIT                         2,838 µs        Window                CPU          Key comparison
+                                                                                   The practical low-cost cluster is SOGI-FLL,
+                                                                                   SOGI-PLL, EKF, and RA-EKF. Koopman and
+                                                                                   ESPRIT sit far to the right on cost without a
+                                                                                   global RMSE gain.
+Source: SGSMA benchmark matrix, Sec.   IV-D and Fig.   2(g)–(h)
+
+
+                                                                  32/61               Core evidence
+                              Deployment limits
+                                      Cost vs trip-risk under multi-event stress (marker ∝ RMSE)
+                       4500                RLS
+                               family
+                               Model           Prony
+                                                                                                                        Deployment interpretation
+                               LoopTKEO
+                       4000    Window                                                                                        •      Deployment combines RMSE, trip
+                               Data-driven
+                               Adaptive                                                                                             exposure, CPU, and divergence
+                       3500    Legacy
+                                         LKF2                                                                                       robustness.
+trip-risk Ttrip [ms]
+
+
+
+
+                       3000                                                                MUSIC
+                                                                                                                             •      In the OpenFreqBench expansion,
+                       2500                                                                                                         state-space + loop methods cluster
+                                 PLL
+                                  Type-3 SOGI-PLL
+                       2000               TFT                                              ESPRIT
+                                                                                                                                    at low cost (≤ 17 µs) and low trip.
+
+                       1500
+                               ZCD                                                                                           •      Spectral/data-driven methods trade
+                                         IPDFT
+                                                                                                                                    lower error for much higher CPU in
+                       1000         EKF RA-EKF
+                                 SOGI-FLL                                                                 Koopman                   this artifact.
+                                     LKF
+                                    SOGI-PLL
+                                        UKF
+
+                                101                      102                      103               104                      •      RA-EKF stays low-cost with no ramp
+                                                       median CPU cost [µs/sample] (log)
+                                                                                                                                    divergence in this run.
+Source: OpenFreqBench expansion:                                                     n = 5
+                                                        artifacts/full_mc_benchmark,33/61                           Core evidence
+Balance profile
+             Robustness profile --- 1/(1 + RMSE) per scenario
+                          (larger is better)
+                                               Ramp
+                                             robustness
+                                                                                            Radar profile
+                                                                                                •   Each axis is one scenario; larger
+    Modulation                                                                                      = more robust
+                                                                     1.0                            (1/(1 + RMSE)).
+                                                           0.5                                  •   RA-EKF and SOGI-FLL stay
+                                                                           Step
+                                                                         accuracy                   robust across all five scenarios.
+                                                                                                •   EKF and IpDFT collapse on the
+                                                                                                    ramp axis (intermittent
+    Phase-jump                                                                                      divergence).
+                                                                                                •   No estimator is strong on every
+                                             Multi-event                                            axis — robustness is the
+                       RA-EKF
+                       EKF
+                                  PLL
+                                  SOGI-FLL
+                                                   IPDFT
+                                                   Koopman       34/61              Core evidence
+                                                                                                    discriminator.
+     Compliance heatmap: why standard tests are
+     insufficient
+                             Method                    Step   Ramp    Mod       Jump   Multi
+                             Koopman                   P       P       P
+                             TFT                       P       P       P
+                             IpDFT                     P       F       P
+                             SOGI-FLL                  P       P       P
+                             PLL                       P       F       F*
+                             EKF                       P       F       P
+                             UKF                       P       P       P
+                             RA-EKF                    P       P       P
+                             LKF2                      F*      P       P
+
+
+
+Columns: Jump = phase jump (D), Multi = multi-event (E). P pass | F fails a declared RMSE/Ttrip /settling threshold | F*
+                                                      borderline.
+
+                                               35/61                 Core evidence
+       Compliance heatmap: why standard tests are
+       insufficient
+                                 Method                     Step    Ramp     Mod    Jump     Multi
+                                 Koopman                     P        P       P       F        F
+                                 TFT                         P        P       P       F*       F
+                                 IpDFT                       P        F       P       F        F
+                                 SOGI-FLL                    P        P       P       P        F
+                                 PLL                         P        F       F*      P        F
+                                 EKF                         P        F       P       P        F
+                                 UKF                         P        P       P       P        F
+                                 RA-EKF                      P        P       P       P        F
+                                 LKF2                        F*       P       P       P        F
+
+
+
+ Columns: Jump = phase jump (D), Multi = multi-event (E). P pass | F fails a declared RMSE/Ttrip /settling threshold | F*
+                                                       borderline.
+
+Result: Step, ramp, and modulation compliance does                       Coreorevidence
+                                                    not predict phase-jump
+                                                 35/61                           multi-event readiness.
+        Empirical claims
+
+Protection behavior                                                     Metric disagreement
+Divergence, not phase jumps, is the dominant failure mode.              RMSE, trip-risk, and CPU select different winners.
+On the ramp, EKF and IpDFT intermittently diverge (37 and               In the OpenFreqBench multi-event run, UKF has the lowest
+14 Hz mean); RA-EKF stays at 0.006 Hz. A clean phase jump               RMSE/trip, SOGI-FLL the lowest usable CPU, and Koopman
+is recovered by every state-space filter with Ttrip = 0.                is 1000× costlier.
+
+
+Standard-test limitation                                                Deployability
+Simple-case pass/fail leaves event readiness unresolved.           Feasibility changes the accuracy ranking.
+The heatmap shows methods that pass Step/Ramp/Mod but              In that same expansion, RA-EKF runs at ∼15 µs/sample;
+fail islanding or multi-event IBR stress.                          selected spectral and data-driven methods move far outside
+                                                                   that cost range.
+Guardrail: report scenario, metric, and compute envelope before naming a preferred estimator.
+Source: OpenFreqBench expansion:   artifacts/full_mc_benchmark, n = 5
+
+
+
+                                                              36/61           Core evidence
+Does the pattern scale across families and severity?
+      Expanded stress analysis
+ OPENFREQBENCH EXPANSION: 18 estimators, 33 scenarios, n = 5 seeds per scenario
+
+
+Monte-Carlo benchmark (full_mc)                           ATLAS severity sweeps
+  •   18 estimators across 5 families.                       •   Severity, sign, and policy curves per stress
+                                                                 family.
+  •   33 scenarios (A–E plus severity variants).
+                                                             •   Fixed-policy n = 30 across all 9 required
+  •   n = 5 Monte Carlo seeds per scenario.
+                                                                 sweeps (both signs).
+  •   Standard, phase-jump, multi-event, and CPU
+                                                             •   Harmonic, RoCoF, phase-jump, and noise
+      metrics.
+                                                                 atlases.
+                                                             •   Tests sensitivity, scaling, and family stability.
+
+ Two evidence layers on the same truth: a replicated Monte-Carlo benchmark, plus ATLAS severity
+ sweeps that trace where each estimator family degrades.
+                                           38/61             Expanded & ATLAS
+        SGSMA benchmark: family winners
+ Family                          Count RMSE leader            RMSE mean                   Trip-risk leader
+ IEEE ramps                         9      SOGI-PLL           19.4 ± 6.4 mHz              0 s (multiple)
+ Magnitude steps                    7      EKF                0.388 ± 0.143 mHz           0 s (multiple)
+ Modulation                         3      RA-EKF             17.8 ± 21.4 mHz             0 s (multiple)
+ Phase jumps                        3      SOGI-FLL           174 ± 67.5 mHz              ZCD: 0.0194 s
+ OOB interference                   1      EKF                13.6 ± 11.1 mHz             EKF / RA-EKF: 0 s
+ IBR harmonics                      3      EKF                70.5 ± 27.3 mHz             TFT / Prony: 0.00947 s
+ IBR ringdown                       5      UKF                313 ± 23.2 mHz              ESPRIT: 0.0989 s
+ IBR multi-event                    1      PLL                173.5 ± 66.7 mHz            IpDFT: 0.0439 s
+
+  The paper result is conditional: SOGI-PLL leads ramps, EKF leads magnitude
+  steps/OOB/harmonics, RA-EKF leads modulation, UKF leads ringdown, and PLL leads the
+  composite IBR case. Trip-risk often points elsewhere.
+
+Source: SGSMA benchmark matrix, Table II
+
+
+                                                      39/61            Expanded & ATLAS
+        ATLAS severity analysis
+  ATLAS VALIDATED SWEEP: n = 30, fixed policy, both signs — readiness gate passed (9/9 sweeps)
+
+
+                    Core                     ATLAS                        sign                  fixed vs         validation
+                    cases                 severity curves              asymmetry              oracle policy         gate
+
+
+                                                                     Are positive and
+                                         When does error                                  Does tuning policy      Which re-
+             A–E failure mode                                        negative events
+                                          start to grow?                                  change the rank?     sults replicate?
+                                                                       symmetric?
+
+
+
+  ATLAS maps where estimator behavior changes with severity, sign, tuning policy, and replication
+  depth.
+Source: docs/ATLAS_PIPELINE.md; docs/ATLAS_METHOD_AUDIT.md
+
+
+                                                             40/61                  Expanded & ATLAS
+        ATLAS result: metric choice changes the answer
+  ATLAS VALIDATED SWEEP: n = 30, fixed policy, both signs — readiness gate passed (9/9 sweeps)
+
+ Metric objective                   Unique metric winner          Different from RMSE
+                                                                                        Why this matters
+ Trip-risk exposure                       26 / 113                       5 / 26
+ RoCoF max error                          112 / 113                     53 / 112
+                                                                                        For protection-adjacent use, low average
+ RoCoF RMS error                          112 / 113                     48 / 112        error is not enough. The estimator must
+                                                                                        avoid long deadband exposure, track
+                                                                                        RoCoF, and remain computable.
+Tie handling
+Trip-risk has tied zero-exposure minima in 87/113 levels. It is an
+exposure screen first, not a single-winner leaderboard.                                 Operational implication
+                                                                                        RoCoF metrics change the preferred
+                                                                                        estimator in nearly half the severity map;
+                                                                                        trip-risk removes estimators with long
+                                                                                        exposure.
+Source: atlas-papergrade-missing-v1/global_metrics_report.csv
+                                                                41/61              Expanded & ATLAS
+      ATLAS result: where estimators stop being valid
+ATLAS VALIDATED SWEEP: n = 30, fixed policy, both signs — readiness gate passed (9/9 sweeps)
+Stress family                Maximum tested level             Methods below      Interpretation
+                                                                 0.05 Hz
+
+Magnitude step               ±90% sag/swell                          2           EKF and RA-EKF survive both
+                                                                                 signs.
+AM modulation                10 Hz envelope                         10           AM alone is not the hardest
+                                                                                 modulation case.
+FM modulation                10 Hz modulation                        0           FM is qualitatively harder than
+                                                                                 AM.
+RoCoF ramp                   ±50 Hz/s                                0           Severe RoCoF requires a
+                                                                                 separate qualification class.
+                                   ◦
+Phase jump                   ±60                                     0           Single jump severity already
+                                                                                 breaks the 0.05 Hz guide.
+Harmonics                    30% THD                                 0           Low-THD winners do not survive
+                                                                                 extreme THD.
+Interharmonics               20% at 75 Hz                            0           Integer-harmonic tests are not
+                                                                                 sufficient.
+Broadband noise              σ = 0.1 pu                              0           Noise robustness is a first-class
+                                              42/61           Expanded & ATLAS   stress dimension.
+     AM, FM, and interharmonics split the story
+ATLAS VALIDATED SWEEP: n = 30, fixed policy, both signs — readiness gate passed (9/9 sweeps)
+
+Stress           Winner pattern         Threshold behavior
+                                                                      Implication
+AM               EKF wins slow,         Ten methods stay below
+modulation       reference, fast, and   0.05 Hz through 10 Hz         AM, FM, integer harmonics, and
+                 severe regions.        envelope modulation.          interharmonics should not be collapsed into
+FM modulation    SOGI-FLL, TFT, and     No method stays below         one “distortion” label. They select different
+                 Koopman split the      0.05 Hz at 10 Hz FM
+                 low-rate points;       modulation.                   estimator families.
+                 ESPRIT leads from
+                 1–10 Hz.
+                                                                      Decomposition insight
+Interharmonics   EKF leads 0.5–15%;     EKF crosses the 0.05 Hz
+                 PLL leads at 20%.      guide between 5% and          A composite IBR trace can contain AM,
+                                        8%; most families cross
+                                        earlier.                      FM, harmonics, interharmonics, noise, and
+                                                                      phase steps. ATLAS isolates which stressor
+                                                                      changes the ranking.
+                                               43/61              Expanded & ATLAS
+      When the textbook filter diverges
+ OPENFREQBENCH EXPANSION: 18 estimators, 33 scenarios, n = 5 seeds per scenario
+Per-seed frequency RMSE [Hz] on the IEEE frequency-ramp scenario (5 Monte Carlo seeds):
+
+
+                 Estimator          seed 1    seed 2    seed 3    seed 4     seed 5    trip-risk
+
+                 EKF (textbook)      0.016     63.7     0.017    121.5      0.027      up to 1.35 s
+                 RA-EKF             0.0055    0.0062    0.0083   0.0045     0.0058     0s
+
+
+
+What happens                                                      Why RA-EKF matters here
+The standard EKF tracks most seeds but                            Covariance scaling and event gating remove the
+intermittently diverges to tens of Hz. It is not a                divergence: stable on every seed, zero trip
+severity threshold: the worst seed (121 Hz) had a                 exposure. This — not a universal RMSE win —
+low ramp rate (1.7 Hz/s) while the steepest (5                    is its defensible value.
+Hz/s) tracked cleanly. The failure is triggered by
+onset/phase combinations — seed-dependent and
+silent.                                    44/61                    Expanded & ATLAS
+                                          RoCoF has a sign: several methods are down-ramp
+                                          sensitive
+                        ATLAS VALIDATED SWEEP: n = 30, fixed policy, both signs — readiness gate passed (9/9 sweeps)
+
+                                    Sign asymmetry by estimator and sweep
+                                                                                                                                                                       1.5× warn
+                                                                                                                                                                       2.0× flag
+
+                                5
+                                                                                                                                                                       3.0× diagnostic
+                                                                                                                                                                       rocof
+                                                                                                                                                                                               Directional bias (RMSE− /RMSE+ at
+                                                                                                                                                                                               ±50 Hz/s)
+max(pos, neg) / min(pos, neg)
+
+
+
+
+                                4
+                                                                                                                                                                                                   • LKF 5.5× worse on −RoCoF
+                                3
+                                                                                                                                                                                                   • TKEO 3.9×, RLS 3.1×
+                                2                                                                                                                                                                  • SOGI-FLL 1.6×
+                                                                                                                                                                                                   • EKF, UKF, RA-EKF ≈ 1.0 (symmetric)
+                                1
+
+
+                                0
+                                                                                                                                                                                               Why it matters
+                                                                                                 -PLL
+
+
+
+
+                                                                                                                                                                       MU)
+                                         LKF
+
+
+                                               TKEO
+
+
+
+                                                      RLS
+
+
+                                                             -FLL
+
+
+                                                                    ZCD
+
+
+                                                                          IPDFT
+
+
+                                                                                  Prony
+
+
+
+
+                                                                                                                 UKF
+
+
+                                                                                                                       PLL
+
+
+
+                                                                                                                              IT
+
+
+                                                                                                                                    TFT
+
+
+                                                                                                                                           -PLL
+
+
+                                                                                                                                                  EKF
+
+
+                                                                                                                                                        LKF2
+                                                                                                        RA-EKF
+
+
+
+
+                                                                                                                             ESPR
+
+
+
+
+                                                                                                                                                                 (RK-DP
+                                                            SOGI
+
+
+
+
+                                                                                            SOGI
+
+
+
+
+                                                                                                                                          SOGI
+                                                                                          Type-3
+
+
+
+
+                                                                                                                                                                man
+                                                                                                                                                                                               For LKF, TKEO, RLS, and SOGI-FLL, a
+
+
+
+                                                                                                                                                               Koop
+                                                                                                                                                                                               +RoCoF-only test can certify behavior that does not
+                                                                                                                                                                                               hold on frequency decline. Both signs must be
+                                                              45/61
+                                                                                                                                                                                               swept.
+                                                                                                                                                                                         Expanded & ATLAS
+Source: atlas-papergrade-missing-v1/atlas_sign_asymmetry.csv (n = 30, both signs)
+        Phase-jump severity is non-monotone
+ ATLAS SEVERITY SWEEP: pilot run, n = 1, default controller policy
+                                                                                              Phase Jump Method Atlas (default)
+                              Phase-jump atlas: true frequency remains nominal while voltage phase changes instantaneously. Frequency errors quantify phase-discontinuity rejection, post-event recovery and sign asymmetry.
+
+
+
+                                            Phase Jump Method Stress Map
+                                                                                                                                                                                                                                                                       Worst case is not 180◦
+                                      PLL
+                                                                                                                                                                                                                                            1
+                                SOGI-FLL
+                                SOGI-PLL                                                                                                                                                                                                                               Most methods peak near 90–120◦ and recover
+                                                                                                                                                                                                                                                                       toward 180◦ (a half-cycle jump partly
+                         Type-3 SOGI-PLL
+                                     ZCD                                                                                                                                                                                                    0
+                                     EKF
+                                                                                                                                                                                                                                                                       self-cancels). EKF peaks at only 0.25 Hz @ 115◦ ,
+
+
+
+
+                                                                                                                                                                                                                                                log10 mean RMSE [Hz]
+                                      LKF
+                                    LKF2                                                                                                                                                                                                        1
+                                                                                                                                                                                                                                                                       back to 0.07 Hz @ 180◦ .
+         Estimator
+
+
+
+
+                                 RA-EKF
+                                     UKF
+                                  ESPRIT
+                                   IPDFT                                                                                                                                                                                                        2
+                                   Prony
+                                      TFT
+                                                                                                                                                                                                                                                3
+                                     RLS
+                                    TKEO
+                     Koopman (RK-DPMU)
+                                                                                                                                                                                                                                                                       The TFT cliff
+                                  PI-GRU
+                                                                                                                                                                                                                                                4
+                                                                                                                                                                                                                                                                       One exception: TFT rises gently, then jumps
+                                            1
+
+
+
+
+                                                              20
+
+
+
+
+                                                                                    45
+
+
+
+                                                                                                   60
+
+
+
+
+                                                                                                                                 90
+
+
+
+
+                                                                                                                                                                   0
+
+
+
+
+                                                                                                                                                                                                0
+
+
+
+
+                                                                                                                                                                                                                               0
+                                                                                                                                                              12
+
+
+
+
+                                                                                                                                                                                            15
+
+
+
+
+                                                                                                                                                                                                                          18
+                                                                                                                         |Phase jump| [deg]
+                                            Critical Phase Jump Summary
+                                                   ESPRIT
+                                            Baseline                     Stress                                                                                                          Half-cycle
+                                                                                                                                                                                                                                                                       2.5 → 21.9 Hz between 150◦ and 180◦ — a
+                                                  Small
+                                                   IPDFT                                  Severe                                                                                                                                   20 ref
+                                                   TFT IEEE 1547                                                               Extreme
+                                             Prony
+                                                         UKF
+                                                         LKF2
+                                                                     EKF                                                                                                                                                                                               phase-reversal singularity.
+                                                   RA-EKF
+                                             LKF
+                                                   ZCD
+                                                   SOGI-FLL
+                                                   SOGI-PLL
+                                             PLL
+                                             Type-3 SOGI-PLL
+                                                   Koopman (RK-DPMU)
+                                                   PI-GRU
+                                             TKEO
+                                             RLS
+                                            1                 20                    45             60                           90                           120                          150                           180
+                                                                                                   First |Phase jump| [deg] where mean RMSE exceeds guide
+
+
+Result: Severity is non-monotone; sweep the jump angle rather than qualify one nominal point.
+Source: atlas-phase-jump-1-180deg-5deg-all18/global_metrics_report.csv (diagnostic, n = 1, default policy, positive sign)
+                                                              46/61                    Expanded & ATLAS
+        No estimator owns the whole stress space
+  ATLAS VALIDATED SWEEP: n = 30, fixed policy, both signs — readiness gate passed (9/9 sweeps)
+                                                                                                                                                                      RoCoF Ramp Method Atlas (fixed policy)
+                                                                                                             Frequency-ramp RoCoF atlas: true frequency changes linearly during the ramp and then holds. Curves expose dynamic tracking error, RoCoF sensitivity, latency and directional bias.
+
+ RoCoF regime                        Best                  med. RMSE
+                                                                                                                     RoCoF Ramp Method Stress Map
+                                                                                                               PLL
+                                                                                                                                                                                                                                                                                                                         1
+ Low (0.1–1 Hz/s)                    Koopman                   5.5 mHz                                   SOGI-FLL
+                                                                                                         SOGI-PLL
+                                                                                                  Type-3 SOGI-PLL
+ Standard (1–3)                      ESPRIT                   12.2 mHz                                        ZCD
+                                                                                                                                                                                                                                                                                                                         0
+
+
+
+
+                                                                                                                                                                                                                                                                                                                             log10 mean RMSE [Hz]
+                                                                                                              EKF
+                                                                                                               LKF
+ IBR stress (3–10)                   ESPRIT                   33.0 mHz                                                                                                                                                                                                                                                       1
+
+
+
+
+                                                                                  Estimator
+                                                                                                             LKF2
+                                                                                                          RA-EKF
+
+ Severe (10–30)                      SOGI-PLL                 70.3 mHz                                        UKF
+                                                                                                           ESPRIT                                                                                                                                                                                                            2
+                                                                                                            IPDFT
+                                                                                                            Prony
+                                                                                                               TFT                                                                                                                                                                                                           3
+                                                                                                              RLS
+                                                                                                             TKEO
+                                                                                              Koopman (RK-DPMU)
+Across stress types                                                                                                                                                                                                                                                                                                          4
+
+
+
+
+                                                                                                                               0.1
+
+
+
+
+                                                                                                                                                0.5
+
+
+
+
+                                                                                                                                                                             1
+
+
+
+
+                                                                                                                                                                                                3
+
+
+
+
+                                                                                                                                                                                                                          5
+
+
+
+
+                                                                                                                                                                                                                                                  10
+
+
+
+
+                                                                                                                                                                                                                                                                         20
+
+
+
+
+                                                                                                                                                                                                                                                                                             50
+                                                                                                                                                                                                      |RoCoF| [Hz/s]
+                                                                                                                     Critical RoCoF Ramp Summary
+EKF wins phase jumps, the magnitude step and                                                                           Prony
+                                                                                                                                                   Low                                           Standard-like                       IBRTFT
+                                                                                                                                                                                                                                         stress
+                                                                                                                                                                                                                                        IPDFT
+                                                                                                                                                                                                                                                              ESPRIT      Severe                  Extreme        3 ref
+                                                                                                                                                                                                                          UKF
+                                                                                                                                                                                                                          RA-EKF
+interharmonics; ESPRIT/Koopman win the RoCoF and                                                                       LKF
+                                                                                                                                                                      LKF2
+                                                                                                                                                                      EKF
+                                                                                                                                                                                                                                         ZCD
+                                                                                                                                                                                                                                                              SOGI-PLL
+                                                                                                                                                                                                                          SOGI-FLL
+frequency-step regimes; ZCD wins low-THD harmonics;                                                                    Type-3 SOGI-PLL
+                                                                                                                       PLL
+                                                                                                                       TKEO
+                                                                                                                       RLS
+                                                                                                                                                                                                                                                              Koopman (RK-DPMU)
+
+
+SOGI-PLL leads severe RoCoF. No method leads                                                                     0.1                                            0.5                   1                               3
+                                                                                                                                                                                 First |RoCoF| [Hz/s] where mean RMSE exceeds guide
+                                                                                                                                                                                                                                     5                   10                    20                           50
+
+
+
+everywhere.
+
+   The deliverable is a selection map:
+                                   47/61
+                                                       × metric
+                                         event classExpanded & ATLAS
+                                                                     × compute budget.
+Source: atlas-papergrade-missing-v1/global_metrics_report.csv; RoCoF regimes averaged across both signs
+      ZCD is a narrow instrument, not a general estimator
+ ATLAS VALIDATED SWEEP: n = 30, fixed policy, both signs — readiness gate passed (9/9 sweeps)
+                                                                                                                                       White Noise / SNR Method Atlas (fixed policy)
+                                                                                       Single-tone white-noise sweep: the signal is a constant-frequency sinusoid and only additive white noise changes. Reported SNR assumes a 1 pu peak sine wave with RMS 1/sqrt(2).
+
+
+
+Low-stress champion                                                                            White Noise / SNR Method Stress Map
+                                                                                         PLL                                                                                                                                                                                                      1
+                                                                                   SOGI-FLL
+Up to ∼15% THD, zero-crossing detection gives the lowest                           SOGI-PLL
+                                                                            Type-3 SOGI-PLL
+                                                                                                                                                                                                                                                                                                  0
+error of any method — 0.27 mHz at 1% THD, 2.2 mHz at                                    ZCD
+
+
+
+
+                                                                                                                                                                                                                                                                                                      log10 mean RMSE [Hz]
+                                                                                        EKF
+                                                                                         LKF
+15%; and just 1.1 mHz at low broadband noise.                                                                                                                                                                                                                                                         1
+
+
+
+
+                                                            Estimator
+                                                                                       LKF2
+                                                                                    RA-EKF
+                                                                                        UKF
+                                                                                     ESPRIT                                                                                                                                                                                                           2
+                                                                                      IPDFT
+                                                                                      Prony
+                                                                                         TFT                                                                                                                                                                                                          3
+                                                                                        RLS
+                                                                                       TKEO
+                                                                        Koopman (RK-DPMU)
+                                                                                                                                                                                                                                                                                                      4
+
+
+
+
+                                                                                                          1
+
+
+
+
+                                                                                                                                 3
+
+
+
+
+                                                                                                                                                             01
+
+
+
+
+                                                                                                                                                                                    03
+
+
+
+
+                                                                                                                                                                                                               1
+
+
+
+
+                                                                                                                                                                                                                                          3
+
+
+
+
+                                                                                                                                                                                                                                                                    0.1
+                                                                                                        00
+
+
+
+
+                                                                                                                               00
+
+
+
+
+                                                                                                                                                                                                             0.0
+
+
+
+
+                                                                                                                                                                                                                                        0.0
+                                                                                                                                                        0.0
+
+
+
+
+                                                                                                                                                                                  0.0
+                                                                                                       0.0
+
+
+
+
+                                                                                                                             0.0
+                                                                                                                                                                         White-noise sigma [pu]
+                                                                                               Critical White Noise / SNR Summary
+                                                                                                                                                                                          SNR [dB]
+                                                                                                                                           6 × 101                                                      4 × 101                        3 × 101                         2 × 101
+                                                                                                                       Low noise                                     Nominal                                                                           TFT
+                                                                                                                                                                                                                                                       IPDFT      Severe           0.001 ref
+                                                                                                                                                                                                                   High                                ESPRIT
+                                                                                                                                                             Prony                                                                                                                     UKF
+                                                                                                                                                                                                                                                                                       RA-EKF
+                                                                                                                                                                                                                                                                                       EKF
+                                                                                                 LKF                                                                                                                                                   LKF2
+                                                                                                                                                                                                                                                       SOGI-PLL                        SOGI-FLL
+                                                                                                 Type-3 SOGI-PLL                                                                                                          ZCD
+                                                                                                 PLL                                                                                                                                                   Koopman (RK-DPMU)
+                                                                                                 TKEO
+                                                                                                 RLS
+                                                                                        0.0001                      0.0003                           0.001                        0.003                            0.01                         0.03                             0.1
+                                                                                                                                                  First White-noise sigma [pu] where mean RMSE exceeds guide
+
+
+
+
+                                                 48/61                            Expanded & ATLAS
+      ZCD is a narrow instrument, not a general estimator
+ ATLAS VALIDATED SWEEP: n = 30, fixed policy, both signs — readiness gate passed (9/9 sweeps)
+                                                                                                                                       White Noise / SNR Method Atlas (fixed policy)
+                                                                                       Single-tone white-noise sweep: the signal is a constant-frequency sinusoid and only additive white noise changes. Reported SNR assumes a 1 pu peak sine wave with RMS 1/sqrt(2).
+
+
+
+Low-stress champion                                                                            White Noise / SNR Method Stress Map
+                                                                                         PLL                                                                                                                                                                                                      1
+                                                                                   SOGI-FLL
+Up to ∼15% THD, zero-crossing detection gives the lowest                           SOGI-PLL
+                                                                            Type-3 SOGI-PLL
+                                                                                                                                                                                                                                                                                                  0
+error of any method — 0.27 mHz at 1% THD, 2.2 mHz at                                    ZCD
+
+
+
+
+                                                                                                                                                                                                                                                                                                      log10 mean RMSE [Hz]
+                                                                                        EKF
+                                                                                         LKF
+15%; and just 1.1 mHz at low broadband noise.                                                                                                                                                                                                                                                         1
+
+
+
+
+                                                            Estimator
+                                                                                       LKF2
+                                                                                    RA-EKF
+                                                                                        UKF
+                                                                                     ESPRIT                                                                                                                                                                                                           2
+                                                                                      IPDFT
+                                                                                      Prony
+                                                                                         TFT                                                                                                                                                                                                          3
+Broadband-noise cliff                                                                   RLS
+                                                                                       TKEO
+                                                                        Koopman (RK-DPMU)
+                                                                                                                                                                                                                                                                                                      4
+Same method: 34 mHz at σ = 0.003 pu → 3112 Hz at
+
+
+
+
+                                                                                                          1
+
+
+
+
+                                                                                                                                 3
+
+
+
+
+                                                                                                                                                             01
+
+
+
+
+                                                                                                                                                                                    03
+
+
+
+
+                                                                                                                                                                                                               1
+
+
+
+
+                                                                                                                                                                                                                                          3
+
+
+
+
+                                                                                                                                                                                                                                                                    0.1
+                                                                                                        00
+
+
+
+
+                                                                                                                               00
+
+
+
+
+                                                                                                                                                                                                             0.0
+
+
+
+
+                                                                                                                                                                                                                                        0.0
+                                                                                                                                                        0.0
+
+
+
+
+                                                                                                                                                                                  0.0
+                                                                                                       0.0
+
+
+
+
+                                                                                                                             0.0
+                                                                                                                                                                         White-noise sigma [pu]
+σ = 0.1 pu. EKF stays ≤ 0.43 Hz across the same sweep.                                         Critical White Noise / SNR Summary
+                                                                                                                                                                                          SNR [dB]
+                                                                                                                                           6 × 101                                                      4 × 101                        3 × 101                         2 × 101
+                                                                                                                       Low noise                                     Nominal                                                                           TFT
+                                                                                                                                                                                                                                                       IPDFT      Severe           0.001 ref
+                                                                                                                                                                                                                   High                                ESPRIT
+                                                                                                                                                             Prony                                                                                                                     UKF
+                                                                                                                                                                                                                                                                                       RA-EKF
+                                                                                                                                                                                                                                                                                       EKF
+                                                                                                 LKF                                                                                                                                                   LKF2
+                                                                                                                                                                                                                                                       SOGI-PLL                        SOGI-FLL
+                                                                                                 Type-3 SOGI-PLL                                                                                                          ZCD
+                                                                                                 PLL                                                                                                                                                   Koopman (RK-DPMU)
+                                                                                                 TKEO
+                                                                                                 RLS
+                                                                                        0.0001                      0.0003                           0.001                        0.003                            0.01                         0.03                             0.1
+                                                                                                                                                  First White-noise sigma [pu] where mean RMSE exceeds guide
+
+
+
+
+                                                 48/61                            Expanded & ATLAS
+      ZCD is a narrow instrument, not a general estimator
+ ATLAS VALIDATED SWEEP: n = 30, fixed policy, both signs — readiness gate passed (9/9 sweeps)
+                                                                                                                                       White Noise / SNR Method Atlas (fixed policy)
+                                                                                       Single-tone white-noise sweep: the signal is a constant-frequency sinusoid and only additive white noise changes. Reported SNR assumes a 1 pu peak sine wave with RMS 1/sqrt(2).
+
+
+
+Low-stress champion                                                                            White Noise / SNR Method Stress Map
+                                                                                         PLL                                                                                                                                                                                                      1
+                                                                                   SOGI-FLL
+Up to ∼15% THD, zero-crossing detection gives the lowest                           SOGI-PLL
+                                                                            Type-3 SOGI-PLL
+                                                                                                                                                                                                                                                                                                  0
+error of any method — 0.27 mHz at 1% THD, 2.2 mHz at                                    ZCD
+
+
+
+
+                                                                                                                                                                                                                                                                                                      log10 mean RMSE [Hz]
+                                                                                        EKF
+                                                                                         LKF
+15%; and just 1.1 mHz at low broadband noise.                                                                                                                                                                                                                                                         1
+
+
+
+
+                                                            Estimator
+                                                                                       LKF2
+                                                                                    RA-EKF
+                                                                                        UKF
+                                                                                     ESPRIT                                                                                                                                                                                                           2
+                                                                                      IPDFT
+                                                                                      Prony
+                                                                                         TFT                                                                                                                                                                                                          3
+Broadband-noise cliff                                                                   RLS
+                                                                                       TKEO
+                                                                        Koopman (RK-DPMU)
+                                                                                                                                                                                                                                                                                                      4
+Same method: 34 mHz at σ = 0.003 pu → 3112 Hz at
+
+
+
+
+                                                                                                          1
+
+
+
+
+                                                                                                                                 3
+
+
+
+
+                                                                                                                                                             01
+
+
+
+
+                                                                                                                                                                                    03
+
+
+
+
+                                                                                                                                                                                                               1
+
+
+
+
+                                                                                                                                                                                                                                          3
+
+
+
+
+                                                                                                                                                                                                                                                                    0.1
+                                                                                                        00
+
+
+
+
+                                                                                                                               00
+
+
+
+
+                                                                                                                                                                                                             0.0
+
+
+
+
+                                                                                                                                                                                                                                        0.0
+                                                                                                                                                        0.0
+
+
+
+
+                                                                                                                                                                                  0.0
+                                                                                                       0.0
+
+
+
+
+                                                                                                                             0.0
+                                                                                                                                                                         White-noise sigma [pu]
+σ = 0.1 pu. EKF stays ≤ 0.43 Hz across the same sweep.                                         Critical White Noise / SNR Summary
+                                                                                                                                                                                          SNR [dB]
+                                                                                                                                           6 × 101                                                      4 × 101                        3 × 101                         2 × 101
+                                                                                                                       Low noise                                     Nominal                                                                           TFT
+                                                                                                                                                                                                                                                       IPDFT      Severe           0.001 ref
+                                                                                                                                                                                                                   High                                ESPRIT
+                                                                                                                                                             Prony                                                                                                                     UKF
+                                                                                                                                                                                                                                                                                       RA-EKF
+                                                                                                                                                                                                                                                                                       EKF
+                                                                                                 LKF                                                                                                                                                   LKF2
+                                                                                                                                                                                                                                                       SOGI-PLL                        SOGI-FLL
+
+Harmonic cliff                                                                                   Type-3 SOGI-PLL
+                                                                                                 PLL
+                                                                                                 TKEO
+                                                                                                 RLS
+                                                                                                                                                                                                                          ZCD
+                                                                                                                                                                                                                                                       Koopman (RK-DPMU)
+
+                                                                                        0.0001                      0.0003                           0.001                        0.003                            0.01                         0.03                             0.1
+                                                                                                                                                  First White-noise sigma [pu] where mean RMSE exceeds guide
+Same method again: 2.2 mHz at 15% THD → 39 Hz at
+20% → 86 Hz at 30%.
+                                                 48/61                            Expanded & ATLAS
+        Voltage sags and swells are not symmetric
+  ATLAS VALIDATED SWEEP: n = 30, fixed policy, both signs — readiness gate passed (9/9 sweeps)
+
+ Estimator at ±90%          Sag to 0.1 pu      Swell to 1.9 pu
+                                                                                          What to claim
+ EKF RMSE                      47 mHz              14 mHz
+ RA-EKF RMSE                   49 mHz              30 mHz
+                                                                                          ZCD is amplitude-invariant only in the
+ ZCD RMSE                       374 Hz             9.4 mHz                                noise-free ideal case. Under fixed absolute
+ ZCD peak error                2856 Hz             32 mHz                                 noise, deep voltage sags create a low-SNR
+                                                                                          crossing problem.
+Mechanism
+Zero-cross timing error scales roughly as σn /(Aω). A deep sag lowers
+                                                                                          Benchmark consequence
+zero-cross slope and makes false crossings likely when absolute noise is                  Sag and swell signs must be swept
+fixed.
+                                                                                          separately; a positive-only magnitude-step
+                                                                                          test can hide the worst case.
+Source: atlas-papergrade-missing-v1/global_metrics_report.csv; src/estimators/zcd.py
+
+                                                             49/61                     Expanded & ATLAS
+         Why a voltage sag breaks zero-crossing detection
+ATLAS VALIDATED SWEEP: n = 30, fixed policy, both signs — readiness gate passed (9/9 sweeps)
+
+v (t)
+        nominal slope                                                     Timing sensitivity
+           large
+                                                                                     n(t0 )       dv
+                                                                                ∆t ≈ dv                ≈ Aω
+                        same absolute
+                                                                                       dt t0
+                                                                                                  dt 0
+                          noise band
+                                                            time          When the voltage amplitude A
+                                                                          collapses, the same noise produces
+                                                                          much larger crossing-time error.
+                                        sag slope
+                                          small
+                                                                          Estimator consequence
+                                                                             ZCD is elegant at clean high-SNR
+                                                                             crossings, but deep sags convert
+                                                                             amplitude loss into apparent frequency
+                                                    50/61                     ATLAS and false crossings.
+                                                                   Expanded &jitter
+    Harmonic degradation differs by estimator family
+ATLAS VALIDATED SWEEP: n = 30, fixed policy, both signs — readiness gate passed (9/9 sweeps)
+                                                                       Integer Harmonics: RMSE [Hz] by estimator family (fixed policy)
+            Integer-harmonic isolation sweep: the true frequency is fixed at nominal and integer harmonic coefficients are scaled to a target THD. Interharmonics, subharmonics, impulses and frequency events are disabled so degradation can be
+                                                                                                 attributed to harmonic distortion rather than mixed IBR artifacts.
+
+
+                                                                                                                                                                                                                                                                       Result
+                                    Reference Integer Harmonics                                                                                      Loop-based
+                                                                                                                                                                   Low THD                                          Severe
+                              1.0                                                                                                                        PLL
+                                                                                                                                               102       SOGI-FLL
+                                                                                                                                                         SOGI-PLL
+                                                                                                                                                         Type-3 SOGI-PLL
+                                                                                                                                                                                    Reference
+                                                                                                                                                                                                    High THD
+                                                                                                                                                                                                                                  Extreme
+                                                                                                                                                                                                                                                                         • Loop, window, model, and
+                              0.5                                                                                                              101       ZCD
+                                                                                                                                                         5 ref
+                                                                                                                                               100                                                                                                                         adaptive families degrade with
+               Signal [pu]
+
+
+
+
+                                                                                                                                  RMSE [Hz]
+                              0.0                                                                                                             10 1
+
+                              0.5
+                                                                                                                                              10 2                                                                                                                         THD at different rates.
+                                                                                                                                              10 3
+                              1.0        5                                                                                                    10 4                                                                                                                       • Best low-THD accuracy does not
+                                    0.00         0.02       0.04          0.06              0.08          0.10          0.12
+
+
+
+
+                                                                                                                                                     1
+
+
+
+
+                                                                                                                                                                      2
+
+
+                                                                                                                                                                              3
+
+
+
+                                                                                                                                                                                            5
+
+
+
+                                                                                                                                                                                                         8
+
+                                                                                                                                                                                                               10
+
+
+                                                                                                                                                                                                                     15
+
+                                                                                                                                                                                                                             20
+
+
+                                                                                                                                                                                                                                       30
+                                                                        Time [s]                                                                                               Integer-harmonic THD [%]
+                                    Model-based                                                                                                      Window-based
+                                                                                                                                                                                                                                                                           predict high-THD survival.
+                                                Low THD                                             Severe                                               ESPRIT   Low THD                                           Severe
+                                                                Reference                                         Extreme                                                           Reference                                     Extreme
+                              100                                                High THD
+                                                                                                                                               101
+                                                                                                                                                         IPDFT
+                                                                                                                                                         Prony
+                                                                                                                                                         TFT
+                                                                                                                                                         5 ref
+                                                                                                                                                                                                    High THD
+                                                                                                                                                                                                                                                                         • Loop methods (ZCD) win at low
+                             10 1                                                                                                              100                                                                                                                         THD but collapse above ∼15%;
+               RMSE [Hz]
+
+
+
+
+                             10 2
+                                                                                                                         EKF      RMSE [Hz]   10 1                                                                                                                         window methods (TFT) degrade
+                                                                                                                         LKF
+                                                                                                                         LKF2
+                             10 3                                                                                        RA-EKF
+                                                                                                                         UKF
+                                                                                                                         5 ref
+                                                                                                                                              10 2                                                                                                                         gently and lead at extreme THD.
+                                    1
+
+
+
+
+                                                   2
+
+
+                                                           3
+
+
+
+                                                                        5
+
+
+
+                                                                                     8
+
+                                                                                            10
+
+
+                                                                                                     15
+
+                                                                                                             20
+
+
+                                                                                                                        30
+
+
+
+
+                                                                                                                                                     1
+
+
+
+
+                                                                                                                                                                      2
+
+
+                                                                                                                                                                              3
+
+
+
+                                                                                                                                                                                            5
+
+
+
+                                                                                                                                                                                                         8
+
+                                                                                                                                                                                                               10
+
+
+                                                                                                                                                                                                                     15
+
+                                                                                                                                                                                                                             20
+
+
+                                                                                                                                                                                                                                       30
+                                                            Integer-harmonic THD [%]                                                                                           Integer-harmonic THD [%]
+                                    Adaptive                                                                                                         Data-driven
+                                                Low THD                                             Severe                                                        Low THD                                           Severe
+                                                                Reference                                         Extreme                                                           Reference                                     Extreme
+                                                                                 High THD                                                                                                           High THD
+
+
+                              101
+                  RMSE [Hz]
+
+
+
+
+                                                                                                                                  RMSE [Hz]
+
+
+
+
+                                                                                                                                                         Koopman (RK-DPMU)
+                                                                                                                                              10 1       5 ref
+
+
+
+
+                              100       RLS
+                                        TKEO
+                                        5 ref
+                                    1
+
+
+
+
+                                                   2
+
+
+                                                           3
+
+
+
+                                                                        5
+
+
+
+                                                                                     8
+
+                                                                                            10
+
+
+                                                                                                     15
+
+                                                                                                             20
+
+
+                                                                                                                        30
+
+
+
+
+                                                                                                                                                     1
+
+
+
+
+                                                                                                                                                                      2
+
+
+                                                                                                                                                                              3
+
+
+
+                                                                                                                                                                                            5
+
+
+
+                                                                                                                                                                                                         8
+
+                                                                                                                                                                                                               10
+
+
+                                                                                                                                                                                                                     15
+
+                                                                                                                                                                                                                             20
+
+
+                                                                                                                                                                                                                                       30
+                                                            Integer-harmonic THD [%]                                                                                           Integer-harmonic THD [%]
+                                                          Solid/dashed lines mark perturbation sign when applicable. Bands show available run intervals; thresholds and regions are interpretation guides.
+
+
+
+
+                                                                                                                                                                         51/61                                                                      Expanded & ATLAS
+                                                        Accuracy costs 100–1000× more compute
+  OPENFREQBENCH EXPANSION: 18 estimators, 33 scenarios, n = 5 seeds per scenario
+
+                                                          Pareto view: spectral/data-driven accuracy costs 100--1000x more compute
+                                                                       TKEO                                                                  Adaptive                    Low-cost core
+                                                                                                                                             Data-driven
+  Dynamic RMSE, geometric mean [Hz] (log scale)
+
+
+
+
+                                                                                                                                             Loop-based
+                                                  101                                                                                        Model-based                 PLL, SOGI-FLL, EKF,
+                                                                                                                                             Window-based
+                                                                                                                                                                         and RA-EKF sit in the
+                                                                                                                                                                         deployable compute
+                                                                                                                                                                         range.
+                                                  100
+
+
+                                                                                                                                                                         Accuracy premium
+                                                                                                                                                                         Spectral and data-
+                                                                      Type-3 SOGI-PLL
+                                                  10 1                                                                                                                   driven methods can
+                                                         ZCD          SOGI-PLL
+                                                                   SOGI-FLL
+                                                                       IPDFT
+                                                                       TFT
+                                                                                                                                  ESPRIT
+                                                                                                                                                     Koopman (RK-DPMU)   move right by 100–
+                                                                      101                                                          102
+                                                                                                                                                                         1000× CPU cost.
+                                                                                    Median per-sample CPU cost [us] (log scale)
+Source: OpenFreqBench expansion:                                                 artifacts/full_mc_benchmark, n = 5
+                                                                                                             52/61                       Expanded & ATLAS
+What to deploy — and what comes next
+    Three findings
+
+1. Metric-conditioned       2. Stress-bounded               3. Robustness over point accuracy
+The SGSMA matrix and AT-    AM remains survivable for       The OpenFreqBench ramp
+LAS both show that RMSE,    many methods; severe FM,        seeds expose silent diver-
+trip exposure, RoCoF, and   RoCoF, interharmonics, noise,   gence; RA-EKF removes that
+CPU can select different    and extreme THD break the       failure mode in the tested
+methods.                    0.05 Hz guide.                  run.
+
+
+Dynamic frequency estimators should be qualified by event family, sign, sever-
+ity, recovery, trip exposure, and compute envelope.
+      Validity limits and next steps
+
+Validation limits                                       Validation program
+  •   Limited to the reported scenario set.               •   Hardware-in-the-loop validation.
+  •   CPU is a software-level cost indicator;             •   Wider converter-control interaction
+      hardware latency requires platform timing.              coverage.
+  •   The study is simulation-only.                       •   Sensitivity analysis of the tuning protocol.
+  •   Scenario-wise tuning can affect rank stability.     •   ATLAS severity and sign sweeps with
+                                                              validation gates.
+
+ These limits define the validation path: broader event coverage, hardware timing, fixed-policy
+ replication, and field replay.
+
+                                              55/61           Deployment
+Recommendation map
+
+
+  FFR / RoCoF
+    tracking
+
+
+
+
+  EKF / RA-EKF
+    explicit ω̇
+
+
+
+
+                  56/61   Deployment
+Recommendation map
+
+
+  FFR / RoCoF     Anti-islanding
+    tracking      phase jumps
+
+
+
+
+  EKF / RA-EKF    PLL / RA-EKF
+    explicit ω̇   near-zero Ttrip
+
+
+
+
+                          56/61     Deployment
+Recommendation map
+
+
+  FFR / RoCoF     Anti-islanding     Low-cost
+    tracking      phase jumps        relay core
+
+
+
+
+  EKF / RA-EKF    PLL / RA-EKF       PLL / EKF
+    explicit ω̇   near-zero Ttrip   CPU efficient
+
+
+
+
+                          56/61      Deployment
+Recommendation map
+
+
+  FFR / RoCoF     Anti-islanding     Low-cost         Metering-like
+    tracking      phase jumps        relay core       steady state
+
+
+
+
+  EKF / RA-EKF    PLL / RA-EKF       PLL / EKF         IpDFT / TFT
+    explicit ω̇   near-zero Ttrip   CPU efficient   if delay acceptable
+
+
+
+
+                          56/61      Deployment
+Recommendation map
+
+
+  FFR / RoCoF                 Anti-islanding                  Low-cost                    Metering-like
+    tracking                  phase jumps                     relay core                  steady state
+
+
+
+
+  EKF / RA-EKF               PLL / RA-EKF                    PLL / EKF                     IpDFT / TFT
+    explicit ω̇              near-zero Ttrip                CPU efficient               if delay acceptable
+
+
+
+             Deployability depends on event class, trip-risk tolerance, and compute budget.
+
+
+
+
+                                     56/61                   Deployment
+Qualification profile
+
+      Core                    Conditional                   Metric-weighted                 Dynamic estimator
+   benchmark               estimator ranking                 event score                    benchmark profile
+
+
+
+
+  Known truth                Estimator I/O                   Locked metric                      Machine-readable
+    signals                     contract                        registry                           evidence
+
+
+
+                Estimator selection moves toward qualification when each method is tested
+                 against a declared event profile, metric profile, and latency-cost envelope.
+
+
+
+
+                                        57/61                    Deployment
+       Standardization profile
+
+Current standardization layer                                   Benchmark profile
+   • PMU standards define phasor, frequency, and RoCoF             • Canonical events: steps, ramps, phase jumps,
+     measurement requirements.                                       ringdown, harmonics, interharmonics, noise, and
+   • Compliance tests are necessary, with estimator-family           composite IBR sequences.
+     ranking by IBR event survival left outside scope.             • Locked metrics: RMSE, peak error, RoCoF error,
+   • Device reports often hide algorithmic failure modes             trip-risk, settling, invalid samples, CPU, and latency.
+     behind aggregate accuracy.                                    • Task profiles: forensic monitoring, PMU augmentation,
+                                                                     DFR support, and relay-adjacent screening.
+
+Standardization boundary
+                                                                Standardization value
+A dynamic-estimator profile needs declared signals, estimator
+I/O, metrics, evidence artifacts, and latency-cost reporting.   A reference test profile needs the same signals, estimator I/O,
+                                                                metrics, and machine-readable evidence.
+
+
+                                                    58/61             Deployment
+            IBR Event Qualification Score
+  COMPOSITE EVENT SCORE: weighted event-class qualification metric
+
+                                                                       Why a score is needed
+Score for estimator e
+                                X                                      RMSE, trip-risk, transient recovery, and
+    IBR-ERS(e) = 1 −                  ws Φs (e),                       cost lead to different decisions. A compos-
+                                s∈S                                    ite score makes the deployment objective
+              Φs (e) = αẼs + β P̃s + γ T̃s + δ S̃s + η C̃s + λL̃s .   explicit.
+
+ Score composition                                                     Protection profile
+    RMSE        peak     trip         settle   cost                    Raise γ, δ, λ when trip exposure, recovery,
+Ẽs , P̃s    dynamic and peak error                                    and latency dominate the risk model.
+T̃s , S̃s    trip exposure and recovery
+C̃s , L̃s    compute and latency penalties
+                                                                       Monitoring profile
+                                                                       Raise α, β, η when reconstruction accuracy
+                                                                       and compute budget dominate.
+                                                        59/61            Deployment
+    Toward realtime IBR estimators
+                                                 field replay + HIL
+
+
+
+
+          ATLAS stress            Failure-mode                         Estimator        Realtime
+            sweeps                  diagnosis                         design loop      qualification
+
+
+
+
+           severity and          ramp lag, phase                  hybrid, adaptive,    latency, CPU,
+           sign sweeps             reset, ringing                 confidence-aware    invalid outputs
+
+
+• The stress analysis identifies which physical stressor breaks each estimator family.
+• That diagnosis supports hybrid estimators: event classifiers, harmonic-aware preprocessing, adaptive
+  bandwidth, and self-reported confidence.
+                                        truth, EMT replay, Deployment
+• Validation should combine synthetic 60/61                  hardware-in-the-loop, and field oscillography.
+     Validation agenda and conclusion
+
+Conclusion                                                        Validation agenda
+  • Field disturbances define the measurement problem;              • Full ATLAS sweeps: fixed policy, 100-run Monte Carlo,
+    controlled synthetic truth makes estimator behavior               statistical rank-stability analysis.
+    explainable.                                                    • Composite qualification profiles for forensic,
+  • The study compares estimators across objectives, regimes,         PMU-augmentation, and relay-adjacent tasks.
+    and deployment constraints, including IBR-relevant stress       • Three-phase, unbalance, and converter-control interaction
+    modes.                                                            coverage.
+  • Empirical conclusions remain tied to evidence level, stress     • Real-event replay from DFR/PMU/oscillography with
+    regime, and replication depth.                                    synchronized ground-truth proxies.
+                                                                    • Estimators that optimize the full objective vector:
+                                                                      frequency error, RoCoF, trip exposure, settling, CPU,
+                                                                      latency.
+
+ Result: estimator choice is tied to event class, metric target, and compute envelope; estimator
+ qualification must declare the stress regime, latency limit, and evidence depth.
+                                                  61/61                  Deployment
+

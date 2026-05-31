@@ -129,8 +129,8 @@ def dashboard(specs, fname, suptitle):
         av.set_title(sp["title"])
         sp["f"](af)
         if j == 0:
-            av.set_ylabel("v(t)  [pu]")
-            af.set_ylabel("f$_\\mathrm{true}$(t)  [Hz]")
+            av.set_ylabel("VOLTAGE\n$v(t)$  [pu]", fontweight="bold", fontsize=8.6)
+            af.set_ylabel("FREQUENCY\n$f_\\mathrm{true}(t)$  [Hz]", fontweight="bold", fontsize=8.6)
     fig.suptitle(suptitle, fontsize=10.5, fontweight="bold", color=INK, y=0.955)
     FIG.mkdir(exist_ok=True)
     for ext in ("pdf", "png"):
@@ -169,8 +169,10 @@ def main():
              f=lambda a: fpanel(a, "IEEE_Modulation_FM", 0.0, 1.0, RED,
                                 ann="$\\pm0.2$ Hz swing")),
     ]
-    dashboard(d1, "scenario_suite_1",
-              "Scenario suite I — standard stresses: voltage v(t) (top) vs. true frequency f(t) (bottom)")
+    dashboard(d1[:3], "scenario_suite_1a",
+              "Standard stresses (1 of 2): VOLTAGE v(t) on top, true FREQUENCY f(t) below")
+    dashboard(d1[3:], "scenario_suite_1b",
+              "Standard stresses (2 of 2): VOLTAGE v(t) on top, true FREQUENCY f(t) below")
 
     # ---------------- Dashboard II: composite IBR stresses ----------------
     d2 = [
@@ -200,8 +202,10 @@ def main():
              f=lambda a: fpanel(a, "IBR_Multi_Event", 0.45, 2.00, VIOLET,
                                 ann="ramp + jumps + ringdown")),
     ]
-    dashboard(d2, "scenario_suite_2",
-              "Scenario suite II — composite IBR stresses: voltage v(t) (top) vs. true frequency f(t) (bottom)")
+    dashboard(d2[:3], "scenario_suite_2a",
+              "Composite IBR stresses (1 of 2): VOLTAGE v(t) on top, true FREQUENCY f(t) below")
+    dashboard(d2[3:], "scenario_suite_2b",
+              "Composite IBR stresses (2 of 2): VOLTAGE v(t) on top, true FREQUENCY f(t) below")
 
 
 if __name__ == "__main__":
