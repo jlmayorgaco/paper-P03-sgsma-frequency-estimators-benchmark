@@ -195,13 +195,16 @@
   \end{tikzpicture}\par\vspace{-0.10cm}%
 }
 \newcommand{\sectionframe}[3]{%
+\begingroup
+\usebackgroundtemplate{\includegraphics[width=\paperwidth,height=\paperheight]{\sgsmaDividerBg}}%
 \begin{frame}[plain]
 \begin{tikzpicture}[remember picture,overlay]
-  \node[anchor=center] at (current page.center) {\includegraphics[width=\paperwidth,height=\paperheight]{\sgsmaDividerBg}};
   \node[anchor=east, text=white, align=right, font=\fontsize{27}{32}\selectfont\rmfamily, text width=0.64\paperwidth] at ([xshift=-0.075\paperwidth,yshift=0.25cm]current page.east) {\hyphenpenalty=10000\exhyphenpenalty=10000 #2};
   \node[anchor=east, text=white, align=right, font=\large, text width=0.62\paperwidth] at ([xshift=-0.075\paperwidth,yshift=-1.00cm]current page.east) {\hyphenpenalty=10000\exhyphenpenalty=10000 #3};
 \end{tikzpicture}
-\end{frame}}
+\end{frame}
+\endgroup
+}
 
 \title[SGSMA 2026]{Benchmarking Dynamic Frequency Estimators for Low-Inertia IBR Grids}
 \subtitle{Latency, trip-risk, and deployability under IBR stress}
@@ -268,33 +271,33 @@ solar reductions; NERC states frequency tripping was not the cause\\[0.25em]
 };
 
 \node[dot] at (5.4,0.05) {};
-\node[tag] at (5.4,0.42) {2021--22};
+\node[tag] at (5.4,0.42) {2021};
 \node[event, fill=ofbGold!18, draw=ofbGold] at (5.4,-1.15) {
-\textbf{Odessa}\\
-TX faults\\[0.25em]
+\textbf{Odessa I/II}\\
+TX faults, 2021/22\\[0.25em]
 \textbf{1,112 / 1,711 MW}\\
 remote solar reductions after normally cleared faults\\[0.25em]
 \textit{stress: phase jumps, controls, model mismatch}
 };
 
 \node[dot] at (7.8,0.05) {};
-\node[tag] at (7.8,0.42) {2022};
-\node[event, fill=ofbRed!9, draw=ofbRed] at (7.8,-1.15) {
-\textbf{CA BESS}\\
-Mar. 9 / Apr. 6\\[0.25em]
-\textbf{BESS/IBR reductions}\\
-ac overcurrent/overvoltage, dc-bus, unbalance, data-quality issues\\[0.25em]
-\textit{stress: low-SNR and non-sinusoidal}
-};
-
-\node[dot] at (10.2,0.05) {};
-\node[tag] at (10.2,0.42) {2021};
-\node[event, fill=ofbViolet!10, draw=ofbViolet] at (10.2,-1.15) {
+\node[tag] at (7.8,0.42) {2021};
+\node[event, fill=ofbViolet!10, draw=ofbViolet] at (7.8,-1.15) {
 \textbf{Kaua'i}\\
 Nov. 21\\[0.25em]
 \textbf{18--20 Hz oscillation}\\
 near or beyond ordinary 30 fps phasor-rate observability\\[0.25em]
 \textit{stress: oscillation and aliasing}
+};
+
+\node[dot] at (10.2,0.05) {};
+\node[tag] at (10.2,0.42) {2022};
+\node[event, fill=ofbRed!9, draw=ofbRed] at (10.2,-1.15) {
+\textbf{CA BESS}\\
+Mar. 9 / Apr. 6\\[0.25em]
+\textbf{BESS/IBR reductions}\\
+ac overcurrent/overvoltage, dc-bus, unbalance, data-quality issues\\[0.25em]
+\textit{stress: low-SNR and non-sinusoidal}
 };
 \end{tikzpicture}
 \end{center}
