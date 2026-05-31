@@ -235,22 +235,72 @@
 \section{Motivation}
 \sectionframe{}{Motivation}{Why frequency estimation in low-inertia IBR grids is hard}
 
-\begin{frame}{IBR disturbances expose a measurement gap}
-\tiny
-\renewcommand{\arraystretch}{1.05}
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{>{\raggedright\arraybackslash}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.39\linewidth}>{\raggedright\arraybackslash}p{0.30\linewidth}}
-\toprule
-\textbf{Event} & \textbf{Verified behavior} & \textbf{Benchmark implication} \\
-\midrule
-Blue Cut Fire, CA, Aug. 16, 2016 & Fault-induced solar PV interruption near 1.2 GW; NERC tied erroneous trips to near-instantaneous frequency estimates during distorted fault waveforms. & Test whether waveform distortion is misread as frequency collapse. \\
-Canyon 2 Fire, CA, Oct. 9, 2017 & Two normally cleared line-to-line faults caused 682 MW and 937 MW solar PV reductions. NERC states frequency-related tripping was \emph{not} the cause. & Separate frequency tracking from voltage, phase-lock, momentary-cessation, and recovery artifacts. \\
-Odessa, TX, May 9/Jun. 26, 2021; Jun. 4, 2022 & Normally cleared Texas faults caused widespread solar PV reductions: 1,112 MW in 2021 and 1,711 MW in 2022, including plants far from the initiating fault. & Include phase jumps, fast controls, model-mismatch regimes, and event-specific trip-risk. \\
-California BESS, Mar. 9/Apr. 6, 2022 & Normally cleared Western Interconnection faults produced abnormal BESS/IBR active-power reductions; NERC lists ac overcurrent/overvoltage, dc-bus, unbalanced-current, and data-quality issues. & Evaluate estimators under low-SNR, unbalanced, and non-sinusoidal conditions. \\
-\bottomrule
-\end{tabular}
-\vspace{0.15em}
-\artifact{NERC Blue Cut 2017; NERC/WECC Canyon 2 2018; NERC Odessa 2021/2022; NERC/WECC CA BESS 2023}
+\begin{frame}{Field events define the benchmark stress model}
+\vspace{-0.35em}
+\begin{center}
+\begin{tikzpicture}[
+  x=1cm,y=1cm,
+  event/.style={draw, rounded corners=3pt, very thick, align=left, text width=2.06cm, minimum height=2.25cm, inner sep=4pt, font=\tiny},
+  dot/.style={circle, fill=ofbInk, inner sep=1.8pt},
+  link/.style={thick, color=ofbInk},
+  tag/.style={font=\scriptsize\bfseries, color=ofbInk}
+]
+\draw[link] (-0.25,0.05) -- (11.35,0.05);
+
+\node[dot] at (0.6,0.05) {};
+\node[tag] at (0.6,0.42) {2016};
+\node[event, fill=ofbBlue!8, draw=ofbBlue] at (0.6,-1.15) {
+\textbf{Blue Cut}\\
+CA, Aug. 16\\[0.25em]
+\textbf{$\sim$1.2 GW PV}\\
+false near-instantaneous frequency trips during distorted fault waveforms\\[0.25em]
+\textit{stress: distortion $\rightarrow$ frequency artifact}
+};
+
+\node[dot] at (3.0,0.05) {};
+\node[tag] at (3.0,0.42) {2017};
+\node[event, fill=ofbGreen!10, draw=ofbGreen] at (3.0,-1.15) {
+\textbf{Canyon 2}\\
+CA, Oct. 9\\[0.25em]
+\textbf{682 / 937 MW}\\
+solar reductions; NERC states frequency tripping was not the cause\\[0.25em]
+\textit{stress: PLL, voltage response, recovery}
+};
+
+\node[dot] at (5.4,0.05) {};
+\node[tag] at (5.4,0.42) {2021--22};
+\node[event, fill=ofbGold!18, draw=ofbGold] at (5.4,-1.15) {
+\textbf{Odessa}\\
+TX faults\\[0.25em]
+\textbf{1,112 / 1,711 MW}\\
+remote solar reductions after normally cleared faults\\[0.25em]
+\textit{stress: phase jumps, controls, model mismatch}
+};
+
+\node[dot] at (7.8,0.05) {};
+\node[tag] at (7.8,0.42) {2022};
+\node[event, fill=ofbRed!9, draw=ofbRed] at (7.8,-1.15) {
+\textbf{CA BESS}\\
+Mar. 9 / Apr. 6\\[0.25em]
+\textbf{BESS/IBR reductions}\\
+ac overcurrent/overvoltage, dc-bus, unbalance, data-quality issues\\[0.25em]
+\textit{stress: low-SNR and non-sinusoidal}
+};
+
+\node[dot] at (10.2,0.05) {};
+\node[tag] at (10.2,0.42) {2021};
+\node[event, fill=ofbViolet!10, draw=ofbViolet] at (10.2,-1.15) {
+\textbf{Kaua'i}\\
+Nov. 21\\[0.25em]
+\textbf{18--20 Hz oscillation}\\
+near or beyond ordinary 30 fps phasor-rate observability\\[0.25em]
+\textit{stress: oscillation and aliasing}
+};
+\end{tikzpicture}
+\end{center}
+\vspace{-0.2em}
+\callout{\textbf{Benchmark implication:} the estimator must be tested against waveform distortion, phase jumps, control recovery, unbalance, noise, harmonics, interharmonics, and reporting-rate limits, not only steady-state frequency error.}
+\artifact{NERC Blue Cut 2017; NERC/WECC Canyon 2 2018; NERC Odessa 2021/2022; NERC/WECC CA BESS 2023; Dong et al. Kaua'i analysis}
 \end{frame}
 
 \begin{frame}{Standard PMU streams show consequences, not always causes}
@@ -410,23 +460,47 @@ No single estimator wins across objectives: the ranking changes with scenario, m
 \sectionframe{}{Benchmark \& platform}{What is missing in prior work --- and OpenFreqBench}
 
 \begin{frame}{Benchmark literature gap}
+\vspace{-0.35em}
+\begin{columns}[T,onlytextwidth]
+\column{0.44\linewidth}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize},
+  layer/.style={draw, rounded corners=3pt, very thick, align=left, text width=4.15cm, minimum height=0.62cm, inner sep=4pt},
+  arr/.style={-{Latex[length=2mm]}, thick, color=ofbInk}
+]
+\node[layer, fill=ofbBlue!8, draw=ofbBlue] (std) at (0,0) {\textbf{Standards}\\PMU compliance, metrology, calibration};
+\node[layer, fill=ofbGreen!10, draw=ofbGreen, below=0.20cm of std] (data) {\textbf{Field data}\\real events, PMU/DFR streams};
+\node[layer, fill=ofbGold!16, draw=ofbGold, below=0.20cm of data] (open) {\textbf{Open platforms}\\OpenPMU, openPDC, event libraries};
+\node[layer, fill=ofbViolet!10, draw=ofbViolet, below=0.20cm of open] (single) {\textbf{Single-method studies}\\detailed but narrow comparisons};
+\node[layer, fill=ofbRed!10, draw=ofbRed, below=0.30cm of single] (gap) {\textbf{Missing layer}\\many estimators, same truth, same metrics, same policy};
+\draw[arr] (std) -- (data);
+\draw[arr] (data) -- (open);
+\draw[arr] (open) -- (single);
+\draw[arr] (single) -- (gap);
+\end{tikzpicture}
+\column{0.52\linewidth}
+\begin{block}{Why existing evidence is not enough}
 \scriptsize
-The field is mature in standards, metrology, open platforms, real datasets, and single-method studies. The missing layer is a reproducible, estimator-level benchmark that compares many algorithms under identical synthetic truth and deployment metrics.
-\vspace{0.15em}
-\renewcommand{\arraystretch}{1.10}
-\begin{tabular}{>{\raggedright\arraybackslash}p{0.21\linewidth}>{\raggedright\arraybackslash}p{0.31\linewidth}>{\raggedright\arraybackslash}p{0.37\linewidth}}
-\toprule
-\textbf{Prior benchmark type} & \textbf{Strength} & \textbf{Gap for estimator-family comparison} \\
-\midrule
-IEC/IEEE PMU compliance & Defines synchrophasor, frequency, RoCoF, static/dynamic compliance tests & Leaves algorithm choice, family comparison, and CPU/latency outside the estimator report. \\
-NIST PMU assessment/calibration & Provides metrological evaluation of PMU devices against standard requirements & Focuses on instruments and compliance behavior rather than a large matrix of open estimator implementations under controlled tuning policy. \\
-OpenPMU / openPDC ecosystem & Enables open PMU construction and synchrophasor stream processing & Infrastructure-oriented, with no controlled estimator matrix using matched seeds and stress sweeps. \\
-Open real PMU datasets & Supply realistic events for detection and application development & Truth is partially latent; hard to isolate causal stress factors or compute estimator error against known $f_{\mathrm{true}}[k]$. \\
-Single-study algorithm comparisons & Give detailed evidence for selected methods or scenarios & Usually limited estimator sets, limited artifact contract, and incomplete deployability metrics. \\
-\bottomrule
-\end{tabular}
-\vspace{-0.05cm}
-\callout{Compliance tests define requirements, operational data define realism, and controlled synthetic truth isolates estimator behavior under reproducible stress.}
+Standards define requirements; field events define realism; open PMU ecosystems provide infrastructure. None alone answers which estimator family is defensible under the same disturbance, tuning policy, metric vector, and compute budget.
+\end{block}
+\vspace{0.2em}
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize},
+  box/.style={draw, rounded corners=3pt, very thick, align=center, minimum width=1.42cm, minimum height=0.58cm},
+  arr/.style={-{Latex[length=2mm]}, thick, color=ofbInk}
+]
+\node[box, fill=ofbSoft, draw=ofbInk] (truth) at (0,0) {known\\truth};
+\node[box, fill=ofbSoft, draw=ofbInk] (stress) at (1.80,0) {IBR\\stress};
+\node[box, fill=ofbSoft, draw=ofbInk] (risk) at (3.60,0) {trip\\risk};
+\node[box, fill=ofbSoft, draw=ofbInk] (cpu) at (5.40,0) {CPU /\\latency};
+\draw[arr] (truth) -- (stress);
+\draw[arr] (stress) -- (risk);
+\draw[arr] (risk) -- (cpu);
+\node[draw=ofbGreen, fill=ofbGreen!10, rounded corners=3pt, very thick, align=center, text width=5.7cm, minimum height=0.62cm] at (2.70,-1.05) {\textbf{Estimator-level benchmark:} one artifact contract for algorithms, scenarios, seeds, metrics, and plots};
+\end{tikzpicture}
+\end{columns}
+\vspace{0.05em}
+{\scriptsize\color{ofbMuted}\textbf{Result:} controlled synthetic truth isolates estimator behavior under reproducible stress while field events define realism.}
 \end{frame}
 
 \begin{frame}{Benchmark comparison axes}
@@ -695,33 +769,40 @@ C_{\mathrm{CPU}}=\mathrm{mean\ time/sample}
 \sectionframe{}{Core evidence}{From standard cases to composite IBR stress}
 
 \begin{frame}{Standard scenario results}
+\begin{columns}[T,onlytextwidth]
+\column{0.58\linewidth}
 \scriptsize
-\setlength{\tabcolsep}{6pt}
-\renewcommand{\arraystretch}{1.08}
-\begin{center}
-\begin{tabular}{>{\raggedright\arraybackslash}p{0.22\linewidth}rrr}
+\renewcommand{\arraystretch}{1.18}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{>{\bfseries\raggedright\arraybackslash}p{0.23\linewidth}ccc}
 \toprule
-Method & Step $+10\%$ & Ramp & Modulation 2 Hz \\
- & RMSE [Hz] & RMSE [Hz] & RMSE [Hz] \\
+Method & Step & Ramp & Mod. \\
 \midrule
-IpDFT & \textbf{0.000} & \textbf{14.4} & 0.114 \\
-TFT & 0.001 & 0.019 & 0.046 \\
-Koopman & 0.003 & 0.017 & 0.044 \\
-\midrule
-PLL & 0.033 & \textbf{1.47} & \textbf{0.227} \\
-SOGI-FLL & 0.005 & 0.013 & 0.040 \\
-\midrule
-EKF & \textbf{0.000} & \textbf{37.1} & 0.064 \\
-UKF & \textbf{0.000} & 0.017 & 0.055 \\
-RA-EKF & 0.000 & \textbf{0.006} & 0.037 \\
-LKF2 & 0.138 & 0.015 & \textbf{0.028} \\
+RA-EKF & \cellcolor{ofbGreen!25}0.000 & \cellcolor{ofbGreen!35}\textbf{0.006} & \cellcolor{ofbGreen!25}0.037 \\
+SOGI-FLL & \cellcolor{ofbGreen!25}0.005 & \cellcolor{ofbGreen!25}0.013 & \cellcolor{ofbGreen!25}0.040 \\
+Koopman & \cellcolor{ofbGreen!25}0.003 & \cellcolor{ofbGreen!25}0.017 & \cellcolor{ofbGreen!25}0.044 \\
+TFT & \cellcolor{ofbGreen!25}0.001 & \cellcolor{ofbGreen!25}0.019 & \cellcolor{ofbGreen!25}0.046 \\
+UKF & \cellcolor{ofbGreen!25}0.000 & \cellcolor{ofbGreen!25}0.017 & \cellcolor{ofbGold!22}0.055 \\
+LKF2 & \cellcolor{ofbRed!18}0.138 & \cellcolor{ofbGreen!25}0.015 & \cellcolor{ofbGreen!35}\textbf{0.028} \\
+PLL & \cellcolor{ofbGreen!25}0.033 & \cellcolor{ofbRed!25}\textbf{1.47} & \cellcolor{ofbRed!25}\textbf{0.227} \\
+IpDFT & \cellcolor{ofbGreen!25}0.000 & \cellcolor{ofbRed!35}\textbf{14.4} & \cellcolor{ofbRed!18}0.114 \\
+EKF & \cellcolor{ofbGreen!25}0.000 & \cellcolor{ofbRed!35}\textbf{37.1} & \cellcolor{ofbGold!22}0.064 \\
 \bottomrule
 \end{tabular}
-\end{center}
-\vspace{-0.05cm}
-\callout{Result (mean over 5 seeds): RA-EKF, SOGI-FLL, Koopman and TFT stay $\le0.05$ Hz on all three, but \textbf{EKF and IpDFT intermittently diverge on the ramp} (37 and 14 Hz) and PLL degrades on ramp/modulation. Robustness, not point accuracy, separates the families.}
-\vspace{-0.05cm}
-\artifact{full\_mc\_benchmark, $n=5$}
+\vspace{0.15em}
+{\tiny\color{ofbMuted}RMSE [Hz], mean over 5 seeds. Green: below 0.05 Hz guide; red: failure/divergence regime.}
+\column{0.38\linewidth}
+\begin{block}{What the heatmap shows}
+\small
+The standard step is easy for most methods. The ramp is the separator: EKF and IpDFT can look excellent at a point and still diverge in another seed.
+\end{block}
+\begin{block}{Operational consequence}
+\small
+Robustness is not the same as point accuracy. A standard scenario can pass while the same estimator remains unsafe for ramp-like IBR dynamics.
+\end{block}
+\end{columns}
+\vspace{0.1em}
+\callout{\textbf{Result:} RA-EKF, SOGI-FLL, Koopman, and TFT remain below 0.05 Hz across the three standard cases; EKF and IpDFT fail through intermittent ramp divergence.}
 \end{frame}
 
 \begin{frame}{Scenario D: phase jump separates filters from windowed methods}
@@ -752,30 +833,54 @@ The trip exposure here lives in the window/spectral family:
 \end{frame}
 
 \begin{frame}{Composite IBR sequence: why it is hardest}
+\vspace{-0.2em}
+\begin{center}
+\begin{tikzpicture}[
+  x=1cm,y=1cm,
+  stress/.style={draw, rounded corners=3pt, very thick, align=center, text width=2.1cm, minimum height=0.66cm, font=\scriptsize},
+  arr/.style={-{Latex[length=2mm]}, thick, color=ofbInk},
+  axis/.style={thick, color=ofbMuted}
+]
+\draw[axis, ->] (0,0) -- (11.4,0) node[right,font=\scriptsize] {time};
+\draw[axis, ->] (0,-1.15) -- (0,1.15) node[above,font=\scriptsize] {$v(t)$};
+\draw[ofbBlue, very thick, smooth] plot coordinates {
+  (0,0) (0.35,0.45) (0.70,-0.28) (1.05,0.34) (1.40,-0.20) (1.75,0.26)
+  (2.10,-0.15) (2.45,0.40) (2.80,-0.35) (3.15,0.30) (3.50,-0.25)
+  (3.85,0.75) (4.20,-0.55) (4.55,0.50) (4.90,-0.45) (5.25,0.30)
+  (5.60,0.10) (5.95,-0.05) (6.30,-0.20) (6.65,-0.32) (7.00,-0.45)
+  (7.35,0.70) (7.70,-0.95) (8.05,0.64) (8.40,-0.50) (8.75,0.36)
+  (9.10,-0.22) (9.45,0.14) (9.80,-0.08) (10.15,0.10) (10.50,-0.28)
+  (10.85,0.18) (11.20,-0.10)
+};
+\draw[dashed, ofbRed, thick] (3.72,-1.05) -- (3.72,1.05);
+\draw[dashed, ofbRed, thick] (7.26,-1.05) -- (7.26,1.05);
+\node[font=\tiny, ofbRed] at (3.72,1.25) {$+40^\circ$};
+\node[font=\tiny, ofbRed] at (7.26,1.25) {$+80^\circ$ + ringdown};
+
+\node[stress, fill=ofbBlue!10, draw=ofbBlue] at (1.35,-1.78) {5th/7th\\harmonics};
+\node[stress, fill=ofbGreen!10, draw=ofbGreen] at (3.72,-1.78) {phase\\jump};
+\node[stress, fill=ofbGold!18, draw=ofbGold] at (5.80,-1.78) {$-6$ Hz/s\\RoCoF};
+\node[stress, fill=ofbRed!10, draw=ofbRed] at (7.95,-1.78) {ringdown\\recovery};
+\node[stress, fill=ofbViolet!10, draw=ofbViolet] at (10.15,-1.78) {impulsive\\noise};
+\draw[arr] (2.35,-1.78) -- (2.72,-1.78);
+\draw[arr] (4.72,-1.78) -- (4.80,-1.78);
+\draw[arr] (6.80,-1.78) -- (6.90,-1.78);
+\draw[arr] (8.95,-1.78) -- (9.05,-1.78);
+\end{tikzpicture}
+\end{center}
+\vspace{-0.1em}
 \begin{columns}[T,onlytextwidth]
 \column{0.48\linewidth}
-\begin{block}{Scenario E stress components}
+\begin{block}{Why standard tests miss it}
 \small
-\begin{itemize}
-  \item Harmonic-rich steady state: 5th at 5\%, 7th at 3\%, low interharmonics.
-  \item $+40^\circ$ phase jump.
-  \item $-6$ Hz/s RoCoF segment.
-  \item $+80^\circ$ phase jump with ringdown.
-  \item Sparse impulsive noise.
-\end{itemize}
+The estimator sees spectral leakage, loop re-lock, state-model mismatch, transient recovery, and noise in one nonstationary waveform.
 \end{block}
 \column{0.47\linewidth}
-\begin{block}{Standard-test gap}
+\begin{block}{Why ATLAS decomposes it}
 \small
-\begin{itemize}
-  \item The estimator sees a nonstationary waveform with stacked disturbances.
-  \item Spectral leakage, loop re-lock, state-model mismatch, and recovery delay occur together.
-  \item A method can be good on RMSE and still undesirable on trip exposure or CPU.
-\end{itemize}
+The multi-event case proves the failure exists; severity sweeps identify which stressor actually breaks each estimator family.
 \end{block}
 \end{columns}
-\vspace{0.35em}
-\callout{Once composite stress is shown to matter, ATLAS sweeps each stress component systematically instead of treating the multi-event case as a single aggregate disturbance.}
 \end{frame}
 
 \begin{frame}{Scenario E: the leaderboard breaks}
@@ -1212,7 +1317,7 @@ A $+$RoCoF-only test can certify a method that fails on frequency \emph{decline}
 \end{frame}
 
 \begin{frame}{Phase-jump severity is non-monotone}
-\papergradebanner
+\atlaspreviewbanner
 \begin{columns}[T,onlytextwidth]
 \column{0.58\linewidth}
 \centering
@@ -1313,6 +1418,43 @@ Sag and swell signs must be swept separately; a positive-only magnitude-step tes
 \artifact{atlas-papergrade-missing-v1/global\_metrics\_report.csv; src/estimators/zcd.py}
 \end{frame}
 
+\begin{frame}{Why a voltage sag breaks zero-crossing detection}
+\papergradebanner
+\begin{columns}[T,onlytextwidth]
+\column{0.58\linewidth}
+\begin{tikzpicture}[x=1cm,y=1cm, every node/.style={font=\scriptsize}]
+  \draw[->, thick, ofbInk] (0,-1.45) -- (0,1.55) node[above] {$v(t)$};
+  \draw[->, thick, ofbInk] (-0.15,0) -- (6.1,0) node[right] {time};
+  \draw[ofbBlue, very thick, smooth] plot coordinates {
+    (0,0) (0.35,0.65) (0.70,0.98) (1.05,0.70) (1.40,0.05) (1.75,-0.62) (2.10,-0.98) (2.45,-0.68) (2.80,-0.03) (3.15,0.62) (3.50,0.98) (3.85,0.70) (4.20,0.04) (4.55,-0.64) (4.90,-0.98) (5.25,-0.70) (5.60,-0.04)
+  };
+  \draw[ofbRed, very thick, smooth] plot coordinates {
+    (0,-0.72) (0.35,-0.65) (0.70,-0.62) (1.05,-0.65) (1.40,-0.72) (1.75,-0.78) (2.10,-0.82) (2.45,-0.78) (2.80,-0.72) (3.15,-0.66) (3.50,-0.62) (3.85,-0.66) (4.20,-0.72) (4.55,-0.78) (4.90,-0.82) (5.25,-0.78) (5.60,-0.72)
+  };
+  \fill[ofbGold!20, opacity=0.65] (-0.05,-0.14) rectangle (5.8,0.14);
+  \draw[dashed, ofbMuted] (1.38,-1.15) -- (1.38,1.20);
+  \draw[dashed, ofbRed] (4.15,-1.15) -- (4.15,1.20);
+  \node[align=center, ofbBlue] at (1.0,1.28) {nominal slope\\large};
+  \node[align=center, ofbRed] at (4.6,-1.15) {sag slope\\small};
+  \node[align=center, fill=white, draw=ofbGold, rounded corners=2pt, inner sep=3pt] at (3.0,0.45) {same absolute\\noise band};
+\end{tikzpicture}
+\column{0.38\linewidth}
+\begin{block}{Timing sensitivity}
+\small
+\[
+\Delta t \approx \frac{n(t_0)}{\left.\frac{dv}{dt}\right|_{t_0}}
+\qquad
+\left.\frac{dv}{dt}\right|_{0} \approx A\omega
+\]
+When the voltage amplitude $A$ collapses, the same noise produces much larger crossing-time error.
+\end{block}
+\begin{block}{Estimator consequence}
+\small
+ZCD is elegant at clean high-SNR crossings, but deep sags convert amplitude loss into apparent frequency jitter and false crossings.
+\end{block}
+\end{columns}
+\end{frame}
+
 \begin{frame}{Harmonic degradation differs by estimator family}
 \papergradebanner
 \begin{columns}[T,onlytextwidth]
@@ -1332,7 +1474,7 @@ Sag and swell signs must be swept separately; a positive-only magnitude-step tes
 \end{frame}
 
 \begin{frame}{CPU--accuracy Pareto analysis}
-\papergradebanner
+\extendedresultsbanner
 \begin{center}
 \includegraphics[width=0.94\linewidth,height=0.70\textheight,keepaspectratio]{figures/cpu_accuracy_pareto.pdf}
 \end{center}

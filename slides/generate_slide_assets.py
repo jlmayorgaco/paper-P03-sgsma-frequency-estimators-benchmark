@@ -312,7 +312,7 @@ def plot_cpu_accuracy_pareto() -> None:
             "SOGI-FLL",
             "SOGI-PLL",
             "ZCD",
-            "PI-GRU",
+            "MUSIC",
             "Type-3 SOGI-PLL",
             "TKEO",
         }:
@@ -327,7 +327,7 @@ def plot_cpu_accuracy_pareto() -> None:
     ax.set_yscale("log")
     ax.set_xlabel("Median per-sample CPU cost [us] (log scale)")
     ax.set_ylabel("Dynamic RMSE, geometric mean [Hz] (log scale)")
-    ax.set_title("Pareto view: PI-GRU is accurate but computationally expensive")
+    ax.set_title("Pareto view: spectral/data-driven accuracy costs 100--1000x more compute")
     ax.grid(True, which="both", alpha=0.24)
     ax.legend(loc="upper right", fontsize=7, frameon=False)
     _savefig("cpu_accuracy_pareto")
