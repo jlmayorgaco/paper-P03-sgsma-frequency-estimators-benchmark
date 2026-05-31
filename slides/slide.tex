@@ -778,6 +778,51 @@ Each estimator--scenario pair is tuned within a declared grid, then compared usi
 \resultclaim{ofbRed}{The estimator must recover through nonstationary segments, not just report low steady-state error after the event.}
 \end{frame}
 
+\begin{frame}{Scenario families: distortion, leakage, and low SNR}
+\vspace{-0.18em}
+\begin{columns}[T,onlytextwidth]
+\column{0.49\linewidth}
+\begin{block}{Compact signal model}
+\scriptsize
+\vspace{-0.5em}
+\[
+v(t)=A(t)\sin\theta(t)+v_h(t)+v_x(t)+n(t)
+\]
+\[
+v_h(t)=\sum_{h=2}^{H}a_h\sin(h\theta+\phi_h),\quad
+v_x(t)=\sum_q b_q\sin(2\pi f_qt+\psi_q)
+\]
+\[
+\mathrm{THD}=\frac{\sqrt{\sum_{h\ge2}V_h^2}}{V_1},\quad
+\mathrm{SNR}_{dB}=20\log_{10}\!\left(\frac{1/\sqrt{2}}{\sigma_n}\right)
+\]
+\end{block}
+\vspace{0.15em}
+\begin{block}{Interpretation}
+\scriptsize
+The benchmark keeps the truth signal and the waveform perturbation separate. When $f_{\mathrm{true}}(t)$ is fixed, estimator error measures artifact rejection, not a physical frequency event.
+\end{block}
+\column{0.47\linewidth}
+\scriptsize
+\renewcommand{\arraystretch}{1.10}
+\begin{tabular}{>{\bfseries\raggedright\arraybackslash}p{0.29\linewidth}>{\raggedright\arraybackslash}p{0.63\linewidth}}
+\toprule
+Family & What it tests \\
+\midrule
+Harmonics & Integer multiples of 60 Hz; THD rejection with fixed true frequency. \\
+Interharmonics & Non-integer tones; leakage and beating that can mimic dynamics. \\
+OOB tones & Out-of-band interference; filter selectivity, aliasing margins, PLL leakage. \\
+Noise / SNR & Controlled $\sigma_n$; low-SNR crossings and covariance assumptions. \\
+\bottomrule
+\end{tabular}
+\vspace{0.35em}
+\begin{block}{Why this slide matters}
+\scriptsize
+In these cases $f_{\mathrm{true}}(t)$ can remain nominal. Any frequency excursion reported by the estimator is then a waveform-induced measurement artifact.
+\end{block}
+\end{columns}
+\end{frame}
+
 \begin{frame}{Estimator families}
 \begin{columns}[T,onlytextwidth]
 \column{0.30\linewidth}
