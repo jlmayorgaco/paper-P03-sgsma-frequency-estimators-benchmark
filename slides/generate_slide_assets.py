@@ -101,6 +101,11 @@ def _geom_mean(values: pd.Series) -> float:
     return float(np.exp(np.mean(np.log(arr))))
 
 
+# PI-GRU is excluded from the deck: it is absent from the full_mc_benchmark
+# run and its CPU cost sits far outside relay-class timing.
+EXCLUDE_ESTIMATORS = {"PI-GRU"}
+
+
 def _load_dynamic() -> pd.DataFrame:
     rocof = _read_csv(ROCOF_DIR, "global_metrics_report.csv")
     rocof["stress"] = "RoCoF ramp"
@@ -108,7 +113,8 @@ def _load_dynamic() -> pd.DataFrame:
     fstep = _read_csv(FSTEP_DIR, "global_metrics_report.csv")
     fstep["stress"] = "Frequency step"
     fstep["x_value"] = fstep["abs_step_hz"]
-    return pd.concat([fstep, rocof], ignore_index=True)
+    df = pd.concat([fstep, rocof], ignore_index=True)
+    return df[~df["estimator"].isin(EXCLUDE_ESTIMATORS)].reset_index(drop=True)
 
 
 def _dynamic_summary() -> pd.DataFrame:
@@ -417,30 +423,36 @@ def plot_regime_summary() -> None:
 
 
 def plot_core_trip_risk_comparison() -> None:
+    # full_mc_benchmark, n=5 means.  Scenario D = NERC_Phase_Jump_60.
     islanding = pd.DataFrame(
         [
-            ("SRF-PLL", 0.0, "Loop-based"),
-            ("RA-EKF", 0.0006, "Model-based"),
-            ("EKF", 0.165, "Model-based"),
-            ("UKF", 0.165, "Model-based"),
+            ("RA-EKF", 0.0, "Model-based"),
+            ("EKF", 0.0, "Model-based"),
+            ("UKF", 0.0, "Model-based"),
+            ("PLL", 0.0, "Loop-based"),
+            ("TFT", 0.093, "Window-based"),
+            ("Koopman", 0.112, "Data-driven"),
+            ("IpDFT", 1.214, "Window-based"),
+            ("RLS", 1.297, "Adaptive"),
         ],
         columns=["estimator", "trip_s", "family"],
     )
+    # Scenario E = IBR_Multi_Event.
     multievent = pd.DataFrame(
         [
-            ("EKF", 0.118, "Model-based"),
-            ("UKF", 0.119, "Model-based"),
-            ("Koopman", 0.137, "Data-driven"),
-            ("RA-EKF", 0.141, "Model-based"),
-            ("IpDFT", 0.335, "Window-based"),
-            ("SOGI-FLL", 0.422, "Loop-based"),
-            ("SRF-PLL", 0.471, "Loop-based"),
+            ("UKF", 0.78, "Model-based"),
+            ("SOGI-PLL", 0.78, "Loop-based"),
+            ("SOGI-FLL", 0.84, "Loop-based"),
+            ("Koopman", 0.84, "Data-driven"),
+            ("EKF", 0.87, "Model-based"),
+            ("RA-EKF", 0.92, "Model-based"),
+            ("IpDFT", 1.35, "Window-based"),
         ],
         columns=["estimator", "trip_s", "family"],
     )
     fig, axes = plt.subplots(1, 2, figsize=(10.8, 4.6))
     for ax, df, title in [
-        (axes[0], islanding, "Scenario D: composite islanding"),
+        (axes[0], islanding, "Scenario D: phase jump (NERC $+60^\\circ$)"),
         (axes[1], multievent, "Scenario E: IBR multi-event"),
     ]:
         df = df.sort_values("trip_s", ascending=True)
@@ -463,14 +475,10 @@ def plot_core_trip_risk_comparison() -> None:
                 fontsize=8,
             )
     axes[0].annotate(
-        "EKF / RA-EKF = 275x",
-        xy=(1.2, 1.0),
-        xytext=(48, 0.42),
-        arrowprops={"arrowstyle": "->", "color": "#B23A48", "lw": 1.2},
-        color="#B23A48",
-        fontsize=9,
-        fontweight="bold",
-        va="center",
+        "state-space + loops: 0 trip",
+        xy=(0.0, 1.5), xytext=(0.34, 2.4), textcoords=("axes fraction", "data"),
+        arrowprops={"arrowstyle": "->", "color": "#196B24", "lw": 1.2},
+        color="#196B24", fontsize=8.5, fontweight="bold", va="center",
     )
     fig.suptitle("Trip-risk is an event metric, not an average-error metric", y=1.02)
     _savefig("core_trip_risk_comparison")

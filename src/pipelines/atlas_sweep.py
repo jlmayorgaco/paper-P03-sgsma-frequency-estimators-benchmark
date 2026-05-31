@@ -89,7 +89,14 @@ LEGEND_CSV_NAME = "rmse_plot_method_legend.csv"
 READINESS_JSON_NAME = "atlas_readiness_report.json"
 READINESS_MD_NAME = "atlas_readiness_report.md"
 
-CANONICAL_ESTIMATORS = ",".join(spec.label for spec in ACTIVE_ESTIMATOR_SPECS)
+# PI-GRU is excluded from the canonical readiness set: it is GPU-bound
+# (impractical at paper/journal-grade n on CPU) and is benchmarked separately,
+# so it must not block full-ATLAS readiness. It stays in ACTIVE_ESTIMATOR_SPECS
+# and can still be included via ATLAS_INCLUDE_ESTIMATORS when GPU is available.
+_NONCANONICAL_ESTIMATORS = {"PI-GRU"}
+CANONICAL_ESTIMATORS = ",".join(
+    spec.label for spec in ACTIVE_ESTIMATOR_SPECS if spec.label not in _NONCANONICAL_ESTIMATORS
+)
 REQUIRED_ATLAS_SWEEPS = (
     "magnitude_step",
     "rocof",
