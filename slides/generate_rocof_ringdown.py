@@ -93,16 +93,19 @@ def rocof_family_panel(rows, family, fname, title):
 
 
 # ------------------------------------------------------------ ringdown dashboard
-ORDER = ["EKF", "UKF", "RA-EKF", "LKF", "LKF2", "RLS",
-         "PLL", "SOGI-PLL", "SOGI-FLL", "Type-3 SOGI-PLL", "TKEO", "ZCD",
-         "IPDFT", "TFT", "ESPRIT", "Prony", "MUSIC", "Koopman (RK-DPMU)"]
-SHORT = {"Koopman (RK-DPMU)": "Koopman", "Type-3 SOGI-PLL": "Type-3 SOGI-PLL"}
+# representative set: one per family + robust/fragile contrast in model
+ORDER = ["RA-EKF", "EKF", "UKF", "SOGI-FLL",
+         "IPDFT", "ESPRIT", "Koopman (RK-DPMU)", "ZCD"]
+FAMTAG = {"RA-EKF": "model", "EKF": "model", "UKF": "model", "SOGI-FLL": "loop",
+          "IPDFT": "window", "ESPRIT": "spectral", "Koopman (RK-DPMU)": "data-driven",
+          "ZCD": "loop (legacy)"}
+SHORT = {"Koopman (RK-DPMU)": "Koopman"}
 
 
 def ringdown_dashboard(fname):
-    fig, axes = plt.subplots(3, 6, figsize=(15.2, 6.6))
-    fig.subplots_adjust(left=0.045, right=0.995, top=0.90, bottom=0.075,
-                        wspace=0.30, hspace=0.42)
+    fig, axes = plt.subplots(2, 4, figsize=(13.6, 5.4))
+    fig.subplots_adjust(left=0.05, right=0.995, top=0.88, bottom=0.10,
+                        wspace=0.28, hspace=0.40)
     for idx, est in enumerate(ORDER):
         ax = axes.flat[idx]
         f = MC / est / f"IBR_Power_Imbalance_Ringdown__{est}_signals.csv"
@@ -116,14 +119,14 @@ def ringdown_dashboard(fname):
         ax.set_ylim(55, 65)
         rmse = float(np.sqrt(np.nanmean((fh - ft) ** 2)))
         tag = SHORT.get(est, est)
-        ax.set_title(f"{tag}", pad=2)
-        ax.annotate(f"RMSE {rmse:.2g} Hz", xy=(0.5, 0.04), xycoords="axes fraction",
-                    ha="center", va="bottom", fontsize=6.0, fontweight="bold",
+        ax.set_title(f"{tag}  ({FAMTAG.get(est,'')})", pad=2, fontsize=9.0)
+        ax.annotate(f"RMSE {rmse:.2g} Hz", xy=(0.5, 0.05), xycoords="axes fraction",
+                    ha="center", va="bottom", fontsize=6.6, fontweight="bold",
                     color="#B23A48",
-                    bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.8))
-        if idx % 6 == 0:
+                    bbox=dict(boxstyle="round,pad=0.16", fc="white", ec="none", alpha=0.82))
+        if idx % 4 == 0:
             ax.set_ylabel("f [Hz]")
-        if idx >= 12:
+        if idx >= 4:
             ax.set_xlabel("t [s]")
         _style(ax)
     handles = [Line2D([0], [0], color="black", lw=1.8, label="true frequency $f(t)$"),
@@ -139,14 +142,9 @@ def ringdown_dashboard(fname):
 
 
 def main():
-    rows = _rocof_rows()
-    rocof_family_panel(rows, "Loop-based", "rocof_fam_loop",
-                       "Loop-based: RMSE vs |RoCoF|, down (solid) vs up (dashed)")
-    rocof_family_panel(rows, "Model-based", "rocof_fam_model",
-                       "Model-based: RMSE vs |RoCoF|, down (solid) vs up (dashed)")
-    rocof_family_panel(rows, "Window-based", "rocof_fam_window",
-                       "Window/spectral: RMSE vs |RoCoF|, down (solid) vs up (dashed)")
-    ringdown_dashboard("ringdown_tracking_all")
+    # RoCoF sign asymmetry already lives on its own redesigned deck slide
+    # (rocof_sign_asymmetry_wide.pdf); here we only build the ringdown dashboard.
+    ringdown_dashboard("ringdown_tracking_rep")
 
 
 if __name__ == "__main__":
