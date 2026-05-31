@@ -427,8 +427,6 @@ Single-study algorithm comparisons & Give detailed evidence for selected methods
 \end{tabular}
 \vspace{-0.05cm}
 \callout{Compliance tests define requirements, operational data define realism, and controlled synthetic truth isolates estimator behavior under reproducible stress.}
-\vspace{-0.05cm}
-\artifact{IEC/IEEE 60255-118-1:2018; NISTIR 8106; OpenPMU; openPDC; FNET/GridEye; LBNL Open micro-PMU; PNNL open PMU event library}
 \end{frame}
 
 \begin{frame}{Benchmark comparison axes}
@@ -721,7 +719,7 @@ LKF2 & 0.138 & 0.015 & \textbf{0.028} \\
 \end{tabular}
 \end{center}
 \vspace{-0.05cm}
-\callout{Reading (mean over 5 seeds): RA-EKF, SOGI-FLL, Koopman and TFT stay $\le0.05$ Hz on all three, but \textbf{EKF and IpDFT intermittently diverge on the ramp} (37 and 14 Hz) and PLL degrades on ramp/modulation. Robustness, not point accuracy, separates the families.}
+\callout{Result (mean over 5 seeds): RA-EKF, SOGI-FLL, Koopman and TFT stay $\le0.05$ Hz on all three, but \textbf{EKF and IpDFT intermittently diverge on the ramp} (37 and 14 Hz) and PLL degrades on ramp/modulation. Robustness, not point accuracy, separates the families.}
 \vspace{-0.05cm}
 \artifact{full\_mc\_benchmark, $n=5$}
 \end{frame}
@@ -904,13 +902,14 @@ The state-space and loop families all run at $\sim$10--17 $\mu$s/sample (embedde
 \centering
 \includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{figures/cost_risk_mc.pdf}
 \column{0.40\linewidth}
-\begin{exampleblock}{Dashboard reading}
+\begin{exampleblock}{Deployment interpretation}
+\small
 \begin{itemize}
-\setlength\itemsep{0.22em}
+\setlength\itemsep{0.14em}
 \item Deployment combines RMSE, trip exposure, CPU, and divergence robustness.
 \item State-space + loop methods cluster at low cost ($\le17\,\mu$s) and low trip.
-\item Spectral/data-driven methods (MUSIC, ESPRIT, Koopman) are 100--1000$\times$ costlier; RLS/Prony pair high trip with low accuracy.
-\item RA-EKF sits in the low-cost, never-diverging region.
+\item Spectral/data-driven methods trade lower error for 100--1000$\times$ higher CPU.
+\item RA-EKF stays low-cost with no ramp divergence in this run.
 \end{itemize}
 \end{exampleblock}
 \end{columns}
@@ -1099,7 +1098,7 @@ RMSE is led mostly by EKF and ESPRIT. Trip-risk is led mostly by Koopman, EKF, S
 \small
 For protection-adjacent use, a low average error is not enough. The estimator must avoid long deadband exposure, track RoCoF, and remain computable.
 \end{block}
-\begin{block}{Conference claim}
+\begin{block}{Operational implication}
 \small
 The benchmark output is not a leaderboard. It is a metric-conditioned selection map.
 \end{block}
@@ -1115,7 +1114,7 @@ The benchmark output is not a leaderboard. It is a metric-conditioned selection 
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{>{\raggedright\arraybackslash}p{0.24\linewidth}>{\raggedright\arraybackslash}p{0.25\linewidth}>{\centering\arraybackslash}p{0.14\linewidth}>{\raggedright\arraybackslash}p{0.25\linewidth}}
 \toprule
-Stress family & Maximum tested level & Methods below 0.05 Hz & Reading \\
+Stress family & Maximum tested level & Methods below 0.05 Hz & Interpretation \\
 \midrule
 Magnitude step & $\pm90\%$ sag/swell & 2 & EKF and RA-EKF survive both signs. \\
 AM modulation & 10 Hz envelope & 10 & AM alone is not the hardest modulation case. \\
@@ -1321,7 +1320,7 @@ Sag and swell signs must be swept separately; a positive-only magnitude-step tes
 \centering
 \includegraphics[width=\linewidth,height=0.70\textheight,keepaspectratio]{figures/harmonics_family_deterioration.pdf}
 \column{0.30\linewidth}
-\begin{block}{Reading}
+\begin{block}{Result}
 \scriptsize
 \begin{itemize}
   \item Loop, window, model, and adaptive families degrade with THD at different rates.
@@ -1621,7 +1620,7 @@ M22 invalid rate & fraction of samples the estimator flags invalid / NaN. \\
 \centering
 \includegraphics[width=\linewidth,height=0.66\textheight,keepaspectratio]{figures/frequency_step_method_map_pg.pdf}
 \column{0.32\linewidth}
-\begin{block}{Reading}
+\begin{block}{Result}
 \scriptsize
 \begin{itemize}
   \item \textbf{ESPRIT leads} almost every step; Koopman wins only the tiny $\pm0.05$ Hz steps.
@@ -1641,7 +1640,7 @@ M22 invalid rate & fraction of samples the estimator flags invalid / NaN. \\
 \centering
 \includegraphics[width=\linewidth,height=0.66\textheight,keepaspectratio]{figures/magnitude_step_method_map.pdf}
 \column{0.32\linewidth}
-\begin{block}{Reading}
+\begin{block}{Result}
 \scriptsize
 \begin{itemize}
   \item \textbf{EKF leads} every step size (0.17--7.8 mHz).
