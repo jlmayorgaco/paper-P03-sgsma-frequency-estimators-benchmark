@@ -1,4 +1,7 @@
-\documentclass[handout,aspectratio=169,10pt]{beamer}
+% Presentation mode: overlays/animations build step-by-step (one page per step).
+% For a FLAT distribution PDF (one page per frame, no builds), add 'handout':
+%   \documentclass[handout,aspectratio=169,10pt]{beamer}
+\documentclass[aspectratio=169,10pt]{beamer}
 
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
@@ -787,9 +790,9 @@ Koopman & \cellcolor{ofbGreen!25}0.003 & \cellcolor{ofbGreen!25}0.017 & \cellcol
 TFT & \cellcolor{ofbGreen!25}0.001 & \cellcolor{ofbGreen!25}0.019 & \cellcolor{ofbGreen!25}0.046 \\
 UKF & \cellcolor{ofbGreen!25}0.000 & \cellcolor{ofbGreen!25}0.017 & \cellcolor{ofbGold!22}0.055 \\
 LKF2 & \cellcolor{ofbRed!18}0.138 & \cellcolor{ofbGreen!25}0.015 & \cellcolor{ofbGreen!35}\textbf{0.028} \\
-PLL & \cellcolor{ofbGreen!25}0.033 & \cellcolor{ofbRed!25}\textbf{1.47} & \cellcolor{ofbRed!25}\textbf{0.227} \\
-IpDFT & \cellcolor{ofbGreen!25}0.000 & \cellcolor{ofbRed!35}\textbf{14.4} & \cellcolor{ofbRed!18}0.114 \\
-EKF & \cellcolor{ofbGreen!25}0.000 & \cellcolor{ofbRed!35}\textbf{37.1} & \cellcolor{ofbGold!22}0.064 \\
+\only<2->{PLL} & \only<2->{\cellcolor{ofbGreen!25}0.033} & \only<2->{\cellcolor{ofbRed!25}\textbf{1.47}} & \only<2->{\cellcolor{ofbRed!25}\textbf{0.227}} \\
+\only<2->{IpDFT} & \only<2->{\cellcolor{ofbGreen!25}0.000} & \only<2->{\cellcolor{ofbRed!35}\textbf{14.4}} & \only<2->{\cellcolor{ofbRed!18}0.114} \\
+\only<2->{EKF} & \only<2->{\cellcolor{ofbGreen!25}0.000} & \only<2->{\cellcolor{ofbRed!35}\textbf{37.1}} & \only<2->{\cellcolor{ofbGold!22}0.064} \\
 \bottomrule
 \end{tabular}
 \vspace{0.15em}
@@ -805,7 +808,7 @@ Robustness is not the same as point accuracy. A standard scenario can pass while
 \end{block}
 \end{columns}
 \vspace{0.1em}
-\callout{\textbf{Result:} RA-EKF, SOGI-FLL, Koopman, and TFT remain below 0.05 Hz across the three standard cases; EKF and IpDFT fail through intermittent ramp divergence.}
+\onslide<2->{\callout{\textbf{Result:} RA-EKF, SOGI-FLL, Koopman, and TFT remain below 0.05 Hz across the three standard cases; EKF and IpDFT fail through intermittent ramp divergence.}}
 \end{frame}
 
 \begin{frame}{Scenario D: phase jump separates filters from windowed methods}
@@ -1050,21 +1053,21 @@ The state-space and loop families all run at $\sim$10--17 $\mu$s/sample (embedde
 \toprule
 Method & Step & Ramp & Mod & Jump & Multi \\
 \midrule
-Koopman & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbRed!22}F & \cellcolor{ofbRed!22}F \\
-TFT & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGold!30}F* & \cellcolor{ofbRed!22}F \\
-IpDFT & \cellcolor{ofbGreen!25}P & \cellcolor{ofbRed!22}F & \cellcolor{ofbGreen!25}P & \cellcolor{ofbRed!22}F & \cellcolor{ofbRed!22}F \\
-SOGI-FLL & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbRed!22}F \\
-PLL & \cellcolor{ofbGreen!25}P & \cellcolor{ofbRed!22}F & \cellcolor{ofbGold!30}F* & \cellcolor{ofbGreen!25}P & \cellcolor{ofbRed!22}F \\
-EKF & \cellcolor{ofbGreen!25}P & \cellcolor{ofbRed!22}F & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbRed!22}F \\
-UKF & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbRed!22}F \\
-RA-EKF & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbRed!22}F \\
-LKF2 & \cellcolor{ofbGold!30}F* & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbRed!22}F \\
+Koopman & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \only<2->{\cellcolor{ofbRed!22}F} & \only<2->{\cellcolor{ofbRed!22}F} \\
+TFT & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \only<2->{\cellcolor{ofbGold!30}F*} & \only<2->{\cellcolor{ofbRed!22}F} \\
+IpDFT & \cellcolor{ofbGreen!25}P & \cellcolor{ofbRed!22}F & \cellcolor{ofbGreen!25}P & \only<2->{\cellcolor{ofbRed!22}F} & \only<2->{\cellcolor{ofbRed!22}F} \\
+SOGI-FLL & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \only<2->{\cellcolor{ofbGreen!25}P} & \only<2->{\cellcolor{ofbRed!22}F} \\
+PLL & \cellcolor{ofbGreen!25}P & \cellcolor{ofbRed!22}F & \cellcolor{ofbGold!30}F* & \only<2->{\cellcolor{ofbGreen!25}P} & \only<2->{\cellcolor{ofbRed!22}F} \\
+EKF & \cellcolor{ofbGreen!25}P & \cellcolor{ofbRed!22}F & \cellcolor{ofbGreen!25}P & \only<2->{\cellcolor{ofbGreen!25}P} & \only<2->{\cellcolor{ofbRed!22}F} \\
+UKF & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \only<2->{\cellcolor{ofbGreen!25}P} & \only<2->{\cellcolor{ofbRed!22}F} \\
+RA-EKF & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \only<2->{\cellcolor{ofbGreen!25}P} & \only<2->{\cellcolor{ofbRed!22}F} \\
+LKF2 & \cellcolor{ofbGold!30}F* & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen!25}P & \only<2->{\cellcolor{ofbGreen!25}P} & \only<2->{\cellcolor{ofbRed!22}F} \\
 \bottomrule
 \end{tabular}
 \end{center}
 \vspace{0.10em}
 \begin{center}{\scriptsize\color{ofbMuted}Columns: \textbf{Jump} = phase jump (D), \textbf{Multi} = multi-event (E). \quad \textbf{P} pass \,\textbar\, \textbf{F} fails a declared RMSE/$T_{\mathrm{trip}}$/settling threshold \,\textbar\, \textbf{F*} borderline.}\end{center}
-{\scriptsize\color{ofbMuted}\textbf{Result:} Step, ramp, and modulation compliance does not predict phase-jump or multi-event readiness.}
+\onslide<2->{{\scriptsize\color{ofbMuted}\textbf{Result:} Step, ramp, and modulation compliance does not predict phase-jump or multi-event readiness.}}
 \end{frame}
 
 \begin{frame}{Empirical claims}
@@ -1373,17 +1376,17 @@ EKF wins phase jumps, the magnitude step and interharmonics; ESPRIT/Koopman win 
 \begin{block}{Low-stress champion}
 Up to $\sim$15\% THD, zero-crossing detection gives the \emph{lowest} error of any method --- \textbf{0.27 mHz} at 1\% THD, 2.2 mHz at 15\%; and just 1.1 mHz at low broadband noise.
 \end{block}
-\begin{block}{Broadband-noise cliff}
+\onslide<2->{\begin{block}{Broadband-noise cliff}
 Same method: 34 mHz at $\sigma\!=\!0.003$\,pu $\rightarrow$ \textbf{3112 Hz} at $\sigma\!=\!0.1$\,pu. EKF stays $\le$\,0.43 Hz across the same sweep.
-\end{block}
-\begin{block}{Harmonic cliff}
+\end{block}}
+\onslide<3->{\begin{block}{Harmonic cliff}
 Same method again: 2.2 mHz at 15\% THD $\rightarrow$ \textbf{39 Hz} at 20\% $\rightarrow$ \textbf{86 Hz} at 30\%.
-\end{block}
+\end{block}}
 \column{0.51\linewidth}
 \centering
 \includegraphics[width=\linewidth,height=0.66\textheight,keepaspectratio]{figures/noise_snr_method_map.pdf}
 \end{columns}
-{\small\textbf{Result:} aggregate rankings hide stress-specific collapse; the benchmark reports per-stress behavior, not one score.}
+\onslide<4->{{\small\textbf{Result:} aggregate rankings hide stress-specific collapse; the benchmark reports per-stress behavior, not one score.}}
 \end{frame}
 
 \begin{frame}{Voltage sags and swells are not symmetric}
