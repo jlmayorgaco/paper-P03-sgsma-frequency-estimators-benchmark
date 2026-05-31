@@ -112,6 +112,51 @@
 };
 \draw[#1, line width=1.5pt] ([xshift=0.5pt,yshift=-0.5pt]current bounding box.north west) -- ([xshift=0.5pt,yshift=0.5pt]current bounding box.south west);
 \end{tikzpicture}}
+\newcommand{\evidencetag}[2]{%
+  \tikz[baseline=(x.base)]\node[
+    fill=#1!10,
+    draw=#1,
+    text=ofbInk,
+    line width=0.55pt,
+    rounded corners=2pt,
+    inner xsep=5pt,
+    inner ysep=2.5pt,
+    font=\scriptsize\bfseries
+  ] (x) {#2};%
+}
+\newcommand{\resultclaim}[2]{%
+  \vspace{0.1em}\noindent
+  \begin{tikzpicture}
+    \node[
+      draw=#1,
+      fill=#1!7,
+      line width=0.75pt,
+      rounded corners=2pt,
+      inner xsep=8pt,
+      inner ysep=6pt,
+      text width=0.93\linewidth,
+      align=left
+    ] {\large\color{ofbInk}#2};
+    \draw[#1, line width=2.0pt] ([xshift=0.6pt,yshift=-0.6pt]current bounding box.north west) -- ([xshift=0.6pt,yshift=0.6pt]current bounding box.south west);
+  \end{tikzpicture}%
+}
+\newcommand{\insightcard}[3]{%
+  \begin{tikzpicture}
+    \node[
+      draw=#1,
+      fill=white,
+      rounded corners=2pt,
+      line width=0.65pt,
+      inner xsep=7pt,
+      inner ysep=6pt,
+      text width=0.90\linewidth,
+      align=left
+    ] {
+      {\scriptsize\bfseries\color{#1}#2}\\[-0.05em]
+      {\small #3}
+    };
+  \end{tikzpicture}%
+}
 \newcommand{\atlaspreviewbanner}{%
   \vspace{-0.10cm}%
   \noindent\begin{tikzpicture}
@@ -343,7 +388,6 @@ The Kaua'i Island event on Nov. 21, 2021 exhibited 18--20 Hz oscillations after 
 Standard synchrophasor outputs summarize the fundamental component; harmonic and interharmonic contamination can still dominate estimator failure modes.
 \end{block}
 \end{columns}
-\artifact{Dong et al., Kaua'i 18--20 Hz oscillation analysis; NERC IBR monitoring white paper; IEC/IEEE 60255-118-1}
 \end{frame}
 
 \begin{frame}{Research problem}
@@ -693,16 +737,44 @@ Each estimator--scenario pair is tuned within a declared grid, then compared usi
 \callout{The benchmark is an evidence pipeline, not just a test script: every figure traces back to a locked manifest, a fixed I/O contract, and the readiness gate.}
 \end{frame}
 
-\begin{frame}{Scenario suite I --- standard stresses}
-\centering
-\vspace{0.2em}
-\includegraphics[width=\linewidth,height=0.80\textheight,keepaspectratio]{figures/scenario_suite_1.pdf}
+\begin{frame}{Standard stresses: the waveform is controlled}
+\vspace{-0.15em}
+\evidencetag{ofbBlue}{CORE SCENARIO SUITE}
+\begin{center}
+\includegraphics[width=0.96\linewidth,height=0.56\textheight,keepaspectratio,trim=0 166 0 0,clip]{figures/scenario_suite_1.pdf}
+\end{center}
+\vspace{-0.3em}
+\resultclaim{ofbBlue}{Each standard test changes one physical ingredient at a time: magnitude, ramp, frequency step, AM, or FM.}
 \end{frame}
 
-\begin{frame}{Scenario suite II --- composite IBR stresses}
-\centering
-\vspace{0.2em}
-\includegraphics[width=\linewidth,height=0.80\textheight,keepaspectratio]{figures/scenario_suite_2.pdf}
+\begin{frame}{Standard stresses: the frequency truth is simple}
+\vspace{-0.15em}
+\evidencetag{ofbBlue}{CORE SCENARIO SUITE}
+\begin{center}
+\includegraphics[width=0.96\linewidth,height=0.56\textheight,keepaspectratio,trim=0 0 0 185,clip]{figures/scenario_suite_1.pdf}
+\end{center}
+\vspace{-0.3em}
+\resultclaim{ofbGreen}{The clean reference traces make estimator failure visible: divergence is an algorithmic response, not ambiguity in ground truth.}
+\end{frame}
+
+\begin{frame}{Composite IBR stresses: waveform physics are stacked}
+\vspace{-0.15em}
+\evidencetag{ofbRust}{IBR STRESS SUITE}
+\begin{center}
+\includegraphics[width=0.96\linewidth,height=0.56\textheight,keepaspectratio,trim=0 166 0 0,clip]{figures/scenario_suite_2.pdf}
+\end{center}
+\vspace{-0.3em}
+\resultclaim{ofbRust}{Composite cases combine harmonic distortion, phase jumps, out-of-band tones, ringdown recovery, and multi-event amplitude dynamics.}
+\end{frame}
+
+\begin{frame}{Composite IBR stresses: frequency truth becomes diagnostic}
+\vspace{-0.15em}
+\evidencetag{ofbRust}{IBR STRESS SUITE}
+\begin{center}
+\includegraphics[width=0.96\linewidth,height=0.56\textheight,keepaspectratio,trim=0 0 0 185,clip]{figures/scenario_suite_2.pdf}
+\end{center}
+\vspace{-0.3em}
+\resultclaim{ofbRed}{The estimator must recover through nonstationary segments, not just report low steady-state error after the event.}
 \end{frame}
 
 \begin{frame}{Estimator families}
@@ -811,31 +883,36 @@ Robustness is not the same as point accuracy. A standard scenario can pass while
 \onslide<2->{\callout{\textbf{Result:} RA-EKF, SOGI-FLL, Koopman, and TFT remain below 0.05 Hz across the three standard cases; EKF and IpDFT fail through intermittent ramp divergence.}}
 \end{frame}
 
-\begin{frame}{Scenario D: phase jump separates filters from windowed methods}
-\begin{columns}[T,onlytextwidth]
-\column{0.49\linewidth}
-\begin{block}{State-space + loops recover cleanly}
-\scriptsize
-A clean $+60^\circ$ phase jump (NERC profile) is absorbed with near-zero error and \textbf{zero trip exposure}:
-\begin{itemize}\setlength\itemsep{2pt}
-  \item EKF, UKF, RA-EKF: RMSE $\approx 0$ Hz, $T_{\mathrm{trip}}=0$.
-  \item PLL 0.021 Hz, SOGI-FLL 0.067 Hz, $T_{\mathrm{trip}}=0$.
-\end{itemize}
-\end{block}
-\column{0.49\linewidth}
-\begin{block}{Windowed / spectral methods trip}
-\scriptsize
-The trip exposure here lives in the window/spectral family:
-\begin{itemize}\setlength\itemsep{2pt}
-  \item IpDFT: 1.56 Hz RMSE, $T_{\mathrm{trip}}=1.21$ s.
-  \item RLS 2.28 Hz / 1.30 s; Prony 2.39 Hz / 1.35 s.
-  \item TFT 0.43 Hz / 0.09 s; Koopman 0.39 Hz / 0.11 s.
-\end{itemize}
-\end{block}
-\end{columns}
-\vspace{-0.10cm}
-{\scriptsize\color{ofbMuted}\textbf{Benchmark reading:} an isolated phase jump does \emph{not} break the state-space filters --- EKF already recovers with zero trip exposure. RA-EKF's real advantage appears on ramps and multi-event stress (next), not on clean phase jumps.}
-\artifact{full\_mc\_benchmark, $n=5$: NERC\_Phase\_Jump\_60}
+\begin{frame}{A clean phase jump is a family separator}
+\vspace{-0.25em}
+\begin{center}
+\begin{tikzpicture}[
+  x=1cm,y=1cm,
+  lane/.style={draw, rounded corners=3pt, line width=0.8pt, align=center, minimum height=0.78cm, text width=2.42cm, font=\scriptsize},
+  pass/.style={lane, draw=ofbGreen, fill=ofbGreen!9},
+  fail/.style={lane, draw=ofbRed, fill=ofbRed!8},
+  neutral/.style={lane, draw=ofbBlue, fill=ofbBlue!7},
+  arr/.style={-{Latex[length=2mm]}, thick, color=ofbInk}
+]
+\node[neutral] (event) at (0,0) {$+60^\circ$\\phase jump};
+\node[pass] (state) at (3.0,0.72) {state-space\\EKF/UKF/RA-EKF};
+\node[pass] (loops) at (3.0,-0.72) {loop methods\\PLL/SOGI-FLL};
+\node[pass] (pass) at (6.0,0.72) {$T_{\mathrm{trip}}=0$\\near-zero error};
+\node[pass] (lock) at (6.0,-0.72) {re-locks without\\trip exposure};
+\node[fail] (window) at (3.0,-2.10) {window/spectral\\IpDFT/RLS/Prony};
+\node[fail] (trip) at (6.0,-2.10) {window memory\\creates trip exposure};
+\draw[arr] (event) -- (state);
+\draw[arr] (event) -- (loops);
+\draw[arr] (event) -- (window);
+\draw[arr] (state) -- (pass);
+\draw[arr] (loops) -- (lock);
+\draw[arr] (window) -- (trip);
+\node[align=left, font=\scriptsize, text width=3.0cm, color=ofbRed] at (9.15,-2.10) {IpDFT: 1.56 Hz, 1.21 s\\RLS: 2.28 Hz, 1.30 s\\Prony: 2.39 Hz, 1.35 s};
+\node[align=left, font=\scriptsize, text width=3.0cm, color=ofbGreen] at (9.15,0.10) {EKF, UKF, RA-EKF:\\RMSE $\approx 0$ Hz\\$T_{\mathrm{trip}}=0$};
+\end{tikzpicture}
+\end{center}
+\vspace{-0.25em}
+\resultclaim{ofbGreen}{The clean jump does not expose RA-EKF's main advantage. It shows which estimator families carry memory through discontinuities.}
 \end{frame}
 
 \begin{frame}{Composite IBR sequence: why it is hardest}
@@ -878,12 +955,12 @@ The trip exposure here lives in the window/spectral family:
 \begin{columns}[T,onlytextwidth]
 \column{0.48\linewidth}
 \begin{block}{Why standard tests miss it}
-\small
+\scriptsize
 The estimator sees spectral leakage, loop re-lock, state-model mismatch, transient recovery, and noise in one nonstationary waveform.
 \end{block}
 \column{0.47\linewidth}
 \begin{block}{Why ATLAS decomposes it}
-\small
+\scriptsize
 The multi-event case proves the failure exists; severity sweeps identify which stressor actually breaks each estimator family.
 \end{block}
 \end{columns}
@@ -944,10 +1021,22 @@ UKF has the lowest RMSE and trip exposure, SOGI-FLL the lowest usable CPU, Koopm
 \end{columns}
 \end{frame}
 
-\begin{frame}{Event responses}
-\centering
+\begin{frame}{The failures are visible in the trace, not only in the table}
 \vspace{-0.25em}
-\includegraphics[width=0.96\paperwidth,height=0.80\textheight,keepaspectratio]{figures/event_responses_mc.pdf}
+\begin{columns}[T,onlytextwidth]
+\column{0.49\linewidth}
+\centering
+\evidencetag{ofbRed}{RAMP DIVERGENCE}\\[0.15em]
+\includegraphics[width=\linewidth,height=0.39\textheight,keepaspectratio,trim=0 222 403 0,clip]{figures/event_responses_mc.pdf}
+\vspace{0.15em}
+\insightcard{ofbRed}{Failure signature}{EKF and IpDFT leave the true ramp almost immediately; after the event, the estimate is no longer operationally usable.}
+\column{0.49\linewidth}
+\centering
+\evidencetag{ofbRust}{MODULATION DIVERGENCE}\\[0.15em]
+\includegraphics[width=\linewidth,height=0.39\textheight,keepaspectratio,trim=403 0 0 222,clip]{figures/event_responses_mc.pdf}
+\vspace{0.15em}
+\insightcard{ofbRust}{Failure signature}{LKF stays plausible between collapses, then repeatedly drops out of the usable frequency band.}
+\end{columns}
 \end{frame}
 
 \begin{frame}{Result comparison: winners depend on the question}
@@ -1340,7 +1429,7 @@ One exception: TFT rises gently, then jumps \textbf{2.5\,$\rightarrow$\,21.9 Hz}
 {\scriptsize\color{ofbMuted}\textbf{Result:} Severity is non-monotone; sweep the jump angle rather than qualify one nominal point.}
 \end{frame}
 
-\begin{frame}{No universal winner: champions rotate by regime}
+\begin{frame}{No estimator owns the whole stress space}
 \papergradebanner
 \begin{columns}[T,onlytextwidth]
 \column{0.46\linewidth}
@@ -1365,10 +1454,10 @@ EKF wins phase jumps, the magnitude step and interharmonics; ESPRIT/Koopman win 
 \centering
 \includegraphics[width=\linewidth,height=0.68\textheight,keepaspectratio]{figures/rocof_method_map.pdf}
 \end{columns}
-{\scriptsize\color{ofbMuted}\textbf{Result:} The deliverable is a selection map: event class $\times$ metric $\times$ compute budget.}
+\resultclaim{ofbBlue}{The deliverable is a selection map: event class $\times$ metric $\times$ compute budget.}
 \end{frame}
 
-\begin{frame}{The ZCD paradox: best and worst, same estimator}
+\begin{frame}{ZCD is a narrow instrument, not a general estimator}
 \papergradebanner
 \begin{columns}[T,onlytextwidth]
 \column{0.45\linewidth}
@@ -1386,7 +1475,6 @@ Same method again: 2.2 mHz at 15\% THD $\rightarrow$ \textbf{39 Hz} at 20\% $\ri
 \centering
 \includegraphics[width=\linewidth,height=0.66\textheight,keepaspectratio]{figures/noise_snr_method_map.pdf}
 \end{columns}
-\onslide<4->{{\small\textbf{Result:} aggregate rankings hide stress-specific collapse; the benchmark reports per-stress behavior, not one score.}}
 \end{frame}
 
 \begin{frame}{Voltage sags and swells are not symmetric}
@@ -1479,24 +1567,35 @@ ZCD is elegant at clean high-SNR crossings, but deep sags convert amplitude loss
 \end{columns}
 \end{frame}
 
-\begin{frame}{CPU--accuracy Pareto analysis}
+\begin{frame}{Accuracy costs 100--1000$\times$ more compute}
 \extendedresultsbanner
-\begin{center}
-\includegraphics[width=0.94\linewidth,height=0.70\textheight,keepaspectratio]{figures/cpu_accuracy_pareto.pdf}
-\end{center}
+\begin{columns}[T,onlytextwidth]
+\column{0.72\linewidth}
+\centering
+\includegraphics[width=\linewidth,height=0.62\textheight,keepaspectratio]{figures/cpu_accuracy_pareto.pdf}
+\column{0.24\linewidth}
+\vspace{0.2em}
+\insightcard{ofbGreen}{Low-cost core}{PLL, SOGI-FLL, EKF, and RA-EKF sit in the deployable compute range.}
+\vspace{0.25em}
+\insightcard{ofbRust}{Accuracy premium}{Spectral and data-driven methods can move right by $100$--$1000\times$ CPU cost.}
+\end{columns}
 \end{frame}
 
 \section{Deployment}
 \sectionframe{}{Findings \& deployment}{What to deploy --- and what comes next}
 
 \begin{frame}{Three findings}
-\begin{enumerate}
-  \item<1-> \textbf{Estimator choice is metric-conditioned}: across ATLAS severity levels, the RMSE leader often differs from the trip-risk and RoCoF leader.
-  \item<2-> \textbf{Stress boundaries matter}: AM modulation remains survivable for many methods, while severe FM, RoCoF, interharmonics, noise, and extreme THD leave no method below the 0.05 Hz guide.
-  \item<3-> \textbf{Robustness beats point accuracy}: EKF, UKF and IpDFT intermittently diverge on ramps and multi-event stress, while RA-EKF's explicit $\dot\omega$ state keeps the ramp family stable across seeds.
-\end{enumerate}
-\vspace{0.4em}
-\onslide<4->{\callout{Estimator qualification includes event family, sign, severity, transient recovery, trip exposure, compute feasibility, and standard-case RMSE.}}
+\vspace{0.15em}
+\begin{columns}[T,onlytextwidth]
+\column{0.32\linewidth}
+\insightcard{ofbBlue}{1. Metric-conditioned}{The RMSE leader often differs from the trip-risk and RoCoF leader across ATLAS severity levels.}
+\column{0.32\linewidth}
+\insightcard{ofbRust}{2. Stress-bounded}{AM remains survivable for many methods; severe FM, RoCoF, interharmonics, noise, and extreme THD break the 0.05 Hz guide.}
+\column{0.32\linewidth}
+\insightcard{ofbGreen}{3. Robustness over point accuracy}{EKF, UKF, and IpDFT can diverge on ramps; RA-EKF keeps the ramp family stable across seeds.}
+\end{columns}
+\vspace{0.5em}
+\resultclaim{ofbBlue}{Dynamic frequency estimators should be qualified by event family, sign, severity, recovery, trip exposure, and compute envelope.}
 \end{frame}
 
 \begin{frame}{Validity limits and next steps}
@@ -1614,11 +1713,11 @@ A reference test profile needs the same signals, estimator I/O, metrics, and mac
 \begin{frame}{IBR Event Qualification Score}
 \readinessmetricbanner
 \begin{columns}[T,onlytextwidth]
-\column{0.53\linewidth}
+\column{0.50\linewidth}
 \begin{block}{Score for estimator $e$}
 \scriptsize
 \begin{center}
-\resizebox{0.98\linewidth}{!}{$
+\resizebox{0.92\linewidth}{!}{$
 \begin{aligned}
 \mathrm{IBR\text{-}ERS}(e) &= 1-\sum_{s\in\mathcal{S}} w_s\,\Phi_s(e),\\
 \Phi_s(e) &= \alpha \tilde E_s+\beta \tilde P_s+\gamma \tilde T_s+\delta \tilde S_s+\eta \tilde C_s+\lambda \tilde L_s .
@@ -1626,22 +1725,34 @@ A reference test profile needs the same signals, estimator I/O, metrics, and mac
 $}
 \end{center}
 \end{block}
-\begin{itemize}
-  \item $\tilde E_s$: normalized dynamic RMSE.
-  \item $\tilde P_s$: normalized peak deviation.
-  \item $\tilde T_s$: trip-risk duration.
-  \item $\tilde S_s$: settling and recovery penalty.
-  \item $\tilde C_s,\tilde L_s$: compute and latency penalties.
-\end{itemize}
-\column{0.43\linewidth}
-\begin{block}{Composite metric}
-\small
-RMSE, trip-risk, transient recovery, and cost lead to different decisions. A composite score states the deployment objective explicitly.
-\end{block}
-\begin{block}{Profile-specific weights}
-\small
-Protection-adjacent use can raise $\gamma,\delta,\lambda$; forensic reconstruction can raise $\alpha,\beta$; embedded monitoring can raise $\eta$.
-\end{block}
+\vspace{0.1em}
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \node[anchor=west, font=\scriptsize\bfseries, color=ofbInk] at (0,0.82) {Score composition};
+  \fill[ofbBlue!75] (0,0.20) rectangle (1.15,0.55);
+  \fill[ofbRust!80] (1.15,0.20) rectangle (2.10,0.55);
+  \fill[ofbRed!80] (2.10,0.20) rectangle (3.05,0.55);
+  \fill[ofbGreen!75] (3.05,0.20) rectangle (4.05,0.55);
+  \fill[ofbViolet!75] (4.05,0.20) rectangle (5.10,0.55);
+  \node[font=\tiny, text=white] at (0.58,0.38) {RMSE};
+  \node[font=\tiny, text=white] at (1.62,0.38) {peak};
+  \node[font=\tiny, text=white] at (2.57,0.38) {trip};
+  \node[font=\tiny, text=white] at (3.55,0.38) {settle};
+  \node[font=\tiny, text=white] at (4.58,0.38) {cost};
+\end{tikzpicture}
+\vspace{-0.1em}
+\vspace{-0.15em}
+{\scriptsize
+\begin{tabular}{@{}ll@{}}
+$\tilde E_s,\tilde P_s$ & dynamic and peak error \\
+$\tilde T_s,\tilde S_s$ & trip exposure and recovery \\
+$\tilde C_s,\tilde L_s$ & compute and latency penalties
+\end{tabular}}
+\column{0.46\linewidth}
+\insightcard{ofbBlue}{Why a score is needed}{RMSE, trip-risk, transient recovery, and cost lead to different decisions. A composite score makes the deployment objective explicit.}
+\vspace{0.4em}
+\insightcard{ofbRed}{Protection profile}{Raise $\gamma,\delta,\lambda$ when trip exposure, recovery, and latency dominate the risk model.}
+\vspace{0.4em}
+\insightcard{ofbGreen}{Monitoring profile}{Raise $\alpha,\beta,\eta$ when reconstruction accuracy and compute budget dominate.}
 \end{columns}
 \end{frame}
 
