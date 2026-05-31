@@ -761,7 +761,7 @@ Benchmark reports, metric tables, plots, manifests, and readiness gates.
 \vspace{-0.15em}
 \evidencetag{ofbBlue}{CORE SCENARIO SUITE}
 \begin{center}
-\includegraphics[width=0.9\linewidth,height=0.72\textheight,keepaspectratio]{figures/scenario_suite_1a.pdf}
+\includegraphics[width=0.9\linewidth,height=0.62\textheight,keepaspectratio]{figures/scenario_suite_1a.pdf}
 \end{center}
 \vspace{-0.3em}
 \resultclaim{ofbBlue}{Top row is the voltage waveform $v(t)$; bottom row is the true frequency $f(t)$. Each test changes one physical ingredient at a time.}
@@ -771,7 +771,7 @@ Benchmark reports, metric tables, plots, manifests, and readiness gates.
 \vspace{-0.15em}
 \evidencetag{ofbBlue}{CORE SCENARIO SUITE}
 \begin{center}
-\includegraphics[width=0.72\linewidth,height=0.72\textheight,keepaspectratio]{figures/scenario_suite_1b.pdf}
+\includegraphics[width=0.72\linewidth,height=0.62\textheight,keepaspectratio]{figures/scenario_suite_1b.pdf}
 \end{center}
 \vspace{-0.3em}
 \resultclaim{ofbGreen}{Voltage on top, true frequency below: AM leaves $f(t)$ flat at 60 Hz, while only FM actually moves it. Failure is algorithmic, not ground-truth ambiguity.}
@@ -781,7 +781,7 @@ Benchmark reports, metric tables, plots, manifests, and readiness gates.
 \vspace{-0.15em}
 \evidencetag{ofbRust}{IBR STRESS SUITE}
 \begin{center}
-\includegraphics[width=0.9\linewidth,height=0.72\textheight,keepaspectratio]{figures/scenario_suite_2a.pdf}
+\includegraphics[width=0.9\linewidth,height=0.62\textheight,keepaspectratio]{figures/scenario_suite_2a.pdf}
 \end{center}
 \vspace{-0.3em}
 \resultclaim{ofbRust}{Top row voltage, bottom row true frequency: harmonics, a phase jump and out-of-band tones distort $v(t)$ while $f(t)$ often stays flat.}
@@ -791,7 +791,7 @@ Benchmark reports, metric tables, plots, manifests, and readiness gates.
 \vspace{-0.15em}
 \evidencetag{ofbRust}{IBR STRESS SUITE}
 \begin{center}
-\includegraphics[width=0.72\linewidth,height=0.72\textheight,keepaspectratio]{figures/scenario_suite_2b.pdf}
+\includegraphics[width=0.72\linewidth,height=0.62\textheight,keepaspectratio]{figures/scenario_suite_2b.pdf}
 \end{center}
 \vspace{-0.3em}
 \resultclaim{ofbRed}{Voltage on top, true frequency below: the estimator must recover through nonstationary segments, not just report low steady-state error after the event.}
@@ -1100,6 +1100,15 @@ UKF has the lowest RMSE and trip exposure, SOGI-FLL the lowest usable CPU, Koopm
 \vspace{0.15em}
 \insightcard{ofbRust}{Failure signature}{LKF stays plausible between collapses, then repeatedly drops out of the usable frequency band.}
 \end{columns}
+\end{frame}
+
+\begin{frame}{How estimators track an IBR ringdown}
+\evidencetag{ofbViolet}{FULL MONTE-CARLO}
+\begin{center}
+\includegraphics[width=0.97\linewidth,height=0.74\textheight,keepaspectratio]{figures/ringdown_tracking_rep.pdf}
+\end{center}
+\vspace{-0.3em}
+\resultclaim{ofbBlue}{Black is the true frequency, red is each estimator on the power-imbalance ringdown. Robust methods (RA-EKF, SOGI-FLL) follow the damped 59--61 Hz swing; fragile ones (ZCD) overshoot or run away.}
 \end{frame}
 
 \begin{frame}{Result comparison: winners depend on the question}

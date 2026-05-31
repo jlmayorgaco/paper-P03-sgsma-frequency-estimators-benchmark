@@ -183,8 +183,14 @@ S = [
    "Here it is, directly. The true frequency is the black line, and each colored line is an estimator trying to follow it.",
    "You can literally watch EKF and IpDFT run away on the ramp, climbing to tens of hertz, while RA-EKF just stays locked on the truth.",
    "This is what intermittent divergence looks like in practice."],
-   "So what does all of this mean when you actually have to choose a method?",
+   "Let me zoom into one hard event to see the tracking up close.",
    "This is the intermittent divergence, seen with your own eyes."),
+ ("How estimators track an IBR ringdown", "FIG", [
+   "Here is a closer look at one hard event, the power-imbalance ringdown, across eight representative estimators.",
+   "Black is the true frequency, the damped swing between roughly fifty-nine and sixty-one hertz; red is each estimator's own output.",
+   "The robust methods like RA-EKF and SOGI-FLL follow the swing cleanly, while fragile ones like ZCD overshoot or simply run away."],
+   "So what does all of this mean when you actually have to choose a method?",
+   "Robust methods track the damped swing; fragile ones overshoot or diverge."),
  ("Result comparison: winners by question", "CORE", [
    "The honest summary is that the winner depends on the question you ask.",
    "Ask for clean steady-state accuracy, and the state-space methods and SOGI-FLL win.",
