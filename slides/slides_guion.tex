@@ -347,18 +347,18 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-17.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 17 / 61 \quad $\sim$24s \quad cum 7:45}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
-{\Large\bfseries\color{ofbTeal} Standard stresses: controlled waveform}\\[6pt]
+{\footnotesize\color{ofbMuted}Slide 17 / 61 \quad $\sim$36s \quad cum 7:57}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\Large\bfseries\color{ofbTeal} Standard stresses (1 of 2): magnitude, ramp, step}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
-\item We start with the standard stresses: a magnitude step, a frequency ramp, and amplitude modulation.
-\item Because we generate the waveform ourselves, we know the true frequency at every single sample.
-\item That means the error is not estimated, it is exact, and that is what makes a fair score possible.
+\item We start with the standard stresses. On this slide the top row is the voltage waveform, and the bottom row is the true frequency, for three cases: a magnitude step, a frequency ramp, and a frequency step.
+\item Because we generate the waveform ourselves, we know that true frequency at every single sample, so the error is exact.
+\item And notice the magnitude step on the left: the voltage clearly changes, but the frequency below it stays flat at sixty hertz.
 \end{itemize}
-\vspace{3pt}{\color{ofbBlue}$\rightarrow$ \itshape Here is what those standard cases actually look like.}\\[2pt]
+\vspace{3pt}{\color{ofbBlue}$\rightarrow$ \itshape Modulation gives us the other two standard cases.}\\[2pt]
 \vspace{4pt}
 \begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.7pt,arc=2pt,left=5pt,right=5pt,top=3pt,bottom=3pt]
-{\bfseries Key line: }Known truth is what lets us score the error with no ambiguity.
+{\bfseries Key line: }Top row is voltage; bottom row is the true frequency we score against.
 \end{tcolorbox}
 \end{minipage}}
 \setlength{\pdfpageheight}{\dimexpr\ht\slidebox+\dp\slidebox+1.6cm\relax}\setlength{\paperheight}{\pdfpageheight}
@@ -368,18 +368,18 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-18.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 18 / 61 \quad $\sim$31s \quad cum 8:16}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
-{\Large\bfseries\color{ofbBlue} Scenario suite I (dashboard)}\\[6pt]
+{\footnotesize\color{ofbMuted}Slide 18 / 61 \quad $\sim$25s \quad cum 8:22}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
+{\Large\bfseries\color{ofbBlue} Standard stresses (2 of 2): modulation AM and FM}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
-\item This dashboard shows the standard suite. Voltage is on the top row, the true frequency on the bottom, one column per scenario.
-\item And here is a subtle but important point: for the magnitude step and the AM case, the frequency stays perfectly flat at sixty hertz.
-\item The stress is not a frequency event at all, and yet, as we will see, the estimators still react to it.
+\item Here are the two modulation cases, again voltage on top and true frequency below.
+\item Amplitude modulation, on the left, leaves the frequency perfectly flat at sixty hertz. Only frequency modulation, on the right, actually moves it.
+\item So an estimator can be disturbed by a signal whose true frequency never changed at all.
 \end{itemize}
-\vspace{3pt}{\color{ofbBlue}$\rightarrow$ \itshape Now let us make the scenarios realistic.}\\[2pt]
+\vspace{3pt}{\color{ofbBlue}$\rightarrow$ \itshape Now let us make the scenarios composite and realistic.}\\[2pt]
 \vspace{4pt}
 \begin{tcolorbox}[colback=ofbBlue!8,colframe=ofbBlue,boxrule=0.7pt,arc=2pt,left=5pt,right=5pt,top=3pt,bottom=3pt]
-{\bfseries Key line: }The stress is not always a frequency event, but estimators react anyway.
+{\bfseries Key line: }AM leaves the frequency flat; only FM truly moves it.
 \end{tcolorbox}
 \end{minipage}}
 \setlength{\pdfpageheight}{\dimexpr\ht\slidebox+\dp\slidebox+1.6cm\relax}\setlength{\paperheight}{\pdfpageheight}
@@ -389,18 +389,18 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-19.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 19 / 61 \quad $\sim$22s \quad cum 8:38}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
-{\Large\bfseries\color{ofbTeal} Composite IBR stresses}\\[6pt]
+{\footnotesize\color{ofbMuted}Slide 19 / 61 \quad $\sim$29s \quad cum 8:51}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\Large\bfseries\color{ofbTeal} Composite IBR stresses (1 of 2): harmonics, jump, OOB}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
-\item Now we stack the disturbances on top of one another: harmonics, phase jumps, a rate-of-change segment, and a ringdown, all inside one waveform.
-\item This is far closer to what a real, inverter-dominated fault actually produces in the field.
-\item It is messy on purpose, because the grid is messy.
+\item Now we stack the physics. Top row voltage, bottom row true frequency, for three composite cases: harmonic distortion, a phase jump, and out-of-band interference.
+\item These badly distort the voltage waveform, and yet in several of them the true frequency stays essentially flat.
+\item That gap, an ugly voltage but a calm true frequency, is exactly what trips up the wrong estimator.
 \end{itemize}
-\vspace{3pt}{\color{ofbBlue}$\rightarrow$ \itshape Here is that composite suite.}\\[2pt]
+\vspace{3pt}{\color{ofbBlue}$\rightarrow$ \itshape The last two composite cases are the genuinely nonstationary ones.}\\[2pt]
 \vspace{4pt}
 \begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.7pt,arc=2pt,left=5pt,right=5pt,top=3pt,bottom=3pt]
-{\bfseries Key line: }Composite stress is the realistic, and the revealing, case.
+{\bfseries Key line: }A distorted voltage does not mean the true frequency moved.
 \end{tcolorbox}
 \end{minipage}}
 \setlength{\pdfpageheight}{\dimexpr\ht\slidebox+\dp\slidebox+1.6cm\relax}\setlength{\paperheight}{\pdfpageheight}
@@ -410,17 +410,18 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-20.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 20 / 61 \quad $\sim$22s \quad cum 9:00}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
-{\Large\bfseries\color{ofbBlue} Scenario suite II (dashboard)}\\[6pt]
+{\footnotesize\color{ofbMuted}Slide 20 / 61 \quad $\sim$27s \quad cum 9:18}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
+{\Large\bfseries\color{ofbBlue} Composite IBR stresses (2 of 2): ringdown, multi-event}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
-\item Same layout as before, voltage on top and frequency below, but now these cases are deliberately harder than anything you would find in a compliance test.
-\item If a method can stay accurate here, it has genuinely earned our trust.
+\item And here are the two hardest cases: a power-imbalance ringdown, and the stacked multi-event sequence, voltage on top and true frequency below.
+\item Now the frequency really does move, through damped oscillations and then a whole chain of events.
+\item The estimator has to track through these nonstationary segments, not just settle down afterward.
 \end{itemize}
-\vspace{3pt}{\color{ofbBlue}$\rightarrow$ \itshape Before we look at methods, let me name the three mechanisms that actually break estimators.}\\[2pt]
+\vspace{3pt}{\color{ofbBlue}$\rightarrow$ \itshape Before the methods, let me name the three mechanisms that actually break estimators.}\\[2pt]
 \vspace{4pt}
 \begin{tcolorbox}[colback=ofbBlue!8,colframe=ofbBlue,boxrule=0.7pt,arc=2pt,left=5pt,right=5pt,top=3pt,bottom=3pt]
-{\bfseries Key line: }If a method survives here, it has earned our trust.
+{\bfseries Key line: }Recovery through nonstationary segments is the real test.
 \end{tcolorbox}
 \end{minipage}}
 \setlength{\pdfpageheight}{\dimexpr\ht\slidebox+\dp\slidebox+1.6cm\relax}\setlength{\paperheight}{\pdfpageheight}
@@ -430,7 +431,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-21.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 21 / 61 \quad $\sim$38s \quad cum 9:38}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 21 / 61 \quad $\sim$38s \quad cum 9:56}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} Scenario families: distortion, leakage, and low SNR}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -452,7 +453,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-22.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 22 / 61 \quad $\sim$24s \quad cum 10:02}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 22 / 61 \quad $\sim$24s \quad cum 10:20}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} Estimator families}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -473,7 +474,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-23.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 23 / 61 \quad $\sim$26s \quad cum 10:28}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 23 / 61 \quad $\sim$26s \quad cum 10:46}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} Metrics and decision variables}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -494,7 +495,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-24.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 24 / 61 \quad $\sim$5s \quad cum 10:33}\hfill{\footnotesize\bfseries\color{ofbMuted}QUICK}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 24 / 61 \quad $\sim$5s \quad cum 10:51}\hfill{\footnotesize\bfseries\color{ofbMuted}QUICK}\\[2pt]
 {\Large\bfseries\color{ofbMuted} Core evidence (section)}\\[6pt]
 \vspace{4pt}
 \begin{tcolorbox}[colback=ofbMuted!8,colframe=ofbMuted,boxrule=0.7pt,arc=2pt,left=5pt,right=5pt,top=3pt,bottom=3pt]
@@ -508,7 +509,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-25.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 25 / 61 \quad $\sim$35s \quad cum 11:08}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 25 / 61 \quad $\sim$35s \quad cum 11:26}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} Standard scenario results (build-up)}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -530,7 +531,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-26.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 26 / 61 \quad $\sim$27s \quad cum 11:35}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 26 / 61 \quad $\sim$27s \quad cum 11:53}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} Scenario D: phase jump separates families}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -552,7 +553,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-27.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 27 / 61 \quad $\sim$21s \quad cum 11:56}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 27 / 61 \quad $\sim$21s \quad cum 12:14}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} Composite IBR sequence: hardest case}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -573,7 +574,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-28.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 28 / 61 \quad $\sim$32s \quad cum 12:28}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 28 / 61 \quad $\sim$32s \quad cum 12:46}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} Scenario E: the leaderboard breaks}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -594,7 +595,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-29.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 29 / 61 \quad $\sim$23s \quad cum 12:51}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 29 / 61 \quad $\sim$23s \quad cum 13:09}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
 {\Large\bfseries\color{ofbBlue} Trip-risk evidence (figure)}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -615,7 +616,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-30.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 30 / 61 \quad $\sim$29s \quad cum 13:20}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 30 / 61 \quad $\sim$29s \quad cum 13:38}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
 {\Large\bfseries\color{ofbBlue} Event responses (figure)}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -636,7 +637,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-31.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 31 / 61 \quad $\sim$28s \quad cum 13:48}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 31 / 61 \quad $\sim$28s \quad cum 14:06}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} Result comparison: winners by question}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -657,7 +658,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-32.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 32 / 61 \quad $\sim$28s \quad cum 14:16}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 32 / 61 \quad $\sim$28s \quad cum 14:34}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} Computational feasibility}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -678,7 +679,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-33.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 33 / 61 \quad $\sim$24s \quad cum 14:40}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 33 / 61 \quad $\sim$24s \quad cum 14:58}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
 {\Large\bfseries\color{ofbBlue} Deployment limits (figure)}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -699,7 +700,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-34.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 34 / 61 \quad $\sim$23s \quad cum 15:03}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 34 / 61 \quad $\sim$23s \quad cum 15:21}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
 {\Large\bfseries\color{ofbBlue} Balance profile (radar)}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -720,7 +721,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-35.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 35 / 61 \quad $\sim$30s \quad cum 15:33}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 35 / 61 \quad $\sim$30s \quad cum 15:51}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} Compliance heatmap (build-up)}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -742,7 +743,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-36.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 36 / 61 \quad $\sim$25s \quad cum 15:58}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 36 / 61 \quad $\sim$25s \quad cum 16:16}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} Empirical claims}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -763,7 +764,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-37.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 37 / 61 \quad $\sim$5s \quad cum 16:03}\hfill{\footnotesize\bfseries\color{ofbMuted}QUICK}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 37 / 61 \quad $\sim$5s \quad cum 16:21}\hfill{\footnotesize\bfseries\color{ofbMuted}QUICK}\\[2pt]
 {\Large\bfseries\color{ofbMuted} Expanded and ATLAS (section)}\\[6pt]
 \vspace{4pt}
 \begin{tcolorbox}[colback=ofbMuted!8,colframe=ofbMuted,boxrule=0.7pt,arc=2pt,left=5pt,right=5pt,top=3pt,bottom=3pt]
@@ -777,7 +778,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-38.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 38 / 61 \quad $\sim$21s \quad cum 16:24}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 38 / 61 \quad $\sim$21s \quad cum 16:42}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} Expanded stress analysis}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -797,7 +798,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-39.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 39 / 61 \quad $\sim$23s \quad cum 16:47}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 39 / 61 \quad $\sim$23s \quad cum 17:05}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} SGSMA benchmark: family winners}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -818,7 +819,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-40.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 40 / 61 \quad $\sim$23s \quad cum 17:10}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 40 / 61 \quad $\sim$23s \quad cum 17:28}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} ATLAS severity analysis}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -838,7 +839,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-41.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 41 / 61 \quad $\sim$31s \quad cum 17:41}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 41 / 61 \quad $\sim$31s \quad cum 17:59}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} ATLAS: metric choice changes the answer}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -859,7 +860,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-42.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 42 / 61 \quad $\sim$22s \quad cum 18:03}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 42 / 61 \quad $\sim$22s \quad cum 18:21}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
 {\Large\bfseries\color{ofbBlue} ATLAS: where estimators stop being valid}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -879,7 +880,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-43.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 43 / 61 \quad $\sim$21s \quad cum 18:24}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 43 / 61 \quad $\sim$21s \quad cum 18:42}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} AM, FM and interharmonics}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -900,7 +901,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-44.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 44 / 61 \quad $\sim$31s \quad cum 18:55}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 44 / 61 \quad $\sim$31s \quad cum 19:13}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} When the textbook filter diverges}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -921,7 +922,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-45.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 45 / 61 \quad $\sim$25s \quad cum 19:20}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 45 / 61 \quad $\sim$25s \quad cum 19:38}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} RoCoF has a sign}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -942,7 +943,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-46.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 46 / 61 \quad $\sim$30s \quad cum 19:50}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 46 / 61 \quad $\sim$30s \quad cum 20:08}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} Phase-jump severity is non-monotone}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -963,7 +964,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-47.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 47 / 61 \quad $\sim$21s \quad cum 20:11}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 47 / 61 \quad $\sim$21s \quad cum 20:29}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
 {\Large\bfseries\color{ofbBlue} No universal winner (map)}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -984,7 +985,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-48.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 48 / 61 \quad $\sim$33s \quad cum 20:44}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 48 / 61 \quad $\sim$33s \quad cum 21:02}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} The ZCD paradox (build-up)}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -1007,7 +1008,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-49.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 49 / 61 \quad $\sim$26s \quad cum 21:10}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 49 / 61 \quad $\sim$26s \quad cum 21:28}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} Sags and swells are not symmetric}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -1028,7 +1029,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-50.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 50 / 61 \quad $\sim$29s \quad cum 21:39}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 50 / 61 \quad $\sim$29s \quad cum 21:57}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
 {\Large\bfseries\color{ofbBlue} Why a sag breaks zero-crossing}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -1049,7 +1050,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-51.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 51 / 61 \quad $\sim$24s \quad cum 22:03}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 51 / 61 \quad $\sim$24s \quad cum 22:21}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} Harmonic degradation by family}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -1070,7 +1071,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-52.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 52 / 61 \quad $\sim$23s \quad cum 22:26}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 52 / 61 \quad $\sim$23s \quad cum 22:44}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
 {\Large\bfseries\color{ofbBlue} CPU-accuracy Pareto}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -1091,7 +1092,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-53.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 53 / 61 \quad $\sim$5s \quad cum 22:31}\hfill{\footnotesize\bfseries\color{ofbMuted}QUICK}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 53 / 61 \quad $\sim$5s \quad cum 22:49}\hfill{\footnotesize\bfseries\color{ofbMuted}QUICK}\\[2pt]
 {\Large\bfseries\color{ofbMuted} Findings and deployment (section)}\\[6pt]
 \vspace{4pt}
 \begin{tcolorbox}[colback=ofbMuted!8,colframe=ofbMuted,boxrule=0.7pt,arc=2pt,left=5pt,right=5pt,top=3pt,bottom=3pt]
@@ -1105,7 +1106,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-54.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 54 / 61 \quad $\sim$28s \quad cum 22:59}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 54 / 61 \quad $\sim$28s \quad cum 23:17}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} Three findings}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -1127,7 +1128,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-55.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 55 / 61 \quad $\sim$27s \quad cum 23:26}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 55 / 61 \quad $\sim$27s \quad cum 23:44}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} Validity limits and next steps}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -1148,7 +1149,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-56.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 56 / 61 \quad $\sim$24s \quad cum 23:50}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 56 / 61 \quad $\sim$24s \quad cum 24:08}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} Recommendation map}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -1169,7 +1170,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-57.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 57 / 61 \quad $\sim$21s \quad cum 24:11}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 57 / 61 \quad $\sim$21s \quad cum 24:29}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
 {\Large\bfseries\color{ofbBlue} Qualification profile}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -1189,7 +1190,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-58.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 58 / 61 \quad $\sim$20s \quad cum 24:31}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 58 / 61 \quad $\sim$20s \quad cum 24:49}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
 {\Large\bfseries\color{ofbBlue} Standardization profile}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -1209,7 +1210,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-59.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 59 / 61 \quad $\sim$21s \quad cum 24:52}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 59 / 61 \quad $\sim$21s \quad cum 25:10}\hfill{\footnotesize\bfseries\color{ofbBlue}FIG}\\[2pt]
 {\Large\bfseries\color{ofbBlue} IBR Event Qualification Score}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -1229,7 +1230,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-60.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 60 / 61 \quad $\sim$17s \quad cum 25:09}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 60 / 61 \quad $\sim$17s \quad cum 25:27}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} Toward realtime IBR estimators}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
@@ -1249,7 +1250,7 @@
 {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-61.png}}}
 \end{minipage}\hspace{1.0cm}%
 \begin{minipage}[t]{0.40\textwidth}\vspace{0pt}
-{\footnotesize\color{ofbMuted}Slide 61 / 61 \quad $\sim$24s \quad cum 25:33}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
+{\footnotesize\color{ofbMuted}Slide 61 / 61 \quad $\sim$24s \quad cum 25:51}\hfill{\footnotesize\bfseries\color{ofbTeal}CORE}\\[2pt]
 {\Large\bfseries\color{ofbTeal} Validation agenda and conclusion}\\[6pt]
 {\small\itshape\color{ofbMuted}Say (verbatim):}\\[2pt]
 \begin{itemize}[leftmargin=1.05em,itemsep=4pt,topsep=2pt]
