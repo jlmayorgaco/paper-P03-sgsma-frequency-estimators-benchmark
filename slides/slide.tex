@@ -247,8 +247,8 @@
 \usebackgroundtemplate{\includegraphics[width=\paperwidth,height=\paperheight]{\sgsmaDividerBg}}%
 \begin{frame}[plain]
 \begin{tikzpicture}[remember picture,overlay]
-  \node[anchor=east, text=white, align=right, font=\fontsize{27}{32}\selectfont\rmfamily, text width=0.64\paperwidth] at ([xshift=-0.075\paperwidth,yshift=0.25cm]current page.east) {\hyphenpenalty=10000\exhyphenpenalty=10000 #2};
-  \node[anchor=east, text=white, align=right, font=\large, text width=0.62\paperwidth] at ([xshift=-0.075\paperwidth,yshift=-1.00cm]current page.east) {\hyphenpenalty=10000\exhyphenpenalty=10000 #3};
+  \node[anchor=center, text=white, align=center, font=\fontsize{27}{32}\selectfont\rmfamily, text width=0.72\paperwidth] at ([yshift=0.25cm]current page.center) {\hyphenpenalty=10000\exhyphenpenalty=10000 #2};
+  \node[anchor=center, text=white, align=center, font=\large, text width=0.70\paperwidth] at ([yshift=-0.95cm]current page.center) {\hyphenpenalty=10000\exhyphenpenalty=10000 #3};
 \end{tikzpicture}
 \end{frame}
 \endgroup
@@ -425,29 +425,31 @@ Report error, transient exposure, settling, latency, and cost as separate output
 \end{frame}
 
 \begin{frame}{Technical contributions}
-\begin{columns}[T,onlytextwidth]
-\column{0.50\linewidth}
-\begin{block}{Not claimed here}
-\small
-\begin{itemize}
-  \item PMU time-stamp certification;
-  \item a single universal leaderboard;
-  \item hardware latency measurements.
-\end{itemize}
-\end{block}
-\column{0.45\linewidth}
-\begin{block}{Contributions}
-\small
-\begin{itemize}\setlength\itemsep{2pt}
-  \item OpenFreqBench: a reproducible stress-test benchmark and platform for relay-class estimators;
-  \item a metric-complete comparison protocol: RMSE, peak error, RoCoF error, $T_{\mathrm{trip}}$, settling, and CPU;
-  \item evidence that standard compliance tests miss IBR failure modes;
-  \item an adapted RA-EKF as a tested estimator, with explicit $\dot\omega$ state and event gating.
-\end{itemize}
-\end{block}
-\end{columns}
-\vspace{-0.25cm}
-\callout{The benchmark explains why estimator rankings change across objectives, regimes, and compute budgets.}
+\vspace{-0.25em}
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize},
+  scopebox/.style={draw, rounded corners=3pt, very thick, align=left, text width=3.25cm, minimum height=0.66cm, inner sep=5pt},
+  contrib/.style={draw, rounded corners=3pt, very thick, align=left, text width=5.65cm, minimum height=0.78cm, inner sep=5pt},
+  arr/.style={-{Latex[length=2mm]}, line width=0.9pt, color=ofbInk}
+]
+\node[scopebox, fill=ofbSoft, draw=ofbInk] (s0) at (1.65,0.95) {\textbf{Scope boundary}};
+\node[scopebox, fill=ofbBlue!7, draw=ofbBlue] (s1) at (1.65,0.15) {not PMU certification};
+\node[scopebox, fill=ofbGreen!7, draw=ofbGreen] (s2) at (1.65,-0.65) {not a universal leaderboard};
+\node[scopebox, fill=ofbGold!13, draw=ofbGold] (s3) at (1.65,-1.45) {not hardware latency testing};
+
+\node[contrib, fill=ofbBlue!7, draw=ofbBlue] (c1) at (7.15,0.95) {\textbf{1. OpenFreqBench}\\reproducible stress-test platform};
+\node[contrib, fill=ofbGreen!7, draw=ofbGreen] (c2) at (7.15,0.03) {\textbf{2. Metric-complete protocol}\\RMSE, peak error, RoCoF error, $T_{\mathrm{trip}}$, settling, CPU};
+\node[contrib, fill=ofbRust!8, draw=ofbRust] (c3) at (7.15,-0.89) {\textbf{3. IBR failure evidence}\\standard cases miss composite IBR failures};
+\node[contrib, fill=ofbViolet!8, draw=ofbViolet] (c4) at (7.15,-1.81) {\textbf{4. RA-EKF variant tested}\\explicit $\dot\omega$ state and event-gated adaptation};
+\draw[arr] (s0.east) -- (c1.west);
+\draw[arr] ([xshift=0.05cm]c1.south) -- ([xshift=0.05cm]c2.north);
+\draw[arr] ([xshift=0.05cm]c2.south) -- ([xshift=0.05cm]c3.north);
+\draw[arr] ([xshift=0.05cm]c3.south) -- ([xshift=0.05cm]c4.north);
+\node[draw=ofbGreen, fill=ofbGreen!7, rounded corners=3pt, line width=0.8pt, align=left, text width=9.35cm, inner sep=6pt] at (5.05,-2.85) {
+\textbf{Contribution logic:} explain estimator ranking shifts by objective, disturbance regime, and compute budget.
+};
+\end{tikzpicture}
 \end{frame}
 
 \begin{frame}{Experiment scale}
@@ -642,8 +644,8 @@ Truth signals, sampling, seeds, tuning policy, metric formulas, and schema.
 Benchmark reports, metric tables, plots, manifests, and readiness gates.
 \end{block}
 \end{columns}
-\vspace{0.15em}
-\callout{OpenFreqBench turns a new estimator into a repeatable benchmark entry instead of a one-off comparison.}
+\vspace{0.05em}
+{\scriptsize\color{ofbInk}\textbf{Principle:} a submitted estimator becomes a repeatable benchmark entry under the same scenarios, seeds, metrics, and artifacts.}
 \end{frame}
 
 \section{Method}
@@ -942,8 +944,6 @@ The standard step is easy for most methods. The ramp is the separator: EKF and I
 Robustness is not the same as point accuracy. A standard scenario can pass while the same estimator remains unsafe for ramp-like IBR dynamics.
 \end{block}
 \end{columns}
-\vspace{0.1em}
-\onslide<2->{\callout{\textbf{Result:} RA-EKF, SOGI-FLL, Koopman, and TFT remain below 0.05 Hz across the three standard cases; EKF and IpDFT fail through intermittent ramp divergence.}}
 \end{frame}
 
 \begin{frame}{A clean phase jump is a family separator}
