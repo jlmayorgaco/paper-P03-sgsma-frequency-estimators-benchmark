@@ -1,4 +1,4 @@
-\documentclass[aspectratio=169,10pt]{beamer}
+\documentclass[handout,aspectratio=169,10pt]{beamer}
 
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
@@ -68,7 +68,9 @@
   \vspace*{0.84cm}%
 }
 
-\newcommand{\artifact}[1]{\vspace{0.20em}{\tiny\color{ofbMuted}Source: \texttt{#1}}}
+\newcommand{\artifact}[1]{%
+  \vspace{0.12em}\par\noindent{\tiny\color{ofbMuted}\raggedright Source: \texttt{#1}\par}%
+}
 \newcommand{\metric}[2]{\textbf{#1}: #2}
 \newcommand{\callout}[1]{%
   \vspace{0.25em}\noindent
@@ -234,21 +236,21 @@
 \sectionframe{}{Motivation}{Why frequency estimation in low-inertia IBR grids is hard}
 
 \begin{frame}{IBR disturbances expose a measurement gap}
-\scriptsize
-\renewcommand{\arraystretch}{1.15}
+\tiny
+\renewcommand{\arraystretch}{1.05}
 \setlength{\tabcolsep}{3pt}
-\begin{tabular}{>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.27\linewidth}>{\raggedright\arraybackslash}p{0.23\linewidth}}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.39\linewidth}>{\raggedright\arraybackslash}p{0.30\linewidth}}
 \toprule
-\textbf{Event} & \textbf{Observed behavior} & \textbf{Monitoring limitation} & \textbf{Benchmark implication} \\
+\textbf{Event} & \textbf{Verified behavior} & \textbf{Benchmark implication} \\
 \midrule
-Blue Cut Fire, CA 2016 & Transmission faults caused nearly 1,200 MW of solar PV output loss; NERC linked part of the behavior to near-instantaneous frequency or voltage response. & The critical interval was a distorted, fault-clearing transient on a subsecond timescale. & Test whether estimators confuse waveform distortion with real frequency collapse. \\
-Canyon 2 Fire, CA 2017 & Two cleared faults produced 682 MW and 937 MW solar PV reductions. & NERC noted 4 s SCADA could not distinguish momentary cessation from tripping in some cases. & Report latency, settling, invalid samples, event-window behavior, and aggregate error. \\
-Odessa events, TX 2021--2022 & More than 1 GW-scale solar reductions followed normally cleared faults far from affected plants. & NERC found controls, protection, and model-fidelity gaps, including effects not captured well by positive-sequence models. & Stress tests must include control-like discontinuities, phase jumps, and model-mismatch regimes. \\
-California BESS, 2022 & Normally cleared faults caused abnormal BESS active-power reductions and inverter trips. & Causes included ac overcurrent/overvoltage, dc bus issues, unbalanced currents, and data-quality limits. & Evaluate frequency estimators under unbalance and non-sinusoidal contamination. \\
+Blue Cut Fire, CA, Aug. 16, 2016 & Fault-induced solar PV interruption near 1.2 GW; NERC tied erroneous trips to near-instantaneous frequency estimates during distorted fault waveforms. & Test whether waveform distortion is misread as frequency collapse. \\
+Canyon 2 Fire, CA, Oct. 9, 2017 & Two normally cleared line-to-line faults caused 682 MW and 937 MW solar PV reductions. NERC states frequency-related tripping was \emph{not} the cause. & Separate frequency tracking from voltage, phase-lock, momentary-cessation, and recovery artifacts. \\
+Odessa, TX, May 9/Jun. 26, 2021; Jun. 4, 2022 & Normally cleared Texas faults caused widespread solar PV reductions: 1,112 MW in 2021 and 1,711 MW in 2022, including plants far from the initiating fault. & Include phase jumps, fast controls, model-mismatch regimes, and event-specific trip-risk. \\
+California BESS, Mar. 9/Apr. 6, 2022 & Normally cleared Western Interconnection faults produced abnormal BESS/IBR active-power reductions; NERC lists ac overcurrent/overvoltage, dc-bus, unbalanced-current, and data-quality issues. & Evaluate estimators under low-SNR, unbalanced, and non-sinusoidal conditions. \\
 \bottomrule
 \end{tabular}
-\vspace{0.35em}
-\artifact{NERC disturbance reports; NERC IBR disturbance monitoring white paper}
+\vspace{0.15em}
+\artifact{NERC Blue Cut 2017; NERC/WECC Canyon 2 2018; NERC Odessa 2021/2022; NERC/WECC CA BESS 2023}
 \end{frame}
 
 \begin{frame}{Standard PMU streams show consequences, not always causes}
@@ -260,7 +262,7 @@ IBR controls can react within cycles. A low-rate or heavily filtered frequency e
 \end{block}
 \begin{block}{Oscillation near reporting-rate limits}
 \scriptsize
-The Kaua'i 2021 event exhibited 18--20 Hz oscillations after a generator trip. A 30 frame/s phasor stream has a 15 Hz Nyquist limit for phasor-time variations, so oscillations near this range can alias or appear as beating.
+The Kaua'i Island event on Nov. 21, 2021 exhibited 18--20 Hz oscillations after an oil-power-plant trip. A 30 frame/s phasor stream has a 15 Hz Nyquist limit for phasor-time variations, so oscillations near this range can alias or appear as beating.
 \end{block}
 \column{0.43\linewidth}
 \begin{center}
@@ -285,7 +287,7 @@ The Kaua'i 2021 event exhibited 18--20 Hz oscillations after a generator trip. A
 Standard synchrophasor outputs summarize the fundamental component; harmonic and interharmonic contamination can still dominate estimator failure modes.
 \end{block}
 \end{columns}
-\artifact{Kaua'i 18--20 Hz IBR oscillation analysis; NERC IBR monitoring white paper; IEC/IEEE 60255-118-1}
+\artifact{Dong et al., Kaua'i 18--20 Hz oscillation analysis; NERC IBR monitoring white paper; IEC/IEEE 60255-118-1}
 \end{frame}
 
 \begin{frame}{Research problem}
@@ -955,8 +957,7 @@ LKF2 & \cellcolor{ofbGold!30}F* & \cellcolor{ofbGreen!25}P & \cellcolor{ofbGreen
 \end{center}
 \vspace{0.10em}
 \begin{center}{\scriptsize\color{ofbMuted}Columns: \textbf{Jump} = phase jump (D), \textbf{Multi} = multi-event (E). \quad \textbf{P} pass \,\textbar\, \textbf{F} fails a declared RMSE/$T_{\mathrm{trip}}$/settling threshold \,\textbar\, \textbf{F*} borderline.}\end{center}
-\vspace{0.10em}
-\callout{No single column predicts the others. EKF and IpDFT pass step/modulation yet \textbf{intermittently fail the ramp} (divergence); windowed/spectral methods fail the phase jump; and \emph{no} method survives the multi-event sequence. Standard tests alone leave IBR readiness untested.}
+{\scriptsize\color{ofbMuted}\textbf{Result:} Step, ramp, and modulation compliance does not predict phase-jump or multi-event readiness.}
 \end{frame}
 
 \begin{frame}{Empirical claims}
@@ -1072,42 +1073,92 @@ IBR multi-event & 1 & UKF & 1.09 Hz & UKF, 780 ms \\
 \artifact{docs/ATLAS\_PIPELINE.md; docs/ATLAS\_METHOD\_AUDIT.md}
 \end{frame}
 
-\begin{frame}{Reading the evidence: three levels}
+\begin{frame}{ATLAS result: metric choice changes the answer}
+\papergradebanner
 \begin{columns}[T,onlytextwidth]
-\column{0.50\linewidth}
-\begin{tikzpicture}[
-  every node/.style={font=\scriptsize},
-  lvl/.style={draw, rounded corners=3pt, very thick, align=left, text width=4.7cm, minimum height=0.92cm, inner sep=5pt},
-  arr/.style={-{Latex[length=2mm]}, thick, color=ofbInk}
-]
-\node[lvl, fill=ofbRust!12, draw=ofbRust] (d) at (0,0) {\textbf{Diagnostic}\ \ ($n<30$)\\mechanism + debugging only};
-\node[lvl, fill=ofbGold!18, draw=ofbGold, below=0.5cm of d] (p) {\textbf{Paper-grade}\ \ ($n\ge30$)\\fixed policy, both signs};
-\node[lvl, fill=ofbGreen!16, draw=ofbGreen, below=0.5cm of p] (j) {\textbf{Journal-grade}\ \ ($n\ge100$)\\cost reps, archived hashes};
-\draw[arr] (d) -- (p);
-\draw[arr] (p) -- (j);
-\end{tikzpicture}
-\column{0.46\linewidth}
-\begin{block}{Where this talk sits}
-\small
-\begin{itemize}
-  \item Core 5-scenario results: tuned comparison evidence ($n=5$).
-  \item ATLAS severity sweeps: \textbf{paper-grade} --- $n=30$, fixed policy, both signs, \textbf{9/9} required sweeps (full-ATLAS readiness met).
-  \item Journal-grade ($n\ge100$, archived hashes) is the remaining step.
-\end{itemize}
+\column{0.52\linewidth}
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.18}
+\begin{tabular}{>{\bfseries}lcc}
+\toprule
+Comparison & Different winner & Levels tested \\
+\midrule
+RMSE vs trip-risk & \cellcolor{ofbRed!18}83 & 113 \\
+RMSE vs RoCoF max error & \cellcolor{ofbGold!18}55 & 113 \\
+RMSE vs RoCoF RMS error & \cellcolor{ofbGold!18}50 & 113 \\
+\bottomrule
+\end{tabular}
+\vspace{0.35em}
+\begin{block}{Winner concentration}
+\scriptsize
+RMSE is led mostly by EKF and ESPRIT. Trip-risk is led mostly by Koopman, EKF, SOGI-FLL, ZCD, and ESPRIT. CPU is always led by ZCD.
 \end{block}
-\callout{The ATLAS severity results are now paper-grade; the journal-grade campaign ($n\ge100$) and the subspace/ML slow-estimator sweep are the remaining steps.}
+\column{0.44\linewidth}
+\begin{block}{Why this matters}
+\small
+For protection-adjacent use, a low average error is not enough. The estimator must avoid long deadband exposure, track RoCoF, and remain computable.
+\end{block}
+\begin{block}{Conference claim}
+\small
+The benchmark output is not a leaderboard. It is a metric-conditioned selection map.
+\end{block}
+\end{columns}
+{\small\textbf{Result:} across 113 severity levels, the preferred estimator changes when the objective changes.}
+\artifact{atlas-papergrade-missing-v1/global\_metrics\_report.csv}
+\end{frame}
+
+\begin{frame}{ATLAS result: where estimators stop being valid}
+\papergradebanner
+\scriptsize
+\renewcommand{\arraystretch}{1.18}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.24\linewidth}>{\raggedright\arraybackslash}p{0.25\linewidth}>{\centering\arraybackslash}p{0.14\linewidth}>{\raggedright\arraybackslash}p{0.25\linewidth}}
+\toprule
+Stress family & Maximum tested level & Methods below 0.05 Hz & Reading \\
+\midrule
+Magnitude step & $\pm90\%$ sag/swell & 2 & EKF and RA-EKF survive both signs. \\
+AM modulation & 10 Hz envelope & 10 & AM alone is not the hardest modulation case. \\
+FM modulation & 10 Hz modulation & 0 & FM is qualitatively harder than AM. \\
+RoCoF ramp & $\pm50$ Hz/s & 0 & Severe RoCoF requires a separate qualification class. \\
+Phase jump & $\pm60^\circ$ & 0 & Single jump severity already breaks the 0.05 Hz guide. \\
+Harmonics & 30\% THD & 0 & Low-THD winners do not survive extreme THD. \\
+Interharmonics & 20\% at 75 Hz & 0 & Integer-harmonic tests are not sufficient. \\
+Broadband noise & $\sigma=0.1$ pu & 0 & Noise robustness is a first-class stress dimension. \\
+\bottomrule
+\end{tabular}
+\end{frame}
+
+\begin{frame}{AM, FM, and interharmonics split the story}
+\papergradebanner
+\begin{columns}[T,onlytextwidth]
+\column{0.55\linewidth}
+\scriptsize
+\renewcommand{\arraystretch}{1.16}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{>{\bfseries\raggedright\arraybackslash}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.30\linewidth}>{\raggedright\arraybackslash}p{0.34\linewidth}}
+\toprule
+Stress & Winner pattern & Threshold behavior \\
+\midrule
+AM modulation & EKF wins slow, reference, fast, and severe regions. & Ten methods stay below 0.05 Hz through 10 Hz envelope modulation. \\
+FM modulation & TFT leads slow; ESPRIT leads reference/fast/severe; SOGI-PLL reaches the best threshold. & No method stays below 0.05 Hz at 10 Hz FM modulation. \\
+Interharmonics & EKF wins trace, reference, high, and severe levels. & EKF crosses the 0.05 Hz guide around 8\%; most other families cross earlier. \\
+\bottomrule
+\end{tabular}
+\column{0.41\linewidth}
+\begin{block}{Implication}
+\small
+AM, FM, integer harmonics, and interharmonics should not be collapsed into one ``distortion'' label. They select different estimator families.
+\end{block}
+\begin{block}{Decomposition insight}
+\small
+A composite IBR trace can contain AM, FM, harmonics, interharmonics, noise, and phase steps. ATLAS isolates which stressor changes the ranking.
+\end{block}
 \end{columns}
 \end{frame}
 
-\begin{frame}{Dynamic accuracy ranking}
-\atlaspreviewbanner
-\begin{center}
-\includegraphics[width=0.94\linewidth,height=0.70\textheight,keepaspectratio]{figures/dynamic_composite_rank.pdf}
-\end{center}
-\end{frame}
-
 \begin{frame}{When the textbook filter diverges}
-\diagbanner
+\extendedresultsbanner
 \scriptsize
 Per-seed frequency RMSE [Hz] on the IEEE frequency-ramp scenario (5 Monte Carlo seeds):
 \vspace{0.25em}
@@ -1136,8 +1187,6 @@ The standard EKF tracks most seeds but \textbf{intermittently diverges} to tens 
 Covariance scaling and event gating remove the divergence: stable on \textbf{every} seed, zero trip exposure. This --- not a universal RMSE win --- is its defensible value.
 \end{block}
 \end{columns}
-\callout{UKF shows the same intermittent divergence on the 5 and 15 Hz/s ramps; the robustified state-space variant stays stable across the whole ramp family.}
-\artifact{full\_mc\_benchmark/IEEE\_Freq\_Ramp/\{EKF,RA-EKF\}}
 \end{frame}
 
 \begin{frame}{RoCoF has a sign: down-ramps are harder}
@@ -1164,7 +1213,7 @@ A $+$RoCoF-only test can certify a method that fails on frequency \emph{decline}
 \end{frame}
 
 \begin{frame}{Phase-jump severity is non-monotone}
-\atlaspreviewbanner
+\papergradebanner
 \begin{columns}[T,onlytextwidth]
 \column{0.58\linewidth}
 \centering
@@ -1178,8 +1227,7 @@ Most methods peak near 90--120$^\circ$ and \emph{recover} toward 180$^\circ$ (a 
 One exception: TFT rises gently, then jumps \textbf{2.5\,$\rightarrow$\,21.9 Hz} between 150$^\circ$ and 180$^\circ$ --- a phase-reversal singularity.
 \end{block}
 \end{columns}
-\vspace{-0.20cm}
-\callout{``Bigger jump = worse'' is wrong for this family. Severity sweeps, not single test points, expose where each estimator actually breaks.}
+{\scriptsize\color{ofbMuted}\textbf{Result:} Severity is non-monotone; sweep the jump angle rather than qualify one nominal point.}
 \end{frame}
 
 \begin{frame}{No universal winner: champions rotate by regime}
@@ -1207,7 +1255,7 @@ EKF wins phase jumps, the magnitude step and interharmonics; ESPRIT/Koopman win 
 \centering
 \includegraphics[width=\linewidth,height=0.68\textheight,keepaspectratio]{figures/rocof_method_map.pdf}
 \end{columns}
-\callout{The deliverable is a selection map --- event class $\times$ metric $\times$ compute budget --- not a single ranking.}
+{\scriptsize\color{ofbMuted}\textbf{Result:} The deliverable is a selection map: event class $\times$ metric $\times$ compute budget.}
 \end{frame}
 
 \begin{frame}{The ZCD paradox: best and worst, same estimator}
@@ -1228,7 +1276,42 @@ Same method again: 2.2 mHz at 15\% THD $\rightarrow$ \textbf{39 Hz} at 20\% $\ri
 \centering
 \includegraphics[width=\linewidth,height=0.66\textheight,keepaspectratio]{figures/noise_snr_method_map.pdf}
 \end{columns}
-\callout{Aggregate rankings hide stress-specific collapse: the same estimator is the best and the worst depending on the disturbance. The benchmark reports per-stress behavior, not one score.}
+{\small\textbf{Result:} aggregate rankings hide stress-specific collapse; the benchmark reports per-stress behavior, not one score.}
+\end{frame}
+
+\begin{frame}{Voltage sags and swells are not symmetric}
+\papergradebanner
+\begin{columns}[T,onlytextwidth]
+\column{0.54\linewidth}
+\scriptsize
+\renewcommand{\arraystretch}{1.18}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{>{\bfseries}lcc}
+\toprule
+Estimator at $\pm90\%$ & Sag to 0.1 pu & Swell to 1.9 pu \\
+\midrule
+EKF RMSE & 47 mHz & 14 mHz \\
+RA-EKF RMSE & 49 mHz & 30 mHz \\
+ZCD RMSE & \cellcolor{ofbRed!22}374 Hz & 9.4 mHz \\
+ZCD peak error & \cellcolor{ofbRed!22}2856 Hz & 32 mHz \\
+\bottomrule
+\end{tabular}
+\vspace{0.35em}
+\begin{block}{Mechanism}
+\scriptsize
+Zero-cross timing error scales roughly as $\sigma_n/(A\omega)$. A deep sag lowers zero-cross slope and makes false crossings likely when absolute noise is fixed.
+\end{block}
+\column{0.42\linewidth}
+\begin{block}{What to claim}
+\small
+ZCD is amplitude-invariant only in the noise-free ideal case. Under fixed absolute noise, deep voltage sags create a low-SNR crossing problem.
+\end{block}
+\begin{block}{Benchmark consequence}
+\small
+Sag and swell signs must be swept separately; a positive-only magnitude-step test can hide the worst case.
+\end{block}
+\end{columns}
+\artifact{atlas-papergrade-missing-v1/global\_metrics\_report.csv; src/estimators/zcd.py}
 \end{frame}
 
 \begin{frame}{Harmonic degradation differs by estimator family}
@@ -1250,7 +1333,7 @@ Same method again: 2.2 mHz at 15\% THD $\rightarrow$ \textbf{39 Hz} at 20\% $\ri
 \end{frame}
 
 \begin{frame}{CPU--accuracy Pareto analysis}
-\atlaspreviewbanner
+\papergradebanner
 \begin{center}
 \includegraphics[width=0.94\linewidth,height=0.70\textheight,keepaspectratio]{figures/cpu_accuracy_pareto.pdf}
 \end{center}
@@ -1261,12 +1344,12 @@ Same method again: 2.2 mHz at 15\% THD $\rightarrow$ \textbf{39 Hz} at 20\% $\ri
 
 \begin{frame}{Three findings}
 \begin{enumerate}
-  \item<1-> \textbf{Latency and stress trade-off}: IpDFT/TFT provide strong steady-state accuracy but carry 3--5 cycle structural delay; loop methods are fast but can suffer elevated trip exposure.
-  \item<2-> \textbf{Robustness beats point accuracy}: EKF, UKF and IpDFT intermittently diverge on ramps and multi-event stress (tens of Hz on individual seeds), while RA-EKF's explicit $\dot\omega$ state keeps it stable across every seed.
-  \item<3-> \textbf{Compliance tests are insufficient}: estimators that pass standard-style Step/Ramp/Mod cases can fail under composite islanding and multi-event IBR stress.
+  \item<1-> \textbf{Estimator choice is metric-conditioned}: across ATLAS severity levels, the RMSE leader often differs from the trip-risk and RoCoF leader.
+  \item<2-> \textbf{Stress boundaries matter}: AM modulation remains survivable for many methods, while severe FM, RoCoF, interharmonics, noise, and extreme THD leave no method below the 0.05 Hz guide.
+  \item<3-> \textbf{Robustness beats point accuracy}: EKF, UKF and IpDFT intermittently diverge on ramps and multi-event stress, while RA-EKF's explicit $\dot\omega$ state keeps the ramp family stable across seeds.
 \end{enumerate}
 \vspace{0.4em}
-\onslide<4->{\callout{Estimator qualification includes transient recovery, trip exposure, compute feasibility, and standard-case RMSE.}}
+\onslide<4->{\callout{Estimator qualification includes event family, sign, severity, transient recovery, trip exposure, compute feasibility, and standard-case RMSE.}}
 \end{frame}
 
 \begin{frame}{Validity limits and next steps}
@@ -1446,31 +1529,6 @@ Protection-adjacent use can raise $\gamma,\delta,\lambda$; forensic reconstructi
 }
 \end{frame}
 
-\begin{frame}{Ongoing and future work}
-\begin{columns}[T,onlytextwidth]
-\column{0.49\linewidth}
-\begin{block}{Full-microgrid fault validation \;\textcolor{ofbGreen}{\scriptsize[in progress]}}
-\small
-Integrate Simulink simulation outputs (CSV) from the Chamorro \emph{et al.} complete-microgrid fault model, replaying realistic fault waveforms through the same estimator pool.
-\end{block}
-\begin{block}{Modern and ML-based estimators}
-\small
-Extend the pool with recent literature methods and machine-learning estimators, benchmarked under the identical metric contract.
-\end{block}
-\column{0.49\linewidth}
-\begin{block}{C++ acceleration}
-\small
-Port the heavy estimators and 1\,MHz signal generation to native C++ modules to cut benchmark runtime and enable journal-grade ($n\ge100$) Monte Carlo at scale.
-\end{block}
-\begin{block}{ANDES co-simulation}
-\small
-Couple OpenFreqBench with the ANDES power-system dynamics engine to measure estimator performance under more realistic fault transients and control interactions.
-\end{block}
-\end{columns}
-\vspace{0.30em}
-\callout{These extensions move OpenFreqBench from synthetic stress tests toward field-realistic, validated estimator qualification.}
-\end{frame}
-
 \begin{frame}{Validation agenda and conclusion}
 \begin{columns}[T,onlytextwidth]
 \column{0.49\linewidth}
@@ -1495,11 +1553,12 @@ Couple OpenFreqBench with the ANDES power-system dynamics engine to measure esti
 \end{block}
 \end{columns}
 \vspace{-0.15cm}
-\callout{\textbf{Result:} estimator choice is tied to the event class, metric target, and compute envelope; the next validation step evaluates each method against declared event regimes, latency limits, and compute envelopes.}
+\callout{\textbf{Result:} estimator choice is tied to event class, metric target, and compute envelope; estimator qualification must declare the stress regime, latency limit, and evidence depth.}
 \end{frame}
 
 
 
+\ifbackupframes
 \appendix
 \section{Backup}
 
@@ -1649,6 +1708,7 @@ $n=30$, fixed policy, both signs, \textbf{9/9} required sweeps; 17-estimator can
 \vspace{0.3em}
 \callout{Field cases define the stress modes; no claim is made that a single estimator would have prevented a disturbance.}
 \end{frame}
+\fi
 
 \ifbackupframes
 \begin{frame}{Evidence map}
