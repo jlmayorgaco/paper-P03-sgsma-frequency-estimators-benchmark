@@ -1449,95 +1449,49 @@ Covariance scaling and event gating remove the divergence: stable on \textbf{eve
 \end{columns}
 \end{frame}
 
-\begin{frame}{RoCoF has a sign: several methods are down-ramp sensitive}
+\begin{frame}{RoCoF sign asymmetry: down-ramp sensitivity}
 \papergradebanner
-\begin{columns}[T,onlytextwidth]
-\column{0.56\linewidth}
 \centering
-\includegraphics[width=\linewidth,height=0.68\textheight,keepaspectratio]{figures/rocof_sign_asymmetry.pdf}
-\column{0.40\linewidth}
+\includegraphics[width=0.98\linewidth]{figures/rocof_sign_asymmetry_wide.pdf}
+\vspace{-0.45em}
+\begin{columns}[T,onlytextwidth]
+\column{0.48\linewidth}
 \scriptsize
 \begin{block}{Directional bias (RMSE$_-$/RMSE$_+$ at $\pm$50 Hz/s)}
-\begin{itemize}
-  \item LKF \textbf{5.5$\times$} worse on $-$RoCoF
-  \item TKEO \textbf{3.9$\times$}, RLS \textbf{3.1$\times$}
-  \item SOGI-FLL 1.6$\times$
-  \item EKF, UKF, RA-EKF $\approx$\,1.0 (symmetric)
-\end{itemize}
+LKF is \textbf{5.5$\times$} worse on $-$RoCoF; TKEO \textbf{3.9$\times$}, RLS \textbf{3.1$\times$}, SOGI-FLL 1.6$\times$. EKF, UKF, and RA-EKF stay near 1.0.
 \end{block}
+\column{0.48\linewidth}
+\scriptsize
 \begin{block}{Why it matters}
-For LKF, TKEO, RLS, and SOGI-FLL, a $+$RoCoF-only test can certify behavior that does not hold on frequency \emph{decline}. Both signs must be swept.
+For these estimators, a $+$RoCoF-only test can certify behavior that does not hold during frequency decline. Both signs must be swept.
 \end{block}
 \end{columns}
-\artifact{atlas-papergrade-missing-v1/atlas\_sign\_asymmetry.csv ($n=30$, both signs)}
+\vspace{-0.35em}
+{\tiny\color{ofbMuted}Source: atlas-papergrade-missing-v1/atlas\_sign\_asymmetry.csv ($n=30$, both signs)}
 \end{frame}
 
 \begin{frame}{Phase-jump severity is non-monotone}
 \atlaspreviewbanner
-\begin{columns}[T,onlytextwidth]
-\column{0.58\linewidth}
 \centering
-\includegraphics[width=\linewidth,height=0.60\textheight,keepaspectratio]{figures/phase_jump_method_map.pdf}
-\column{0.38\linewidth}
-\scriptsize
-\begin{block}{Worst case is not 180$^\circ$}
-Most methods peak near 90--120$^\circ$ and \emph{recover} toward 180$^\circ$ (a half-cycle jump partly self-cancels). EKF peaks at only \textbf{0.25 Hz @\,115$^\circ$}, back to 0.07 Hz @\,180$^\circ$.
-\end{block}
-\begin{block}{The TFT cliff}
-One exception: TFT rises gently, then jumps \textbf{2.5\,$\rightarrow$\,21.9 Hz} between 150$^\circ$ and 180$^\circ$ --- a phase-reversal singularity.
-\end{block}
-\end{columns}
-{\scriptsize\color{ofbMuted}\textbf{Result:} Severity is non-monotone; sweep the jump angle rather than qualify one nominal point.}
-\artifact{atlas-phase-jump-1-180deg-5deg-all18/global\_metrics\_report.csv (diagnostic, $n=1$, default policy, positive sign)}
+{\scriptsize\color{ofbMuted}Most estimators peak before 180$^\circ$; TFT is the exception, with a late cliff near phase reversal.}
+\vspace{0.15em}
+\includegraphics[width=0.98\linewidth]{figures/phase_jump_method_map_wide.pdf}
 \end{frame}
 
 \begin{frame}{No estimator owns the whole stress space}
 \papergradebanner
-\begin{columns}[T,onlytextwidth]
-\column{0.46\linewidth}
-\scriptsize
-\setlength{\tabcolsep}{4pt}
-\renewcommand{\arraystretch}{1.28}
-\begin{tabular}{>{\raggedright\arraybackslash}p{0.46\linewidth}>{\raggedright\arraybackslash}p{0.27\linewidth}r}
-\toprule
-RoCoF regime & Best & med.\ RMSE \\
-\midrule
-Low (0.1--1 Hz/s) & Koopman & 5.5 mHz \\
-Standard (1--3) & ESPRIT & 12.2 mHz \\
-IBR stress (3--10) & ESPRIT & 33.0 mHz \\
-Severe (10--30) & SOGI-PLL & 70.3 mHz \\
-\bottomrule
-\end{tabular}
-\vspace{0.35em}
-\begin{block}{Across stress types}
-EKF wins phase jumps, the magnitude step and interharmonics; ESPRIT/Koopman win the RoCoF and frequency-step regimes; ZCD wins low-THD harmonics; SOGI-PLL leads severe RoCoF. No method leads everywhere.
-\end{block}
-\column{0.50\linewidth}
 \centering
-\includegraphics[width=\linewidth,height=0.68\textheight,keepaspectratio]{figures/rocof_method_map.pdf}
-\end{columns}
-\resultclaim{ofbBlue}{The deliverable is a selection map: event class $\times$ metric $\times$ compute budget.}
-\artifact{atlas-papergrade-missing-v1/global\_metrics\_report.csv; RoCoF regimes averaged across both signs}
+{\scriptsize\color{ofbMuted}RoCoF winners move by regime: Koopman at low stress, ESPRIT through the standard/IBR band, SOGI-PLL at severe RoCoF.}
+\vspace{0.15em}
+\includegraphics[width=0.98\linewidth]{figures/rocof_method_map_wide.pdf}
 \end{frame}
 
 \begin{frame}{ZCD is a narrow instrument, not a general estimator}
 \papergradebanner
-\begin{columns}[T,onlytextwidth]
-\column{0.45\linewidth}
-\scriptsize
-\begin{block}{Low-stress champion}
-Up to $\sim$15\% THD, zero-crossing detection gives the \emph{lowest} error of any method --- \textbf{0.27 mHz} at 1\% THD, 2.2 mHz at 15\%; and just 1.1 mHz at low broadband noise.
-\end{block}
-\onslide<2->{\begin{block}{Broadband-noise cliff}
-Same method: 34 mHz at $\sigma\!=\!0.003$\,pu $\rightarrow$ \textbf{3112 Hz} at $\sigma\!=\!0.1$\,pu. EKF stays $\le$\,0.43 Hz across the same sweep.
-\end{block}}
-\onslide<3->{\begin{block}{Harmonic cliff}
-Same method again: 2.2 mHz at 15\% THD $\rightarrow$ \textbf{39 Hz} at 20\% $\rightarrow$ \textbf{86 Hz} at 30\%.
-\end{block}}
-\column{0.51\linewidth}
 \centering
-\includegraphics[width=\linewidth,height=0.66\textheight,keepaspectratio]{figures/noise_snr_method_map.pdf}
-\end{columns}
+{\scriptsize\color{ofbMuted}\only<1>{ZCD is excellent at clean crossings and low THD.}\only<2>{The same estimator collapses under broadband noise.}\only<3->{It also collapses above the harmonic cliff near 20\% THD.}}
+\vspace{0.15em}
+\includegraphics[width=0.98\linewidth]{figures/noise_snr_method_map_wide.pdf}
 \end{frame}
 
 \begin{frame}{Voltage sags and swells are not symmetric}
@@ -1614,35 +1568,18 @@ ZCD is elegant at clean high-SNR crossings, but deep sags convert amplitude loss
 
 \begin{frame}{Harmonic degradation differs by estimator family}
 \papergradebanner
-\begin{columns}[T,onlytextwidth]
-\column{0.66\linewidth}
 \centering
-\includegraphics[width=\linewidth,height=0.70\textheight,keepaspectratio]{figures/harmonics_family_deterioration.pdf}
-\column{0.30\linewidth}
-\begin{block}{Result}
-\scriptsize
-\begin{itemize}
-  \item Loop, window, model, and adaptive families degrade with THD at different rates.
-  \item Best low-THD accuracy does not predict high-THD survival.
-  \item Loop methods (ZCD) win at low THD but collapse above $\sim$15\%; window methods (TFT) degrade gently and lead at extreme THD.
-\end{itemize}
-\end{block}
-\end{columns}
+{\scriptsize\color{ofbMuted}Family medians cross as THD increases; low-THD leadership does not predict high-THD survival.}
+\vspace{0.15em}
+\includegraphics[width=0.92\linewidth,height=0.55\textheight,keepaspectratio]{figures/harmonics_family_deterioration_wide.pdf}
 \end{frame}
 
 \begin{frame}{Accuracy costs 100--1000$\times$ more compute}
 \extendedresultsbanner
-\begin{columns}[T,onlytextwidth]
-\column{0.72\linewidth}
 \centering
-\includegraphics[width=\linewidth,height=0.62\textheight,keepaspectratio]{figures/cpu_accuracy_pareto.pdf}
-\column{0.24\linewidth}
-\vspace{0.2em}
-\insightcard{ofbGreen}{Low-cost core}{PLL, SOGI-FLL, EKF, and RA-EKF sit in the deployable compute range.}
-\vspace{0.25em}
-\insightcard{ofbRust}{Accuracy premium}{Spectral and data-driven methods can move right by $100$--$1000\times$ CPU cost.}
-\end{columns}
-\artifact{OpenFreqBench expansion: artifacts/full\_mc\_benchmark, $n=5$}
+{\scriptsize\color{ofbMuted}Deployable methods sit lower-left; spectral/data-driven accuracy moves right by $100$--$1000\times$ CPU.}
+\vspace{0.15em}
+\includegraphics[width=0.92\linewidth,height=0.55\textheight,keepaspectratio]{figures/cpu_accuracy_pareto_wide.pdf}
 \end{frame}
 
 \section{Deployment}
