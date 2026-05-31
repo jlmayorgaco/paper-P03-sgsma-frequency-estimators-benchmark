@@ -1,0 +1,1015 @@
+\documentclass[10pt]{article}
+\usepackage[a4paper,landscape,margin=1.0cm]{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{tcolorbox}
+\definecolor{ofbTeal}{HTML}{0E6E6E}
+\definecolor{ofbInk}{HTML}{1A1A1A}
+\definecolor{ofbMuted}{HTML}{5B5B5B}
+\setlength{\parindent}{0pt}
+\pagestyle{empty}
+\begin{document}
+
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-01.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 1 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Title}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Good morning. I am Jorge Mayorga.
+\item This talk benchmarks dynamic frequency estimators for low-inertia, inverter-based grids.
+\item The question: in a grid run by power electronics, which estimator do we trust?
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small The answer depends on what you are measuring.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-02.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 2 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Motivation (section)}\\[6pt]
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Let me start with why this matters.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-03.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 3 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Field events define the stress model}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Real IBR disturbances are not clean sine waves.
+\item Blue Cut, Odessa, the Kauai oscillation: phase jumps, fast RoCoF, harmonics and noise stacked together.
+\item We use these real events to define the stress cases the benchmark must cover.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Field events, not textbook signals, set our test bar.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-04.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 4 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} PMU streams show consequences}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Standard PMU streams report frequency and RoCoF.
+\item During IBR events those numbers show the consequence, not always the cause.
+\item The estimator inside the PMU shapes what we see.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Choosing the estimator is itself a measurement decision.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-05.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 5 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Research problem}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item There is no agreed way to compare estimators under IBR-specific stress.
+\item Compliance tests use clean signals.
+\item They do not tell us how a method behaves on a composite event.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small The gap is a fair, IBR-relevant comparison.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-06.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 6 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Operating claim}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Estimator selection must be conditional.
+\item It depends on the disturbance type, the metric you care about, and the compute budget.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small There is no single best estimator.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-07.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 7 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Technical contributions}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item One: an open benchmark platform with known-truth scenarios.
+\item Two: a common execution contract for 18 estimators.
+\item Three: a metric vector separating accuracy, trip-risk, latency and cost.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Open platform, common contract, multi-metric evidence.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-08.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 8 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Experiment scale}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item 18 estimators, 33 scenarios, five families of stress.
+\item Monte-Carlo repetitions, plus a severity-sweep engine we call ATLAS.
+\item Everything is reproducible from artifacts.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Large, factorial, and fully reproducible.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-09.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 9 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Estimator selection logic (build-up)}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Selection follows three questions: which event class, which metric, which compute budget.
+\item Each one can point to a different method.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small This diagram is the whole talk in one picture.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-10.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 10 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Benchmark and platform (section)}\\[6pt]
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small First, the benchmark and the platform.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-11.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 11 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Benchmark literature gap}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Prior work compares a few estimators on one or two cases.
+\item No benchmark covers the full estimator space against composite IBR stress with reproducible metrics.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small That is the gap we fill.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-12.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 12 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Benchmark comparison axes}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item We compare on four axes: accuracy, robustness, computational cost, and trip exposure.
+\item A method can win one axis and lose another.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Four axes, because one number hides the trade-off.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-13.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 13 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} OpenFreqBench platform}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item A scenario factory with known truth.
+\item A uniform estimator API and a locked metric engine.
+\item Traceable CSV and JSON artifacts.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Known truth in, locked metrics out, everything traced.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-14.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 14 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Experimental method (1)}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Every estimator sees the identical input trace.
+\item Same random seeds, same warm-up handling.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Fairness is enforced by construction.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-15.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 15 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Experimental method (2)}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item We tune under a fixed policy and exclude the warm-up region.
+\item CPU is measured as a response variable.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Nothing is hand-picked per method.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-16.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 16 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Full benchmark workflow}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Scenario, Monte-Carlo, estimator, locked metrics, then artifacts.
+\item Every figure in this talk traces back to those artifacts.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small One pipeline, end to end, reproducible.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-17.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 17 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Standard stresses: controlled waveform}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item The standard stresses are step, ramp, and modulation.
+\item The waveform is fully controlled, so we know the true frequency at every sample.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Known truth lets us score error exactly.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-18.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 18 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Scenario suite I (dashboard)}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Voltage on top, true frequency below, one column per scenario.
+\item For the magnitude step and AM, frequency stays flat at 60 hertz.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small The stress is not always a frequency event, but estimators still react.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-19.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 19 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Composite IBR stresses}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Harmonics, phase jumps, RoCoF segments and ringdown, stacked into one waveform.
+\item This is what a real inverter-dominated fault produces.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Composite stress is the realistic case.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-20.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 20 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Scenario suite II (dashboard)}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item The composite suite, again voltage on top and frequency below.
+\item These are deliberately harder than any compliance test.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small If a method survives here, it is robust.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-21.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 21 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Estimator families}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Loop-based PLLs, window and spectral methods, model-based Kalman filters, adaptive, and data-driven.
+\item We analyze by family because the family explains the behavior.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Eighteen estimators, five families.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-22.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 22 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Metrics and decision variables}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item RMSE for average error, peak error, and a trip-risk time.
+\item Trip-risk counts how long the error exceeds half a hertz; plus settling and CPU.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Half a hertz is our protection-oriented proxy.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-23.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 23 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Core evidence (section)}\\[6pt]
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Now the core evidence: five scenarios, standard to composite.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-24.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 24 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Standard scenario results (build-up)}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item On the standard cases most methods are excellent, below fifty millihertz.
+\item CLICK: watch the ramp. The textbook EKF and IpDFT intermittently diverge, 37 and 14 hertz.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Robustness, not point accuracy, separates the families.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-25.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 25 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Scenario D: phase jump separates families}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item A clean 60-degree phase jump separates the families.
+\item State-space filters and PLLs recover with zero trip exposure.
+\item Windowed and spectral methods carry over a second of exposure.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small The phase jump does not break the EKF.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-26.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 26 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Composite IBR sequence: hardest case}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Scenario E stacks everything: harmonics, two phase jumps, a RoCoF segment, ringdown and impulsive noise.
+\item Spectral leakage, loop re-lock and model mismatch happen at once.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small This is the hardest, most realistic case.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-27.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 27 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Scenario E: the leaderboard breaks}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Every usable method collapses to about 1.1 hertz RMSE.
+\item ZCD diverges to 426 hertz.
+\item RMSE, trip-risk and CPU rankings all disagree.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small There is no accurate winner here.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-28.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 28 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Trip-risk evidence (figure)}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item In Scenario D the state-space filters keep zero exposure; windowed methods exceed 1.2 seconds.
+\item In Scenario E everyone carries exposure.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Trip-risk is not the RMSE ranking.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-29.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 29 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Event responses (figure)}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item True frequency in black, each estimator tracking it.
+\item EKF and IpDFT visibly run away on the ramp; RA-EKF stays locked.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small This is the intermittent divergence, seen directly.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-30.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 30 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Result comparison: winners by question}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Clean accuracy favors state-space and SOGI-FLL.
+\item Ramp robustness favors RA-EKF; multi-event has no winner; feasibility rules out the expensive methods.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Different question, different winner.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-31.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 31 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Computational feasibility}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Loop and state-space methods run in 9 to 17 microseconds per sample, embedded-feasible.
+\item Spectral and data-driven methods are 100 to 1000 times more expensive.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Cost alone removes several methods from a relay.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-32.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 32 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Deployment limits (figure)}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Deployment combines accuracy, trip exposure, cost and divergence-robustness.
+\item The low-cost cluster, state-space and loops, is also the low-trip cluster.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small The practical winners cluster at low cost and low trip.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-33.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 33 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Balance profile (radar)}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Each axis is one scenario; larger means more robust.
+\item RA-EKF and SOGI-FLL stay robust everywhere; EKF and IpDFT collapse on the ramp.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small No method is strong on every axis.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-34.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 34 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Compliance heatmap (build-up)}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Most methods pass step, ramp and modulation.
+\item CLICK: the same methods fail the phase-jump and multi-event columns.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Passing standard tests does not predict event readiness.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-35.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 35 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Empirical claims}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Divergence, not phase jumps, is the dominant failure mode.
+\item Pass/fail leaves event readiness unresolved; the three metrics pick different winners; feasibility changes the ranking.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Four claims, one theme: report the conditions.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-36.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 36 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Expanded and ATLAS (section)}\\[6pt]
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Does the pattern hold across families and severity? That is ATLAS.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-37.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 37 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Expanded stress analysis}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item We expand to a full Monte-Carlo benchmark: 18 estimators, 33 scenarios, five seeds.
+\item Plus the ATLAS severity sweeps.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small We scale the test, not just repeat it.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-38.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 38 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Expanded benchmark: family winners}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item The winner rotates: different methods lead the step, the ramp, harmonics and the multi-event.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small The leaderboard is regime-dependent, not absolute.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-39.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 39 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} ATLAS severity analysis}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item ATLAS sweeps each stress by severity and by sign, fixed policy, n equals 30.
+\item This is now paper-grade across all nine required sweeps.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Paper-grade severity evidence, not a pilot.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-40.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 40 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} ATLAS: metric choice changes the answer}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Across 113 severity levels, the preferred estimator changes when the objective changes.
+\item In 83 of them, RMSE and trip-risk disagree.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small The output is a selection map, not a leaderboard.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-41.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 41 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} ATLAS: where estimators stop being valid}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item ATLAS tells us the severity at which each method crosses into failure.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small That validity boundary is different for every family.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-42.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 42 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} AM, FM and interharmonics}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item AM is easy and the model-based methods win.
+\item FM and interharmonics are harder, and the spectral methods take over.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Even within modulation, the winner switches.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-43.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 43 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} When the textbook filter diverges}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item The textbook EKF tracks most seeds but intermittently runs away to tens of hertz.
+\item It is not severity-driven; the worst seed had a low ramp rate.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small The robustified RA-EKF removes it on every seed.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-44.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 44 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} RoCoF has a sign}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Down-ramps are harder than up-ramps.
+\item LKF is 5.5 times worse on negative RoCoF, TKEO almost 4.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small A positive-only test can pass a method that fails on frequency decline.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-45.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 45 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Phase-jump severity is non-monotone}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item The worst case is not 180 degrees.
+\item Most methods peak around 90 to 120 degrees and then recover, because a half-cycle jump partly self-cancels.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Bigger is not always worse; sweep the severity.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-46.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 46 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} No universal winner (map)}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item The champion rotates by RoCoF regime.
+\item Koopman at low rates, ESPRIT in the middle, SOGI-PLL when severe.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small No universal winner; the deliverable is the map.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-47.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 47 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} The ZCD paradox (build-up)}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Below 15 percent THD, ZCD is the most accurate method we have.
+\item CLICK: broadband noise pushes it to 3000 hertz.
+\item CLICK: above 20 percent THD it collapses to tens of hertz.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small The same estimator is the best and the worst.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-48.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 48 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Sags and swells are not symmetric}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item A deep sag is far harder than a swell.
+\item ZCD goes from millihertz on a swell to hundreds of hertz on a sag.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Voltage direction matters; sweep both signs.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-49.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 49 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Why a sag breaks zero-crossing}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Zero-cross timing error scales with noise over amplitude times frequency.
+\item A deep sag flattens the slope at the crossing, so noise creates false crossings.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small The mechanism is physical, not a coding bug.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-50.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 50 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Harmonic degradation by family}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Loop methods like ZCD win at low THD but collapse above 15 percent.
+\item Window methods degrade gently and lead at extreme THD.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Low-THD accuracy does not predict high-THD survival.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-51.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 51 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} CPU-accuracy Pareto}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Spectral and data-driven methods buy a little accuracy for 100 to 1000 times more compute.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small For relay-class timing, that trade is usually not worth it.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-52.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 52 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Findings and deployment (section)}\\[6pt]
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small So what do we actually deploy?}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-53.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 53 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Three findings}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item One: a latency-versus-stress trade-off.
+\item Two: robustness beats point accuracy. RA-EKF's explicit RoCoF state stays stable where EKF and IpDFT diverge.
+\item Three: compliance tests are insufficient for IBR events.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Robustness, not accuracy, is the deployment discriminator.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-54.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 54 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Validity limits and next steps}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Core means are n equals 5; ATLAS sweeps are paper-grade at n equals 30.
+\item Next is journal-grade at n equals 100, plus subspace and ML methods.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small We are explicit about diagnostic versus paper-grade.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-55.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 55 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Recommendation map}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item For fast frequency response and anti-islanding, RA-EKF is the strongest benchmark-backed choice.
+\item PLL and EKF are low-cost baselines; IpDFT and TFT where observation delay is acceptable.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small A recommendation map, not a single ranking.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-56.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 56 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Qualification profile}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item A qualification profile tests transient recovery, trip exposure, compute feasibility and standard-case RMSE.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Qualify on all dimensions together, not one at a time.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-57.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 57 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Standardization profile}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item We propose reporting these dimensions explicitly.
+\item So two estimators can be compared on equal terms.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Make the comparison reproducible and fair.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-58.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 58 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} IBR Event Qualification Score}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item A composite, weighted, event-class metric.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small One number when you need one, without hiding the dimensions.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-59.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 59 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Toward realtime IBR estimators}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item Real-time estimators, Simulink microgrid fault records, modern and ML methods, C++ acceleration, ANDES co-simulation.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small This is where the benchmark goes next.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\noindent\begin{minipage}[t]{0.585\textwidth}\vspace{0pt}
+{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{build/guion/g-60.png}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.395\textwidth}\vspace{2pt}
+{\footnotesize\color{ofbMuted}Slide 60 / 60}\\[1pt]
+{\large\bfseries\color{ofbTeal} Validation agenda and conclusion}\\[6pt]
+{\small\itshape\color{ofbMuted}Say:}\\[2pt]
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=2pt]
+\item There is no universal frequency estimator.
+\item The defensible choice depends on the event, the metric and the compute budget.
+\item OpenFreqBench gives the community a reproducible way to make that choice.
+\end{itemize}
+\vspace{4pt}
+\begin{tcolorbox}[colback=ofbTeal!8,colframe=ofbTeal,boxrule=0.6pt,arc=2pt,left=4pt,right=4pt,top=3pt,bottom=3pt]
+{\small\bfseries Key line: }{\small Thank you. I am happy to take questions.}
+\end{tcolorbox}
+\end{minipage}
+\clearpage
+\end{document}
