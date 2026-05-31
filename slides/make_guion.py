@@ -123,8 +123,15 @@ S = [
  ("Scenario suite II (dashboard)", "FIG", [
    "Same layout as before, voltage on top and frequency below, but now these cases are deliberately harder than anything you would find in a compliance test.",
    "If a method can stay accurate here, it has genuinely earned our trust."],
-   "Before the results, a quick word on the methods and the metrics.",
+   "Before we look at methods, let me name the three mechanisms that actually break estimators.",
    "If a method survives here, it has earned our trust."),
+ ("Scenario families: distortion, leakage, and low SNR", "CORE", [
+   "It helps to group the hard scenarios into three families, because each one breaks an estimator in a different way.",
+   "Harmonic distortion attacks any method that assumes a pure sinusoid. Spectral leakage hurts the window-based methods when the frequency does not sit neatly inside a bin.",
+   "And a low signal-to-noise ratio simply drowns the zero-crossing and timing-based methods.",
+   "Keeping these three failure mechanisms separate is exactly what lets us explain, later, why a given method wins or collapses."],
+   "With those mechanisms named, here are the estimators we put up against them.",
+   "Distortion, leakage, and low SNR are three distinct failure mechanisms, not one."),
  ("Estimator families", "CORE", [
    "The eighteen estimators sort naturally into families.",
    "Loop-based methods, the PLLs. Window and spectral methods. Model-based Kalman filters. Adaptive methods. And data-driven methods.",
@@ -221,7 +228,7 @@ S = [
    "And then we add the ATLAS severity sweeps on top, which push each disturbance from mild all the way to extreme."],
    "The first question is whether the family winners stay fixed as we scale.",
    "We scale the test, we do not just repeat it."),
- ("Expanded benchmark: family winners", "CORE", [
+ ("SGSMA benchmark: family winners", "CORE", [
    "And they do not stay fixed. The winner rotates from family to family.",
    "One method leads on the step, a different one on the ramp, another on harmonics, another on the multi-event case.",
    "There is no method that quietly wins everywhere when you are not looking."],
@@ -402,10 +409,10 @@ for i, (title, tier, say, trans, key) in enumerate(S, start=1):
     col = TIER_COLOR.get(tier, "ofbInk")
     body = []
     body.append(r"\savebox{\slidebox}{%")
-    body.append(r"\begin{minipage}[t]{0.555\textwidth}\vspace{0pt}")
+    body.append(r"\begin{minipage}[t]{0.55\textwidth}\vspace{0pt}")
     body.append(r"{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\linewidth]{%s}}}" % IMG.format(i))
-    body.append(r"\end{minipage}\hfill")
-    body.append(r"\begin{minipage}[t]{0.420\textwidth}\vspace{0pt}")
+    body.append(r"\end{minipage}\hspace{1.0cm}%")
+    body.append(r"\begin{minipage}[t]{0.40\textwidth}\vspace{0pt}")
     body.append(r"{\footnotesize\color{ofbMuted}Slide %d / %d \quad $\sim$%ds \quad cum %d:%02d}\hfill{\footnotesize\bfseries\color{%s}%s}\\[2pt]"
                % (i, len(S), sc, rmm, rss, col, tier))
     body.append(r"{\Large\bfseries\color{%s} %s}\\[6pt]" % (col, esc(title)))
