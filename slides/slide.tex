@@ -304,7 +304,7 @@
 \textbf{Blue Cut}\\
 CA, Aug. 16\\[0.25em]
 \textbf{1,178 MW PV}\\
-false near-instantaneous frequency trips during distorted fault waveforms\\[0.25em]
+inverter momentary cessation; erroneous frequency measurement on distorted fault waveforms was a contributing factor\\[0.25em]
 \textit{stress: distortion $\rightarrow$ frequency artifact}
 };
 
@@ -755,6 +755,75 @@ Benchmark reports, metric tables, plots, manifests, and readiness gates.
 }
 \vspace{0.2em}
 \callout{The benchmark is an evidence pipeline, not just a test script: every figure traces back to a locked manifest, a fixed I/O contract, and the readiness gate.}
+\end{frame}
+
+\begin{frame}[fragile]{Adding an estimator: one small Python contract}
+\begin{columns}[T,onlytextwidth]
+\column{0.56\linewidth}
+\scriptsize
+\begin{block}{The whole interface a new method must satisfy}
+\begin{semiverbatim}\tiny
+\textcolor{ofbViolet}{class} \textcolor{ofbBlue}{MyEstimator}(BaseFrequencyEstimator):
+    name = \textcolor{ofbRust}{"My-Method"}
+
+    \textcolor{ofbViolet}{def} \textcolor{ofbBlue}{_step}(self, z, t_s, memory):
+        \textcolor{ofbMuted}{# one input sample z -> one f_hat [Hz]}
+        ...
+        \textcolor{ofbViolet}{return} f_hat
+
+    \textcolor{ofbViolet}{def} \textcolor{ofbBlue}{structural_latency_samples}(self):
+        \textcolor{ofbViolet}{return} self.window\_len      \textcolor{ofbMuted}{# declared delay}
+
+    \textcolor{ofbViolet}{def} \textcolor{ofbBlue}{tuning_grid}(cls):
+        \textcolor{ofbViolet}{return} [\{...\}, \{...\}]    \textcolor{ofbMuted}{# fair-tuning space}
+\end{semiverbatim}
+\end{block}
+\column{0.42\linewidth}
+\scriptsize
+\begin{block}{Why this is enough}
+\begin{itemize}\setlength\itemsep{3pt}
+  \item A method only implements \texttt{\_step}: \emph{one sample in, one frequency out}. No I/O, no plotting, no metric code.
+  \item \texttt{structural\_latency\_samples} forces every author to \textbf{declare} the inherent delay (window/group delay), so latency is comparable, not hidden.
+  \item \texttt{tuning\_grid} exposes the parameter space the harness sweeps under a single fixed policy --- nobody hand-tunes per scenario.
+\end{itemize}
+\end{block}
+\end{columns}
+\vspace{-0.1em}
+\callout{The contract is deliberately tiny: anything an author writes beyond \texttt{\_step} is logic, never evaluation. That is what makes 18 very different methods comparable.}
+\end{frame}
+
+\begin{frame}[fragile]{Performance is measured inside the contract, not by the author}
+\begin{columns}[T,onlytextwidth]
+\column{0.50\linewidth}
+\scriptsize
+\begin{block}{The public \texttt{step()} wrapper instruments every call}
+\begin{semiverbatim}\tiny
+\textcolor{ofbViolet}{def} \textcolor{ofbBlue}{step}(self, z, t_s, memory):
+    t0 = time.process\_time()
+    y  = self.\_step(z, t_s, mem)     \textcolor{ofbMuted}{# author code}
+    dt = time.process\_time() - t0
+
+    self.\_times\_us.append(dt*1e6)    \textcolor{ofbMuted}{# CPU}
+    \textcolor{ofbViolet}{if} \textcolor{ofbViolet}{not} isfinite(y):
+        self.\_invalid += \textcolor{ofbRust}{1}        \textcolor{ofbMuted}{# NaN/Inf guard}
+    mem.observe()                    \textcolor{ofbMuted}{# memory proxy}
+    \textcolor{ofbViolet}{return} y
+\end{semiverbatim}
+\end{block}
+\column{0.48\linewidth}
+\scriptsize
+\begin{block}{What the harness records per run, for free}
+\begin{itemize}\setlength\itemsep{2.5pt}
+  \item \textbf{M13 CPU} --- mean \texttt{process\_time} per sample ($\mu$s), wrapped around the author's code so it cannot be gamed.
+  \item \textbf{M20 jitter} --- standard deviation of per-step time.
+  \item \textbf{invalid-output rate} --- fraction of NaN/Inf returns (divergence detector).
+  \item \textbf{startup-valid sample} --- when the first usable output appears.
+  \item \textbf{memory proxy} --- peak/mean bytes via \texttt{MemoryStore}.
+\end{itemize}
+\end{block}
+\end{columns}
+\vspace{-0.1em}
+\callout{Because the timing and validity instrumentation lives in the \emph{wrapper}, every estimator is measured identically --- the same anti-cheat path for a 7\,$\mu$s ZCD and a 15{,}000\,$\mu$s Koopman.}
 \end{frame}
 
 \begin{frame}{Standard stresses (1 of 2): magnitude, ramp, frequency step}
@@ -1398,6 +1467,15 @@ Broadband noise & $\sigma=0.1$ pu & 0 & Noise robustness is a first-class stress
 \end{tabular}
 \end{frame}
 
+\begin{frame}{Safe-operating envelope: where each estimator stays usable}
+\papergradebanner
+\begin{center}
+\includegraphics[width=0.99\linewidth,height=0.80\textheight,keepaspectratio]{figures/atlas_safe_envelope.pdf}
+\end{center}
+\vspace{-0.35em}
+\resultclaim{ofbGreen}{Each cell is the severity at which frequency RMSE first exceeds 0.05 Hz, in that family's own units ($+$ = never exceeded). This is a deployable map of operating limits, not a single ranking.}
+\end{frame}
+
 \begin{frame}{AM, FM, and interharmonics split the story}
 \papergradebanner
 \begin{columns}[T,onlytextwidth]
@@ -1493,6 +1571,29 @@ For these estimators, a $+$RoCoF-only test can certify behavior that does not ho
 {\scriptsize\color{ofbMuted}RoCoF winners move by regime: Koopman at low stress, ESPRIT through the standard/IBR band, SOGI-PLL at severe RoCoF.}
 \vspace{0.15em}
 \includegraphics[width=0.98\linewidth]{figures/rocof_method_map_wide.pdf}
+\end{frame}
+
+\begin{frame}{How error grows with stress: the scaling exponent}
+\papergradebanner
+\begin{columns}[T,onlytextwidth]
+\column{0.64\linewidth}
+\centering
+\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{figures/atlas_scaling_exponent.pdf}
+\column{0.34\linewidth}
+\scriptsize
+\begin{block}{Reading the exponent}
+The log--log slope of RMSE vs.\ severity is a physical signature:
+\begin{itemize}\setlength\itemsep{2pt}
+  \item \textbf{slope $\approx 1$}: error grows linearly with stress --- statistically efficient tracking (ESPRIT, MUSIC, TFT, UKF).
+  \item \textbf{slope $<0.3$}: flat and bad --- saturated or broken (TKEO, LKF).
+  \item \textbf{slope $>1.15$}: super-linear collapse (EKF under noise).
+\end{itemize}
+\end{block}
+\begin{block}{Why it matters}
+The exponent, not the point error, predicts how a method behaves as an event worsens.
+\end{block}
+\end{columns}
+\artifact{atlas-papergrade-missing-v1/hypothesis\_results.csv ($n=30$, 7 stress families)}
 \end{frame}
 
 \begin{frame}{ZCD is a narrow instrument, not a general estimator}
@@ -1824,6 +1925,25 @@ $\tilde C_s,\tilde L_s$ & compute and latency penalties
 \callout{\textbf{Result:} estimator choice is tied to event class, metric target, and compute envelope; estimator qualification must declare the stress regime, latency limit, and evidence depth.}
 \end{frame}
 
+\begin{frame}{Expert Q\&A: anticipated hard questions}
+\tiny
+\renewcommand{\arraystretch}{1.18}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{>{\bfseries\raggedright\arraybackslash}p{0.27\linewidth}>{\raggedright\arraybackslash}p{0.66\linewidth}}
+\toprule
+Likely question & Defensible answer \\
+\midrule
+Is $n=30$ enough for a statistical claim? & It clears our paper-grade gate with 95\% CIs reported; we label evidence diagnostic vs.\ paper-grade and flag $n\ge100$ as the replication layer. We claim mechanisms and rankings, not tight confidence bounds. \\
+Why does the EKF diverge --- is it a bug? & No. It is intermittent filter divergence: a seed-dependent onset/phase combination drives the covariance unstable. The worst seed had the \emph{gentlest} ramp, so it is not severity-driven; the robustified RA-EKF removes it on every seed. \\
+Scaling exponent $\approx 1$ --- coincidence? & It is the Cramer--Rao-efficient regime: error $\propto$ noise, so RMSE/$\sigma$ is constant (verified). Slope-1 methods are statistically efficient; saturated methods sit near 0. \\
+Isn't CPU time language-dependent? & Yes --- it is a software-cost \emph{proxy} from one Python run, not hardware latency. It separates feasible families ($\sim$10\,$\mu$s) from prohibitive ones ($\sim$10\,ms); absolute relay timing needs platform replication. \\
+RA-EKF: overfitting to your own method? & It wins only ramp/multi-event robustness, not global RMSE; the leaderboard rotates by regime. Its advantage is an explicit $\dot\omega$ state and event gating, not tuning. \\
+Why not real PMU data? & Known ground truth is the point: real streams lack a reference frequency, so error cannot be scored. Recorded Simulink/EMT fault data is on the roadmap. \\
+ZCD 3000\,Hz --- is that physical? & Yes. Zero-cross timing error scales as $\sigma_n/(A\omega)$; once noise exceeds the slope at the crossing, false crossings appear, and the CI widens exactly at that bifurcation. \\
+\bottomrule
+\end{tabular}
+\end{frame}
+
 
 
 \ifbackupframes
@@ -1935,7 +2055,7 @@ M22 invalid rate & fraction of samples the estimator flags invalid / NaN. \\
 \column{0.50\linewidth}
 \begin{block}{Completed --- validated $n=30$}
 \scriptsize
-$n=30$, fixed policy, both signs, \textbf{9/9} required sweeps; 17-estimator canonical set (PI-GRU experimental, separate sweep). Readiness gate: \texttt{status=paper\_grade}, \texttt{scope=full\_atlas}.
+$n=30$, fixed policy, both signs, \textbf{9/9} required sweeps; \textbf{18-estimator} canonical set incl.\ MUSIC (PI-GRU experimental, GPU-bound, separate sweep). Readiness gate: \texttt{status=paper\_grade}, \texttt{scope=full\_atlas}.
 \end{block}
 \begin{block}{Next --- $n\ge100$ replication}
 \scriptsize
@@ -1946,12 +2066,12 @@ $n=30$, fixed policy, both signs, \textbf{9/9} required sweeps; 17-estimator can
 \begin{itemize}
   \item Validated $n=30$ campaign: \textbf{done} (readiness gate passed).
   \item The $n\ge100$ replication layer adds archived seeds, manifests, and hashes.
-  \item Subspace/ML methods (MUSIC, ESPRIT, PI-GRU) run as a separate full-ATLAS sweep.
+  \item MUSIC and ESPRIT are now in the canonical set; only PI-GRU (GPU-bound) remains a separate experimental sweep.
   \item Every table and figure regenerates from artifacts.
 \end{itemize}
 \end{columns}
 \vspace{0.2em}
-\callout{The validated $n=30$ ATLAS run is complete; the $n\ge100$ replication run and the subspace/ML sweep are the remaining steps.}
+\callout{The validated $n=30$ ATLAS run is complete (18 estimators); the $n\ge100$ replication run and the GPU-bound PI-GRU sweep are the remaining steps.}
 \artifact{docs/ATLAS\_PIPELINE.md; docs/ATLAS\_ROADMAP.md}
 \end{frame}
 
@@ -2793,7 +2913,7 @@ Why scenario-wise tuning? & It estimates best-in-range behavior under the tested
 How is this different from IEC/IEEE compliance? & Compliance tests define device-level requirements. This study compares estimator algorithms under known truth, IBR-specific stress, trip-risk, and CPU cost. \\
 Why Python CPU times? & CPU reports relative software cost. Embedded or FPGA timing requires implementation-specific replication. \\
 What should be deployed? & For FFR and phase-jump anti-islanding, RA-EKF is the strongest benchmark-backed recommendation; PLL/EKF remain low-cost baselines; IpDFT/TFT are useful where observation delay is acceptable. \\
-How reliable are the ATLAS sweeps? & Validated $n=30$: fixed policy, both signs, 9/9 required sweeps. The $n\ge100$ replication and the subspace/ML sweep remain. \\
+How reliable are the ATLAS sweeps? & Validated $n=30$: fixed policy, both signs, 9/9 required sweeps, 18 estimators. The $n\ge100$ replication and the GPU-bound PI-GRU sweep remain. \\
 Does this explain any blackout? & No. Field events define the stress modes; no prevention claim is made. \\
 \bottomrule
 \end{tabular}

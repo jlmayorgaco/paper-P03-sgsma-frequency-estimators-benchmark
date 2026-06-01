@@ -100,8 +100,20 @@ S = [
  ("Full benchmark workflow", "FIG", [
    "The workflow runs in a fixed order: scenario, then Monte-Carlo, then the estimator, then the locked metrics, and finally the artifacts.",
    "And I want to stress this: every single figure in this talk traces straight back to those artifacts. Nothing here is hand-drawn."],
-   "Now let me introduce the scenarios themselves.",
+   "Now, before the scenarios, let me show how someone actually adds a method.",
    "One reproducible pipeline, end to end."),
+ ("Adding an estimator: one small Python contract", "FIG", [
+   "This is the entire interface a new estimator has to satisfy. A class, a name, and one method called underscore-step: one input sample in, one frequency estimate out.",
+   "Two optional hooks make the comparison fair. structural-latency-samples forces every author to declare their inherent delay, so latency is comparable and never hidden. And tuning-grid exposes the parameter space, which the harness sweeps under a single fixed policy, so nobody hand-tunes per scenario.",
+   "Everything an author writes beyond that is algorithm logic, never evaluation code."],
+   "And the performance numbers are not something the author reports --- they are measured for them.",
+   "The contract is tiny on purpose: that is what makes eighteen very different methods comparable."),
+ ("Performance is measured inside the contract", "FIG", [
+   "Here is the trick that keeps it honest. The public step method wraps the author's code: it timestamps with process-time before and after the call, so CPU cost is measured around their logic and cannot be gamed.",
+   "In the same wrapper we catch NaN or infinite outputs, which is our divergence detector, and we sample a memory proxy.",
+   "So for free, every run records CPU per sample, timing jitter, invalid-output rate, the first valid sample, and memory --- identically for a seven-microsecond ZCD and a fifteen-thousand-microsecond Koopman."],
+   "Now let me introduce the scenarios themselves.",
+   "Timing and validity live in the wrapper, so every estimator is measured on the same anti-cheat path."),
  ("Standard stresses (1 of 2): magnitude, ramp, step", "CORE", [
    "We start with the standard stresses. On this slide the top row is the voltage waveform, and the bottom row is the true frequency, for three cases: a magnitude step, a frequency ramp, and a frequency step.",
    "Because we generate the waveform ourselves, we know that true frequency at every single sample, so the error is exact.",
@@ -255,8 +267,14 @@ S = [
  ("ATLAS: where estimators stop being valid", "FIG", [
    "For every method, ATLAS pinpoints the exact severity at which it crosses over from working to failing.",
    "That boundary, the point of no return, is different for every family, and knowing it is what lets you deploy a method safely."],
-   "Let me now show you a few of the most surprising individual sweeps.",
+   "And we can turn that into a single deployable map.",
    "That validity boundary is different for every family."),
+ ("Safe-operating envelope", "CORE", [
+   "This is, for an engineer, the most useful single figure in the talk. Each cell is the severity at which a given estimator first exceeds the half-tenth-of-a-hertz error guide, expressed in that stress family's own units.",
+   "Greener means the method tolerates more severe stress before failing; a plus sign means it never crossed the guide in the tested range.",
+   "Read a row to see one estimator's safe envelope across all stresses; read a column to see who survives a given stress the longest. This is a map of operating limits, not a single ranking."],
+   "Now a few of the most surprising individual sweeps.",
+   "The deliverable is a map of safe operating limits per estimator, per stress."),
  ("AM, FM and interharmonics", "CORE", [
    "Even within modulation, the story splits in two.",
    "Amplitude modulation is relatively easy, and there the model-based methods win.",
@@ -285,8 +303,15 @@ S = [
    "This map really captures the central message. The champion rotates by rate-of-change regime.",
    "Koopman wins at low rates. ESPRIT wins in the middle. SOGI-PLL takes over once it gets severe.",
    "No single column owns the whole map."],
-   "And remarkably, one estimator manages to be both the best and the worst.",
+   "And there is a deeper way to classify them, by how the error grows.",
    "No universal winner; the deliverable is the map itself."),
+ ("How error grows with stress: the scaling exponent", "CORE", [
+   "This is one of my favorite results, and it is more physics than benchmarking. If you take the log-log slope of error versus severity, you get a scaling exponent that classifies the estimators.",
+   "A slope of about one, in green, means error grows linearly with stress --- that is the Cramer-Rao-efficient regime, where the method is statistically as good as the noise allows. ESPRIT, MUSIC, TFT and UKF sit there.",
+   "A slope near zero, in red, means flat and bad --- saturated or broken, like TKEO and LKF. And a slope above one is super-linear collapse, which is where the textbook EKF lands under noise.",
+   "The exponent, not the single error number, predicts how a method behaves as an event gets worse."],
+   "And one estimator shows this most dramatically, being both best and worst.",
+   "The scaling exponent classifies estimators by estimation theory, not by a single score."),
  ("The ZCD paradox (build-up)", "CORE", [
    "This is my favorite result, the ZCD paradox.",
    "Below fifteen percent harmonic distortion, zero-crossing detection is the single most accurate method we tested. The best of all eighteen.",
@@ -366,6 +391,12 @@ S = [
    "And what OpenFreqBench provides is a reproducible, open way for the community to make that choice on evidence, rather than on habit."],
    "",
    "Thank you very much for your attention. I would be very glad to take your questions."),
+ ("Expert Q&A: anticipated hard questions (backup)", "FIG", [
+   "(Backup slide --- not presented; rehearse these answers for the question round.)",
+   "Six hard questions to have ready: is n=30 enough (paper-grade gate + CIs, we claim mechanisms not tight bounds); is the EKF divergence a bug (no --- intermittent filter divergence, seed-dependent, RA-EKF fixes it); is the slope-1 exponent a coincidence (no --- Cramer-Rao efficiency); isn't CPU language-dependent (yes --- it is a software-cost proxy, not hardware latency); are you overfitting RA-EKF (it wins only ramp/multi-event, not global RMSE); why not real PMU data (no ground truth to score against).",
+   "Keep every answer to two sentences and always end by naming the evidence layer."],
+   "",
+   "Answer in two sentences; always cite the evidence layer (diagnostic, paper-grade, or field-motivation)."),
 ]
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
