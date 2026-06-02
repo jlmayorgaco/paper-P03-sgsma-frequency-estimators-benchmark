@@ -92,8 +92,13 @@ def _tkeo_vectorized_core(
             
             f_raw = math.acos(arg) / (two_pi * dt)
             
-            # Sanity check: prevent absurd jumps if noise causes strange energy ratios
-            if math.isnan(f_raw) or f_raw > 120.0 or f_raw < 10.0:
+            # Sanity check: TKEO's energy ratio can be corrupted by fast
+            # oscillations / harmonics and produce a stable-but-wrong frequency
+            # (e.g. ~90 Hz on the ringdown). Restrict to a plausible grid band
+            # (45-75 Hz around a 60 Hz nominal) so a corrupted ratio holds the
+            # last valid value instead of reporting a non-physical frequency.
+            # (Was 10-120 Hz, which let ~90 Hz through.)
+            if math.isnan(f_raw) or f_raw > 75.0 or f_raw < 45.0:
                  f_raw = f_out
         else:
             f_raw = f_out

@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
+cd "$(dirname "$0")/.."
 
 export PYTHONPATH="src"
 export KMP_DUPLICATE_LIB_OK="TRUE"
 export BENCHMARK_INCLUDE_EXPERIMENTAL="0"
 
 python -m pipelines.atlas_sweep \
-  --sweeps all \
+  --sweeps paper_required \
   --policy fixed_policy \
   --n-runs 100 \
   --base-seed 12345 \

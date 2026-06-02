@@ -63,7 +63,13 @@ def _zcd_vectorized_core(
                 if last_cross_t >= 0.0:
                     period = t_zc - last_cross_t
                     if period > 1e-12:
-                        last_f = 1.0 / period
+                        f_candidate = 1.0 / period
+                        # Reject spurious crossings: a grid ZCD can only report a
+                        # frequency in a plausible band. Two near-coincident
+                        # positive crossings (noise/distortion near the zero) would
+                        # otherwise yield hundreds/thousands of Hz. Hold last valid.
+                        if 0.5 * nominal_f <= f_candidate <= 1.5 * nominal_f:
+                            last_f = f_candidate
 
                 last_cross_t = t_zc
 

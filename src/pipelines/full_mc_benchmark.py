@@ -97,6 +97,10 @@ except Exception:
 # â”€â”€ Project imports â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 from analysis.monte_carlo_engine import MonteCarloEngine
 from analysis.advanced_benchmark_analysis import AdvancedBenchmarkAnalyzer, AdvancedStatsConfig
+try:
+    from estimators.base import MemoryStore
+except ModuleNotFoundError:
+    from src.estimators.base import MemoryStore  # type: ignore
 from scenarios.ibr_multi_event import IBRMultiEventScenario
 from scenarios.ieee_freq_ramp import IEEEFreqRampScenario
 from scenarios.ieee_freq_step import IEEEFreqStepScenario
@@ -127,6 +131,21 @@ def _env_int(name: str, default: int, minimum: int = 0) -> int:
         print(f"[WARN] Invalid integer for {name}={raw!r}; using default={default}.")
         return default
     if value < minimum:
+        print(f"[WARN] {name}={value} < {minimum}; clamping to {minimum}.")
+        return minimum
+    return value
+
+
+def _env_optional_float(name: str, minimum: float | None = None) -> float | None:
+    raw = os.getenv(name)
+    if raw is None or raw.strip() == "":
+        return None
+    try:
+        value = float(raw)
+    except ValueError:
+        print(f"[WARN] Invalid float for {name}={raw!r}; ignoring override.")
+        return None
+    if minimum is not None and value < minimum:
         print(f"[WARN] {name}={value} < {minimum}; clamping to {minimum}.")
         return minimum
     return value
@@ -163,6 +182,10 @@ def _env_csv_list(name: str) -> list[str]:
 N_TRIALS_TUNING = _env_int("BENCHMARK_N_TRIALS_TUNING", 500, minimum=0)
 N_MC_RUNS = _env_int("BENCHMARK_N_MC_RUNS", 100, minimum=1)
 N_COST_REPS = _env_int("BENCHMARK_N_COST_REPS", 20, minimum=1)
+BASE_SEED = _env_int("BENCHMARK_BASE_SEED", 12345, minimum=0)
+TUNING_SCENARIO_SEED = _env_int("BENCHMARK_TUNING_SCENARIO_SEED", 42, minimum=0)
+TUNING_NOISE_LEVEL = _env_optional_float("BENCHMARK_TUNING_NOISE_LEVEL", minimum=0.0)
+CAPTURE_SIGNALS = _env_bool("BENCHMARK_CAPTURE_SIGNALS", True)
 OPTUNA_SAMPLER_MODE = _env_choice(
     "BENCHMARK_OPTUNA_SAMPLER",
     "tpe",
@@ -184,6 +207,10 @@ def create_variant(base_cls: type, name_suffix: str, param_overrides: dict[str, 
     # El nombre visible (para carpetas y grÃ¡ficos) puede tener puntos
     new_name = f"{base_cls.SCENARIO_NAME}_{name_suffix}"
     new_params = {**base_cls.DEFAULT_PARAMS, **param_overrides}
+    new_mc_space = dict(getattr(base_cls, "MONTE_CARLO_SPACE", {}))
+    for key, value in param_overrides.items():
+        if key in new_mc_space:
+            new_mc_space[key] = {"kind": "fixed", "value": value}
     
     # Â¡NUEVO FIX!: El nombre INTERNO de la clase Python no puede tener puntos '.'
     safe_class_suffix = name_suffix.replace(".", "p").replace("-", "m")
@@ -192,6 +219,7 @@ def create_variant(base_cls: type, name_suffix: str, param_overrides: dict[str, 
     new_cls = type(class_name, (base_cls,), {
         "SCENARIO_NAME": new_name,
         "DEFAULT_PARAMS": new_params,
+        "MONTE_CARLO_SPACE": new_mc_space,
         "get_name": classmethod(lambda cls: cls.SCENARIO_NAME)
     })
     
@@ -309,6 +337,18 @@ METRIC_COLUMNS = [
     "m21_startup_valid_samples",
     "m22_invalid_output_rate",
     "m23_memory_key_count",
+    "m24_pre_event_rmse_hz",
+    "m25_post_1cy_rmse_hz",
+    "m26_post_3cy_rmse_hz",
+    "m27_post_100ms_rmse_hz",
+    "m28_post_event_peak_hz",
+    "m29_late_event_rmse_hz",
+    "m30_event_settling_time_s",
+    "m31_freq_bound_hit_rate",
+    "m32_freq_lower_bound_hit_rate",
+    "m33_freq_upper_bound_hit_rate",
+    "m34_p95_error_hz",
+    "m35_p99_error_hz",
 ]
 
 METRIC_LABELS: dict[str, str] = {
@@ -336,7 +376,35 @@ METRIC_LABELS: dict[str, str] = {
     "m21_startup_valid_samples": "STARTUP_VALID_SAMPLES",
     "m22_invalid_output_rate": "INVALID_OUTPUT_RATE",
     "m23_memory_key_count": "MEMORY_KEY_COUNT",
+    "m24_pre_event_rmse_hz": "PRE_EVENT_RMSE_Hz",
+    "m25_post_1cy_rmse_hz": "POST_1CY_RMSE_Hz",
+    "m26_post_3cy_rmse_hz": "POST_3CY_RMSE_Hz",
+    "m27_post_100ms_rmse_hz": "POST_100MS_RMSE_Hz",
+    "m28_post_event_peak_hz": "POST_EVENT_PEAK_Hz",
+    "m29_late_event_rmse_hz": "LATE_EVENT_RMSE_Hz",
+    "m30_event_settling_time_s": "EVENT_SETTLING_TIME_s",
+    "m31_freq_bound_hit_rate": "FREQ_BOUND_HIT_RATE",
+    "m32_freq_lower_bound_hit_rate": "FREQ_LOWER_BOUND_HIT_RATE",
+    "m33_freq_upper_bound_hit_rate": "FREQ_UPPER_BOUND_HIT_RATE",
+    "m34_p95_error_hz": "P95_ERROR_Hz",
+    "m35_p99_error_hz": "P99_ERROR_Hz",
 }
+
+METRIC_LOWER_IS_BETTER: dict[str, bool] = {metric: True for metric in METRIC_COLUMNS}
+METRIC_LOWER_IS_BETTER.update(
+    {
+        "m15_pcb_compliant": False,
+        "m16_heatmap_pass": False,
+    }
+)
+
+
+def _finite_numeric_series(values: Any) -> pd.Series | None:
+    converted = pd.to_numeric(values, errors="coerce")
+    if not converted.notna().any():
+        return None
+    numeric = converted.astype(float)
+    return numeric.where(np.isfinite(numeric), np.nan)
 
 # â”€â”€ IEEE publication-quality style â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 _IEEE_RC: dict[str, Any] = {
@@ -509,9 +577,11 @@ SEARCH_SPACES: dict[str, Any] = {
         "n_cycles": trial.suggest_float("n_cycles", 0.5, 10.0),
     },
     "Prony": lambda trial: {
-        # Ã“rdenes altos permiten modelar ruido/armÃ³nicos como polos matemÃ¡ticos
-        "order": trial.suggest_int("order", 2, 14),
-        "n_cycles": trial.suggest_float("n_cycles", 0.5, 8.0),
+        # Cap the model order: very high orders create spurious mathematical
+        # poles that the root selector can lock onto, giving non-physical
+        # frequency jumps (was 2-14). 2-8 keeps the fundamental dominant.
+        "order": trial.suggest_int("order", 2, 8),
+        "n_cycles": trial.suggest_float("n_cycles", 1.0, 8.0),
     },
     "ESPRIT": lambda trial: {
         "n_cycles": trial.suggest_float("n_cycles", 0.5, 8.0),
@@ -539,8 +609,11 @@ SEARCH_SPACES: dict[str, Any] = {
         "transient_reject": False,
         "transient_clip": 3.0,
         "transient_hold_samples": 0,
-        "f_min_hz": trial.suggest_float("f_min_hz", 40.0, 58.0),
-        "f_max_hz": trial.suggest_float("f_max_hz", 62.0, 90.0),
+        # Output clamp must stay within a physical grid band so a destabilised
+        # AR(2) cannot park the output far from nominal (was 40-58 / 62-90,
+        # which let tuning pin RLS at ~85 Hz and inflate RMSE to ~14 Hz).
+        "f_min_hz": trial.suggest_float("f_min_hz", 50.0, 58.0),
+        "f_max_hz": trial.suggest_float("f_max_hz", 62.0, 70.0),
     },
     "TKEO": lambda trial: {
         "output_smoothing": trial.suggest_float("output_smoothing", 1e-6, 0.5, log=True),
@@ -961,6 +1034,16 @@ def _noise_kwargs(sc_cls: type, level: float) -> dict[str, Any]:
     return overrides
 
 
+def _tuning_noise_kwargs(sc_cls: type) -> dict[str, Any]:
+    """
+    Tuning uses each scenario's declared default stress unless the caller
+    explicitly sets BENCHMARK_TUNING_NOISE_LEVEL.
+    """
+    if TUNING_NOISE_LEVEL is None:
+        return {}
+    return _noise_kwargs(sc_cls, TUNING_NOISE_LEVEL)
+
+
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 # Tuning
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -988,6 +1071,11 @@ def tune_estimator(
         "n_trials_requested": None,
         "n_trials_executed": 0,
         "n_trials_override_applied": bool(APPLY_TRIAL_OVERRIDES and est_name in N_TRIALS_OVERRIDES),
+        "tuning_scenario_seed": int(TUNING_SCENARIO_SEED),
+        "tuning_noise_level": TUNING_NOISE_LEVEL,
+        "tuning_noise_policy": "scenario_defaults"
+        if TUNING_NOISE_LEVEL is None
+        else "compatible_noise_override",
     }
 
     if est_name not in SEARCH_SPACES:
@@ -1009,7 +1097,11 @@ def tune_estimator(
         tuning_meta["n_trials_executed"] = 0
         return defaults, tuning_meta
 
-    sc = scenario_cls.run(duration_s=2.0, seed=42, **_noise_kwargs(scenario_cls, 0.001))
+    sc = scenario_cls.run(
+        duration_s=2.0,
+        seed=TUNING_SCENARIO_SEED,
+        **_tuning_noise_kwargs(scenario_cls),
+    )
     fs_dsp = 1.0 / (sc.t[1] - sc.t[0])
     eval_start = int(0.100 * fs_dsp)
 
@@ -1018,7 +1110,7 @@ def tune_estimator(
         params = {**defaults, **suggested}
         try:
             est = est_cls(**params)
-            f_hat = _run_estimator(est, sc.v)
+            f_hat = _run_estimator(est, sc.v, t=sc.t)
 
             error = f_hat[eval_start:] - sc.f_true[eval_start:]
             rmse = float(np.sqrt(np.mean(error ** 2)))
@@ -1098,11 +1190,59 @@ def _to_builtin(obj: Any) -> Any:
     return obj
 
 
-def _run_estimator(est: Any, v: np.ndarray) -> np.ndarray:
-    """Call step_vectorized if available, otherwise fall back to per-sample step."""
-    if hasattr(est, "step_vectorized"):
+def _run_estimator(est: Any, v: np.ndarray, t: np.ndarray | None = None) -> np.ndarray:
+    """
+    Match MonteCarloEngine estimator semantics for tuning and plots.
+    Most estimators are evaluated through the standardized step wrapper; only
+    estimators that explicitly request vectorized execution bypass it.
+    """
+    if hasattr(est, "reset"):
+        est.reset()
+
+    has_step = hasattr(est, "step")
+    has_step_vectorized = hasattr(est, "step_vectorized")
+    prefer_vectorized = bool(
+        getattr(est, "PREFER_VECTORIZED_ENGINE", False)
+        or getattr(est, "prefer_vectorized_engine", False)
+    )
+
+    if has_step and not prefer_vectorized:
+        mem = MemoryStore()
+        step_func = est.step
+        out = np.empty(len(v), dtype=float)
+        for k, sample in enumerate(v):
+            t_k = float(t[k]) if t is not None else None
+            try:
+                out[k] = float(step_func(float(sample), t_k, mem))
+            except TypeError:
+                try:
+                    out[k] = float(step_func(float(sample), t_k))
+                except TypeError:
+                    out[k] = float(step_func(float(sample)))
+        return out
+
+    if has_step_vectorized:
         return np.asarray(est.step_vectorized(v), dtype=float)
-    return np.array([est.step(float(sample)) for sample in v], dtype=float)
+
+    if has_step:
+        return np.array([est.step(float(sample)) for sample in v], dtype=float)
+
+    raise AttributeError(f"Estimator {est.__class__.__name__} must define step(...) or step_vectorized(...).")
+
+
+def _find_summary_csv(est_dir: Path, sc_name: str, est_name: str) -> Path | None:
+    expected = est_dir / f"{sc_name}__{est_name}_summary.csv"
+    if expected.exists():
+        return expected
+    matches = sorted(est_dir.glob("*_summary.csv"))
+    if not matches:
+        return None
+    if len(matches) > 1:
+        print(
+            f"    [WARN] Multiple summary CSVs in {est_dir.relative_to(ROOT)}; "
+            f"using {matches[0].name}."
+        )
+    return matches[0]
 
 
 def _save_scenario_artifacts(sc: Any, sc_dir: Path, sc_name: str) -> None:
@@ -1139,7 +1279,7 @@ def _save_tracking_plot(
     """Plot estimator frequency tracking against ground truth."""
     try:
         est = est_cls(**params)
-        f_hat = _run_estimator(est, sc.v)
+        f_hat = _run_estimator(est, sc.v, t=sc.t)
 
         margin = max(5.0, (sc.f_true.max() - sc.f_true.min()) * 0.15)
         with plt.rc_context(_IEEE_RC):
@@ -1276,7 +1416,7 @@ def run_phase_1(estimators: dict[str, type]) -> None:
         print(f"\n  Scenario: {sc_name}")
 
         # ---> CORRECCIÃ“N: Alineado con la optimizaciÃ³n de Optuna a 2.0s <---
-        sc_base = sc_cls.run(duration_s=2.0, seed=42, **_noise_kwargs(sc_cls, 0.0))
+        sc_base = sc_cls.run(duration_s=2.0, seed=TUNING_SCENARIO_SEED, **_noise_kwargs(sc_cls, 0.0))
         _save_scenario_artifacts(sc_base, sc_dir, sc_name)
         _save_scenario_zoom_plot(sc_base, sc_dir, sc_name)
 
@@ -1298,7 +1438,9 @@ def run_phase_1(estimators: dict[str, type]) -> None:
                 estimator_cls=est_cls,
                 estimator_params=best_params,
                 n_runs=N_MC_RUNS,
+                base_seed=BASE_SEED,
                 n_cost_reps=N_COST_REPS,
+                capture_signals=CAPTURE_SIGNALS,
             )
             result = engine.run()
             engine.save_csv(result, out_dir)
@@ -1328,6 +1470,8 @@ def run_phase_1(estimators: dict[str, type]) -> None:
                     bool(APPLY_TRIAL_OVERRIDES and est_name in N_TRIALS_OVERRIDES),
                 ),
                 "n_mc_runs": N_MC_RUNS,
+                "base_seed": BASE_SEED,
+                "capture_signals": CAPTURE_SIGNALS,
                 "artifacts": {
                     "summary_csv": summary_files,
                     "signals_csv": signal_files,
@@ -1371,7 +1515,7 @@ def run_phase_2(allowed_estimators: set[str] | None = None) -> None:
             est_name = est_dir.name
             if allowed_estimators is not None and est_name not in allowed_estimators:
                 continue
-            summary_file = next(est_dir.glob("*_summary.csv"), None)
+            summary_file = _find_summary_csv(est_dir, sc_name=sc_name, est_name=est_name)
             if summary_file is None:
                 print(f"    [?] No summary CSV in {est_dir.relative_to(ROOT)}")
                 continue
@@ -1384,10 +1528,15 @@ def run_phase_2(allowed_estimators: set[str] | None = None) -> None:
                 "family": _ESTIMATOR_FAMILIES.get(est_name, "Unknown"),
             }
             for col in available:
-                series_num = pd.to_numeric(df[col], errors="coerce")
-                if series_num.notna().any():
+                series_num = _finite_numeric_series(df[col])
+                if series_num is not None:
+                    n_total = int(len(series_num))
+                    n_valid = int(series_num.notna().sum())
                     row[f"{col}_mean"] = float(series_num.mean())
                     row[f"{col}_std"] = float(series_num.std())
+                    row[f"{col}_n"] = n_total
+                    row[f"{col}_n_valid"] = n_valid
+                    row[f"{col}_n_nonfinite"] = n_total - n_valid
                 else:
                     # Preserve non-numeric metric aggregates (e.g., class labels) deterministically.
                     values = [str(v) for v in df[col].dropna().tolist()]
@@ -2061,7 +2210,7 @@ def _load_long_run_dataframe(allowed_estimators: set[str] | None = None) -> pd.D
             est_name = est_dir.name
             if allowed_estimators is not None and est_name not in allowed_estimators:
                 continue
-            summary_file = next(est_dir.glob("*_summary.csv"), None)
+            summary_file = _find_summary_csv(est_dir, sc_name=sc_name, est_name=est_name)
             if summary_file is None:
                 continue
 
@@ -2091,13 +2240,18 @@ def _build_aggregated_dataframe(df_long: pd.DataFrame) -> pd.DataFrame:
     group_cols = ["scenario", "estimator", "family"]
     agg_map: dict[str, list[str]] = {}
     non_numeric_metrics: list[str] = []
+    group_sizes = (
+        df_long.groupby(group_cols, dropna=False)
+        .size()
+        .reset_index(name="n_runs_total")
+    )
 
     for metric in METRIC_COLUMNS:
         if metric in df_long.columns:
-            series_num = pd.to_numeric(df_long[metric], errors="coerce")
-            if series_num.notna().any():
+            series_num = _finite_numeric_series(df_long[metric])
+            if series_num is not None:
                 df_long[metric] = series_num
-                agg_map[metric] = ["mean", "std", "median", "min", "max"]
+                agg_map[metric] = ["mean", "std", "median", "min", "max", "count"]
             else:
                 non_numeric_metrics.append(metric)
 
@@ -2107,6 +2261,10 @@ def _build_aggregated_dataframe(df_long: pd.DataFrame) -> pd.DataFrame:
     df_agg = df_long.groupby(group_cols, dropna=False).agg(agg_map)
     df_agg.columns = [f"{col}_{stat}" for col, stat in df_agg.columns]
     df_agg = df_agg.reset_index()
+    df_agg = df_agg.rename(
+        columns={f"{metric}_count": f"{metric}_n_valid" for metric in METRIC_COLUMNS}
+    )
+    df_agg = df_agg.merge(group_sizes, on=group_cols, how="left")
     for metric in non_numeric_metrics:
         mode_df = (
             df_long.groupby(group_cols, dropna=False)[metric]
@@ -2239,7 +2397,11 @@ def _build_rankings(df_agg: pd.DataFrame) -> dict[str, Any]:
         if pivot.empty:
             continue
 
-        ranks = pivot.rank(axis=1, method="average", ascending=True)
+        ranks = pivot.rank(
+            axis=1,
+            method="average",
+            ascending=METRIC_LOWER_IS_BETTER.get(metric, True),
+        )
         mean_rank = ranks.mean(axis=0).sort_values()
 
         out[METRIC_LABELS.get(metric, metric)] = [
@@ -2552,6 +2714,13 @@ def _export_full_benchmark_json(estimators: dict[str, type]) -> Path:
             "n_trials_tuning": N_TRIALS_TUNING,
             "n_mc_runs": N_MC_RUNS,
             "n_cost_reps": N_COST_REPS,
+            "base_seed": BASE_SEED,
+            "tuning_scenario_seed": TUNING_SCENARIO_SEED,
+            "tuning_noise_level": TUNING_NOISE_LEVEL,
+            "tuning_noise_policy": "scenario_defaults"
+            if TUNING_NOISE_LEVEL is None
+            else "compatible_noise_override",
+            "capture_signals": CAPTURE_SIGNALS,
             "optuna_sampler_mode": OPTUNA_SAMPLER_MODE,
             "optuna_seed": OPTUNA_SEED,
             "apply_trial_overrides": APPLY_TRIAL_OVERRIDES,
@@ -2561,7 +2730,6 @@ def _export_full_benchmark_json(estimators: dict[str, type]) -> Path:
             "base_results_dir": str(BASE_RESULTS_DIR),
             "scenarios": [sc.get_name() for sc in SCENARIOS],
             "estimators": sorted(list(estimators.keys())),
-            "base_seed": 12345,
             "metrics": METRIC_COLUMNS,
             "metric_labels": METRIC_LABELS,
             "estimator_families": _ESTIMATOR_FAMILIES,
@@ -2661,8 +2829,12 @@ def main() -> None:
     print(
         "Run config: "
         f"N_MC_RUNS={N_MC_RUNS}, "
+        f"BASE_SEED={BASE_SEED}, "
         f"N_COST_REPS={N_COST_REPS}, "
+        f"CAPTURE_SIGNALS={CAPTURE_SIGNALS}, "
         f"N_TRIALS_TUNING={N_TRIALS_TUNING}, "
+        f"TUNING_SEED={TUNING_SCENARIO_SEED}, "
+        f"TUNING_NOISE_LEVEL={TUNING_NOISE_LEVEL}, "
         f"OPTUNA_SAMPLER={OPTUNA_SAMPLER_MODE}, "
         f"APPLY_OVERRIDES={APPLY_TRIAL_OVERRIDES}, "
         f"EXCLUDED={EXCLUDED_ESTIMATOR_LABELS}, "
