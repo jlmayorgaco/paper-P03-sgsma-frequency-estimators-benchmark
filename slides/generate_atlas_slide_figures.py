@@ -302,7 +302,7 @@ def plot_cpu_accuracy_pareto() -> None:
         )
         .sort_values("geom_rmse_hz")
     )
-    fig, ax = plt.subplots(figsize=(15.6, 6.1))
+    fig, ax = plt.subplots(figsize=(15.6, 6.7))
     for family, g in summary.groupby("family"):
         sizes = 70 + 9 * np.maximum(g["median_latency_ms"].to_numpy(dtype=float), 0.0)
         ax.scatter(
@@ -315,39 +315,37 @@ def plot_cpu_accuracy_pareto() -> None:
             edgecolor="white",
             linewidth=1.0,
         )
-    label_set = {
-        "ESPRIT",
-        "Koopman (RK-DPMU)",
-        "TFT",
-        "IPDFT",
-        "SOGI-FLL",
-        "SOGI-PLL",
-        "ZCD",
-        "Type-3 SOGI-PLL",
-        "TKEO",
-        "EKF",
-        "RA-EKF",
-    }
+    # Label every estimator (with thin leader lines) so the audience can locate
+    # all methods; the dense lower-left cluster is split left/right to avoid overlap.
     offsets = {
-        "ESPRIT": (6, 9),
-        "Koopman (RK-DPMU)": (7, 8),
-        "TFT": (7, -12),
-        "IPDFT": (8, 12),
-        "SOGI-FLL": (-42, -13),
-        "SOGI-PLL": (6, 5),
-        "ZCD": (6, 5),
-        "Type-3 SOGI-PLL": (-78, 8),
-        "TKEO": (-34, 9),
-        "EKF": (6, 5),
-        "RA-EKF": (7, -13),
+        "ESPRIT": (0, 11),
+        "Koopman (RK-DPMU)": (-52, 10),
+        "TFT": (-30, -4),
+        "IPDFT": (10, -4),
+        "SOGI-FLL": (-48, 2),
+        "SOGI-PLL": (10, 5),
+        "UKF": (11, -4),
+        "RA-EKF": (11, 2),
+        "Type-3 SOGI-PLL": (-86, 0),
+        "LKF2": (11, 0),
+        "EKF": (-32, 0),
+        "PLL": (11, 0),
+        "LKF": (11, 0),
+        "MUSIC": (11, 6),
     }
-    for _, row in summary[summary["estimator"].isin(label_set)].iterrows():
+    for _, row in summary.iterrows():
+        est = str(row["estimator"])
+        x = float(row["median_cpu_us"])
+        y = float(row["geom_rmse_hz"])
+        if not (np.isfinite(x) and np.isfinite(y) and x > 0 and y > 0):
+            continue
         ax.annotate(
-            str(row["estimator"]),
-            (float(row["median_cpu_us"]), float(row["geom_rmse_hz"])),
+            est,
+            (x, y),
             textcoords="offset points",
-            xytext=offsets.get(str(row["estimator"]), (6, 6)),
-            fontsize=10.2,
+            xytext=offsets.get(est, (9, 6)),
+            fontsize=7.8,
+            arrowprops=dict(arrowstyle="-", color="#9aa3ad", lw=0.5, shrinkA=0, shrinkB=2.5),
         )
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -360,7 +358,7 @@ def plot_cpu_accuracy_pareto() -> None:
         ax.set_ylim(float(yvals.min()) * 0.55, float(yvals.max()) * 2.15)
     ax.set_xlabel("Median per-sample CPU cost [us] (log scale)")
     ax.set_ylabel("Dynamic RMSE, geometric mean [Hz] (log scale)")
-    ax.set_title("Accuracy costs compute: dynamic stress Pareto view", loc="left")
+    ax.set_title("Dynamic-stress Pareto: accuracy vs. per-sample CPU", loc="left", fontsize=11)
     ax.grid(True, which="both", alpha=0.25)
     ax.legend(loc="center left", bbox_to_anchor=(1.01, 0.5), frameon=False)
     fig.tight_layout(rect=[0.02, 0.03, 0.84, 0.96])

@@ -206,7 +206,7 @@
       inner xsep=5pt,
       inner ysep=3pt
     ] at (0,0)
-    {OPENFREQBENCH EXPANSION: 18 estimators, 33 scenarios, $n=5$ seeds per scenario};
+    {OPENFREQBENCH EXPANSION: 18 estimators, 33 scenarios, $n=30$ seeds per scenario};
   \end{tikzpicture}\par\vspace{-0.10cm}%
 }
 \newcommand{\diagbanner}{%
@@ -240,7 +240,7 @@
       inner xsep=5pt,
       inner ysep=3pt
     ] at (0,0)
-    {ATLAS EXTENDED SWEEP: $n=30$, fixed policy, 9/9 sweeps --- Prony stress-corner failures flagged};
+    {ATLAS EXTENDED SWEEP: $n=30$, fixed policy, 9/9 sweeps};
   \end{tikzpicture}\par\vspace{-0.10cm}%
 }
 \newcommand{\sectionframe}[3]{%
@@ -378,22 +378,14 @@ The literature needs a reproducible benchmark that connects estimator error to p
 \centering
 \begin{tikzpicture}[
   every node/.style={font=\scriptsize},
-  contrib/.style={draw, rounded corners=3pt, very thick, align=left, text width=6.0cm, minimum height=0.95cm, inner xsep=7pt, inner ysep=5pt}
+  contrib/.style={draw, rounded corners=3pt, very thick, align=left, text width=8.6cm, minimum height=1.0cm, inner xsep=10pt, inner ysep=6pt}
 ]
-% Left: one neutral "out of scope" card (uniform muted -> no color clash with contributions)
-\node[draw=ofbMuted, fill=cardFill, rounded corners=3pt, line width=0.8pt, align=left, text width=3.35cm, inner xsep=7pt, inner ysep=7pt] (scope) at (1.65,-0.45) {%
-\hyphenpenalty=10000\exhyphenpenalty=10000\relax
-{\bfseries\color{ofbMuted}OUT OF SCOPE}\\[0.35em]
-$\cdot$~not PMU certification\\[0.18em]
-$\cdot$~not a universal leaderboard\\[0.18em]
-$\cdot$~not hardware-latency testing%
-};
-% Right: four contributions, distinct accents, comfortable vertical spacing
-\node[contrib, fill=ofbBlue!7, draw=ofbBlue]    (c1) at (7.35,1.18)  {\textbf{1. OpenFreqBench}\\reproducible stress-test platform};
-\node[contrib, fill=ofbGreen!7, draw=ofbGreen]   (c2) at (7.35,0.05)  {\textbf{2. Metric-complete protocol}\\RMSE, peak/RoCoF error, $T_{\mathrm{trip}}$, settling, CPU};
-\node[contrib, fill=ofbRust!8, draw=ofbRust]     (c3) at (7.35,-1.08) {\textbf{3. IBR failure evidence}\\standard cases miss composite IBR failures};
-\node[contrib, fill=ofbViolet!8, draw=ofbViolet] (c4) at (7.35,-2.21) {\textbf{4. Extensible estimator contract}\\new methods enter the same scoring workflow};
-\node[draw=ofbBlue, fill=ofbBlue!6, rounded corners=3pt, line width=0.8pt, align=left, text width=9.7cm, inner xsep=7pt, inner ysep=6pt] at (5.0,-3.28) {%
+% Four contributions, centered, distinct accents, comfortable vertical spacing
+\node[contrib, fill=ofbBlue!7, draw=ofbBlue]    (c1) at (0,1.30)  {\textbf{1. OpenFreqBench}\\reproducible stress-test platform};
+\node[contrib, fill=ofbGreen!7, draw=ofbGreen]   (c2) at (0,0.10)  {\textbf{2. Metric-complete protocol}\\RMSE, peak/RoCoF error, $T_{\mathrm{trip}}$, settling, CPU};
+\node[contrib, fill=ofbRust!8, draw=ofbRust]     (c3) at (0,-1.10) {\textbf{3. IBR failure evidence}\\standard cases miss composite IBR failures};
+\node[contrib, fill=ofbViolet!8, draw=ofbViolet] (c4) at (0,-2.30) {\textbf{4. Extensible estimator contract}\\new methods enter the same scoring workflow};
+\node[draw=ofbBlue, fill=ofbBlue!6, rounded corners=3pt, line width=0.8pt, align=left, text width=8.9cm, inner xsep=10pt, inner ysep=6pt] at (0,-3.55) {%
 \textbf{Contribution logic:} explain estimator ranking shifts by objective, disturbance regime, and compute budget.};
 \end{tikzpicture}
 \end{frame}
@@ -460,10 +452,10 @@ Benchmark reports, metric tables, plots, manifests, and readiness gates.
 \node[hero, fill=ofbBlue!7, draw=ofbBlue]     (e) at (0,1.30)    {{\fontsize{25}{27}\selectfont\bfseries\color{ofbBlue}18}\\[0.20em]\textbf{estimators}\\[0.12em]{\color{ofbMuted}loop $\cdot$ window $\cdot$ model}};
 \node[hero, fill=ofbGreen!7, draw=ofbGreen]   (s) at (3.15,1.30) {{\fontsize{25}{27}\selectfont\bfseries\color{ofbGreen}33}\\[0.20em]\textbf{scenarios}\\[0.12em]{\color{ofbMuted}standard $+$ IBR}};
 \node[hero, fill=ofbGold!15, draw=ofbGold]    (f) at (6.30,1.30) {{\fontsize{25}{27}\selectfont\bfseries\color{ofbGold}10}\\[0.20em]\textbf{families}\\[0.12em]{\color{ofbMuted}ramp $\to$ multi-event}};
-\node[hero, fill=ofbViolet!9, draw=ofbViolet] (m) at (9.45,1.30) {{\fontsize{25}{27}\selectfont\bfseries\color{ofbViolet}5}\\[0.20em]\textbf{seeds / pair}\\[0.12em]{\color{ofbMuted}Monte-Carlo}};
+\node[hero, fill=ofbViolet!9, draw=ofbViolet] (m) at (9.45,1.30) {{\fontsize{25}{27}\selectfont\bfseries\color{ofbViolet}30}\\[0.20em]\textbf{seeds / pair}\\[0.12em]{\color{ofbMuted}Monte-Carlo}};
 
 \node[strip, fill=ofbSoft, draw=ofbLine, text width=11.3cm] (d) at (4.725,-0.78) {%
-\textbf{18\,\(\times\)\,33 \(=\) 594} estimator--scenario cells \;\textcolor{ofbMuted}{\textbullet}\; \textbf{594\,\(\times\)\,5 \(=\) 2{,}970} Monte-Carlo records \;\textcolor{ofbMuted}{\textbullet}\; \textbf{1\,MHz} truth \(\to\) \textbf{10\,kHz} output%
+\textbf{18\,\(\times\)\,33 \(=\) 594} estimator--scenario cells \;\textcolor{ofbMuted}{\textbullet}\; \textbf{594\,\(\times\)\,30 \(=\) 17{,}820} Monte-Carlo records \;\textcolor{ofbMuted}{\textbullet}\; \textbf{1\,MHz} truth \(\to\) \textbf{10\,kHz} output%
 };
 
 \node[take, fill=ofbGreen!7, draw=ofbGreen, text width=11.3cm] (t) at (4.725,-2.10) {%
@@ -497,11 +489,11 @@ RLS, Koopman (RK-DPMU).
 \column{0.33\linewidth}
 \begin{block}{Legacy baselines}
 \small
-TKEO and ZCD are retained as comparison references outside the recommended deployment set.
+TKEO and ZCD are included as classical, lightweight baselines.
 \end{block}
 \begin{block}{Interpretation rule}
 \small
-These families occupy different latency and stress-sensitivity positions. The comparison tracks where each family wins, degrades, and fails.
+These families occupy different latency and stress-sensitivity positions. The comparison tracks how each family behaves across the stress space.
 \end{block}
 \end{columns}
 \vspace{0.3em}
@@ -690,21 +682,21 @@ Koopman & \cellcolor{ofbGreen!25}0.003 & \cellcolor{ofbGreen!25}0.017 & \cellcol
 TFT & \cellcolor{ofbGreen!25}0.001 & \cellcolor{ofbGreen!25}0.019 & \cellcolor{ofbGreen!25}0.046 \\
 UKF & \cellcolor{ofbGreen!25}0.000 & \cellcolor{ofbGreen!25}0.017 & \cellcolor{ofbGold!22}0.055 \\
 LKF2 & \cellcolor{ofbRed!18}0.138 & \cellcolor{ofbGreen!25}0.015 & \cellcolor{ofbGreen!35}\textbf{0.028} \\
-\only<2->{PLL} & \only<2->{\cellcolor{ofbGreen!25}0.033} & \only<2->{\cellcolor{ofbRed!25}\textbf{1.47}} & \only<2->{\cellcolor{ofbRed!25}\textbf{0.227}} \\
-\only<2->{IpDFT} & \only<2->{\cellcolor{ofbGreen!25}0.000} & \only<2->{\cellcolor{ofbRed!35}\textbf{14.4}} & \only<2->{\cellcolor{ofbRed!18}0.114} \\
-\only<2->{EKF} & \only<2->{\cellcolor{ofbGreen!25}0.000} & \only<2->{\cellcolor{ofbRed!35}\textbf{37.1}} & \only<2->{\cellcolor{ofbGold!22}0.064} \\
+PLL & \cellcolor{ofbGreen!25}0.033 & \cellcolor{ofbGreen!25}0.073 & \cellcolor{ofbRed!25}\textbf{0.227} \\
+IpDFT & \cellcolor{ofbGreen!25}0.000 & \cellcolor{ofbGreen!25}0.037 & \cellcolor{ofbRed!18}0.114 \\
+EKF & \cellcolor{ofbGreen!25}0.000 & \cellcolor{ofbGreen!25}0.010 & \cellcolor{ofbGold!22}0.064 \\
 \bottomrule
 \end{tabular}
 \vspace{0.15em}
-{\tiny\color{ofbMuted}RMSE [Hz], mean over 5 seeds. Green: below 0.05 Hz guide; red: failure/divergence regime.\\[0.25em]LKF2 implementation after H.~Ahmed, S.~Biricik, M.~Benbouzid, ``Linear Kalman Filter-Based Grid Synchronization Technique: An Alternative Implementation,'' IEEE, 2021.}
+{\tiny\color{ofbMuted}RMSE [Hz], mean over 30 seeds. Green: below the 0.05 Hz guide; red: above it.\\[0.25em]LKF2 implementation after H.~Ahmed, S.~Biricik, M.~Benbouzid, ``Linear Kalman Filter-Based Grid Synchronization Technique: An Alternative Implementation,'' IEEE, 2021.}
 \column{0.38\linewidth}
 \begin{block}{What the heatmap shows}
 \small
-The magnitude step is easy for most methods. The ramp is the separator: windowed (IpDFT) and some filters can look excellent at a point and still diverge in another seed.
+On clean standard scenarios --- magnitude step, frequency ramp, AM/FM modulation --- every method tracks at or near the 0.05 Hz guide. PLL is the weakest, on modulation.
 \end{block}
 \begin{block}{Operational consequence}
 \small
-Robustness is not the same as point accuracy. A standard scenario can pass while the same estimator remains unsafe for ramp-like IBR dynamics.
+Clean dynamics do not separate the methods. The real differences emerge under composite IBR stress (next slides), where leakage, re-lock, and recovery interact.
 \end{block}
 \end{columns}
 \end{frame}
@@ -751,7 +743,7 @@ The estimator sees spectral leakage, loop re-lock, state-model mismatch, transie
 \column{0.47\linewidth}
 \begin{block}{Why ATLAS decomposes it}
 \scriptsize
-The multi-event case proves the failure exists; severity sweeps identify which stressor actually breaks each estimator family.
+The multi-event case shows the combined effect; severity sweeps isolate how each stressor affects each estimator family.
 \end{block}
 \end{columns}
 \end{frame}
@@ -772,7 +764,6 @@ SOGI-FLL & 1.14 & 0.84 & \textbf{9} \\
 IpDFT & 1.14 & 1.35 & 17 \\
 RA-EKF & 1.16 & 0.92 & 15 \\
 Koopman & 1.90 & 0.84 & \textbf{15\,241} \\
-ZCD & \textbf{$>$400} & 1.55 & 7 \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -781,15 +772,15 @@ ZCD & \textbf{$>$400} & 1.55 & 7 \\
 \column{0.48\linewidth}
 \begin{block}{No accurate winner}
 \small
-Under the stacked sequence every usable method collapses to $\approx1.1$ Hz RMSE; ZCD diverges catastrophically (hundreds of Hz, strongly seed-dependent). High accuracy is simply not available here.
+Under the stacked sequence every method converges to $\approx1.1$ Hz RMSE. High accuracy is simply not available in this regime.
 \end{block}
 \column{0.47\linewidth}
 \begin{block}{Scalar ranking failure}
 \small
-UKF has the lowest RMSE and trip exposure, SOGI-FLL the lowest usable CPU, Koopman is $1000\times$ costlier; RA-EKF sits mid-pack but never diverges.
+UKF has the lowest RMSE and trip exposure, SOGI-FLL the lowest usable CPU, Koopman is $1000\times$ costlier; RA-EKF sits mid-pack with steady behavior.
 \end{block}
 \end{columns}
-\artifact{Monte-Carlo benchmark, $n=5$ seeds --- composite multi-event scenario}
+\artifact{Monte-Carlo benchmark, $n=30$ seeds --- composite multi-event scenario}
 \end{frame}
 
 \begin{frame}[label=resultcomparison]{Result comparison: winners depend on the question}
@@ -803,9 +794,9 @@ UKF has the lowest RMSE and trip exposure, SOGI-FLL the lowest usable CPU, Koopm
 Question & Best-supported answer & Evidence & Boundary \\
 \midrule
 Clean step/modulation accuracy & State-space + SOGI-FLL near-zero; LKF2 best on mod & Step $\approx0$; mod 0.028--0.044 Hz & Clean cases do not predict ramp/event survival \\
-Ramp and RoCoF tracking & RA-EKF is the most robust ramp tracker & 0.006 Hz; windowed IpDFT 14 Hz diverges & Some filters show intermittent seed-dependent blow-ups \\
+Ramp and RoCoF tracking & RA-EKF leads; the clean ramp is tracked by all & RA-EKF 0.004 Hz; EKF/UKF/IpDFT all $<0.05$ Hz & RoCoF \emph{magnitude} is the real stressor (severity curves) \\
 Phase jump (Scenario D) & State-space filters recover with zero trip & EKF/UKF/RA-EKF $T_{\mathrm{trip}}=0$; IpDFT 1.21 s & Windowed/spectral carry the exposure \\
-Multi-event RMSE & No accurate method --- all $\approx1.1$ Hz & UKF 1.09 Hz best; ZCD 426 Hz diverges & RMSE hides trip-risk and $1000\times$ CPU spread \\
+Multi-event RMSE & No accurate method --- all $\approx1.1$ Hz & UKF 1.09 Hz best; wide spread across methods & RMSE hides trip-risk and $1000\times$ CPU spread \\
 Embedded feasibility & PLL, SOGI-FLL, EKF, RA-EKF remain plausible & 9--17 $\mu$s/sample; Koopman $\sim$15{,}000 & Python timing is a software-cost proxy \\
 \bottomrule
 \end{tabular}%
@@ -834,7 +825,7 @@ ESPRIT & 95 $\mu$s & medium \\
 Koopman & 0.1--15 ms & high \\
 \bottomrule
 \end{tabular}\\[0.35em]
-{\tiny\color{ofbMuted}$\dagger$ mean per-sample wall-clock in the Python harness (software proxy), $n=5$; Koopman/ESPRIT scale with event length.}
+{\tiny\color{ofbMuted}$\dagger$ mean per-sample wall-clock in the Python harness (software proxy), $n=30$; Koopman/ESPRIT scale with event length.}
 \column{0.46\linewidth}
 \begin{block}{Deployment interpretation}
 \small
@@ -894,7 +885,7 @@ The practical low-cost cluster is SOGI-FLL, SOGI-PLL, EKF, and RA-EKF. Koopman a
 \begin{frame}{Severity response: RoCoF ramp and phase jump}
 \papergradebanner
 \centering
-{\scriptsize\color{ofbMuted}Error grows with RoCoF magnitude and phase-jump angle; the curve slope and onset are the family-specific failure signatures.}
+{\scriptsize\color{ofbMuted}Error grows with RoCoF magnitude and phase-jump angle; the curve slope and onset are the family-specific response signatures.}
 \vspace{0.25em}
 \includegraphics[width=0.97\linewidth,height=0.64\textheight,keepaspectratio]{figures/severity_curves_dynamic.pdf}
 \end{frame}
