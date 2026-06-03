@@ -85,16 +85,16 @@
       "max_trip_risk_s": 0.0395
     },
     {
-      "estimator": "PI-GRU",
-      "family": "Data-driven",
-      "geom_rmse_hz": 0.0697764598201208,
-      "median_rmse_hz": 0.05702479571646675,
-      "worst_rmse_hz": 0.6786376009577908,
-      "geom_rfe_rms_hz_s": 16.292797481061076,
-      "median_rfe_rms_hz_s": 10.505005891029679,
-      "median_cpu_us": 3509.375,
-      "median_latency_ms": 9.1,
-      "max_trip_risk_s": 0.4076
+      "estimator": "UKF",
+      "family": "Model-based",
+      "geom_rmse_hz": 0.08919717981683653,
+      "median_rmse_hz": 0.1179542510183644,
+      "worst_rmse_hz": 1.5092953342660196,
+      "geom_rfe_rms_hz_s": 6.864363599196587,
+      "median_rfe_rms_hz_s": 5.67805553057509,
+      "median_cpu_us": 11.458333333333334,
+      "median_latency_ms": 0.0,
+      "max_trip_risk_s": 0.4651
     }
   ],
   "dynamic_rfe_top": [
@@ -159,18 +159,6 @@
       "max_trip_risk_s": 0.443
     },
     {
-      "estimator": "PI-GRU",
-      "family": "Data-driven",
-      "geom_rmse_hz": 0.0697764598201208,
-      "median_rmse_hz": 0.05702479571646675,
-      "worst_rmse_hz": 0.6786376009577908,
-      "geom_rfe_rms_hz_s": 16.292797481061076,
-      "median_rfe_rms_hz_s": 10.505005891029679,
-      "median_cpu_us": 3509.375,
-      "median_latency_ms": 9.1,
-      "max_trip_risk_s": 0.4076
-    },
-    {
       "estimator": "Koopman (RK-DPMU)",
       "family": "Data-driven",
       "geom_rmse_hz": 0.0398552170433493,
@@ -193,12 +181,24 @@
       "median_cpu_us": 9.375,
       "median_latency_ms": 33.300000000000004,
       "max_trip_risk_s": 0.4378
+    },
+    {
+      "estimator": "ESPRIT",
+      "family": "Window-based",
+      "geom_rmse_hz": 0.034673841000943575,
+      "median_rmse_hz": 0.03140602077980525,
+      "worst_rmse_hz": 0.3546879753632,
+      "geom_rfe_rms_hz_s": 24.741340387222543,
+      "median_rfe_rms_hz_s": 15.575648575306943,
+      "median_cpu_us": 88.54166666666667,
+      "median_latency_ms": 8.3,
+      "max_trip_risk_s": 0.0963
     }
   ],
   "sources": {
     "rocof": "artifacts\\freq_ramp_rocof_mvp2_all18_representative",
     "frequency_step": "artifacts\\frequency_step_mvp2_all18_representative",
     "harmonics": "artifacts\\atlas-harmonics-fast14-preview-v2",
-    "readiness": "artifacts\\atlas-readiness-smoke"
+    "readiness": "artifacts\\atlas-papergrade-missing-v1"
   }
 }

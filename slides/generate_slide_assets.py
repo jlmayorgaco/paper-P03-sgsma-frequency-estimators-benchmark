@@ -16,7 +16,7 @@ FIG_DIR = SLIDE_DIR / "figures"
 ROCOF_DIR = REPO_ROOT / "artifacts" / "freq_ramp_rocof_mvp2_all18_representative"
 FSTEP_DIR = REPO_ROOT / "artifacts" / "frequency_step_mvp2_all18_representative"
 HARM_DIR = REPO_ROOT / "artifacts" / "atlas-harmonics-fast14-preview-v2"
-READINESS_DIR = REPO_ROOT / "artifacts" / "atlas-readiness-smoke"
+READINESS_DIR = REPO_ROOT / "artifacts" / "atlas-papergrade-missing-v1"
 
 
 FAMILY_COLORS = {

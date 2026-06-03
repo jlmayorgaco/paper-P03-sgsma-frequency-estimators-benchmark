@@ -289,7 +289,10 @@ def plot_cpu_accuracy_pareto() -> None:
     fstep = _read(FSTEP_DIR)
     fstep["stress"] = "Frequency step"
     df = pd.concat([rocof, fstep], ignore_index=True)
-    df = df[df["estimator"] != "PI-GRU"].copy()
+    # Deployment Pareto: show the recommended set only. ZCD/TKEO/RLS/Prony are
+    # non-core baselines (outside the recommended deployment set); their flat or
+    # broken severity response makes the geometric-mean accuracy misleading here.
+    df = df[~df["estimator"].isin(["PI-GRU", "ZCD", "TKEO", "RLS", "Prony"])].copy()
     summary = (
         df.groupby(["estimator", "family"], as_index=False)
         .agg(

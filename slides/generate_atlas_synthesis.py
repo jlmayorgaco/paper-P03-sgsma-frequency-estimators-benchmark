@@ -1,10 +1,14 @@
-"""Two high-value synthesis figures from the paper-grade ATLAS data (n=30, 18 est):
+"""High-value synthesis figures from the paper-grade ATLAS data (n=30).
 
 1) Safe-operating-envelope heatmap: for each estimator x stress family, the
    critical severity where frequency RMSE first crosses the 0.05 Hz guide.
    Greener = survives to higher severity. Source: atlas_critical_thresholds.csv.
 
-2) Scaling-exponent chart: the log-log slope of RMSE vs severity per estimator,
+2) Stability atlas: categorical stable/usable/fragile/invalid status by
+   estimator and stress family. Source: global_metrics_report.csv and
+   atlas_critical_thresholds.csv.
+
+3) Scaling-exponent chart: the log-log slope of RMSE vs severity per estimator,
    averaged over sweeps, with the slope=1 (Cramer-Rao-efficient) reference.
    slope~1 = error grows linearly with stress; slope~0 = saturated/broken;
    slope>1 = super-linear collapse. Source: hypothesis_results.csv.
@@ -16,7 +20,8 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import LinearSegmentedColormap, ListedColormap
+from matplotlib.patches import Patch
 
 REPO = Path(__file__).resolve().parents[1]
 ATLAS = REPO / "artifacts" / "atlas-papergrade-missing-v1"
@@ -60,6 +65,14 @@ def _fmt(v):
     if v >= 1:   return f"{v:.0f}" if v == int(v) else f"{v:.1f}"
     if v >= 0.01: return f"{v:.2f}"
     return f"{v:.0e}"
+
+
+def _to_float(value, default=np.nan):
+    try:
+        out = float(value)
+    except (TypeError, ValueError):
+        return default
+    return out if np.isfinite(out) else default
 
 
 def safe_envelope():
@@ -122,6 +135,133 @@ def safe_envelope():
     print("wrote", FIG / "atlas_safe_envelope.pdf")
 
 
+def stability_atlas():
+    crit_rows = list(csv.DictReader(open(ATLAS / "atlas_critical_thresholds.csv")))
+    global_rows = list(csv.DictReader(open(ATLAS / "global_metrics_report.csv")))
+
+    crit = {}
+    maxlvl = {}
+    for r in crit_rows:
+        sk = r.get("sweep_key", "")
+        est = r.get("estimator", "")
+        c = _to_float(r.get("critical_level"))
+        mx = _to_float(r.get("max_level_tested"))
+        if est and sk:
+            crit[(est, sk)] = c
+        if sk and np.isfinite(mx):
+            maxlvl[sk] = mx
+
+    metrics = {}
+    for r in global_rows:
+        est = r.get("estimator", "")
+        sk = r.get("sweep_key", "")
+        if not est or not sk:
+            continue
+        key = (est, sk)
+        item = metrics.setdefault(
+            key,
+            {"max_rmse": 0.0, "max_invalid": 0.0, "max_bound": 0.0, "has_nonfinite": False},
+        )
+        rmse = _to_float(r.get("m1_rmse_hz_mean"))
+        invalid = _to_float(r.get("m22_invalid_output_rate_mean"), 0.0)
+        bound = max(
+            _to_float(r.get("m31_freq_bound_hit_rate_mean"), 0.0),
+            _to_float(r.get("m32_freq_lower_bound_hit_rate_mean"), 0.0),
+            _to_float(r.get("m33_freq_upper_bound_hit_rate_mean"), 0.0),
+        )
+        if not np.isfinite(rmse):
+            item["has_nonfinite"] = True
+        else:
+            item["max_rmse"] = max(item["max_rmse"], rmse)
+        item["max_invalid"] = max(item["max_invalid"], invalid)
+        item["max_bound"] = max(item["max_bound"], bound)
+
+    ests = [e for e in EST_ORDER if any((e, s[0]) in metrics for s in SWEEPS)]
+    nE, nS = len(ests), len(SWEEPS)
+    Z = np.full((nE, nS), np.nan)
+    labels = [["" for _ in range(nS)] for _ in range(nE)]
+
+    # 0 stable, 1 usable, 2 fragile, 3 invalid/diverged.
+    for i, est in enumerate(ests):
+        for j, (sk, _, _, unit) in enumerate(SWEEPS):
+            m = metrics.get((est, sk))
+            c = crit.get((est, sk), np.nan)
+            mx = maxlvl.get(sk, np.nan)
+            if m is None or not np.isfinite(mx) or mx <= 0:
+                continue
+
+            invalid = (
+                m["has_nonfinite"]
+                or m["max_invalid"] > 0.02
+                or m["max_bound"] > 0.02
+            )
+            if invalid:
+                status = 3
+                word = "invalid"
+                value = "flag"
+            elif m["max_rmse"] <= 0.05:
+                status = 0
+                word = "stable"
+                value = f"{_fmt(mx)}+"
+            else:
+                ratio = c / mx if np.isfinite(c) else 0.0
+                if ratio >= 0.50:
+                    status = 1
+                    word = "usable"
+                else:
+                    status = 2
+                    word = "fragile"
+                value = _fmt(c) if np.isfinite(c) else "early"
+
+            Z[i, j] = status
+            labels[i][j] = f"{word}\n{value}"
+
+    colors = ["#196B24", "#7FB069", "#E97132", "#B23A48"]
+    cmap = ListedColormap(colors)
+    fig, ax = plt.subplots(figsize=(14.5, 7.2))
+    ax.imshow(np.ma.masked_invalid(Z), aspect="auto", cmap=cmap, vmin=0, vmax=3)
+    ax.set_xticks(range(nS))
+    ax.set_xticklabels([s[1] for s in SWEEPS], rotation=24, ha="right")
+    ax.set_yticks(range(nE))
+    ax.set_yticklabels([SHORT.get(e, e) for e in ests])
+    ax.set_title("ATLAS stability atlas: categorical operating-limit view", loc="left", pad=8)
+    ax.set_xlabel("stress family")
+    ax.set_ylabel("estimator")
+    ax.set_xticks(np.arange(-0.5, nS, 1), minor=True)
+    ax.set_yticks(np.arange(-0.5, nE, 1), minor=True)
+    ax.grid(which="minor", color="white", linewidth=1.15)
+    ax.tick_params(which="minor", bottom=False, left=False)
+
+    for i in range(nE):
+        for j in range(nS):
+            text = labels[i][j]
+            if not text:
+                continue
+            color = "white" if Z[i, j] in {0, 3} else "black"
+            ax.text(j, i, text, ha="center", va="center", fontsize=5.8,
+                    color=color, fontweight="bold", linespacing=0.92)
+
+    legend = [
+        Patch(facecolor=colors[0], edgecolor="black", label="stable: RMSE <= 0.05 Hz across tested range"),
+        Patch(facecolor=colors[1], edgecolor="black", label="usable: threshold reached after >=50% of max severity"),
+        Patch(facecolor=colors[2], edgecolor="black", label="fragile: threshold crossed early"),
+        Patch(facecolor=colors[3], edgecolor="black", label="invalid/diverged: non-finite, invalid-rate, or bound-hit flag"),
+    ]
+    ax.legend(handles=legend, loc="upper center", bbox_to_anchor=(0.5, -0.135),
+              ncol=2, frameon=False, fontsize=7.2)
+    fig.text(
+        0.02, 0.012,
+        "Cell value is the first severity where frequency RMSE exceeds 0.05 Hz, in each stress family's units; '+' means the guide was not exceeded. "
+        "ATLAS artifact: 17 canonical estimators plus MUSIC extra; PI-GRU is handled separately.",
+        fontsize=7.3, color="#5B677A", ha="left",
+    )
+    fig.tight_layout(rect=[0.02, 0.085, 0.99, 0.965])
+    for ext in ("pdf", "png"):
+        fig.savefig(FIG / f"atlas_stability_atlas.{ext}", bbox_inches="tight")
+    plt.close(fig)
+    print("wrote", FIG / "atlas_stability_atlas.pdf")
+
+
 def scaling_exponents():
     rows = list(csv.DictReader(open(ATLAS / "hypothesis_results.csv")))
     # sweeps where a log-log slope is physically meaningful (monotone severity)
@@ -168,7 +308,6 @@ def scaling_exponents():
         s.set_linewidth(0.9)
     ax.grid(True, axis="x", color="#c7c7c7", lw=0.5, alpha=0.8); ax.set_axisbelow(True)
     # legend
-    from matplotlib.patches import Patch
     leg = [Patch(fc="#B23A48", ec="black", label="$<0.3$ saturated / broken"),
            Patch(fc="#E97132", ec="black", label="$0.3$--$0.8$ sub-linear"),
            Patch(fc="#196B24", ec="black", label="$\\approx 1$ linear (efficient)"),
@@ -184,4 +323,5 @@ def scaling_exponents():
 
 if __name__ == "__main__":
     safe_envelope()
+    stability_atlas()
     scaling_exponents()
