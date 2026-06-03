@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator
 
+import numpy as np
 import pandas as pd
 
 from analysis.monte_carlo_engine import MonteCarloEngine
@@ -69,6 +70,19 @@ def _load_custom_estimator(spec: CustomEstimatorSelection) -> type:
     return cls
 
 
+def _env_int(name: str, default: int, *, minimum: int = 1) -> int:
+    raw = os.environ.get(name)
+    if raw is None or raw == "":
+        return int(default)
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be an integer, got {raw!r}.") from exc
+    if value < minimum:
+        raise ValueError(f"{name} must be >= {minimum}, got {value}.")
+    return value
+
+
 def _load_tuned_params(config: BenchmarkRunConfig, scenario_name: str, estimator_name: str) -> dict[str, Any]:
     if config.tuned_artifacts_dir is None:
         raise ValueError("tuned_artifacts_dir is required for artifact_tuned parameter policy.")
@@ -81,12 +95,16 @@ def _load_tuned_params(config: BenchmarkRunConfig, scenario_name: str, estimator
         if not path.exists():
             continue
         spec = json.loads(path.read_text(encoding="utf-8"))
-        params = spec.get("params", spec.get("estimator_params", {})) or {}
+        param_key = next((key for key in ("params", "estimator_params", "best_params") if key in spec), None)
+        if param_key is None:
+            raise ValueError(f"Tuned run_spec.json at {path} must contain params, estimator_params, or best_params.")
+        params = spec.get(param_key) or {}
         if not isinstance(params, dict):
             raise ValueError(f"Tuned params in {path} must be a JSON object.")
         params = dict(params)
         params["_openfreqbench_tuned_source"] = str(path)
         params["_openfreqbench_tuned_source_sha256"] = sha256_file(path)
+        params["_openfreqbench_tuned_param_key"] = param_key
         return params
     raise FileNotFoundError(
         "No tuned run_spec.json found for "
@@ -111,6 +129,7 @@ def _params_for_pair(
         tuned_source = {
             "path": tuned.pop("_openfreqbench_tuned_source"),
             "sha256": tuned.pop("_openfreqbench_tuned_source_sha256"),
+            "param_key": tuned.pop("_openfreqbench_tuned_param_key"),
         }
         params.update(tuned)
         source["tuned_artifact"] = tuned_source
@@ -158,6 +177,7 @@ def dry_run_manifest(config: BenchmarkRunConfig) -> dict[str, Any]:
         "estimators": estimator_names,
         "n_runs": config.n_runs,
         "base_seed": config.base_seed,
+        "n_cost_reps": _env_int("BENCHMARK_N_COST_REPS", 20, minimum=1),
         "capture_signals": config.capture_signals,
         "metric_profile": config.metric_profile,
         "metric_include": config.metric_include or list(CANONICAL_METRIC_IDS),
@@ -177,18 +197,26 @@ def _aggregate(raw: pd.DataFrame) -> pd.DataFrame:
             continue
         converted = pd.to_numeric(work[metric], errors="coerce")
         if converted.notna().any():
-            work[metric] = converted
+            numeric = converted.astype(float)
+            work[metric] = numeric.where(np.isfinite(numeric), np.nan)
             metric_cols.append(metric)
     if not metric_cols:
         return pd.DataFrame()
     grouped = work.groupby(["scenario", "estimator", "family"], dropna=False)[metric_cols]
-    agg = grouped.agg(["mean", "std", "median", "min", "max"]).reset_index()
+    agg = grouped.agg(["mean", "std", "median", "min", "max", "count"]).reset_index()
     agg.columns = [
         "_".join(str(part) for part in col if part)
         if isinstance(col, tuple)
         else str(col)
         for col in agg.columns
     ]
+    agg = agg.rename(columns={f"{metric}_count": f"{metric}_n_valid" for metric in metric_cols})
+    sizes = (
+        work.groupby(["scenario", "estimator", "family"], dropna=False)
+        .size()
+        .reset_index(name="n_runs_total")
+    )
+    agg = agg.merge(sizes, on=["scenario", "estimator", "family"], how="left")
     return agg
 
 
@@ -219,6 +247,7 @@ def run_benchmark_config(config: BenchmarkRunConfig, *, dry_run: bool = False) -
             )
     scenarios = scenario_registry()
     estimators = _resolve_estimator_classes(config)
+    n_cost_reps = _env_int("BENCHMARK_N_COST_REPS", 20, minimum=1)
 
     run_root = config.output_dir / config.run_id
     run_root.mkdir(parents=True, exist_ok=True)
@@ -253,6 +282,7 @@ def run_benchmark_config(config: BenchmarkRunConfig, *, dry_run: bool = False) -
                     estimator_params=params,
                     n_runs=config.n_runs,
                     base_seed=config.base_seed,
+                    n_cost_reps=n_cost_reps,
                     capture_signals=config.capture_signals,
                 )
                 result = engine.run()
@@ -281,6 +311,7 @@ def run_benchmark_config(config: BenchmarkRunConfig, *, dry_run: bool = False) -
                     "parameter_source": param_source,
                     "n_runs": config.n_runs,
                     "base_seed": config.base_seed,
+                    "n_cost_reps": n_cost_reps,
                     "metric_profile": CANONICAL_METRIC_PROFILE,
                 }
                 spec_path = out_dir / "run_spec.json"
@@ -320,6 +351,7 @@ def run_benchmark_config(config: BenchmarkRunConfig, *, dry_run: bool = False) -
             "estimator_families": {name: fam for name, (_, _, fam) in estimators.items()},
             "n_mc_runs": config.n_runs,
             "base_seed": config.base_seed,
+            "n_cost_reps": n_cost_reps,
             "capture_signals": config.capture_signals,
             "parameter_policy": config.parameter_policy,
             "tuned_artifacts_dir": str(config.tuned_artifacts_dir) if config.tuned_artifacts_dir else None,

@@ -83,19 +83,31 @@ def validate_canonical_artifacts(root: Path, allow_partial: bool = False) -> Val
     if allow_partial:
         include_scenarios = set(_env_csv("BENCHMARK_INCLUDE_SCENARIOS"))
         include_estimators = set(_env_csv("BENCHMARK_INCLUDE_ESTIMATORS"))
+        exclude_estimators = set(_env_csv("BENCHMARK_EXCLUDE_ESTIMATORS"))
         if include_scenarios:
             expected_scenarios = [s for s in expected_scenarios if s in include_scenarios]
         if include_estimators:
             expected_estimators = [e for e in expected_estimators if e in include_estimators]
+        if exclude_estimators:
+            expected_estimators = [e for e in expected_estimators if e not in exclude_estimators]
 
     required_top_level = [
         "global_metrics_report.csv",
         JSON_REPORT_NAME,
-        f"{FIGURE1_BASENAME}.png",
-        f"{FIGURE1_BASENAME}.pdf",
-        f"{FIGURE2_BASENAME}.png",
-        f"{FIGURE2_BASENAME}.pdf",
     ]
+    if not allow_partial or not (
+        _env_csv("BENCHMARK_INCLUDE_SCENARIOS")
+        or _env_csv("BENCHMARK_INCLUDE_ESTIMATORS")
+        or _env_csv("BENCHMARK_EXCLUDE_ESTIMATORS")
+    ):
+        required_top_level.extend(
+            [
+                f"{FIGURE1_BASENAME}.png",
+                f"{FIGURE1_BASENAME}.pdf",
+                f"{FIGURE2_BASENAME}.png",
+                f"{FIGURE2_BASENAME}.pdf",
+            ]
+        )
 
     missing_top = [name for name in required_top_level if not (root / name).exists()]
     missing_scenarios: list[str] = []

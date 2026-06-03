@@ -311,6 +311,7 @@ class PIDRE_Model(nn.Module):
 
 class PI_GRU_Estimator(BaseFrequencyEstimator):
     name = "PI-GRU"
+    PREFER_VECTORIZED_ENGINE = True
 
     def __init__(
         self,

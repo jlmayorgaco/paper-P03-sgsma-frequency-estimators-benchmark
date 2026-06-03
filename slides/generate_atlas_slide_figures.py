@@ -15,7 +15,7 @@ import pandas as pd
 REPO_ROOT = Path(__file__).resolve().parents[1]
 FIG_DIR = REPO_ROOT / "slides" / "figures"
 ATLAS_DIR = REPO_ROOT / "artifacts" / "atlas-papergrade-missing-v1"
-PHASE_DIR = REPO_ROOT / "artifacts" / "atlas-phase-jump-1-180deg-5deg-all18"
+PHASE_DIR = ATLAS_DIR
 ROCOF_DIR = REPO_ROOT / "artifacts" / "freq_ramp_rocof_mvp2_all18_representative"
 FSTEP_DIR = REPO_ROOT / "artifacts" / "frequency_step_mvp2_all18_representative"
 
@@ -79,8 +79,15 @@ def _read(folder: Path) -> pd.DataFrame:
 
 def _save(fig: plt.Figure, name: str) -> None:
     FIG_DIR.mkdir(parents=True, exist_ok=True)
-    fig.savefig(FIG_DIR / f"{name}.pdf")
-    fig.savefig(FIG_DIR / f"{name}.png", dpi=300)
+    pdf_path = FIG_DIR / f"{name}.pdf"
+    png_path = FIG_DIR / f"{name}.png"
+    for path in (pdf_path, png_path):
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass
+    fig.savefig(pdf_path)
+    fig.savefig(png_path, dpi=300)
     plt.close(fig)
 
 
@@ -128,9 +135,9 @@ def _method_map(
 ) -> None:
     part = df[df["sweep_key"].astype(str) == sweep_key].copy() if "sweep_key" in df else df.copy()
     part = part.dropna(subset=[x_col, "m1_rmse_hz_mean", "estimator"])
+    part_level = part.groupby(["estimator", x_col], as_index=False)["m1_rmse_hz_mean"].max()
     pivot = (
-        part.groupby(["estimator", x_col], as_index=False)["m1_rmse_hz_mean"]
-        .mean()
+        part_level
         .pivot(index="estimator", columns=x_col, values="m1_rmse_hz_mean")
     )
     families = part[["estimator", "family"]].drop_duplicates().set_index("estimator")["family"].to_dict()
@@ -160,7 +167,7 @@ def _method_map(
     fig.text(
         0.025,
         0.018,
-        f"Guide used in slide discussion: {guide_hz:g} Hz RMSE. Gray cells denote unavailable finite values.",
+        f"Reference guide: {guide_hz:g} Hz RMSE. Gray cells denote non-finite (diverged) values.",
         ha="left",
         va="bottom",
         fontsize=10,
@@ -319,15 +326,15 @@ def plot_cpu_accuracy_pareto() -> None:
         "RA-EKF",
     }
     offsets = {
-        "ESPRIT": (5, -16),
+        "ESPRIT": (6, 9),
         "Koopman (RK-DPMU)": (7, 8),
         "TFT": (7, -12),
-        "IPDFT": (6, 6),
-        "SOGI-FLL": (7, -17),
+        "IPDFT": (8, 12),
+        "SOGI-FLL": (-42, -13),
         "SOGI-PLL": (6, 5),
         "ZCD": (6, 5),
-        "Type-3 SOGI-PLL": (6, 6),
-        "TKEO": (-48, 5),
+        "Type-3 SOGI-PLL": (-78, 8),
+        "TKEO": (-34, 9),
         "EKF": (6, 5),
         "RA-EKF": (7, -13),
     }
@@ -341,6 +348,13 @@ def plot_cpu_accuracy_pareto() -> None:
         )
     ax.set_xscale("log")
     ax.set_yscale("log")
+    xvals = summary["median_cpu_us"].to_numpy(dtype=float)
+    yvals = summary["geom_rmse_hz"].to_numpy(dtype=float)
+    xvals = xvals[np.isfinite(xvals) & (xvals > 0)]
+    yvals = yvals[np.isfinite(yvals) & (yvals > 0)]
+    if xvals.size and yvals.size:
+        ax.set_xlim(float(xvals.min()) * 0.72, float(xvals.max()) * 1.95)
+        ax.set_ylim(float(yvals.min()) * 0.55, float(yvals.max()) * 2.15)
     ax.set_xlabel("Median per-sample CPU cost [us] (log scale)")
     ax.set_ylabel("Dynamic RMSE, geometric mean [Hz] (log scale)")
     ax.set_title("Accuracy costs compute: dynamic stress Pareto view", loc="left")

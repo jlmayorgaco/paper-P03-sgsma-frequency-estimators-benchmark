@@ -112,6 +112,15 @@ PAPER_GRADE_MIN_RUNS = 30
 JOURNAL_GRADE_MIN_RUNS = 100
 MIN_LEVELS_PER_SWEEP = 4
 PAPER_READY_POLICIES = {"fixed_policy"}
+PAPER_CLAIM_METRICS = (
+    "m1_rmse_hz",
+    "m3_max_peak_hz",
+    "m5_trip_risk_s",
+    "m9_rfe_max_hz_s",
+    "m10_rfe_rms_hz_s",
+    "m13_cpu_time_us",
+    "m22_invalid_output_rate",
+)
 
 METRIC_COLUMNS = [
     "m1_rmse_hz",
@@ -185,6 +194,43 @@ HIGH_CONTRAST_ESTIMATOR_COLORS = {
     "PI-GRU": "#E7298A",
     "MUSIC": "#7F7F7F",
 }
+
+
+def _json_dumps_stable(payload: Any) -> str:
+    return json.dumps(benchmark._to_builtin(payload), sort_keys=True, ensure_ascii=False)
+
+
+def _source_sha256(obj: Any) -> str | None:
+    try:
+        source = inspect.getsourcefile(obj)
+    except TypeError:
+        source = None
+    if not source:
+        return None
+    path = Path(source)
+    if not path.exists():
+        return None
+    return sha256_file(path)
+
+
+def _atlas_env_snapshot() -> dict[str, str]:
+    prefixes = ("ATLAS_", "BENCHMARK_")
+    keep = {"KMP_DUPLICATE_LIB_OK"}
+    return {
+        key: str(value)
+        for key, value in sorted(os.environ.items())
+        if key.startswith(prefixes) or key in keep
+    }
+
+
+def _scenario_source_fingerprint(scenario_cls: type) -> dict[str, str | None]:
+    mro = getattr(scenario_cls, "__mro__", ())
+    base_cls = mro[1] if len(mro) > 1 else scenario_cls
+    return {
+        "atlas_sweep_py": sha256_file(Path(__file__).resolve()),
+        "scenario_py": _source_sha256(base_cls),
+        "monte_carlo_engine_py": _source_sha256(MonteCarloEngine),
+    }
 
 HIGH_CONTRAST_FALLBACK_COLORS = (
     "#D00000",
@@ -1192,6 +1238,8 @@ def _expand_sweep_keys(requested: list[str]) -> list[str]:
         key = item.strip().lower().replace("-", "_")
         if key == "all":
             expanded.extend(SWEEP_SPECS.keys())
+        elif key in {"required", "paper_required", "paper"}:
+            expanded.extend(REQUIRED_ATLAS_SWEEPS)
         elif key == "core":
             expanded.extend(["magnitude_step", "rocof", "frequency_step"])
         elif key == "p0":
@@ -1427,8 +1475,13 @@ def _frequency_bounds_for_sweep(scenarios: list[AtlasScenario]) -> tuple[float, 
             values.extend([f_nom - peak_dev, f_nom + peak_dev])
         elif sc.sweep_key in {"harmonics", "interharmonics"}:
             values.append(float(params.get("freq_nom_hz", 60.0)))
-        elif sc.sweep_key == "noise_snr":
+        elif sc.sweep_key in {"noise_snr", "noise_nongaussian", "heavy_tail_noise", "impulse_probability"}:
             values.append(float(params.get("freq_hz", 60.0)))
+        elif sc.sweep_key == "mixed_ibr_lhs":
+            f_nom = float(params.get("freq_nom_hz", 60.0))
+            rocof = float(params.get("rocof_hz_s", 0.0))
+            ramp_duration = float(params.get("ramp_duration_s", 0.0))
+            values.extend([f_nom, f_nom + rocof * ramp_duration])
     if not values:
         return None
     margin = _env_float("ATLAS_FREQ_BOUND_MARGIN_HZ", 10.0, minimum=0.0)
@@ -1444,6 +1497,22 @@ def _can_reuse(run_spec_path: Path, summary_csv: Path, expected: dict[str, Any])
         return False
     for key, value in expected.items():
         if spec.get(key) != value:
+            return False
+    try:
+        summary = pd.read_csv(summary_csv)
+    except Exception:
+        return False
+    expected_runs = int(expected.get("n_mc_runs", 0) or 0)
+    if expected_runs > 0 and len(summary) != expected_runs:
+        return False
+    if expected_runs > 0:
+        if "run_idx" not in summary.columns:
+            return False
+        run_idx = pd.to_numeric(summary["run_idx"], errors="coerce")
+        if run_idx.isna().any():
+            return False
+        actual = sorted(int(v) for v in run_idx.astype(int).unique().tolist())
+        if actual != list(range(expected_runs)):
             return False
     return True
 
@@ -1469,7 +1538,11 @@ def _aggregate_summary(summary_df: pd.DataFrame) -> dict[str, Any]:
         if metric not in summary_df.columns:
             continue
         series = pd.to_numeric(summary_df[metric], errors="coerce")
-        valid = series.dropna().to_numpy(dtype=float)
+        raw = series.to_numpy(dtype=float)
+        finite_mask = np.isfinite(raw)
+        valid = raw[finite_mask]
+        row[f"{metric}_n"] = int(len(valid))
+        row[f"{metric}_invalid_n"] = int(len(raw) - len(valid))
         if len(valid) == 0:
             continue
         ci_lo, ci_hi = _bootstrap_ci_mean(valid)
@@ -1480,7 +1553,6 @@ def _aggregate_summary(summary_df: pd.DataFrame) -> dict[str, Any]:
         row[f"{metric}_p95"] = float(np.quantile(valid, 0.95))
         row[f"{metric}_ci95_low"] = ci_lo
         row[f"{metric}_ci95_high"] = ci_hi
-        row[f"{metric}_n"] = int(len(valid))
     return row
 
 
@@ -1987,9 +2059,9 @@ def save_multipage_dashboard(df_global: pd.DataFrame, out_dir: Path) -> Path:
 def _plot_method_map_page(df_global: pd.DataFrame, sweep_key: str) -> plt.Figure:
     spec = SWEEP_SPECS[sweep_key]
     part = df_global[df_global["sweep_key"] == sweep_key].copy()
+    level_metric = part.groupby(["estimator", spec.x_col], as_index=False)["m1_rmse_hz_mean"].max()
     pivot = (
-        part.groupby(["estimator", spec.x_col], as_index=False)["m1_rmse_hz_mean"]
-        .mean()
+        level_metric
         .pivot(index="estimator", columns=spec.x_col, values="m1_rmse_hz_mean")
     )
     families = part[["estimator", "family"]].drop_duplicates().set_index("estimator")["family"].to_dict()
@@ -2020,7 +2092,7 @@ def _plot_method_map_page(df_global: pd.DataFrame, sweep_key: str) -> plt.Figure
     guide = _env_float("ATLAS_LIMIT_RMSE_GUIDE", 0.05, minimum=0.0)
     rows = []
     for est, df_est in part.sort_values(spec.x_col).groupby("estimator", sort=False):
-        reduced = df_est.groupby(spec.x_col, as_index=False)["m1_rmse_hz_mean"].mean().sort_values(spec.x_col)
+        reduced = df_est.groupby(spec.x_col, as_index=False)["m1_rmse_hz_mean"].max().sort_values(spec.x_col)
         fail = reduced[reduced["m1_rmse_hz_mean"] > guide]
         critical = float(fail.iloc[0][spec.x_col]) if not fail.empty else float("nan")
         rows.append((est, families.get(est, ""), critical, float(reduced[spec.x_col].max())))
@@ -2204,8 +2276,11 @@ def save_winner_regions(df_global: pd.DataFrame, out_dir: Path) -> Path:
                 continue
             summary = (
                 band.groupby(["estimator", "family"], as_index=False)
-                .agg(median_rmse_hz=("m1_rmse_hz_mean", "median"))
-                .sort_values("median_rmse_hz")
+                .agg(
+                    median_rmse_hz=("m1_rmse_hz_mean", "median"),
+                    worst_case_rmse_hz=("m1_rmse_hz_mean", "max"),
+                )
+                .sort_values("worst_case_rmse_hz")
             )
             if summary.empty:
                 continue
@@ -2219,6 +2294,8 @@ def save_winner_regions(df_global: pd.DataFrame, out_dir: Path) -> Path:
                 "best_estimator": str(best["estimator"]),
                 "family": str(best["family"]),
                 "median_rmse_hz": float(best["median_rmse_hz"]),
+                "worst_case_rmse_hz": float(best["worst_case_rmse_hz"]),
+                "selection_metric": "worst_case_rmse_hz",
             })
     csv_path = out_dir / WINNER_REGIONS_CSV_NAME
     pd.DataFrame(rows).to_csv(csv_path, index=False)
@@ -2237,7 +2314,7 @@ def save_critical_thresholds(df_global: pd.DataFrame, out_dir: Path) -> Path:
         for estimator, df_est in part.sort_values(spec.x_col).groupby("estimator", sort=False):
             reduced = (
                 df_est.groupby(spec.x_col, as_index=False)["m1_rmse_hz_mean"]
-                .mean()
+                .max()
                 .sort_values(spec.x_col)
             )
             fail = reduced[reduced["m1_rmse_hz_mean"] > guide]
@@ -2320,6 +2397,8 @@ def save_summary_tables(df_global: pd.DataFrame, timing_rows: list[dict[str, Any
         "m1_rmse_hz_ci95_low",
         "m1_rmse_hz_ci95_high",
         "m1_rmse_hz_std",
+        "m1_rmse_hz_n",
+        "m1_rmse_hz_invalid_n",
     ]
     for spec in SWEEP_SPECS.values():
         if spec.x_col in df_global.columns:
@@ -2352,7 +2431,7 @@ def save_hypothesis_results(df_global: pd.DataFrame, out_dir: Path) -> Path:
         spec = SWEEP_SPECS[str(sweep_key)]
         reduced = (
             part.groupby(spec.x_col, as_index=False)["m1_rmse_hz_mean"]
-            .mean()
+            .max()
             .sort_values(spec.x_col)
         )
         x_all = reduced[spec.x_col].to_numpy(dtype=float)
@@ -2387,6 +2466,15 @@ def save_hypothesis_results(df_global: pd.DataFrame, out_dir: Path) -> Path:
                 regime = "nonfinite_or_unstable"
                 slope = float("nan")
                 ratio = float(y[-1] / max(y[0], 1e-12)) if len(y) >= 2 else float("nan")
+        if "m1_rmse_hz_n" in part.columns:
+            valid_run_floor = int(pd.to_numeric(part["m1_rmse_hz_n"], errors="coerce").fillna(0).min())
+        else:
+            valid_run_floor = int(part["n_mc_runs"].median())
+        status = (
+            "diagnostic"
+            if valid_run_floor < PAPER_GRADE_MIN_RUNS or len(x) < MIN_LEVELS_PER_SWEEP
+            else "claimable_with_mc_support"
+        )
         rows.append(
             {
                 "hypothesis_id": f"{sweep_key}_{estimator}_severity_trend",
@@ -2400,7 +2488,8 @@ def save_hypothesis_results(df_global: pd.DataFrame, out_dir: Path) -> Path:
                 "median_rmse_hz": median_rmse_hz if math.isfinite(median_rmse_hz) else "",
                 "rmse_guide_hz": _rmse_guide,
                 "classification": regime,
-                "status": "diagnostic" if int(part["n_mc_runs"].median()) < 30 else "claimable_with_mc_support",
+                "min_valid_rmse_runs": valid_run_floor,
+                "status": status,
             }
         )
     path = out_dir / HYPOTHESIS_CSV_NAME
@@ -2414,6 +2503,42 @@ def _canonical_estimator_set() -> set[str]:
 
 def _issue(severity: str, code: str, message: str) -> dict[str, str]:
     return {"severity": severity, "code": code, "message": message}
+
+
+def _atlas_matrix_gaps(df_global: pd.DataFrame, sweeps: list[str], estimators: list[str]) -> list[str]:
+    canonical_present = sorted(_canonical_estimator_set().intersection(set(estimators)))
+    if not canonical_present:
+        return []
+
+    examples: list[str] = []
+    missing_count = 0
+    for sweep_key in sweeps:
+        spec = SWEEP_SPECS.get(sweep_key)
+        if spec is None or spec.x_col not in df_global.columns:
+            continue
+        expected_directions = (
+            ["pos", "neg"]
+            if spec.directional
+            else list(spec.variants)
+            if spec.variants
+            else ["level"]
+        )
+        part = df_global[df_global["sweep_key"].astype(str) == sweep_key].copy()
+        part["_atlas_level_key"] = pd.to_numeric(part[spec.x_col], errors="coerce").round(12)
+        levels = sorted(v for v in part["_atlas_level_key"].dropna().unique().tolist() if pd.notna(v))
+        for estimator in canonical_present:
+            est_part = part[part["estimator"].astype(str) == estimator]
+            for level in levels:
+                cell = est_part[est_part["_atlas_level_key"] == level]
+                got = set(cell.get("direction", pd.Series(dtype=str)).dropna().astype(str).tolist())
+                missing = [direction for direction in expected_directions if direction not in got]
+                if missing:
+                    missing_count += len(missing)
+                    if len(examples) < 8:
+                        examples.append(f"{sweep_key}/{estimator}/level={float(level):g}/missing={','.join(missing)}")
+    if missing_count == 0:
+        return []
+    return [f"{missing_count} estimator-level-direction cell(s) missing; examples: " + "; ".join(examples)]
 
 
 def build_atlas_readiness_report(df_global: pd.DataFrame, settings: dict[str, Any]) -> dict[str, Any]:
@@ -2444,6 +2569,25 @@ def build_atlas_readiness_report(df_global: pd.DataFrame, settings: dict[str, An
     missing_sweeps = [item for item in REQUIRED_ATLAS_SWEEPS if item not in set(sweeps)]
     missing_estimators = sorted(canonical.difference(estimators))
     extra_estimators = sorted(set(estimators).difference(canonical))
+    metric_coverage: dict[str, dict[str, int]] = {}
+    min_valid_claim_runs = max_runs
+    missing_metric_counts: list[str] = []
+    for metric in PAPER_CLAIM_METRICS:
+        count_col = f"{metric}_n"
+        if count_col not in df_global.columns:
+            missing_metric_counts.append(metric)
+            min_valid_claim_runs = 0
+            continue
+        counts = pd.to_numeric(df_global[count_col], errors="coerce").fillna(0)
+        metric_min = int(counts.min()) if not counts.empty else 0
+        metric_max = int(counts.max()) if not counts.empty else 0
+        metric_coverage[metric] = {
+            "min_valid_runs": metric_min,
+            "max_valid_runs": metric_max,
+            "rows_below_paper_grade": int((counts < PAPER_GRADE_MIN_RUNS).sum()),
+            "rows_below_journal_grade": int((counts < JOURNAL_GRADE_MIN_RUNS).sum()),
+        }
+        min_valid_claim_runs = min(min_valid_claim_runs, metric_min)
 
     if missing_sweeps:
         issues.append(
@@ -2477,6 +2621,44 @@ def build_atlas_readiness_report(df_global: pd.DataFrame, settings: dict[str, An
                 f"Minimum Monte Carlo count is {min_runs}; paper-grade ATLAS requires at least {PAPER_GRADE_MIN_RUNS}.",
             )
         )
+    if missing_metric_counts:
+        issues.append(
+            _issue(
+                "blocker",
+                "missing_claim_metric_counts",
+                "Readiness cannot verify paper claims because metric count columns are missing: "
+                + ", ".join(missing_metric_counts)
+                + ".",
+            )
+        )
+    elif min_valid_claim_runs < PAPER_GRADE_MIN_RUNS:
+        weak = [
+            f"{metric} min={details['min_valid_runs']} rows_below={details['rows_below_paper_grade']}"
+            for metric, details in metric_coverage.items()
+            if details["rows_below_paper_grade"] > 0
+        ]
+        issues.append(
+            _issue(
+                "blocker",
+                "insufficient_valid_metric_runs",
+                f"Minimum finite claim-metric count is {min_valid_claim_runs}; paper-grade ATLAS requires "
+                f"at least {PAPER_GRADE_MIN_RUNS} finite values for each claim metric. "
+                + "; ".join(weak[:6]),
+            )
+        )
+    if "m22_invalid_output_rate_mean" in df_global.columns:
+        invalid_rates = pd.to_numeric(df_global["m22_invalid_output_rate_mean"], errors="coerce").replace(
+            [np.inf, -np.inf], np.nan
+        )
+        max_invalid_rate = float(invalid_rates.max()) if not invalid_rates.dropna().empty else 0.0
+        if max_invalid_rate > 0.0:
+            issues.append(
+                _issue(
+                    "warning",
+                    "invalid_estimator_outputs_present",
+                    f"At least one estimator/scenario produced invalid outputs; max invalid-output rate is {max_invalid_rate:.6g}.",
+                )
+            )
     if len(policies) != 1:
         issues.append(
             _issue(
@@ -2527,6 +2709,16 @@ def build_atlas_readiness_report(df_global: pd.DataFrame, settings: dict[str, An
         else:
             direction_coverage[sweep_key] = sorted(str(item) for item in part["direction"].dropna().astype(str).unique()) if "direction" in part else []
 
+    matrix_gaps = _atlas_matrix_gaps(df_global, sweeps, estimators)
+    if matrix_gaps:
+        issues.append(
+            _issue(
+                "blocker",
+                "incomplete_estimator_level_matrix",
+                matrix_gaps[0],
+            )
+        )
+
     n_cost_reps = int(settings.get("n_cost_reps", 0) or 0)
     if n_cost_reps < 3:
         issues.append(
@@ -2540,7 +2732,7 @@ def build_atlas_readiness_report(df_global: pd.DataFrame, settings: dict[str, An
     has_blockers = any(item["severity"] == "blocker" for item in issues)
     if has_blockers:
         status = "diagnostic"
-    elif min_runs >= JOURNAL_GRADE_MIN_RUNS:
+    elif min_runs >= JOURNAL_GRADE_MIN_RUNS and min_valid_claim_runs >= JOURNAL_GRADE_MIN_RUNS:
         status = "journal_grade"
     else:
         status = "paper_grade"
@@ -2578,6 +2770,8 @@ def build_atlas_readiness_report(df_global: pd.DataFrame, settings: dict[str, An
             "policies": policies,
             "min_n_mc_runs": min_runs,
             "max_n_mc_runs": max_runs,
+            "min_valid_claim_metric_runs": int(min_valid_claim_runs),
+            "claim_metric_coverage": metric_coverage,
             "n_rows": int(len(df_global)),
             "level_counts": level_counts,
             "direction_coverage": direction_coverage,
@@ -2610,6 +2804,7 @@ def write_atlas_readiness_report(df_global: pd.DataFrame, settings: dict[str, An
         f"- Sweeps: {len(summary.get('sweeps_present', []))}/{len(REQUIRED_ATLAS_SWEEPS)}",
         f"- Estimators: {len(summary.get('estimators_present', []))}/{len(_canonical_estimator_set())} canonical",
         f"- Monte Carlo runs: {summary.get('min_n_mc_runs', 0)} min, {summary.get('max_n_mc_runs', 0)} max",
+        f"- Finite claim-metric runs: {summary.get('min_valid_claim_metric_runs', 0)} min",
         f"- Parameter policies: {', '.join(summary.get('policies', [])) or '<missing>'}",
         "",
         "## Issues",
@@ -2707,6 +2902,8 @@ def reproduce_command(settings: dict[str, Any]) -> str:
         f"--n-cost-reps {settings['n_cost_reps']}",
         f"--tune-trials {settings['tune_trials']}",
         f"--tune-eval-runs {settings['tune_eval_runs']}",
+        f"--optuna-seed {settings['optuna_seed']}",
+        f"--optuna-sampler {settings['optuna_sampler_mode']}",
         f"--output-subdir {settings['output_subdir']}",
     ]
     if settings.get("run_id") and settings["run_id"] != settings["output_subdir"]:
@@ -2780,6 +2977,19 @@ def run_atlas(args: argparse.Namespace) -> Path:
     tune_trials = int(args.tune_trials if args.tune_trials is not None else _env_int("ATLAS_TUNE_TRIALS", 0, minimum=0))
     tune_eval_runs = int(args.tune_eval_runs if args.tune_eval_runs is not None else _env_int("ATLAS_TUNE_EVAL_RUNS", 2, minimum=1))
     fixed_eval_runs = _env_int("ATLAS_FIXED_POLICY_EVAL_RUNS_PER_LEVEL", max(1, min(4, tune_eval_runs)), minimum=1)
+    optuna_seed = int(
+        args.optuna_seed
+        if args.optuna_seed is not None
+        else _env_int("ATLAS_OPTUNA_SEED", int(getattr(benchmark, "OPTUNA_SEED", 42)), minimum=0)
+    )
+    optuna_sampler_mode = (
+        args.optuna_sampler
+        or os.getenv("ATLAS_OPTUNA_SAMPLER", str(getattr(benchmark, "OPTUNA_SAMPLER_MODE", "tpe")))
+    ).strip().lower()
+    if optuna_sampler_mode not in {"tpe", "random", "grid"}:
+        raise ValueError("ATLAS_OPTUNA_SAMPLER must be one of: tpe, random, grid.")
+    benchmark.OPTUNA_SEED = int(optuna_seed)
+    benchmark.OPTUNA_SAMPLER_MODE = optuna_sampler_mode
     capture_signals = bool(args.capture_signals or _env_bool("ATLAS_CAPTURE_SIGNALS", False))
     resume = bool(args.resume or _env_bool("ATLAS_RESUME", True))
     run_id = args.run_id or os.getenv("ATLAS_RUN_ID", output_subdir)
@@ -2797,9 +3007,12 @@ def run_atlas(args: argparse.Namespace) -> Path:
         "tune_trials": tune_trials,
         "tune_eval_runs": tune_eval_runs,
         "fixed_policy_eval_runs_per_level": fixed_eval_runs,
+        "optuna_seed": optuna_seed,
+        "optuna_sampler_mode": optuna_sampler_mode,
         "resume": resume,
         "capture_signals": capture_signals,
         "write_small_multiples": _env_bool("ATLAS_WRITE_SMALL_MULTIPLES", False),
+        "env_snapshot": _atlas_env_snapshot(),
     }
     settings["command"] = reproduce_command(settings)
 
@@ -2841,6 +3054,9 @@ def run_atlas(args: argparse.Namespace) -> Path:
         sc_dir = out_dir / sc.scenario_name
         sc_dir.mkdir(parents=True, exist_ok=True)
         frequency_bounds = _frequency_bounds_for_sweep(scenarios_by_sweep[sc.sweep_key])
+        scenario_defaults_json = _json_dumps_stable(sc.scenario_cls.get_default_params())
+        monte_carlo_space_json = _json_dumps_stable(sc.scenario_cls.get_monte_carlo_space())
+        scenario_sources = _scenario_source_fingerprint(sc.scenario_cls)
         print(f"\nScenario {sc.scenario_name} ({sc.signed_value:+g})")
         for est_name, est_cls in estimators.items():
             est_n_mc = _env_int(f"ATLAS_{_env_key_for_estimator(est_name)}_N_MC_RUNS", n_mc_runs, minimum=1)
@@ -2862,6 +3078,14 @@ def run_atlas(args: argparse.Namespace) -> Path:
                 "capture_signals": bool(capture_signals),
                 "tune_trials": int(tune_trials),
                 "tune_eval_runs": int(tune_eval_runs),
+                "frequency_bounds_hz": list(frequency_bounds) if frequency_bounds else None,
+                "scenario_default_params_json": scenario_defaults_json,
+                "monte_carlo_space_json": monte_carlo_space_json,
+                "env_snapshot": settings["env_snapshot"],
+                "source_fingerprint": {
+                    **scenario_sources,
+                    "estimator_py": _source_sha256(est_cls),
+                },
             }
 
             if resume and _can_reuse(run_spec_path, summary_csv, expected):
@@ -2910,10 +3134,11 @@ def run_atlas(args: argparse.Namespace) -> Path:
                 spec_current = {
                     **expected,
                     "family": ESTIMATOR_FAMILIES.get(est_name, "Unknown"),
+                    "params": benchmark._to_builtin(best_params),
+                    "estimator_params": benchmark._to_builtin(best_params),
                     "best_params": benchmark._to_builtin(best_params),
                     "tuning_meta": benchmark._to_builtin(tuning_meta),
                     "timing": timing,
-                    "frequency_bounds_hz": list(frequency_bounds) if frequency_bounds else None,
                 }
                 run_spec_path.write_text(json.dumps(benchmark._to_builtin(spec_current), indent=2, ensure_ascii=False), encoding="utf-8")
 
@@ -3024,7 +3249,6 @@ def run_atlas(args: argparse.Namespace) -> Path:
     trace_path = write_paper_traceability(report_path, trace_path)
     manifest_path = write_manifest(out_dir, scenarios, estimators, settings, artifacts)
     evidence_path = write_evidence_manifest(out_dir, evidence_path, source_report=report_path)
-    manifest_path = write_manifest(out_dir, scenarios, estimators, settings, artifacts)
     artifact_index_path = write_artifact_index(out_dir, artifact_index_path)
 
     elapsed = (time.time() - t0) / 60.0
@@ -3060,9 +3284,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--sweeps",
         default=os.getenv("ATLAS_SWEEPS", "all"),
         help=(
-            "Comma list: all, core, p0, magnitude_step, rocof, frequency_step, "
+            "Comma list: all, paper_required, core, p0, magnitude_step, rocof, frequency_step, "
             "phase_jump_sweep, modulation_am_sweep, modulation_fm_sweep, "
-            "harmonics, interharmonics, noise_snr."
+            "harmonics, interharmonics, noise_snr, noise_nongaussian, heavy_tail_noise, "
+            "impulse_probability, mixed_ibr_lhs."
         ),
     )
     parser.add_argument("--policy", default=os.getenv("ATLAS_POLICY", "default"), help="default, fixed_policy, or oracle/per_scenario_oracle.")
@@ -3071,6 +3296,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--n-cost-reps", type=int, default=None)
     parser.add_argument("--tune-trials", type=int, default=None)
     parser.add_argument("--tune-eval-runs", type=int, default=None)
+    parser.add_argument("--optuna-seed", type=int, default=None)
+    parser.add_argument("--optuna-sampler", default=None, help="tpe, random, or grid.")
     parser.add_argument("--output-subdir", default=None)
     parser.add_argument("--run-id", default=None)
     parser.add_argument("--resume", action="store_true")

@@ -11,7 +11,7 @@ def test_artifact_tuned_policy_loads_run_spec_and_writes_repro_manifest(tmp_path
     spec_dir = tuned_dir / "IEEE_Single_SinWave" / "ZCD"
     spec_dir.mkdir(parents=True)
     (spec_dir / "run_spec.json").write_text(
-        json.dumps({"params": {"nominal_f": 60.0}}),
+        json.dumps({"best_params": {"nominal_f": 60.0}}),
         encoding="utf-8",
     )
     cfg = parse_config(
@@ -53,4 +53,4 @@ def test_artifact_tuned_policy_loads_run_spec_and_writes_repro_manifest(tmp_path
     assert "manifest_sha256" in report["reproducibility"]
     assert run_spec["parameter_source"]["policy"] == "artifact_tuned"
     assert "tuned_artifact" in run_spec["parameter_source"]
-
+    assert run_spec["parameter_source"]["tuned_artifact"]["param_key"] == "best_params"

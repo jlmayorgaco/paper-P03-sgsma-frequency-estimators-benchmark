@@ -99,6 +99,40 @@ def test_validate_tuned_artifacts_reports_missing_pairs(tmp_path) -> None:
     assert result["status"] == "fail"
     assert result["n_expected_pairs"] == 5
     assert result["n_missing_pairs"] == 4
+    assert result["n_invalid_specs"] == 0
+
+
+def test_validate_tuned_artifacts_accepts_best_params_and_rejects_empty_spec(tmp_path) -> None:
+    tuned_dir = tmp_path / "tuned"
+    (tuned_dir / "IEEE_Single_SinWave" / "ZCD").mkdir(parents=True)
+    (tuned_dir / "IEEE_Single_SinWave" / "IPDFT").mkdir(parents=True)
+    (tuned_dir / "IEEE_Single_SinWave" / "ZCD" / "run_spec.json").write_text(
+        json.dumps({"best_params": {}}),
+        encoding="utf-8",
+    )
+    (tuned_dir / "IEEE_Single_SinWave" / "IPDFT" / "run_spec.json").write_text(
+        json.dumps({"tuning_meta": {}}),
+        encoding="utf-8",
+    )
+    cfg = parse_config(
+        {
+            "run": {"id": "validate", "n_runs": 1},
+            "benchmark": {
+                "parameter_policy": "artifact_tuned",
+                "tuned_artifacts_dir": str(tuned_dir),
+                "scenarios": ["IEEE_Single_SinWave"],
+                "estimators": ["ZCD", "IPDFT"],
+            },
+            "metrics": {"profile": "canonical-single-phase-v1"},
+        }
+    )
+
+    result = validate_tuned_artifacts(cfg)
+
+    assert result["status"] == "fail"
+    assert result["n_present_pairs"] == 1
+    assert result["present"][0]["param_key"] == "best_params"
+    assert result["n_invalid_specs"] == 1
 
 
 def test_freeze_artifacts_writes_traceability_and_index(tmp_path) -> None:

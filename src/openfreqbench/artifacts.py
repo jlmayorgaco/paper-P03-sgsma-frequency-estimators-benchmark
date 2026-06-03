@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import importlib
 import json
+import math
 import platform
 import sys
 import zipfile
@@ -302,6 +303,44 @@ def freeze_artifacts(
     }
 
 
+def _summary_csv_path(run_spec_path: Path, scenario: str, estimator: str) -> Path:
+    safe_estimator = estimator.replace("/", "_")
+    return run_spec_path.parent / f"{scenario}__{safe_estimator}_summary.csv"
+
+
+def _fixed_mc_mismatches(summary_path: Path, fixed_params: dict[str, Any]) -> list[str]:
+    if not summary_path.exists() or not fixed_params:
+        return []
+    mismatches: list[str] = []
+    try:
+        with summary_path.open("r", encoding="utf-8", newline="") as fh:
+            reader = csv.DictReader(fh)
+            for row_idx, row in enumerate(reader):
+                for key, expected in fixed_params.items():
+                    if key not in row or row[key] in {None, ""}:
+                        continue
+                    observed_raw = row[key]
+                    try:
+                        observed = float(observed_raw)
+                        expected_float = float(expected)
+                    except (TypeError, ValueError):
+                        if str(observed_raw) != str(expected):
+                            mismatches.append(f"{key}: expected {expected!r}, observed {observed_raw!r}")
+                    else:
+                        if not math.isfinite(observed) or not math.isclose(
+                            observed,
+                            expected_float,
+                            rel_tol=1e-9,
+                            abs_tol=1e-12,
+                        ):
+                            mismatches.append(f"{key}: expected {expected_float:g}, observed {observed:g}")
+                if mismatches or row_idx >= 9:
+                    break
+    except Exception as exc:
+        return [f"summary_csv_unreadable: {exc}"]
+    return mismatches
+
+
 def validate_tuned_artifacts(config: BenchmarkRunConfig) -> dict[str, Any]:
     if config.parameter_policy != "artifact_tuned":
         raise ValueError("Artifact validation requires benchmark.parameter_policy=artifact_tuned.")
@@ -315,6 +354,19 @@ def validate_tuned_artifacts(config: BenchmarkRunConfig) -> dict[str, Any]:
 
     present: list[dict[str, Any]] = []
     missing: list[dict[str, str]] = []
+    invalid_specs: list[dict[str, str]] = []
+    fixed_mc_by_scenario: dict[str, dict[str, Any]] = {}
+    for scenario_name, scenario_cls in known_scenarios.items():
+        try:
+            mc_space = scenario_cls.get_monte_carlo_space()
+        except Exception:
+            mc_space = {}
+        fixed_mc_by_scenario[scenario_name] = {
+            key: spec.get("value")
+            for key, spec in mc_space.items()
+            if isinstance(spec, dict) and spec.get("kind") == "fixed" and "value" in spec
+        }
+
     for scenario in config.scenarios:
         for estimator in [item.name for item in config.estimators]:
             safe = estimator.replace("/", "_")
@@ -326,17 +378,47 @@ def validate_tuned_artifacts(config: BenchmarkRunConfig) -> dict[str, Any]:
             if found is None:
                 missing.append({"scenario": scenario, "estimator": estimator})
                 continue
+            try:
+                spec = json.loads(found.read_text(encoding="utf-8"))
+            except Exception as exc:
+                invalid_specs.append({"scenario": scenario, "estimator": estimator, "reason": f"invalid_json: {exc}"})
+                continue
+            param_key = next((key for key in ("params", "estimator_params", "best_params") if key in spec), None)
+            if param_key is None or not isinstance(spec.get(param_key) or {}, dict):
+                invalid_specs.append(
+                    {
+                        "scenario": scenario,
+                        "estimator": estimator,
+                        "reason": "run_spec must contain params, estimator_params, or best_params as a JSON object",
+                    }
+                )
+                continue
+            fixed_mismatches = _fixed_mc_mismatches(
+                _summary_csv_path(found, scenario, estimator),
+                fixed_mc_by_scenario.get(scenario, {}),
+            )
+            if fixed_mismatches:
+                invalid_specs.append(
+                    {
+                        "scenario": scenario,
+                        "estimator": estimator,
+                        "reason": "summary_csv fixed scenario parameter mismatch: "
+                        + "; ".join(fixed_mismatches[:3]),
+                    }
+                )
+                continue
             present.append(
                 {
                     "scenario": scenario,
                     "estimator": estimator,
                     "run_spec": str(found),
                     "sha256": sha256_file(found),
+                    "param_key": param_key,
                 }
             )
 
     expected_pairs = len(config.scenarios) * len(config.estimators)
-    status = "pass" if not unknown_scenarios and not unknown_estimators and not missing else "fail"
+    status = "pass" if not unknown_scenarios and not unknown_estimators and not missing and not invalid_specs else "fail"
     required_labels = {"LKF", "LKF2", "PI-GRU"}
     configured_labels = {item.name for item in config.estimators}
     missing_required = sorted(required_labels - configured_labels)
@@ -352,9 +434,11 @@ def validate_tuned_artifacts(config: BenchmarkRunConfig) -> dict[str, Any]:
         "n_expected_pairs": expected_pairs,
         "n_present_pairs": len(present),
         "n_missing_pairs": len(missing),
+        "n_invalid_specs": len(invalid_specs),
         "unknown_scenarios": unknown_scenarios,
         "unknown_estimators": unknown_estimators,
         "missing_required_estimators": missing_required,
         "present": present,
         "missing": missing,
+        "invalid_specs": invalid_specs,
     }

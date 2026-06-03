@@ -52,6 +52,10 @@ class MetricSpec:
 def _create_variant(base_cls: type, name_suffix: str, param_overrides: dict[str, Any]) -> type:
     new_name = f"{base_cls.SCENARIO_NAME}_{name_suffix}"
     new_params = {**base_cls.DEFAULT_PARAMS, **param_overrides}
+    new_mc_space = dict(getattr(base_cls, "MONTE_CARLO_SPACE", {}))
+    for key, value in param_overrides.items():
+        if key in new_mc_space:
+            new_mc_space[key] = {"kind": "fixed", "value": value}
     safe_class_suffix = name_suffix.replace(".", "p").replace("-", "m")
     class_name = f"{base_cls.__name__}_{safe_class_suffix}"
     new_cls = type(
@@ -60,6 +64,7 @@ def _create_variant(base_cls: type, name_suffix: str, param_overrides: dict[str,
         {
             "SCENARIO_NAME": new_name,
             "DEFAULT_PARAMS": new_params,
+            "MONTE_CARLO_SPACE": new_mc_space,
             "get_name": classmethod(lambda cls: cls.SCENARIO_NAME),
         },
     )
@@ -164,6 +169,8 @@ METRIC_SPECS: tuple[MetricSpec, ...] = (
     MetricSpec("m31_freq_bound_hit_rate", "Frequency bound hit rate", "ratio", True, "guardrail", "Fraction of outputs clamped to estimator bounds."),
     MetricSpec("m32_freq_lower_bound_hit_rate", "Lower bound hit rate", "ratio", True, "guardrail", "Fraction of outputs clamped to lower frequency bound."),
     MetricSpec("m33_freq_upper_bound_hit_rate", "Upper bound hit rate", "ratio", True, "guardrail", "Fraction of outputs clamped to upper frequency bound."),
+    MetricSpec("m34_p95_error_hz", "p95 error", "Hz", True, "tail", "95th percentile of absolute frequency error."),
+    MetricSpec("m35_p99_error_hz", "p99 error", "Hz", True, "tail", "99th percentile of absolute frequency error."),
 )
 
 METRIC_LABELS: dict[str, str] = {spec.metric_id: spec.label for spec in METRIC_SPECS}

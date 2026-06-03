@@ -239,7 +239,7 @@
       inner xsep=5pt,
       inner ysep=3pt
     ] at (0,0)
-    {ATLAS VALIDATED SWEEP: $n=30$, fixed policy, both signs --- readiness gate passed (9/9 sweeps)};
+    {ATLAS EXTENDED SWEEP: $n=30$, fixed policy, 9/9 sweeps --- Prony stress-corner failures flagged};
   \end{tikzpicture}\par\vspace{-0.10cm}%
 }
 \newcommand{\sectionframe}[3]{%
@@ -261,12 +261,17 @@
 \date{May 25, 2026}
 \newif\ifbackupframes
 \backupframesfalse
+\newif\iforalcompact
+\oralcompacttrue
+\iforalcompact
+\includeonlyframes{title,fieldevents,researchproblem,operatingclaim,technicalcontributions,experimentscale,openfreqbenchplatform,experimentalmethod,fullworkflow,scenariofamilies,estimatorfamilies,metrics,standardresults,compositeibr,resultcomparison,computationalfeasibility,complianceheatmap,atlasseverity,amfminterharmonics,textbookdivergence,wholestressspace,computecost,threefindings,recommendationmap,validationconclusion}
+\fi
 
 \begin{document}
 
 {
 \setbeamertemplate{footline}{}
-\begin{frame}[plain]
+\begin{frame}[plain,label=title]
 \begin{tikzpicture}[remember picture,overlay]
   \node[anchor=center] at (current page.center) {\includegraphics[width=\paperwidth,height=\paperheight]{\sgsmaTitleBg}};
   \node[anchor=west, text=white, align=left, font=\fontsize{18}{23}\selectfont\rmfamily\itshape, text width=0.72\paperwidth] at ([xshift=0.056\paperwidth,yshift=-0.45cm]current page.west) {
@@ -286,7 +291,7 @@
 \section{Motivation}
 \sectionframe{}{Motivation}{Why frequency estimation in low-inertia IBR grids is hard}
 
-\begin{frame}{Field events define the benchmark stress model}
+\begin{frame}[label=fieldevents]{Field events define the benchmark stress model}
 \vspace{-0.35em}
 \begin{center}
 \begin{tikzpicture}[
@@ -390,7 +395,7 @@ Standard synchrophasor outputs summarize the fundamental component; harmonic and
 \end{columns}
 \end{frame}
 
-\begin{frame}{Research problem}
+\begin{frame}[label=researchproblem]{Research problem}
 \begin{columns}[T,onlytextwidth]
 \column{0.55\linewidth}
 \begin{itemize}
@@ -406,7 +411,7 @@ The literature needs a reproducible benchmark that connects estimator error to p
 \end{columns}
 \end{frame}
 
-\begin{frame}{Operating claim}
+\begin{frame}[label=operatingclaim]{Operating claim}
 \begin{columns}[T,onlytextwidth]
 \column{0.53\linewidth}
 \small
@@ -424,7 +429,7 @@ Report error, transient exposure, settling, latency, and cost as separate output
 \end{columns}
 \end{frame}
 
-\begin{frame}{Technical contributions}
+\begin{frame}[label=technicalcontributions]{Technical contributions}
 \vspace{-0.25em}
 \centering
 \begin{tikzpicture}[
@@ -441,7 +446,7 @@ Report error, transient exposure, settling, latency, and cost as separate output
 \node[contrib, fill=ofbBlue!7, draw=ofbBlue] (c1) at (7.15,0.95) {\textbf{1. OpenFreqBench}\\reproducible stress-test platform};
 \node[contrib, fill=ofbGreen!7, draw=ofbGreen] (c2) at (7.15,0.03) {\textbf{2. Metric-complete protocol}\\RMSE, peak error, RoCoF error, $T_{\mathrm{trip}}$, settling, CPU};
 \node[contrib, fill=ofbRust!8, draw=ofbRust] (c3) at (7.15,-0.89) {\textbf{3. IBR failure evidence}\\standard cases miss composite IBR failures};
-\node[contrib, fill=ofbViolet!8, draw=ofbViolet] (c4) at (7.15,-1.81) {\textbf{4. RA-EKF variant tested}\\explicit $\dot\omega$ state and event-gated adaptation};
+\node[contrib, fill=ofbViolet!8, draw=ofbViolet] (c4) at (7.15,-1.81) {\textbf{4. Extensible estimator contract}\\new methods enter the same scoring workflow};
 \draw[arr] (s0.east) -- (c1.west);
 \draw[arr] ([xshift=0.05cm]c1.south) -- ([xshift=0.05cm]c2.north);
 \draw[arr] ([xshift=0.05cm]c2.south) -- ([xshift=0.05cm]c3.north);
@@ -452,7 +457,7 @@ Report error, transient exposure, settling, latency, and cost as separate output
 \end{tikzpicture}
 \end{frame}
 
-\begin{frame}{Experiment scale}
+\begin{frame}[label=experimentscale]{Experiment scale}
 \vspace{-0.18em}
 \begin{tikzpicture}[
   every node/.style={font=\scriptsize},
@@ -601,7 +606,7 @@ An estimator can pass standard cases and still fail a composite IBR event; it ca
 \end{columns}
 \end{frame}
 
-\begin{frame}{OpenFreqBench platform}
+\begin{frame}[label=openfreqbenchplatform]{OpenFreqBench platform}
 \vspace{-0.25em}
 \begin{center}
 \begin{tikzpicture}[
@@ -651,7 +656,7 @@ Benchmark reports, metric tables, plots, manifests, and readiness gates.
 \section{Method}
 \sectionframe{}{Experimental method}{Same truth, same metrics, fair tuning}
 
-\begin{frame}{Experimental method}
+\begin{frame}[label=experimentalmethod]{Experimental method}
 \vspace{-0.35em}
 \centering
 \resizebox{0.98\linewidth}{!}{%
@@ -693,7 +698,7 @@ Benchmark reports, metric tables, plots, manifests, and readiness gates.
 \artifact{Methodology and test framework}
 \end{frame}
 
-\begin{frame}{Full benchmark workflow}
+\begin{frame}[label=fullworkflow]{Full benchmark workflow}
 \centering
 \vspace{-0.35em}
 \resizebox{0.985\textwidth}{!}{%
@@ -866,7 +871,7 @@ Benchmark reports, metric tables, plots, manifests, and readiness gates.
 \resultclaim{ofbRed}{Voltage on top, true frequency below: the estimator must recover through nonstationary segments, not just report low steady-state error after the event.}
 \end{frame}
 
-\begin{frame}{Scenario families: distortion, leakage, and low SNR}
+\begin{frame}[label=scenariofamilies]{Scenario families: distortion, leakage, and low SNR}
 \vspace{-0.18em}
 \begin{columns}[T,onlytextwidth]
 \column{0.49\linewidth}
@@ -911,7 +916,7 @@ In these cases $f_{\mathrm{true}}(t)$ can remain nominal. Any frequency excursio
 \end{columns}
 \end{frame}
 
-\begin{frame}{Estimator families}
+\begin{frame}[label=estimatorfamilies]{Estimator families}
 \begin{columns}[T,onlytextwidth]
 \column{0.30\linewidth}
 \begin{block}{Loop-based}
@@ -945,7 +950,7 @@ These families occupy different latency and stress-sensitivity positions. The co
 {\scriptsize\color{ofbMuted}LKF and LKF2 follow H.~Ahmed, S.~Biricik, M.~Benbouzid, ``Linear Kalman Filter-Based Grid Synchronization Technique: An Alternative Implementation,'' IEEE, 2021.}
 \end{frame}
 
-\begin{frame}{Metrics and decision variables}
+\begin{frame}[label=metrics]{Metrics and decision variables}
 \small
 \begin{columns}[T,onlytextwidth]
 \column{0.48\linewidth}
@@ -980,7 +985,7 @@ C_{\mathrm{CPU}}=\mathrm{mean\ time/sample}
 \section{Core evidence}
 \sectionframe{}{Core evidence}{From standard cases to composite IBR stress}
 
-\begin{frame}{Standard scenario results}
+\begin{frame}[label=standardresults]{Standard scenario results}
 \begin{columns}[T,onlytextwidth]
 \column{0.58\linewidth}
 \scriptsize
@@ -1047,7 +1052,7 @@ Robustness is not the same as point accuracy. A standard scenario can pass while
 \resultclaim{ofbGreen}{The clean jump does not expose RA-EKF's main advantage. It shows which estimator families carry memory through discontinuities.}
 \end{frame}
 
-\begin{frame}{Composite IBR sequence: why it is hardest}
+\begin{frame}[label=compositeibr]{Composite IBR sequence: why it is hardest}
 \vspace{-0.2em}
 \begin{center}
 \begin{tikzpicture}[
@@ -1180,7 +1185,7 @@ UKF has the lowest RMSE and trip exposure, SOGI-FLL the lowest usable CPU, Koopm
 \resultclaim{ofbBlue}{Black is the true frequency, red is each estimator on the power-imbalance ringdown. Robust methods (RA-EKF, SOGI-FLL) follow the damped 59--61 Hz swing; fragile ones (ZCD) overshoot or run away.}
 \end{frame}
 
-\begin{frame}{Result comparison: winners depend on the question}
+\begin{frame}[label=resultcomparison]{Result comparison: winners depend on the question}
 \scriptsize
 \setlength{\tabcolsep}{5pt}
 \renewcommand{\arraystretch}{1.16}
@@ -1203,7 +1208,7 @@ Embedded feasibility & PLL, SOGI-FLL, EKF, RA-EKF remain plausible & 9--17 $\mu$
 \callout{Selection changes with event family, objective metric, and compute envelope. A single leaderboard hides the deployment trade-off.}
 \end{frame}
 
-\begin{frame}{Computational feasibility}
+\begin{frame}[label=computationalfeasibility]{Computational feasibility}
 \scriptsize
 \setlength{\tabcolsep}{5pt}
 \renewcommand{\arraystretch}{1.12}
@@ -1273,7 +1278,7 @@ The practical low-cost cluster is SOGI-FLL, SOGI-PLL, EKF, and RA-EKF. Koopman a
 \end{columns}
 \end{frame}
 
-\begin{frame}{Compliance heatmap: why standard tests are insufficient}
+\begin{frame}[label=complianceheatmap]{Compliance heatmap: why standard tests are insufficient}
 \scriptsize
 \setlength{\tabcolsep}{5pt}
 \renewcommand{\arraystretch}{1.08}
@@ -1383,7 +1388,7 @@ IBR multi-event & 1 & PLL & 173.5 $\pm$ 66.7 mHz & IpDFT: 0.0439 s \\
 \artifact{SGSMA benchmark matrix, Table II}
 \end{frame}
 
-\begin{frame}{ATLAS severity analysis}
+\begin{frame}[label=atlasseverity]{ATLAS severity analysis}
 \papergradebanner
 \begin{center}
 \begin{tikzpicture}[
@@ -1476,7 +1481,7 @@ Broadband noise & $\sigma=0.1$ pu & 0 & Noise robustness is a first-class stress
 \resultclaim{ofbGreen}{Each cell is the severity at which frequency RMSE first exceeds 0.05 Hz, in that family's own units ($+$ = never exceeded). This is a deployable map of operating limits, not a single ranking.}
 \end{frame}
 
-\begin{frame}{AM, FM, and interharmonics split the story}
+\begin{frame}[label=amfminterharmonics]{AM, FM, and interharmonics split the story}
 \papergradebanner
 \begin{columns}[T,onlytextwidth]
 \column{0.55\linewidth}
@@ -1504,7 +1509,7 @@ A composite IBR trace can contain AM, FM, harmonics, interharmonics, noise, and 
 \end{columns}
 \end{frame}
 
-\begin{frame}{When the textbook filter diverges}
+\begin{frame}[label=textbookdivergence]{When the textbook filter diverges}
 \extendedresultsbanner
 \scriptsize
 Per-seed frequency RMSE [Hz] on the IEEE frequency-ramp scenario (5 Monte Carlo seeds):
@@ -1565,7 +1570,7 @@ For these estimators, a $+$RoCoF-only test can certify behavior that does not ho
 \includegraphics[width=0.98\linewidth]{figures/phase_jump_method_map_wide.pdf}
 \end{frame}
 
-\begin{frame}{No estimator owns the whole stress space}
+\begin{frame}[label=wholestressspace]{No estimator owns the whole stress space}
 \papergradebanner
 \centering
 {\scriptsize\color{ofbMuted}RoCoF winners move by regime: Koopman at low stress, ESPRIT through the standard/IBR band, SOGI-PLL at severe RoCoF.}
@@ -1684,7 +1689,7 @@ ZCD is elegant at clean high-SNR crossings, but deep sags convert amplitude loss
 \includegraphics[width=0.92\linewidth,height=0.55\textheight,keepaspectratio]{figures/harmonics_family_deterioration_wide.pdf}
 \end{frame}
 
-\begin{frame}{Accuracy costs 100--1000$\times$ more compute}
+\begin{frame}[label=computecost]{Accuracy costs 100--1000$\times$ more compute}
 \extendedresultsbanner
 \centering
 {\scriptsize\color{ofbMuted}Deployable methods sit lower-left; spectral/data-driven accuracy moves right by $100$--$1000\times$ CPU.}
@@ -1695,7 +1700,7 @@ ZCD is elegant at clean high-SNR crossings, but deep sags convert amplitude loss
 \section{Deployment}
 \sectionframe{}{Findings \& deployment}{What to deploy --- and what comes next}
 
-\begin{frame}{Three findings}
+\begin{frame}[label=threefindings]{Three findings}
 \vspace{0.15em}
 \begin{columns}[T,onlytextwidth]
 \column{0.32\linewidth}
@@ -1736,7 +1741,7 @@ ZCD is elegant at clean high-SNR crossings, but deep sags convert amplitude loss
 \callout{These limits define the validation path: broader event coverage, hardware timing, fixed-policy replication, and field replay.}
 \end{frame}
 
-\begin{frame}{Recommendation map}
+\begin{frame}[label=recommendationmap]{Recommendation map}
 \begin{center}
 \begin{tikzpicture}[
   every node/.style={font=\scriptsize},
@@ -1898,7 +1903,7 @@ $\tilde C_s,\tilde L_s$ & compute and latency penalties
 }
 \end{frame}
 
-\begin{frame}{Validation agenda and conclusion}
+\begin{frame}[label=validationconclusion]{Validation agenda and conclusion}
 \begin{columns}[T,onlytextwidth]
 \column{0.49\linewidth}
 \begin{block}{Conclusion}
@@ -2053,9 +2058,9 @@ M22 invalid rate & fraction of samples the estimator flags invalid / NaN. \\
 \begin{frame}{Backup: ATLAS replication ladder}
 \begin{columns}[T,onlytextwidth]
 \column{0.50\linewidth}
-\begin{block}{Completed --- validated $n=30$}
+\begin{block}{Completed --- extended $n=30$ sweep}
 \scriptsize
-$n=30$, fixed policy, both signs, \textbf{9/9} required sweeps; \textbf{18-estimator} canonical set incl.\ MUSIC (PI-GRU experimental, GPU-bound, separate sweep). Readiness gate: \texttt{status=paper\_grade}, \texttt{scope=full\_atlas}.
+$n=30$, fixed policy, both signs, \textbf{9/9} required sweeps; \textbf{18-estimator} canonical set incl.\ MUSIC (PI-GRU experimental, GPU-bound, separate sweep). Current audit: \texttt{status=diagnostic}; Prony has non-finite outputs in selected stress-corner cells.
 \end{block}
 \begin{block}{Next --- $n\ge100$ replication}
 \scriptsize
@@ -2064,14 +2069,14 @@ $n=30$, fixed policy, both signs, \textbf{9/9} required sweeps; \textbf{18-estim
 \column{0.46\linewidth}
 \scriptsize
 \begin{itemize}
-  \item Validated $n=30$ campaign: \textbf{done} (readiness gate passed).
+  \item $n=30$ ATLAS campaign: \textbf{done}; readiness gate flags Prony stress-corner finite-coverage failures.
   \item The $n\ge100$ replication layer adds archived seeds, manifests, and hashes.
   \item MUSIC and ESPRIT are now in the canonical set; only PI-GRU (GPU-bound) remains a separate experimental sweep.
   \item Every table and figure regenerates from artifacts.
 \end{itemize}
 \end{columns}
 \vspace{0.2em}
-\callout{The validated $n=30$ ATLAS run is complete (18 estimators); the $n\ge100$ replication run and the GPU-bound PI-GRU sweep are the remaining steps.}
+\callout{The $n=30$ ATLAS run is complete as an extended stress map; final qualification needs Prony stress-cell remediation or explicit exclusion criteria, plus the $n\ge100$ replication layer.}
 \artifact{docs/ATLAS\_PIPELINE.md; docs/ATLAS\_ROADMAP.md}
 \end{frame}
 
@@ -2814,7 +2819,7 @@ A single leaderboard would hide deployment constraints that matter in grid instr
 \end{center}
 \vspace{0.35em}
 \begin{itemize}
-  \item ZCD is the strongest method under isolated integer-harmonic stress at low THD, but the validated $n=30$ sweep shows it collapses to tens of Hz above $\sim$20\% THD.
+  \item ZCD is the strongest method under isolated integer-harmonic stress at low THD, but the extended $n=30$ sweep shows it collapses to tens of Hz above $\sim$20\% THD.
   \item Generalization to interharmonics, noise, IBR-rich events, or mixed disturbances requires additional runs.
   \item RA-EKF, TFT, EKF, SOGI-PLL, and UKF remain secondary candidates for harmonic stress.
   \item Low slope must be read with baseline RMSE; both values are needed.
@@ -2913,7 +2918,7 @@ Why scenario-wise tuning? & It estimates best-in-range behavior under the tested
 How is this different from IEC/IEEE compliance? & Compliance tests define device-level requirements. This study compares estimator algorithms under known truth, IBR-specific stress, trip-risk, and CPU cost. \\
 Why Python CPU times? & CPU reports relative software cost. Embedded or FPGA timing requires implementation-specific replication. \\
 What should be deployed? & For FFR and phase-jump anti-islanding, RA-EKF is the strongest benchmark-backed recommendation; PLL/EKF remain low-cost baselines; IpDFT/TFT are useful where observation delay is acceptable. \\
-How reliable are the ATLAS sweeps? & Validated $n=30$: fixed policy, both signs, 9/9 required sweeps, 18 estimators. The $n\ge100$ replication and the GPU-bound PI-GRU sweep remain. \\
+How reliable are the ATLAS sweeps? & Extended $n=30$: fixed policy, both signs, 9/9 required sweeps, 18 estimators. Current audit is diagnostic because Prony has non-finite stress-corner outputs; the $n\ge100$ replication and GPU-bound PI-GRU sweep remain. \\
 Does this explain any blackout? & No. Field events define the stress modes; no prevention claim is made. \\
 \bottomrule
 \end{tabular}
