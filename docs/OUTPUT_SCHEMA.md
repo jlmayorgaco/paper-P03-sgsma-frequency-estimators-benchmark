@@ -26,6 +26,14 @@ single-phase benchmark replay under `canonical-single-phase-v1`.
 
 ## Schema commands
 
+Runtime validity fields in `raw_run_records.csv` and `aggregated_metrics.csv`
+include:
+
+- `m21_startup_valid_samples`: first finite output sample.
+- `m22_invalid_output_rate`: total invalid-output fraction, including startup.
+- `m36_post_startup_invalid_rate`: invalid-output fraction after the first finite
+  output.
+
 ```bash
 openfreqbench schema --name benchmark-report
 openfreqbench schema --name manifest

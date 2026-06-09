@@ -60,9 +60,10 @@ def test_aggregate_filters_nonfinite_values_and_reports_valid_count() -> None:
     assert row["n_runs_total"] == 3
 
 
-def test_canonical_metric_profile_includes_tail_error_metrics() -> None:
+def test_canonical_metric_profile_includes_tail_and_post_startup_metrics() -> None:
     assert "m34_p95_error_hz" in CANONICAL_METRIC_IDS
     assert "m35_p99_error_hz" in CANONICAL_METRIC_IDS
+    assert "m36_post_startup_invalid_rate" in CANONICAL_METRIC_IDS
 
 
 def test_vectorized_preference_bypasses_standardized_step_loop() -> None:

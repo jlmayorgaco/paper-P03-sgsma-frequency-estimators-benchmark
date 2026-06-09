@@ -150,7 +150,7 @@ class Prony_Estimator(BaseFrequencyEstimator):
         )
 
     def structural_latency_samples(self) -> int:
-        return self.window_size
+        return int(math.ceil(self.window_size / self.execution_stride) * self.execution_stride)
 
     def step(self, z: float) -> float:
         return float(self.step_vectorized(np.array([z], dtype=np.float64))[0])

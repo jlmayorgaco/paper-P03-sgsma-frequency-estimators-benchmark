@@ -65,9 +65,16 @@ Core metrics:
 - `m13_cpu_time_us`: repeated process-time CPU cost per sample
 - `m14_struct_latency_ms`: declared structural latency in milliseconds
 - `m18` to `m23`: standardized runtime and memory proxy metrics
+- `m36_post_startup_invalid_rate`: invalid-output fraction after the first finite
+  estimator output
 
 The baseline warm-up/evaluation trim is handled in `analysis.metrics` and is
 part of the profile. Changing it requires a new metric profile.
+
+Windowed estimators may return `NaN` before their declared structural latency.
+Those startup invalids are counted in `m22_invalid_output_rate`, but paper
+failure interpretation must use `m36_post_startup_invalid_rate` together with
+`m21_startup_valid_samples`. See `docs/PHASE2D_WINDOWED_ESTIMATOR_POLICY.md`.
 
 ## Parameter Policies
 
@@ -97,4 +104,3 @@ correction. Future tests must be added in code, documented here, and tested.
   artifact hashes.
 - Differences below timing or sampling resolution should not be overinterpreted.
 - PI-GRU claims must include checkpoint checksum and torch version.
-

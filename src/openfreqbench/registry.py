@@ -171,6 +171,14 @@ METRIC_SPECS: tuple[MetricSpec, ...] = (
     MetricSpec("m33_freq_upper_bound_hit_rate", "Upper bound hit rate", "ratio", True, "guardrail", "Fraction of outputs clamped to upper frequency bound."),
     MetricSpec("m34_p95_error_hz", "p95 error", "Hz", True, "tail", "95th percentile of absolute frequency error."),
     MetricSpec("m35_p99_error_hz", "p99 error", "Hz", True, "tail", "99th percentile of absolute frequency error."),
+    MetricSpec(
+        "m36_post_startup_invalid_rate",
+        "Post-startup invalid output rate",
+        "ratio",
+        True,
+        "runtime",
+        "Fraction of invalid estimator outputs after the first finite valid output.",
+    ),
 )
 
 METRIC_LABELS: dict[str, str] = {spec.metric_id: spec.label for spec in METRIC_SPECS}

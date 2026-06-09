@@ -53,6 +53,8 @@ metrics:
     - m7_pcb_hz
     - m13_cpu_time_us
     - m14_struct_latency_ms
+    - m21_startup_valid_samples
     - m22_invalid_output_rate
+    - m36_post_startup_invalid_rate
     - m34_p95_error_hz
     - m35_p99_error_hz

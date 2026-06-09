@@ -126,14 +126,15 @@ Completed:
 - Phase 1 integration run;
 - IPDFT/LKF/LKF2 numerical-debt closure;
 - Phase 2-C paper-grade preview bundle.
+- Phase 2-D invalid-output/startup policy for Prony, ESPRIT, and Koopman.
 
 Next:
 
-1. Define invalid-output/startup policy for Prony, ESPRIT, and Koopman.
-2. Decide whether window/exotic estimators stay in the main comparison or move to a diagnostic
-   appendix.
-3. Rerun `phase2-paper-grade-preview` with log capture and a longer execution timeout.
-4. Only then widen to 30-seed paper-grade evidence.
+1. Rerun `phase2-paper-grade-preview` with log capture, `m36_post_startup_invalid_rate`, and
+   a longer execution timeout.
+2. Apply the Phase 2-D classification: Prony pairs with `m36 > 0` or non-finite accuracy move
+   to diagnostic appendix; ESPRIT/Koopman remain main only where `m36 == 0`.
+3. Only then widen to 30-seed paper-grade evidence.
 
 ## Venue notes checked on 2026-06-08
 

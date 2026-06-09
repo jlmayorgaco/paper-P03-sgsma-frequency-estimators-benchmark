@@ -68,15 +68,19 @@ Observed preview risks:
 - IPDFT remains valid, but large phase-jump peak errors should be treated as structural
   transient behavior and reported separately from steady-state error.
 
-## Phase 2-D handoff
+## Phase 2-D resolution
 
-Before final paper-grade runs:
+Phase 2-D is now defined in `docs/PHASE2D_WINDOWED_ESTIMATOR_POLICY.md`.
 
-1. define an invalid-output/startup policy for Prony, ESPRIT, and Koopman;
-2. decide whether Prony/ESPRIT/Koopman stay in the main comparison or move to a diagnostic
-   appendix;
-3. keep LKF/LKF2 in the canonical set only if the final policy accepts their severe-IBR
-   performance envelope;
-4. rerun the preview with log capture and a longer execution timeout before using it as
-   archival evidence;
-5. only then widen toward `journal-paper-replay-v2` scale.
+The core decision is:
+
+1. `m22_invalid_output_rate` includes expected startup invalids and is not sufficient by
+   itself to disqualify a windowed estimator;
+2. `m36_post_startup_invalid_rate` is the invalid-output failure metric;
+3. Prony scenario-estimator pairs with `m36 > 0` or non-finite accuracy metrics move to a
+   diagnostic appendix and must be excluded from main aggregate rankings;
+4. ESPRIT and Koopman may stay in the main comparison when `m36 == 0`, with high severe-IBR
+   RMSE interpreted as performance weakness rather than invalid-output failure.
+
+Before final paper-grade runs, rerun this preview with log capture and a longer execution
+timeout so the artifact bundle includes `m36`.

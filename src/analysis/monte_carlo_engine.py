@@ -329,6 +329,7 @@ class MonteCarloEngine:
             row["m21_startup_valid_samples"] = int(rt.get("startup_valid_samples", 0))
             row["m22_invalid_output_rate"] = round(float(rt.get("invalid_output_rate", 0.0)), 6)
             row["m23_memory_key_count"] = int(rt.get("memory_key_count", 0))
+            row["m36_post_startup_invalid_rate"] = round(float(rt.get("post_startup_invalid_rate", 0.0)), 6)
 
         if signal_dict is not None:
             signal_df = pd.DataFrame(signal_dict)
