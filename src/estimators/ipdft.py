@@ -116,6 +116,7 @@ class IPDFT_Estimator(BaseFrequencyEstimator):
         nominal_f: float = 60.0,
         cycles: float = 2.0,
         decim: int = 1,
+        dt: float = DT_DSP,
         window: str = "hann",
         f_min_hz: float = 40.0,
         f_max_hz: float = 90.0,
@@ -126,6 +127,9 @@ class IPDFT_Estimator(BaseFrequencyEstimator):
         self.nominal_f = float(nominal_f)
         self.cycles = float(cycles)
         self.decim = max(1, int(decim))
+        self.dt = float(dt)
+        if self.dt <= 0.0:
+            raise ValueError("dt must be positive.")
         self.window = str(window).lower()
         self.f_min_hz = float(f_min_hz)
         self.f_max_hz = float(f_max_hz)
@@ -134,7 +138,6 @@ class IPDFT_Estimator(BaseFrequencyEstimator):
         self.delta_limit_bins = float(delta_limit_bins)
         self.output_smoothing = float(output_smoothing)
         self.verbose = bool(verbose)
-        self.dt = DT_DSP 
         
         self._update_internals()
         self.reset()
@@ -186,6 +189,7 @@ class IPDFT_Estimator(BaseFrequencyEstimator):
             "nominal_f": 60.0,
             "cycles": 2.0,
             "decim": 1,
+            "dt": DT_DSP,
             "window": "hann",
             "f_min_hz": 40.0,
             "f_max_hz": 90.0,
@@ -200,6 +204,7 @@ class IPDFT_Estimator(BaseFrequencyEstimator):
             f"f_nom={params.get('nominal_f', 60.0)}Hz, "
             f"Cycles={params.get('cycles', 2.0)}, "
             f"decim={params.get('decim', 1)}, "
+            f"dt={params.get('dt', DT_DSP)}, "
             f"window={params.get('window', 'hann')}"
         )
 

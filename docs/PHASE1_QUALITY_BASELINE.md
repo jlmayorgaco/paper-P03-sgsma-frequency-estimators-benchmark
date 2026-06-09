@@ -54,11 +54,14 @@ they are used as release-critical evidence.
 These tests are marked `known_numerical_debt` and `xfail(strict=True)`. They still run; if the
 behavior is fixed, pytest will report an unexpected pass and force removal from this list.
 
-- `tests/estimators/ipdft/test_ipdft.py::test_ipdft_off_nominal_interpolation`
-- `tests/estimators/ipdft/test_ipdft.py::test_ipdft_structural_latency`
 - `tests/estimators/lkf/test_lkf.py::test_lkf_nominal_pure_sine`
 - `tests/estimators/lkf/test_lkf.py::test_lkf_robustness_to_noise`
 - `tests/estimators/lkf2/test_lkf2.py::test_lkf2_step_tracking`
+
+Resolved in Phase 2:
+
+- `tests/estimators/ipdft/test_ipdft.py::test_ipdft_off_nominal_interpolation`
+- `tests/estimators/ipdft/test_ipdft.py::test_ipdft_structural_latency`
 
 ## Exit criteria
 
@@ -74,7 +77,6 @@ Phase 1 is complete when:
 
 Phase 2 should repair estimator behavior rather than widen the benchmark:
 
-1. resolve IPDFT off-nominal interpolation and latency-unit contract;
-2. retune or redefine LKF/LKF2 acceptance thresholds;
-3. decide whether LKF-family estimators are canonical or diagnostic;
-4. add a `phase2-paper-grade-preview.yaml` only after the numerical debt is closed.
+1. retune or redefine LKF/LKF2 acceptance thresholds;
+2. decide whether LKF-family estimators are canonical or diagnostic;
+3. add a `phase2-paper-grade-preview.yaml` only after the numerical debt is closed.

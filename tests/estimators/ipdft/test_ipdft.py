@@ -1,7 +1,6 @@
 import sys
 from pathlib import Path
 import numpy as np
-import pytest
 
 # Rutas
 ROOT = Path(__file__).resolve().parents[3]
@@ -18,18 +17,13 @@ def test_ipdft_nominal_tracking():
     t = np.arange(0, 0.1, 1/fs_phys)
     v = np.sin(2 * np.pi * 50.0 * t) 
     
-    estimator = IPDFT_Estimator(nominal_f=50.0, cycles=2.0, decim=100)
+    estimator = IPDFT_Estimator(nominal_f=50.0, cycles=2.0, decim=100, dt=1 / fs_phys)
     f_est = estimator.step_vectorized(v)
     
     f_clean = f_est[t > 0.05]
     # Relajamos a 0.01 Hz, lo cual sigue siendo precisión de grado protección
     assert np.allclose(f_clean, 50.0, atol=1e-2)
 
-@pytest.mark.known_numerical_debt
-@pytest.mark.xfail(
-    reason="IPDFT currently holds nominal output for this off-nominal 52.5 Hz case.",
-    strict=True,
-)
 def test_ipdft_off_nominal_interpolation():
     """Valida que la interpolación parabólica detecte frecuencias entre bins de Fourier."""
     fs_phys = 1_000_000.0
@@ -38,24 +32,19 @@ def test_ipdft_off_nominal_interpolation():
     f_target = 52.5
     v = np.sin(2 * np.pi * f_target * t)
     
-    estimator = IPDFT_Estimator(nominal_f=50.0, cycles=2.0, decim=100)
+    estimator = IPDFT_Estimator(nominal_f=50.0, cycles=2.0, decim=100, dt=1 / fs_phys)
     f_est = estimator.step_vectorized(v)
     
     f_clean = f_est[t > 0.05]
     assert np.allclose(np.mean(f_clean), f_target, atol=0.1)
 
-@pytest.mark.known_numerical_debt
-@pytest.mark.xfail(
-    reason="Latency contract must be resolved between DSP samples and physics-domain samples.",
-    strict=True,
-)
 def test_ipdft_structural_latency():
     """Valida que el estimador no arroje valores actualizados hasta llenar la ventana."""
     fs_phys = 1_000_000.0
     t = np.arange(0, 0.1, 1/fs_phys)
     v = np.sin(2 * np.pi * 50.0 * t) 
     
-    estimator = IPDFT_Estimator(nominal_f=50.0, cycles=2.0, decim=100)
+    estimator = IPDFT_Estimator(nominal_f=50.0, cycles=2.0, decim=100, dt=1 / fs_phys)
     latency_samples = estimator.structural_latency_samples()
     
     expected_sz = int(round((10000.0 / 50.0) * 2.0))
