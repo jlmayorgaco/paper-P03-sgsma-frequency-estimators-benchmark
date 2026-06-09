@@ -66,6 +66,22 @@ openfreqbench = ["templates/*.yaml"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+norecursedirs = [
+  ".git",
+  ".venv",
+  "venv",
+  "build",
+  "dist",
+  "artifacts",
+  "output",
+  "outputs",
+  "tests/montecarlo/temp",
+]
+markers = [
+  "canonical: canonical estimator or scenario behavior expected in release gates",
+  "legacy: historical Monte Carlo or plotting tests kept for reference",
+  "known_numerical_debt: estimator behavior regression kept visible while Phase 1 stabilizes the package",
+]
 
 [tool.ruff]
 line-length = 100

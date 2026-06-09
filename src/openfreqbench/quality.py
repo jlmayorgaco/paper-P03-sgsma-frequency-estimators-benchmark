@@ -17,15 +17,27 @@ def _check_file(path: Path) -> dict[str, Any]:
 
 
 def _run_pytest(root: Path) -> dict[str, Any]:
+    basetemp = root / "artifacts" / "pytest-tmp"
+    basetemp.parent.mkdir(parents=True, exist_ok=True)
     proc = subprocess.run(
-        [sys.executable, "-m", "pytest", "tests", "-q", "-p", "no:cacheprovider"],
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "tests",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "--basetemp",
+            str(basetemp),
+        ],
         cwd=root,
         capture_output=True,
         text=True,
         check=False,
     )
     return {
-        "command": "python -m pytest tests -q -p no:cacheprovider",
+        "command": f"python -m pytest tests -q -p no:cacheprovider --basetemp {basetemp}",
         "returncode": int(proc.returncode),
         "stdout_tail": proc.stdout[-2000:],
         "stderr_tail": proc.stderr[-2000:],

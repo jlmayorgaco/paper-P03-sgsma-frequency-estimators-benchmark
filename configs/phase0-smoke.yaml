@@ -1,0 +1,26 @@
+run:
+  id: phase0-smoke
+  mode: smoke
+  output_dir: ../artifacts/openfreqbench
+  n_runs: 2
+  base_seed: 12345
+  max_workers: 1
+  capture_signals: false
+
+benchmark:
+  parameter_policy: default
+  scenarios:
+    - IEEE_Single_SinWave
+    - IEEE_Freq_Step
+  estimators:
+    - name: ZCD
+    - name: IPDFT
+
+metrics:
+  profile: canonical-single-phase-v1
+  include:
+    - m1_rmse_hz
+    - m2_mae_hz
+    - m3_max_peak_hz
+    - m5_trip_risk_s
+    - m13_cpu_time_us

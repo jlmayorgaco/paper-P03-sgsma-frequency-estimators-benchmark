@@ -1,4 +1,5 @@
 .pytest_cache/
+.pytest-tmp/
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -9,9 +10,16 @@ dist/
 venv/
 artifacts/
 reports/
+output/
 outputs/
+scripts/out/
 *.csv
 *.log
+/slide.pdf
+/slide_flat.pdf
+/slides_script.aux
+/slides_script.log
+/slides_script.pdf
 slides/render_*/
 slides/doc1_pages/
 slides/*.aux
@@ -22,3 +30,13 @@ slides/*.toc
 slides/*.fls
 slides/*.fdb_latexmk
 slides/*.synctex.gz
+slides/*.vrb
+slides_final/*.aux
+slides_final/*.nav
+slides_final/*.out
+slides_final/*.snm
+slides_final/*.toc
+slides_final/*.fls
+slides_final/*.fdb_latexmk
+slides_final/*.synctex.gz
+slides_final/*.vrb
