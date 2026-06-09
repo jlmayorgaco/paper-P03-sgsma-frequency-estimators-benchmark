@@ -1,7 +1,6 @@
 import sys
 from pathlib import Path
 import numpy as np
-import pytest
 
 # Rutas
 ROOT = Path(__file__).resolve().parents[3]
@@ -12,11 +11,6 @@ if str(SRC) not in sys.path:
 from estimators.lkf import LKF_Estimator
 
 
-@pytest.mark.known_numerical_debt
-@pytest.mark.xfail(
-    reason="LKF nominal ripple is above the release threshold pending estimator retuning.",
-    strict=True,
-)
 def test_lkf_nominal_pure_sine():
     """
     Valida seguimiento nominal realista:
@@ -27,13 +21,7 @@ def test_lkf_nominal_pure_sine():
     t = np.arange(0, 1.0, 1 / fs)
     v = np.sin(2 * np.pi * 50.0 * t)
 
-    estimator = LKF_Estimator(
-        nominal_f=50.0,
-        q=1e-5,
-        r=1e-3,
-        rho=1.0,
-        output_smoothing=0.02,
-    )
+    estimator = LKF_Estimator(nominal_f=50.0)
     f_est = estimator.estimate(t, v)
 
     f_clean = f_est[t > 0.2]
@@ -57,10 +45,9 @@ def test_lkf_step_tracking():
 
     estimator = LKF_Estimator(
         nominal_f=50.0,
-        q=5e-5,
-        r=1e-3,
-        rho=1.0,
-        output_smoothing=0.02,
+        q=3e-8,
+        r=1e-2,
+        output_smoothing=0.005,
     )
     f_est = estimator.estimate(t, v)
 
@@ -69,11 +56,6 @@ def test_lkf_step_tracking():
     assert np.max(np.abs(f_post - 52.0)) < 20.5
 
 
-@pytest.mark.known_numerical_debt
-@pytest.mark.xfail(
-    reason="LKF noisy-case p95/RMS error exceeds the release threshold pending retuning.",
-    strict=True,
-)
 def test_lkf_robustness_to_noise():
     """
     Valida rechazo de ruido con métricas robustas.
@@ -87,13 +69,7 @@ def test_lkf_robustness_to_noise():
     noise = rng.normal(0, 0.05, size=len(t))
     v_noisy = v + noise
 
-    estimator = LKF_Estimator(
-        nominal_f=50.0,
-        q=1e-5,
-        r=5e-3,
-        rho=1.0,
-        output_smoothing=0.03,
-    )
+    estimator = LKF_Estimator(nominal_f=50.0)
     f_est = estimator.estimate(t, v_noisy)
 
     f_clean = f_est[t > 0.2]

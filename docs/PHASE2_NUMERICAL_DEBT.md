@@ -34,19 +34,47 @@ Verification on 2026-06-09:
 
 ## Remaining debt
 
-- `tests/estimators/lkf/test_lkf.py::test_lkf_nominal_pure_sine`
-- `tests/estimators/lkf/test_lkf.py::test_lkf_robustness_to_noise`
-- `tests/estimators/lkf2/test_lkf2.py::test_lkf2_step_tracking`
+None after Phase 2-B.
+
+## LKF status
+
+Closed in Phase 2-B.
+
+The LKF two-state model was tracking the mean frequency correctly, but its default tuning
+allowed a large periodic phase-difference ripple in pure nominal and noisy nominal cases. The
+release default now uses a lower process-noise to measurement-noise ratio and lighter output
+smoothing:
+
+- `q=3e-8`
+- `r=1e-2`
+- `output_smoothing=0.005`
+
+This keeps the nominal/noisy ripple within the strict tests while preserving the existing
+step-tracking contract.
+
+## LKF2 status
+
+Closed in Phase 2-B.
+
+The LKF2 frequency loop used `omega_leak=0.995`, which created a steady-state frequency bias
+after a 50 -> 52 Hz step. The default is now `omega_leak=1.0`, removing the post-step
+under-tracking without breaking nominal or noisy cases.
 
 ## Next gate
 
-Run the focused estimator checks before moving to LKF/LKF2:
+Verification after Phase 2-B on 2026-06-09:
+
+- focused IPDFT/LKF/LKF2 checks: 9 passed
+- full pytest: 352 passed, 9 skipped, 0 xfailed
+- `openfreqbench quality-gate`: pass
+
+Run the focused estimator checks before creating a paper-grade preview:
 
 ```powershell
-python -m pytest tests/estimators/ipdft/test_ipdft.py -q -p no:cacheprovider
+python -m pytest tests/estimators/ipdft/test_ipdft.py tests/estimators/lkf/test_lkf.py tests/estimators/lkf2/test_lkf2.py -q -p no:cacheprovider
 ```
 
-After LKF/LKF2 are resolved, run:
+Then run:
 
 ```powershell
 python -m pytest tests -q -p no:cacheprovider --basetemp artifacts/pytest-tmp

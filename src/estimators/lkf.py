@@ -220,10 +220,10 @@ class LKF_Estimator(BaseFrequencyEstimator):
     def __init__(
         self,
         nominal_f: float = 60.0,
-        q: float = 1e-5,
-        r: float = 1e-3,
+        q: float = 3e-8,
+        r: float = 1e-2,
         rho: float = 1.0,
-        output_smoothing: float = 0.02,
+        output_smoothing: float = 0.005,
         phase_lag_samples: int = 0,
         normalize_input: bool = True,
         amp_lpf_alpha: float = 0.05,
@@ -285,10 +285,10 @@ class LKF_Estimator(BaseFrequencyEstimator):
     def default_params(cls) -> dict[str, float | int]:
         return {
             "nominal_f": 60.0,
-            "q": 1e-5,
-            "r": 1e-3,
+            "q": 3e-8,
+            "r": 1e-2,
             "rho": 1.0,
-            "output_smoothing": 0.02,
+            "output_smoothing": 0.005,
             "phase_lag_samples": 0,
             "normalize_input": True,
             "amp_lpf_alpha": 0.05,
