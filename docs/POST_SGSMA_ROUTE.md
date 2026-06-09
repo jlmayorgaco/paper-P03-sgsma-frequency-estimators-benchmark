@@ -68,8 +68,11 @@ Minimum run ladder:
 
 1. `smoke`: 2-3 scenarios, 3-5 estimators, 2-5 seeds.
 2. `integration`: full estimator list, 2-3 scenarios, 10 seeds.
-3. `paper-grade`: full matrix, 30 seeds, no mixed artifacts.
-4. `journal-grade`: full matrix, 100 seeds, archived manifest and hashes.
+3. `paper-grade-preview`: medium matrix, 3-5 seeds, diagnostic only.
+4. `paper-grade`: full matrix, 30 seeds, no mixed artifacts.
+5. `journal-grade`: full matrix, 100 seeds, archived manifest and hashes.
+
+Current preview contract: see `docs/PHASE2C_PAPER_GRADE_PREVIEW.md`.
 
 ### Phase 3: Results/theory paper
 
@@ -115,12 +118,22 @@ SGSMA should be cited internally as:
 
 ## Immediate work queue
 
-1. Commit the artifact cleanup and ignore-policy change.
-2. Fix test collection by moving or excluding `tests/montecarlo/temp`.
-3. Fix or mark missing-data tests for Chamorro playback.
-4. Decide canonical estimator set for clean runs: 17 CPU-only first, PI-GRU as optional GPU.
-5. Build a clean smoke config and run it end to end.
-6. Regenerate docs and tables only from the clean run outputs.
+Completed:
+
+- artifact cleanup and ignore-policy change;
+- deterministic test collection and optional Chamorro playback handling;
+- Phase 0 smoke run;
+- Phase 1 integration run;
+- IPDFT/LKF/LKF2 numerical-debt closure;
+- Phase 2-C paper-grade preview bundle.
+
+Next:
+
+1. Define invalid-output/startup policy for Prony, ESPRIT, and Koopman.
+2. Decide whether window/exotic estimators stay in the main comparison or move to a diagnostic
+   appendix.
+3. Rerun `phase2-paper-grade-preview` with log capture and a longer execution timeout.
+4. Only then widen to 30-seed paper-grade evidence.
 
 ## Venue notes checked on 2026-06-08
 
