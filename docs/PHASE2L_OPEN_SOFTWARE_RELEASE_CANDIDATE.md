@@ -7,7 +7,7 @@ candidate infrastructure.
 
 ## Changes
 
-- Added GitHub Actions CI at `.github/workflows/ci.yml`.
+- Added manual GitHub Actions CI at `.github/workflows/ci.yml`.
 - Added issue templates for bug reports and feature requests.
 - Added `docs/AI_USAGE_DISCLOSURE.md`.
 - Added a JOSS-oriented software-paper skeleton in `paper/paper.md`.

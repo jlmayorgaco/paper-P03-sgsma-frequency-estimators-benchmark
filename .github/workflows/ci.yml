@@ -1,11 +1,7 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - MVP2.0.0
-      - main
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read

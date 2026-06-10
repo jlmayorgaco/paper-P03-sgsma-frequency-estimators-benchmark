@@ -9,7 +9,8 @@ at the repository root.
 - The package checkout is clean.
 - Public repository URL is correct in `pyproject.toml` and `CITATION.cff`.
 - License, code of conduct, contributing guide, and security policy are present.
-- GitHub Actions CI is present under `.github/workflows/`.
+- GitHub Actions CI is present under `.github/workflows/` and is triggered
+  manually to avoid consuming Actions minutes on every push.
 - Issue templates are present under `.github/ISSUE_TEMPLATE/`.
 - `docs/AI_USAGE_DISCLOSURE.md` is present and reflected in the manuscript.
 - A software-paper package is present under `paper/` or `manuscripts/softwarex/`.
