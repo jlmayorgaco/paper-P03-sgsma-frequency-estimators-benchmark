@@ -97,8 +97,10 @@ status: pass
 pytest: 358 passed, 9 skipped
 ```
 
-## Next gate
+## Phase 2-G follow-through
 
-Create a 30-seed paper-grade config from `configs/phase2-paper-grade-preview-v2.yaml`.
-The 30-seed run should use the Phase 2-F report builder before any table is
-promoted to manuscript evidence.
+The 30-seed follow-through is documented in
+`docs/PHASE2G_PAPER_GRADE_30SEED.md`. The final Phase 2-G report keeps 234
+scenario-estimator pairs in the main comparison and places 4 Prony pairs in the
+diagnostic appendix. Use that 30-seed report, not the preview v2 report, for any
+manuscript table.

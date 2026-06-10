@@ -72,7 +72,7 @@ Minimum run ladder:
 4. `paper-grade`: full matrix, 30 seeds, no mixed artifacts.
 5. `journal-grade`: full matrix, 100 seeds, archived manifest and hashes.
 
-Current preview contract: see `docs/PHASE2C_PAPER_GRADE_PREVIEW.md`.
+Current paper-grade contract: see `docs/PHASE2G_PAPER_GRADE_30SEED.md`.
 
 ### Phase 3: Results/theory paper
 
@@ -129,13 +129,15 @@ Completed:
 - Phase 2-D invalid-output/startup policy for Prony, ESPRIT, and Koopman.
 - Phase 2-E paper-grade preview v2 with `m36_post_startup_invalid_rate`.
 - Phase 2-F deterministic report classification for main comparison versus diagnostic appendix.
+- Phase 2-G 30-seed paper-grade run and Phase 2-F report over that run.
 
 Next:
 
-1. Create the 30-seed paper-grade config from the v2 preview contract.
-2. Run the 30-seed paper-grade benchmark with log capture.
-3. Build the Phase 2-F report from the 30-seed artifact before using any table as
-   manuscript evidence.
+1. Create a manuscript claim ledger from `phase2-paper-grade/report-phase2f`.
+2. Freeze the main-table and diagnostic-appendix table set before drafting results prose.
+3. Decide whether the next paper is a software-first paper or a results/theory paper.
+4. Only after the claim ledger is stable, draft the Results and Discussion from Phase 2-G
+   evidence.
 
 ## Venue notes checked on 2026-06-08
 
