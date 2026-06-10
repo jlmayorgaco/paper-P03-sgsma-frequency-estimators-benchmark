@@ -130,14 +130,16 @@ Completed:
 - Phase 2-E paper-grade preview v2 with `m36_post_startup_invalid_rate`.
 - Phase 2-F deterministic report classification for main comparison versus diagnostic appendix.
 - Phase 2-G 30-seed paper-grade run and Phase 2-F report over that run.
+- Phase 2-H manuscript claim ledger from the Phase 2-G report.
 
 Next:
 
-1. Create a manuscript claim ledger from `phase2-paper-grade/report-phase2f`.
-2. Freeze the main-table and diagnostic-appendix table set before drafting results prose.
-3. Decide whether the next paper is a software-first paper or a results/theory paper.
-4. Only after the claim ledger is stable, draft the Results and Discussion from Phase 2-G
-   evidence.
+1. Draft the Results section from `docs/PHASE2H_MANUSCRIPT_CLAIM_LEDGER.md`.
+2. Require every estimator-performance sentence to cite one claim ID from the ledger.
+3. Keep CPU ranking, PI-GRU, ATLAS, and n=100 journal-grade claims out of the main
+   results unless new evidence is generated.
+4. Decide after the Results draft whether to prioritize a software-first paper or a
+   results/theory paper.
 
 ## Venue notes checked on 2026-06-08
 

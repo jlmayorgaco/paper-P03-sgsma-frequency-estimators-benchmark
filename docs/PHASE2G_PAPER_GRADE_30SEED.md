@@ -167,6 +167,7 @@ pytest: 359 passed, 9 skipped
 
 ## Next gate
 
-Create a manuscript claim ledger before drafting results prose. Each claim must
-point to one Phase 2-G table or plot and declare whether it is main-table,
-diagnostic-appendix, or out of scope.
+The manuscript claim ledger is documented in
+`docs/PHASE2H_MANUSCRIPT_CLAIM_LEDGER.md`. Draft Results from that ledger only:
+each estimator-performance claim should cite one claim ID before it enters the
+manuscript.
