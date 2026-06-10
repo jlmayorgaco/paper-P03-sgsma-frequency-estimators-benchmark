@@ -97,6 +97,6 @@ poor tracking performance, and true post-startup numerical failure.
 
 ## Next gate
 
-Rerun `configs/phase2-paper-grade-preview.yaml` with log capture and a longer
-timeout. The Phase 2-C invalid-output findings must be reinterpreted using `m36`
-before any table is promoted to paper evidence.
+The preview rerun is complete in `docs/PHASE2E_PAPER_GRADE_PREVIEW_V2.md`.
+Before widening to 30 seeds, report/table generation must apply the Phase 2-E
+main-vs-appendix classification deterministically.

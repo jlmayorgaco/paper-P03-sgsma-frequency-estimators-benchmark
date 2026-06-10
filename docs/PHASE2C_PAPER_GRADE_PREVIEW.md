@@ -84,3 +84,5 @@ The core decision is:
 
 Before final paper-grade runs, rerun this preview with log capture and a longer execution
 timeout so the artifact bundle includes `m36`.
+
+This rerun is complete in `docs/PHASE2E_PAPER_GRADE_PREVIEW_V2.md`.
