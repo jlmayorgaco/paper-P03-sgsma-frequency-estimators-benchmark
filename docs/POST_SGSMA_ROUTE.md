@@ -132,15 +132,17 @@ Completed:
 - Phase 2-G 30-seed paper-grade run and Phase 2-F report over that run.
 - Phase 2-H manuscript claim ledger from the Phase 2-G report.
 - Phase 2-I first Results draft from the Phase 2-H claim ledger.
+- Phase 2-J Methods/Experimental Setup draft for the Phase 2-G evidence contract.
 
 Next:
 
 1. Decide the manuscript route: results/theory paper or software-first paper.
-2. Move `docs/PHASE2I_RESULTS_DRAFT.md` into the chosen manuscript format.
+2. Move `docs/PHASE2J_METHODS_EXPERIMENTAL_SETUP_DRAFT.md` and
+   `docs/PHASE2I_RESULTS_DRAFT.md` into the chosen manuscript format.
 3. Keep CPU ranking, PI-GRU, ATLAS, and n=100 journal-grade claims out of the main
    results unless new evidence is generated.
-4. Build the matching Methods/Experimental Setup section so the Phase 2-F scope
-   filter is explained before the Results section.
+4. Draft the Introduction around the same evidence boundary: regime-dependent
+   estimator behavior, post-startup validity, and reproducible benchmarking.
 
 ## Venue notes checked on 2026-06-08
 

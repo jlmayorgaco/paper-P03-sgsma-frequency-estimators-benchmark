@@ -247,8 +247,10 @@ diagnostic appendix with explicit invalid-output statistics.
 
 ## Next Gate
 
-Move this draft into the manuscript only after deciding the target format. For a
-results/theory journal paper, convert the prose to LaTeX and keep Tables 1, 3,
-4, and one Pareto/timing table as candidates. For a software-first paper, shorten
-the estimator-specific discussion and emphasize the reproducible benchmark
-contract, output schema, and failure-mode reporting.
+The matching Methods/Experimental Setup draft is documented in
+`docs/PHASE2J_METHODS_EXPERIMENTAL_SETUP_DRAFT.md`. Move both drafts into the
+manuscript only after deciding the target format. For a results/theory journal
+paper, convert the prose to LaTeX and keep Tables 1, 3, 4, and one
+Pareto/timing table as candidates. For a software-first paper, shorten the
+estimator-specific discussion and emphasize the reproducible benchmark contract,
+output schema, and failure-mode reporting.
