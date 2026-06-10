@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+REFERENCE_KEYS = ("kalman1960_linear_filtering", "mehra1970_adaptive_kalman")
+
 from ._experimental_base import ExperimentalFrequencyEstimator
 
 

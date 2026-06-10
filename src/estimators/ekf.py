@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+REFERENCE_KEYS = ("kalman1960_linear_filtering", "dash1999_extended_complex_kalman")
+
 import math
 import numpy as np
 from numba import njit

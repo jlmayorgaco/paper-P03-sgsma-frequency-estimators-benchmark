@@ -142,8 +142,7 @@ Completed:
 
 Next:
 
-1. Replace placeholder metadata in `paper/paper.md` and add verified bibliography
-   entries.
+1. Confirm author affiliation/ORCID metadata in `paper/paper.md`.
 2. Create an annotated release tag only after the release candidate is final.
 3. Run the release verification scripts from the tagged commit.
 4. Make the software citable with a GitHub release and Zenodo DOI.

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+REFERENCE_KEYS = ("grandke1983_ipdft", "jacobsen2007_frequency_estimators")
+
 from ._experimental_base import ExperimentalFrequencyEstimator
 
 

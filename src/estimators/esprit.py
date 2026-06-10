@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+REFERENCE_KEYS = ("roy1989_esprit",)
+
 import math
 
 import numpy as np

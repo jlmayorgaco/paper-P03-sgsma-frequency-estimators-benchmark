@@ -4,6 +4,8 @@ import importlib
 import os
 from dataclasses import asdict, dataclass
 
+from estimators.references import ESTIMATOR_REFERENCE_KEYS
+
 
 BENCHMARK_IDENTITY = "full_mc_benchmark_active_pipeline"
 BENCHMARK_SCOPE = "Full modular Monte Carlo benchmark under src/pipelines"
@@ -25,7 +27,7 @@ class EstimatorSpec:
     status: str
     reason: str
 
-    def to_manifest(self) -> dict[str, str]:
+    def to_manifest(self) -> dict[str, object]:
         return asdict(self)
 
 
@@ -72,6 +74,12 @@ ESTIMATOR_FAMILIES: dict[str, str] = {
 }
 
 
+def estimator_manifest_entry(spec: EstimatorSpec) -> dict[str, object]:
+    entry = spec.to_manifest()
+    entry["reference_keys"] = list(ESTIMATOR_REFERENCE_KEYS.get(spec.module_name, ()))
+    return entry
+
+
 def active_estimator_specs() -> list[EstimatorSpec]:
     include_experimental = os.getenv("BENCHMARK_INCLUDE_EXPERIMENTAL", "0").strip().lower() in {"1", "true", "yes", "on"}
     if not include_experimental:
@@ -92,8 +100,8 @@ def build_estimator_registry_manifest() -> dict[str, object]:
         "benchmark_scope": BENCHMARK_SCOPE,
         "authority_statement": BENCHMARK_AUTHORITY_STATEMENT,
         "paper_alignment_policy": PAPER_ALIGNMENT_POLICY,
-        "active": [spec.to_manifest() for spec in active_specs],
-        "excluded": [spec.to_manifest() for spec in EXCLUDED_ESTIMATOR_SPECS],
+        "active": [estimator_manifest_entry(spec) for spec in active_specs],
+        "excluded": [estimator_manifest_entry(spec) for spec in EXCLUDED_ESTIMATOR_SPECS],
         "families": {spec.label: spec.family for spec in all_specs},
     }
 

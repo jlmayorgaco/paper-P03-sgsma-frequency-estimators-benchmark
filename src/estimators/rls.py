@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+REFERENCE_KEYS = ("carlsson1994_rls_notch",)
+
 import math
 import numpy as np
 from numba import njit

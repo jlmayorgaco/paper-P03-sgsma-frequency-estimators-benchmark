@@ -8,10 +8,9 @@ tags:
   - benchmarking
 authors:
   - name: Juan Lugo
-    orcid: "TODO"
     affiliation: 1
 affiliations:
-  - name: "TODO: add institutional affiliation"
+  - name: "Independent researcher"
     index: 1
 date: 10 June 2026
 bibliography: paper.bib
@@ -50,12 +49,27 @@ line to manuscript table.
 
 # State of the Field
 
-TODO: Add concise citations for PMU frequency estimation, IEEE/NERC-style test
-conditions, benchmark reproducibility, and prior estimator-comparison work.
+Synchrophasor and PMU evaluation is normally anchored in standard measurement
+requirements and dynamic test cases rather than in a single estimator family
+[@ieee2018_synchrophasor; @martin2015_synchrophasor]. The estimator literature
+is broad: zero-crossing and interpolated-DFT methods remain common references
+for timing and windowed approaches [@djuric2008_zero_crossing;
+@grandke1983_ipdft], PLL and SOGI structures are widely used for grid
+synchronization [@kaura1997_pll_distorted; @ciobotaru2006_sogi_pll],
+Kalman-family estimators cover linear, extended, unscented, adaptive, and robust
+variants [@kalman1960_linear_filtering; @dash1999_extended_complex_kalman;
+@julier2004_unscented_filtering; @mehra1970_adaptive_kalman], and subspace or
+modal methods such as Prony, ESPRIT, MUSIC, matrix pencil, and Koopman/EDMD have
+separate signal-processing foundations [@hauer1991_prony_power_system;
+@roy1989_esprit; @schmidt1986_music; @hua1990_matrix_pencil;
+@williams2015_edmd_koopman].
 
-This section should position OpenFreqBench against ad hoc simulation scripts,
-single-estimator studies, and broader power-system simulation tools. The key
-claim should be software scope, not superiority of any one estimator.
+OpenFreqBench is positioned against ad hoc simulation scripts and
+single-estimator studies. Its contribution is the software contract: a
+reproducible way to run estimator/scenario matrices, preserve raw and aggregate
+artifacts, enforce metric definitions, and keep paper-facing claims tied to
+traceable outputs. The software-paper claim is therefore platform scope and
+reproducibility, not superiority of any one estimator.
 
 # Software Design
 
@@ -103,7 +117,8 @@ for the accuracy, integrity, and reproducibility of the software and manuscript.
 
 # Acknowledgements
 
-TODO: Add funding, institutional, advisor, collaborator, and compute-resource
-acknowledgements.
+No external funding or institutional grant is declared for this release-candidate
+manuscript. The SGSMA presentation is acknowledged as the pilot setting that
+motivated the cleanup into a reusable open-source benchmark platform.
 
 # References

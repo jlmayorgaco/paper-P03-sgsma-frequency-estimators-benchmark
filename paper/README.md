@@ -7,7 +7,7 @@ Current target: JOSS skeleton.
 Files:
 
 - `paper.md`: short software-paper draft structure.
-- `paper.bib`: citation file placeholder.
+- `paper.bib`: verified bibliography for the software-paper draft.
 
 The Phase 2-G benchmark should be used as a reproducible demonstration of the
 software, not as a full results-journal claim set.

@@ -15,6 +15,7 @@ from pipelines.benchmark_definition import (
     EXCLUDED_ESTIMATOR_SPECS,
     PAPER_ALIGNMENT_POLICY,
     EstimatorSpec,
+    estimator_manifest_entry,
 )
 from scenarios.ibr_harmonics_large import IBRHarmonicsLargeScenario
 from scenarios.ibr_harmonics_medium import IBRHarmonicsMediumScenario
@@ -275,7 +276,10 @@ def platform_manifest() -> dict[str, object]:
             ],
         ],
         "scenarios": sorted(scenario_registry()),
-        "estimators": [spec.to_manifest() for spec in estimator_specs(include_experimental=True)],
+        "estimators": [
+            estimator_manifest_entry(spec)
+            for spec in estimator_specs(include_experimental=True)
+        ],
         "canonical_estimators": [spec.label for spec in estimator_specs(include_experimental=False)],
         "metric_ids": list(CANONICAL_METRIC_IDS),
         "metric_labels": METRIC_LABELS,

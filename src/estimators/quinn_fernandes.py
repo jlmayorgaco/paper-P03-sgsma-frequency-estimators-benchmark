@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+REFERENCE_KEYS = ("quinn1991_frequency_estimation",)
+
 from ._experimental_base import ExperimentalFrequencyEstimator
 
 

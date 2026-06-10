@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+REFERENCE_KEYS = ("julier2004_unscented_filtering", "regulski2012_ukf_frequency")
+
 import math
 import numpy as np
 from numba import njit

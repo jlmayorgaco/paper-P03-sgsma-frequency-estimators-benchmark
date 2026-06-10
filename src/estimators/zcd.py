@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+REFERENCE_KEYS = ("djuric2008_zero_crossing",)
+
 import numpy as np
 from numba import njit
 

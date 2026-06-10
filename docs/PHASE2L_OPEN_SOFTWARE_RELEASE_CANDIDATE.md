@@ -13,6 +13,10 @@ candidate infrastructure.
 - Added a JOSS-oriented software-paper skeleton in `paper/paper.md`.
 - Added release-file checks to `openfreqbench quality-gate --release`.
 - Added unit tests for the release-file checks.
+- Added estimator-level `REFERENCE_KEYS`, a DOI-backed reference registry, and
+  `docs/ESTIMATOR_REFERENCES.md`.
+- Replaced the initial software-paper bibliography placeholder with verified
+  method-family and PMU-context citations.
 
 ## Release Gate Additions
 
@@ -40,7 +44,7 @@ gate from the exact commit that will be archived.
 3. Create the GitHub release.
 4. Archive the release in Zenodo.
 5. Update `CITATION.cff` with the Zenodo DOI.
-6. Replace placeholder JOSS metadata and add verified bibliography entries.
+6. Confirm author affiliation/ORCID metadata before submission.
 7. Decide whether to submit JOSS after public-history maturity or prepare a
    SoftwareX manuscript first.
 

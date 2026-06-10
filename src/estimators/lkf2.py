@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+REFERENCE_KEYS = ("kalman1960_linear_filtering", "reza2012_frequency_adaptive_lkf")
+
 import math
 import numpy as np
 from numba import njit

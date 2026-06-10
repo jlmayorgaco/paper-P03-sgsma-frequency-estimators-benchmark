@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+REFERENCE_KEYS = ("hauer1991_prony_power_system",)
+
 import math
 
 import numpy as np

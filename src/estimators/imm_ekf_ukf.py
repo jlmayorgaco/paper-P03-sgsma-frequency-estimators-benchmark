@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+REFERENCE_KEYS = ("julier2004_unscented_filtering", "blom1988_interacting_multiple_model")
+
 from ._experimental_base import ExperimentalFrequencyEstimator
 
 

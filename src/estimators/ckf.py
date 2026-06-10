@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+REFERENCE_KEYS = ("arasaratnam2009_cubature_kalman",)
+
 from ._experimental_base import ExperimentalFrequencyEstimator
 
 

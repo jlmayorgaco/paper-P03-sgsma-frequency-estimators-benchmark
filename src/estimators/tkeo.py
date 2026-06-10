@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+REFERENCE_KEYS = ("maragos1993_energy_separation",)
+
 import math
 import numpy as np
 from numba import njit

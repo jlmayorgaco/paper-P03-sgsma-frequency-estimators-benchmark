@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+REFERENCE_KEYS = ("platasgarza2010_tft",)
+
 import math
 import numpy as np
 from numba import njit

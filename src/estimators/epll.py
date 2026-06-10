@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+REFERENCE_KEYS = ("karimi2004_epll_sync",)
+
 import math
 import numpy as np
 from numba import njit
