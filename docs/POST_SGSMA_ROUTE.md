@@ -14,7 +14,7 @@ Do not go straight to a transaction/journal results paper yet. The current stron
    manifest-backed smoke run.
 1. Stabilize OpenFreqBench as research software.
 2. Produce one clean reproducibility release with small and full benchmark runs.
-3. Use that release to choose between a software paper and a results/theory paper.
+3. Prepare a software-first paper route before escalating to a results/theory paper.
 
 This avoids wasting the SGSMA work while preventing mixed old artifacts from contaminating
 new claims.
@@ -73,6 +73,8 @@ Minimum run ladder:
 5. `journal-grade`: full matrix, 100 seeds, archived manifest and hashes.
 
 Current paper-grade contract: see `docs/PHASE2G_PAPER_GRADE_30SEED.md`.
+
+Software-first audit: see `docs/PHASE2K_SOFTWARE_FIRST_AUDIT.md`.
 
 ### Phase 3: Results/theory paper
 
@@ -133,22 +135,26 @@ Completed:
 - Phase 2-H manuscript claim ledger from the Phase 2-G report.
 - Phase 2-I first Results draft from the Phase 2-H claim ledger.
 - Phase 2-J Methods/Experimental Setup draft for the Phase 2-G evidence contract.
+- Phase 2-K software-first audit of methodology, implementation, open-source
+  readiness, and JOSS/SoftwareX blockers.
 
 Next:
 
-1. Decide the manuscript route: results/theory paper or software-first paper.
-2. Move `docs/PHASE2J_METHODS_EXPERIMENTAL_SETUP_DRAFT.md` and
-   `docs/PHASE2I_RESULTS_DRAFT.md` into the chosen manuscript format.
-3. Keep CPU ranking, PI-GRU, ATLAS, and n=100 journal-grade claims out of the main
-   results unless new evidence is generated.
-4. Draft the Introduction around the same evidence boundary: regime-dependent
-   estimator behavior, post-startup validity, and reproducible benchmarking.
+1. Phase 2-L: create the open-software release candidate.
+2. Add CI, release tags, issue templates, and a stronger release gate.
+3. Draft the software-paper package: JOSS `paper/paper.md` or SoftwareX manuscript
+   folder with AI disclosure and software/data availability statements.
+4. Make the software citable with a GitHub release and Zenodo DOI.
+5. Keep Phase 2-G as the reproducible demonstration bundle, not as a full
+   results-journal claim set.
 
-## Venue notes checked on 2026-06-08
+## Venue notes checked on 2026-06-10
 
 - JOSS submission docs: https://joss.readthedocs.io/en/latest/submitting.html
+- JOSS review criteria: https://joss.readthedocs.io/en/latest/review_criteria.html
 - JOSS paper format: https://joss.readthedocs.io/en/latest/paper.html
-- SoftwareX aims/scope: https://www.sciencedirect.com/journal/softwarex
+- SoftwareX guide for authors:
+  https://www.sciencedirect.com/journal/softwarex/publish/guide-for-authors
 - IEEE Transactions on Smart Grid scope: https://ieee-pes.org/publications/transactions-on-smart-grid/
 - IEEE Open Access Journal of Power and Energy scope:
   https://ieee-pes.org/publications/open-access-journal-of-power-and-energy/
