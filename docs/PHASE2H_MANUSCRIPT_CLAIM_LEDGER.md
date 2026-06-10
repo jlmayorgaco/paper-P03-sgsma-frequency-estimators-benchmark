@@ -89,6 +89,7 @@ Out of scope for Phase 2-G claims:
 | C14 | out of scope | PI-GRU generalization cannot be claimed from Phase 2-G because PI-GRU is not included in the 17-estimator matrix and `pi_gru_generalization.csv` is empty. | `pi_gru_generalization.csv`; `configs/phase2-paper-grade.yaml` | PI-GRU generalizes better or worse than classical estimators in this run. |
 | C15 | out of scope | ATLAS severity-sweep claims remain outside this evidence bundle. Phase 2-G is a fixed matrix run, not a severity sweep. | `PHASE2G_PAPER_GRADE_30SEED.md`; `POST_SGSMA_ROUTE.md` | ATLAS readiness or severity-taxonomy claims are proven by Phase 2-G. |
 | C16 | out of scope | A transaction/journal final submission still needs stronger timing and/or journal-grade uncertainty evidence if CPU ranking or n=100 claims are central. | `PHASE2G_PAPER_GRADE_30SEED.md`; `estimator_cpu_ci.csv` | Phase 2-G alone is final journal-grade evidence for every claim. |
+| C17 | main | The global RMSE confidence-interval summary ranks model-based estimators in the first five positions: LKF, UKF, RA-EKF, LKF2, and EKF. | `estimator_rmse_ci.csv`; `ranking_sensitivity.csv` | This aggregate order is a universal deployment rule for every scenario. |
 
 ## Results-section skeleton
 
@@ -123,6 +124,7 @@ uncertainty claims. The pragmatic route is:
 
 ## Next gate
 
-Draft the Results section from this ledger only. Any new sentence that claims an
-estimator is better, faster, more robust, or more reliable must cite one claim ID
-from this file.
+The first Results draft is documented in `docs/PHASE2I_RESULTS_DRAFT.md`. Before
+moving it into a LaTeX manuscript, choose the target route: a results/theory
+paper with a fuller Results section, or a software-first paper with a shorter
+benchmark case study.

@@ -131,15 +131,16 @@ Completed:
 - Phase 2-F deterministic report classification for main comparison versus diagnostic appendix.
 - Phase 2-G 30-seed paper-grade run and Phase 2-F report over that run.
 - Phase 2-H manuscript claim ledger from the Phase 2-G report.
+- Phase 2-I first Results draft from the Phase 2-H claim ledger.
 
 Next:
 
-1. Draft the Results section from `docs/PHASE2H_MANUSCRIPT_CLAIM_LEDGER.md`.
-2. Require every estimator-performance sentence to cite one claim ID from the ledger.
+1. Decide the manuscript route: results/theory paper or software-first paper.
+2. Move `docs/PHASE2I_RESULTS_DRAFT.md` into the chosen manuscript format.
 3. Keep CPU ranking, PI-GRU, ATLAS, and n=100 journal-grade claims out of the main
    results unless new evidence is generated.
-4. Decide after the Results draft whether to prioritize a software-first paper or a
-   results/theory paper.
+4. Build the matching Methods/Experimental Setup section so the Phase 2-F scope
+   filter is explained before the Results section.
 
 ## Venue notes checked on 2026-06-08
 
