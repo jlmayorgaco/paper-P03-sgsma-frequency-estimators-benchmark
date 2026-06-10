@@ -21,6 +21,12 @@ rewrite the benchmark metrics from YAML. That is the point.
 | Research workflow | Active | Monte Carlo, reports, plots, hypotheses, manifests |
 | Three-phase / WAMS | Planned | future profiles: `three-phase-v1`, `wams-v1` |
 
+Publication scope note: the software registry currently exposes 32 scenarios
+and 18 canonical estimators. The Phase 2-G software-paper demonstration uses a
+smaller clean matrix: 14 scenarios, 17 estimators, 238 scenario-estimator pairs,
+and 7140 raw Monte Carlo records. Keep those scopes separate when citing
+results.
+
 ## Install
 
 Use Python 3.10 or newer.
@@ -271,6 +277,8 @@ Start here:
 - [Researcher contract](docs/RESEARCHER_CONTRACT.md): what stays locked.
 - [Journal protocol](docs/JOURNAL_RESULTS_PROTOCOL.md): artifact rules for paper-grade runs.
 - [Weights](docs/WEIGHTS.md): PI-GRU checkpoint notes.
+- [Software-first audit](docs/PHASE2K_SOFTWARE_FIRST_AUDIT.md): JOSS/SoftwareX readiness and blockers.
+- [AI usage disclosure](docs/AI_USAGE_DISCLOSURE.md): disclosure draft for software-paper submission.
 
 ## Project layout
 

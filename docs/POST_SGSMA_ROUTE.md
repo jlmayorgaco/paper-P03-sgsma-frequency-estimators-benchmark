@@ -137,15 +137,18 @@ Completed:
 - Phase 2-J Methods/Experimental Setup draft for the Phase 2-G evidence contract.
 - Phase 2-K software-first audit of methodology, implementation, open-source
   readiness, and JOSS/SoftwareX blockers.
+- Phase 2-L open software release candidate infrastructure: CI, issue templates,
+  stronger release gate, JOSS skeleton, and AI usage disclosure.
 
 Next:
 
-1. Phase 2-L: create the open-software release candidate.
-2. Add CI, release tags, issue templates, and a stronger release gate.
-3. Draft the software-paper package: JOSS `paper/paper.md` or SoftwareX manuscript
-   folder with AI disclosure and software/data availability statements.
+1. Replace placeholder metadata in `paper/paper.md` and add verified bibliography
+   entries.
+2. Create an annotated release tag only after the release candidate is final.
+3. Run the release verification scripts from the tagged commit.
 4. Make the software citable with a GitHub release and Zenodo DOI.
-5. Keep Phase 2-G as the reproducible demonstration bundle, not as a full
+5. Update `CITATION.cff` after the DOI exists.
+6. Keep Phase 2-G as the reproducible demonstration bundle, not as a full
    results-journal claim set.
 
 ## Venue notes checked on 2026-06-10

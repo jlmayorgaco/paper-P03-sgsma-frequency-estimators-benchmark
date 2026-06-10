@@ -1,0 +1,33 @@
+name: Feature request
+description: Propose a new estimator, scenario, metric profile, report, or workflow.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Contribution type
+      options:
+        - Estimator
+        - Scenario
+        - Report or plot
+        - Documentation
+        - Metric profile proposal
+        - Release or packaging workflow
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: What research or user workflow does this enable?
+    validations:
+      required: true
+  - type: textarea
+    id: contract
+    attributes:
+      label: Contract impact
+      description: Note any effects on metrics, schemas, reproducibility, or public APIs.
+    validations:
+      required: true

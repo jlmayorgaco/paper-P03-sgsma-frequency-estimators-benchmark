@@ -29,7 +29,16 @@ The gate checks:
 - reproducibility metadata can be generated.
 
 The release gate additionally requires a clean package checkout and release
-metadata suitable for public archival.
+metadata suitable for public archival:
+
+- remote origin,
+- citation metadata,
+- a release tag pointing at `HEAD`,
+- CI workflow,
+- issue templates,
+- software-paper package,
+- AI usage disclosure,
+- Zenodo metadata.
 
 ## Required Before a Public Release
 
@@ -38,6 +47,7 @@ metadata suitable for public archival.
 - Run generated hypotheses on the archived report.
 - Store report plots and the reproducibility manifest.
 - Verify wheel installation in a fresh environment.
+- Run the release gate from the exact tagged commit that will be archived.
 
 ## Residual Risks
 

@@ -9,6 +9,10 @@ at the repository root.
 - The package checkout is clean.
 - Public repository URL is correct in `pyproject.toml` and `CITATION.cff`.
 - License, code of conduct, contributing guide, and security policy are present.
+- GitHub Actions CI is present under `.github/workflows/`.
+- Issue templates are present under `.github/ISSUE_TEMPLATE/`.
+- `docs/AI_USAGE_DISCLOSURE.md` is present and reflected in the manuscript.
+- A software-paper package is present under `paper/` or `manuscripts/softwarex/`.
 - For PyPI, confirm that the `openfreqbench` name is available or update the
   package name before upload.
 
@@ -28,7 +32,8 @@ at the repository root.
 - Run `openfreqbench doctor`.
 - Run `openfreqbench quick-test --scenario IEEE_Single_SinWave --estimator ZCD --n-runs 1`.
 - Run `scripts/verify_local.ps1` or `scripts/verify_local.sh`.
-- Run `scripts/verify_release.ps1` or `scripts/verify_release.sh` before tagging.
+- Create an annotated release tag on the exact release commit.
+- Run `scripts/verify_release.ps1` or `scripts/verify_release.sh` from the tagged commit.
 
 ## Communication
 
@@ -36,3 +41,5 @@ at the repository root.
 - CPU claims state hardware/runtime.
 - PI-GRU claims state checkpoint hash and torch version.
 - The README clearly labels unsupported three-phase/WAMS features as roadmap.
+- The release notes distinguish software registry scope from any paper-grade
+  demonstration matrix.

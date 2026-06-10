@@ -16,6 +16,42 @@ def _check_file(path: Path) -> dict[str, Any]:
     return {"path": str(path), "exists": path.exists(), "size_bytes": path.stat().st_size if path.exists() else 0}
 
 
+def _has_any_file(path: Path, patterns: tuple[str, ...]) -> bool:
+    if not path.exists() or not path.is_dir():
+        return False
+    return any(candidate.is_file() for pattern in patterns for candidate in path.glob(pattern))
+
+
+def _git_tags_at_head(root: Path) -> list[str]:
+    proc = subprocess.run(
+        ["git", "tag", "--points-at", "HEAD"],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        return []
+    return [line.strip() for line in proc.stdout.splitlines() if line.strip()]
+
+
+def _release_file_checks(root: Path) -> dict[str, bool]:
+    return {
+        "ci_workflow_present": _has_any_file(
+            root / ".github" / "workflows",
+            ("*.yml", "*.yaml"),
+        ),
+        "issue_templates_present": _has_any_file(
+            root / ".github" / "ISSUE_TEMPLATE",
+            ("*.md", "*.yml", "*.yaml"),
+        ),
+        "software_paper_present": (root / "paper" / "paper.md").exists()
+        or _has_any_file(root / "manuscripts" / "softwarex", ("*.md", "*.tex")),
+        "ai_disclosure_present": (root / "docs" / "AI_USAGE_DISCLOSURE.md").exists(),
+        "zenodo_metadata_present": (root / ".zenodo.json").exists(),
+    }
+
+
 def _run_pytest(root: Path) -> dict[str, Any]:
     basetemp = root / "artifacts" / "pytest-tmp"
     basetemp.parent.mkdir(parents=True, exist_ok=True)
@@ -93,11 +129,14 @@ def run_quality_gate(root: Path, *, run_tests: bool = True, release: bool = Fals
     }
     pytest_result = _run_pytest(root) if run_tests else {"skipped": True}
     repro = build_reproducibility_manifest(root, None)
+    tags_at_head = _git_tags_at_head(root)
     release_checks = {
         "enabled": bool(release),
         "git_clean": not bool(repro.get("git", {}).get("dirty")),
         "remote_origin_set": bool(repro.get("git", {}).get("remote_origin")),
         "citation_present": (root / "CITATION.cff").exists(),
+        "release_tag_points_at_head": bool(tags_at_head),
+        **_release_file_checks(root),
     }
     checks_ok = (
         all(item["exists"] and item["size_bytes"] > 0 for item in file_checks)
@@ -114,6 +153,7 @@ def run_quality_gate(root: Path, *, run_tests: bool = True, release: bool = Fals
         "configs": config_checks,
         "registry": registry_check,
         "release_checks": release_checks,
+        "release_metadata": {"tags_at_head": tags_at_head},
         "pytest": pytest_result,
         "reproducibility": repro,
     }
