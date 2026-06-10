@@ -128,14 +128,14 @@ Completed:
 - Phase 2-C paper-grade preview bundle.
 - Phase 2-D invalid-output/startup policy for Prony, ESPRIT, and Koopman.
 - Phase 2-E paper-grade preview v2 with `m36_post_startup_invalid_rate`.
+- Phase 2-F deterministic report classification for main comparison versus diagnostic appendix.
 
 Next:
 
-1. Implement deterministic report/table classification: Prony pairs with `m36 > 0` or
-   non-finite accuracy move to diagnostic appendix; ESPRIT/Koopman remain main only where
-   `m36 == 0`.
-2. Create the 30-seed paper-grade config from the v2 preview contract.
-3. Only then widen to 30-seed paper-grade evidence.
+1. Create the 30-seed paper-grade config from the v2 preview contract.
+2. Run the 30-seed paper-grade benchmark with log capture.
+3. Build the Phase 2-F report from the 30-seed artifact before using any table as
+   manuscript evidence.
 
 ## Venue notes checked on 2026-06-08
 

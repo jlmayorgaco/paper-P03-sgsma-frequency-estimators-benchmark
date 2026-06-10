@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 from .artifacts import write_artifact_index, write_evidence_manifest, write_paper_traceability
-from .scientific import write_scientific_tables
+from .scientific import apply_paper_scope_filter, paper_scope_classification, write_scientific_tables
 
 
 def _json_safe(value: Any) -> Any:
@@ -388,6 +388,9 @@ def build_report_outputs(input_json: Path, output_dir: Path | None = None) -> di
     report = _read_report(input_json)
     raw = _raw_df(report)
     agg = _agg_df(report)
+    scope = paper_scope_classification(raw)
+    raw_main = apply_paper_scope_filter(raw, scope)
+    agg_main = apply_paper_scope_filter(agg, scope)
     if output_dir is None:
         output_dir = input_json.parent / "report"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -401,8 +404,8 @@ def build_report_outputs(input_json: Path, output_dir: Path | None = None) -> di
     if not agg.empty:
         agg.to_csv(agg_out, index=False)
 
-    rmse_summary = _estimator_metric_summary(raw, "m1_rmse_hz")
-    cpu_summary = _estimator_metric_summary(raw, "m13_cpu_time_us")
+    rmse_summary = _estimator_metric_summary(raw_main, "m1_rmse_hz")
+    cpu_summary = _estimator_metric_summary(raw_main, "m13_cpu_time_us")
     statistical_tables: list[str] = []
     if not rmse_summary.empty:
         path = output_dir / "estimator_rmse_ci.csv"
@@ -413,16 +416,16 @@ def build_report_outputs(input_json: Path, output_dir: Path | None = None) -> di
         cpu_summary.to_csv(path, index=False)
         statistical_tables.append(str(path))
 
-    rmse_col = _metric_mean_col(agg, "m1_rmse_hz")
-    cpu_col = _metric_mean_col(agg, "m13_cpu_time_us")
+    rmse_col = _metric_mean_col(agg_main, "m1_rmse_hz")
+    cpu_col = _metric_mean_col(agg_main, "m13_cpu_time_us")
     if not rmse_summary.empty:
         _save_ci_bar(rmse_summary, plots_dir / "rmse_by_estimator_ci.png", "Mean RMSE by Estimator (95% CI)", "RMSE (Hz)")
     elif rmse_col:
-        _save_bar(agg, rmse_col, plots_dir / "rmse_by_estimator.png", "Mean RMSE by Estimator", "RMSE (Hz)")
+        _save_bar(agg_main, rmse_col, plots_dir / "rmse_by_estimator.png", "Mean RMSE by Estimator", "RMSE (Hz)")
     if not cpu_summary.empty:
         _save_ci_bar(cpu_summary, plots_dir / "cpu_by_estimator_ci.png", "Mean CPU Time by Estimator (95% CI)", "us/sample")
     elif cpu_col:
-        _save_bar(agg, cpu_col, plots_dir / "cpu_by_estimator.png", "Mean CPU Time by Estimator", "us/sample")
+        _save_bar(agg_main, cpu_col, plots_dir / "cpu_by_estimator.png", "Mean CPU Time by Estimator", "us/sample")
 
     scientific_tables = write_scientific_tables(report, raw, output_dir)
     def _read_table(path: str) -> pd.DataFrame:
@@ -438,19 +441,23 @@ def build_report_outputs(input_json: Path, output_dir: Path | None = None) -> di
     _save_ranking_sensitivity_plot(ranking_df, plots_dir / "ranking_sensitivity_top5.png")
     _save_ibr_robustness_plot(ibr_df, plots_dir / "ibr_robustness_delta.png")
 
-    _save_pareto(agg, plots_dir / "pareto_rmse_cpu.png")
-    _save_heatmap(agg, plots_dir / "scenario_rmse_heatmap.png")
-    _save_family_boxplot(raw, plots_dir / "family_rmse_boxplot.png")
+    _save_pareto(agg_main, plots_dir / "pareto_rmse_cpu.png")
+    _save_heatmap(agg_main, plots_dir / "scenario_rmse_heatmap.png")
+    _save_family_boxplot(raw_main, plots_dir / "family_rmse_boxplot.png")
     trace_paths = _save_signal_traces(report, plots_dir)
 
     plot_paths = sorted(str(path) for path in plots_dir.glob("*.png"))
-    winners = _winner_rows(agg)
-    fastest = _fastest_rows(agg)
+    winners = _winner_rows(agg_main)
+    fastest = _fastest_rows(agg_main)
+    diagnostic_pairs = int(scope["diagnostic_appendix"].astype(bool).sum()) if not scope.empty else 0
+    main_pairs = int(scope["main_table_eligible"].astype(bool).sum()) if not scope.empty else int(len(agg_main))
     summary = {
         "source_report": str(input_json),
         "output_dir": str(output_dir),
         "n_raw_records": int(len(raw)),
         "n_aggregated_rows": int(len(agg)),
+        "n_main_comparison_pairs": main_pairs,
+        "n_diagnostic_appendix_pairs": diagnostic_pairs,
         "scenario_winners_by_rmse": winners,
         "fastest_estimators": fastest,
         "plots": plot_paths,
@@ -464,6 +471,11 @@ def build_report_outputs(input_json: Path, output_dir: Path | None = None) -> di
             "latency_ms": 100.0,
             "cpu_time_us": 1000.0,
         },
+        "paper_scope_policy": {
+            "main_table_filter": "exclude pairs with post-startup invalid outputs or non-finite RMSE",
+            "classification_table": scientific_tables.get("paper_scope_classification", ""),
+            "diagnostic_appendix_table": scientific_tables.get("diagnostic_appendix", ""),
+        },
     }
 
     summary_json = output_dir / "analysis_summary.json"
@@ -475,6 +487,8 @@ def build_report_outputs(input_json: Path, output_dir: Path | None = None) -> di
         f"- Source report: `{input_json}`",
         f"- Raw records: `{len(raw)}`",
         f"- Aggregated rows: `{len(agg)}`",
+        f"- Main comparison pairs: `{main_pairs}`",
+        f"- Diagnostic appendix pairs: `{diagnostic_pairs}`",
         f"- Plots: `{len(plot_paths)}`",
         "",
         "## RMSE Winners",

@@ -10,6 +10,10 @@ single-phase benchmark replay under `canonical-single-phase-v1`.
 - `aggregated_metrics.csv`: grouped estimator/scenario summaries.
 - `metric_confidence_intervals.csv`: bootstrap CIs by scenario family, scenario,
   estimator, family, and metric.
+- `paper_scope_classification.csv`: report-scope decision for each
+  scenario-estimator pair.
+- `diagnostic_appendix.csv`: pairs excluded from main report rankings and kept
+  as diagnostic failure-mode evidence.
 - `failure_analysis.csv`: collapse and failure rates by scenario and estimator.
 - `ranking_sensitivity.csv`: estimator rank under each primary metric.
 - `pareto_recommendations.csv`: recommended estimators by operating profile.

@@ -115,3 +115,6 @@ interpretation:
    high severe-IBR error as performance weakness.
 4. Move to a 30-seed paper-grade run only after the report/table code can apply
    this main-vs-appendix classification deterministically.
+
+That report/table implementation is complete in
+`docs/PHASE2F_REPORT_SCOPE_CLASSIFICATION.md`.

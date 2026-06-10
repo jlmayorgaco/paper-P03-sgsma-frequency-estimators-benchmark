@@ -20,6 +20,7 @@ PRIMARY_RANKING_METRICS = (
 )
 
 CLASSICAL_ESTIMATORS = {"ZCD", "IPDFT", "TFT", "PLL", "Prony", "ESPRIT"}
+PAPER_SCOPE_KEYS = ["scenario", "estimator", "family"]
 
 
 def scenario_family(scenario: str) -> str:
@@ -51,6 +52,88 @@ def _numeric(raw: pd.DataFrame, metric: str) -> pd.Series:
     if metric not in raw.columns:
         return pd.Series([], dtype=float)
     return pd.to_numeric(raw[metric], errors="coerce")
+
+
+def paper_scope_classification(raw: pd.DataFrame) -> pd.DataFrame:
+    if raw.empty or not {"scenario", "estimator"}.issubset(raw.columns):
+        return pd.DataFrame()
+
+    work = raw.copy()
+    if "family" not in work.columns:
+        work["family"] = ""
+    if "m36_post_startup_invalid_rate" in work.columns:
+        work["_post_startup_invalid_rate"] = pd.to_numeric(
+            work["m36_post_startup_invalid_rate"],
+            errors="coerce",
+        ).fillna(0.0)
+        validity_metric = "m36_post_startup_invalid_rate"
+    else:
+        work["_post_startup_invalid_rate"] = 0.0
+        validity_metric = "m36_post_startup_invalid_rate_missing"
+
+    if "m22_invalid_output_rate" in work.columns:
+        work["_total_invalid_rate"] = pd.to_numeric(work["m22_invalid_output_rate"], errors="coerce").fillna(0.0)
+    else:
+        work["_total_invalid_rate"] = 0.0
+
+    has_rmse = "m1_rmse_hz" in work.columns
+    if has_rmse:
+        rmse = pd.to_numeric(work["m1_rmse_hz"], errors="coerce")
+        work["_rmse_valid"] = np.isfinite(rmse.to_numpy(dtype=float))
+    else:
+        work["_rmse_valid"] = True
+
+    rows: list[dict[str, Any]] = []
+    for keys, block in work.groupby(PAPER_SCOPE_KEYS, dropna=False):
+        n_runs = int(len(block))
+        n_valid_rmse = int(block["_rmse_valid"].sum()) if has_rmse else n_runs
+        post_startup_invalid_max = float(block["_post_startup_invalid_rate"].max()) if n_runs else 0.0
+        post_startup_invalid_mean = float(block["_post_startup_invalid_rate"].mean()) if n_runs else 0.0
+        total_invalid_mean = float(block["_total_invalid_rate"].mean()) if n_runs else 0.0
+        post_startup_invalid = post_startup_invalid_max > 0.0
+        nonfinite_accuracy = bool(has_rmse and n_valid_rmse < n_runs)
+        reasons: list[str] = []
+        if post_startup_invalid:
+            reasons.append("post_startup_invalid")
+        if nonfinite_accuracy:
+            reasons.append("nonfinite_accuracy")
+        main_table_eligible = not reasons
+        rows.append(
+            {
+                "scenario_family": scenario_family(str(keys[0])),
+                "scenario": keys[0],
+                "estimator": keys[1],
+                "family": keys[2],
+                "n_runs": n_runs,
+                "n_valid_rmse": n_valid_rmse,
+                "m22_invalid_output_rate_mean": total_invalid_mean,
+                "m36_post_startup_invalid_rate_mean": post_startup_invalid_mean,
+                "m36_post_startup_invalid_rate_max": post_startup_invalid_max,
+                "main_table_eligible": bool(main_table_eligible),
+                "diagnostic_appendix": bool(not main_table_eligible),
+                "classification": "main_comparison" if main_table_eligible else "diagnostic_appendix",
+                "classification_reason": "main" if main_table_eligible else ";".join(reasons),
+                "validity_metric": validity_metric,
+            }
+        )
+    return pd.DataFrame(rows).sort_values(["scenario_family", "scenario", "estimator"]).reset_index(drop=True)
+
+
+def apply_paper_scope_filter(df: pd.DataFrame, classification: pd.DataFrame | None = None) -> pd.DataFrame:
+    if df.empty:
+        return df.copy()
+    scope = classification if classification is not None else paper_scope_classification(df)
+    if scope is None or scope.empty or not {"scenario", "estimator", "main_table_eligible"}.issubset(scope.columns):
+        return df.copy()
+
+    keys = ["scenario", "estimator"]
+    if "family" in df.columns and "family" in scope.columns:
+        keys.append("family")
+
+    scoped = scope[keys + ["main_table_eligible"]].drop_duplicates()
+    merged = df.merge(scoped, on=keys, how="left")
+    eligible = merged["main_table_eligible"].fillna(True).astype(bool)
+    return merged.loc[eligible, [col for col in merged.columns if col != "main_table_eligible"]].copy()
 
 
 def _bootstrap_mean_ci(values: np.ndarray, *, seed: int = 12345, iters: int = 1000) -> tuple[float, float]:
@@ -108,8 +191,17 @@ def failure_analysis(raw: pd.DataFrame) -> pd.DataFrame:
     primary = [m for m in ("m1_rmse_hz", "m2_mae_hz", "m3_max_peak_hz", "m13_cpu_time_us", "m14_struct_latency_ms") if m in work.columns]
     for metric in primary:
         work[metric] = pd.to_numeric(work[metric], errors="coerce")
-    invalid_rate = _numeric(work, "m22_invalid_output_rate")
+    invalid_rate = _numeric(work, "m36_post_startup_invalid_rate")
+    invalid_metric = "m36_post_startup_invalid_rate"
+    if len(invalid_rate) == 0:
+        invalid_rate = _numeric(work, "m22_invalid_output_rate")
+        invalid_metric = "m22_invalid_output_rate"
     work["_invalid_output_flag"] = invalid_rate.fillna(0.0) > 0.0 if len(invalid_rate) else False
+    work["_post_startup_invalid_rate"] = invalid_rate.fillna(0.0) if len(invalid_rate) else 0.0
+    if "m22_invalid_output_rate" in work.columns:
+        work["_total_invalid_rate"] = pd.to_numeric(work["m22_invalid_output_rate"], errors="coerce").fillna(0.0)
+    else:
+        work["_total_invalid_rate"] = 0.0
     if primary:
         finite_matrix = np.column_stack([np.isfinite(work[m].to_numpy(dtype=float)) for m in primary])
         work["_nonfinite_metric_flag"] = ~np.all(finite_matrix, axis=1)
@@ -156,7 +248,10 @@ def failure_analysis(raw: pd.DataFrame) -> pd.DataFrame:
                 "estimator": keys[2],
                 "family": keys[3],
                 "n": int(len(block)),
+                "invalid_output_metric": invalid_metric,
                 "invalid_output_rate": float(block["_invalid_output_flag"].mean()),
+                "post_startup_invalid_rate_mean": float(block["_post_startup_invalid_rate"].mean()),
+                "total_invalid_output_rate_mean": float(block["_total_invalid_rate"].mean()),
                 "nonfinite_metric_rate": float(block["_nonfinite_metric_flag"].mean()),
                 "extreme_error_rate": float(block["_extreme_error_flag"].mean()),
                 "latency_fail_rate": float(block["_latency_fail_flag"].mean()),
@@ -359,14 +454,19 @@ def tuning_policy_summary(report: dict[str, Any]) -> pd.DataFrame:
 
 def write_scientific_tables(report: dict[str, Any], raw: pd.DataFrame, output_dir: Path) -> dict[str, str]:
     output_dir.mkdir(parents=True, exist_ok=True)
+    scope = paper_scope_classification(raw)
+    main_raw = apply_paper_scope_filter(raw, scope)
+    diagnostic_appendix = scope[scope["diagnostic_appendix"].astype(bool)].copy() if not scope.empty else pd.DataFrame()
     tables = {
-        "metric_confidence_intervals": metric_confidence_intervals(raw),
+        "paper_scope_classification": scope,
+        "diagnostic_appendix": diagnostic_appendix,
+        "metric_confidence_intervals": metric_confidence_intervals(main_raw),
         "failure_analysis": failure_analysis(raw),
-        "pareto_recommendations": pareto_recommendations(raw),
-        "ibr_robustness": ibr_robustness(raw),
-        "pi_gru_generalization": pi_gru_generalization(raw),
-        "classical_competitiveness": classical_competitiveness(raw),
-        "ranking_sensitivity": ranking_sensitivity(raw),
+        "pareto_recommendations": pareto_recommendations(main_raw),
+        "ibr_robustness": ibr_robustness(main_raw),
+        "pi_gru_generalization": pi_gru_generalization(main_raw),
+        "classical_competitiveness": classical_competitiveness(main_raw),
+        "ranking_sensitivity": ranking_sensitivity(main_raw),
         "tuning_policy_summary": tuning_policy_summary(report),
     }
     paths: dict[str, str] = {}
