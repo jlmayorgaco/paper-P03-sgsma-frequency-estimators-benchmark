@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-REFERENCE_KEYS = ("djuric2008_zero_crossing",)
-
 import numpy as np
 from numba import njit
 
 from .base import BaseFrequencyEstimator
 from .common import DT_DSP
+
+REFERENCE_KEYS = ("djuric2008_zero_crossing",)
 
 
 # =====================================================================

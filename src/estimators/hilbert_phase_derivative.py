@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-REFERENCE_KEYS = ("boashash1992_instantaneous_frequency",)
-
 from ._experimental_base import ExperimentalFrequencyEstimator
+
+REFERENCE_KEYS = ("boashash1992_instantaneous_frequency",)
 
 
 class Hilbert_Phase_Derivative_Estimator(ExperimentalFrequencyEstimator):

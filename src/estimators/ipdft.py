@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-REFERENCE_KEYS = ("grandke1983_ipdft",)
-
 import math
 import numpy as np
 from numba import njit
 
 from .base import BaseFrequencyEstimator
 from .common import DT_DSP
+
+REFERENCE_KEYS = ("grandke1983_ipdft",)
 
 # =====================================================================
 # Numba JIT-compiled core logic (Ruta Rápida)
@@ -48,9 +48,12 @@ def _ipdft_direct_vectorized(
 
         # 2. Solo computamos si el buffer ya tiene al menos 1 ciclo completo
         if buf_count >= sz:
-            m1_re = 0.0; m1_im = 0.0
-            m2_re = 0.0; m2_im = 0.0
-            m3_re = 0.0; m3_im = 0.0
+            m1_re = 0.0
+            m1_im = 0.0
+            m2_re = 0.0
+            m2_im = 0.0
+            m3_re = 0.0
+            m3_im = 0.0
 
             # DFT puntual en los 3 bins de interés
             for m in range(sz):

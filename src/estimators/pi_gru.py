@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-REFERENCE_KEYS = ("cho2014_gru", "raissi2019_pinn")
-
 import math
 import os
 from pathlib import Path
@@ -20,6 +18,8 @@ from .base import BaseFrequencyEstimator
 from .common import DT_DSP
 from .ipdft import IPDFT_Estimator
 from .zcd import ZCDEstimator
+
+REFERENCE_KEYS = ("cho2014_gru", "raissi2019_pinn")
 
 
 torch.set_num_threads(1)

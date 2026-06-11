@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from openfreqbench import __version__
 from openfreqbench.cli import build_parser
+from openfreqbench.registry import platform_manifest
 
 
 def test_run_command_parses() -> None:
@@ -70,3 +72,7 @@ def test_schema_command_parses() -> None:
     args = parser.parse_args(["schema", "--name", "benchmark-report"])
     assert args.command == "schema"
     assert args.name == "benchmark-report"
+
+
+def test_platform_manifest_uses_package_version() -> None:
+    assert platform_manifest()["version"] == __version__

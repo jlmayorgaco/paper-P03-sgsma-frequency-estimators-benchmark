@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-REFERENCE_KEYS = ("kalman1960_linear_filtering", "reza2012_frequency_adaptive_lkf")
-
 import math
 import numpy as np
 from numba import njit
 
 from .base import BaseFrequencyEstimator
 from .common import DT_DSP
+
+REFERENCE_KEYS = ("kalman1960_linear_filtering", "reza2012_frequency_adaptive_lkf")
 
 
 @njit(cache=True)

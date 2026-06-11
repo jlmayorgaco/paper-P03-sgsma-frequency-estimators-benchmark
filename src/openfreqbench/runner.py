@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+import hashlib
 import importlib
+import importlib.util
 import json
 import math
 import os
 import sys
 from contextlib import contextmanager
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any, Iterator
 
 import numpy as np
@@ -22,7 +23,7 @@ from .artifacts import (
     write_evidence_manifest,
     write_paper_traceability,
 )
-from .config import BenchmarkRunConfig, CustomEstimatorSelection, EstimatorSelection
+from .config import BenchmarkRunConfig, CustomEstimatorSelection
 from .paths import PROJECT_ROOT, SOURCE_ROOT
 from .registry import (
     CANONICAL_METRIC_IDS,
@@ -54,14 +55,36 @@ def _temporary_env(overrides: dict[str, str]) -> Iterator[None]:
 
 
 def _load_custom_estimator(spec: CustomEstimatorSelection) -> type:
-    if not spec.path.exists():
-        raise FileNotFoundError(f"Custom estimator file not found: {spec.path}")
-    module_dir = str(spec.path.parent)
+    path = spec.path.resolve()
+    if not path.exists():
+        raise FileNotFoundError(f"Custom estimator file not found: {path}")
+    module_dir = str(path.parent)
+    module_digest = hashlib.sha256(str(path).encode("utf-8")).hexdigest()[:16]
+    safe_stem = "".join(ch if ch.isalnum() else "_" for ch in path.stem)
+    module_name = f"_openfreqbench_custom_{safe_stem}_{module_digest}"
+    module_spec = importlib.util.spec_from_file_location(module_name, path)
+    if module_spec is None or module_spec.loader is None:
+        raise ImportError(f"Could not load custom estimator module from {path}")
+
+    inserted_path = False
     if module_dir not in sys.path:
         sys.path.insert(0, module_dir)
-    module_name = spec.path.stem
-    importlib.invalidate_caches()
-    module = importlib.import_module(module_name)
+        inserted_path = True
+    try:
+        importlib.invalidate_caches()
+        module = importlib.util.module_from_spec(module_spec)
+        sys.modules[module_name] = module
+        try:
+            module_spec.loader.exec_module(module)
+        except Exception:
+            sys.modules.pop(module_name, None)
+            raise
+    finally:
+        if inserted_path:
+            try:
+                sys.path.remove(module_dir)
+            except ValueError:
+                pass
     cls = getattr(module, spec.class_name)
     if not hasattr(cls, "name"):
         cls.name = spec.name
@@ -334,6 +357,7 @@ def run_benchmark_config(config: BenchmarkRunConfig, *, dry_run: bool = False) -
     aggregated.to_csv(agg_csv, index=False)
 
     manifest = platform_manifest()
+    selected_metrics = config.metric_include or list(CANONICAL_METRIC_IDS)
     payload = {
         "metadata": {
             "timestamp_utc": datetime.now(timezone.utc).isoformat(),
@@ -345,6 +369,7 @@ def run_benchmark_config(config: BenchmarkRunConfig, *, dry_run: bool = False) -
             "metric_profile": CANONICAL_METRIC_PROFILE,
             "metrics_locked": True,
             "metrics": list(CANONICAL_METRIC_IDS),
+            "metric_include": selected_metrics,
             "metric_labels": METRIC_LABELS,
             "scenarios": config.scenarios,
             "estimators": list(estimators),

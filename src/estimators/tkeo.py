@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-REFERENCE_KEYS = ("maragos1993_energy_separation",)
-
 import math
 import numpy as np
 from numba import njit
 
 from .base import BaseFrequencyEstimator
 from .common import DT_DSP
+
+REFERENCE_KEYS = ("maragos1993_energy_separation",)
 
 @njit(cache=True)
 def _psi(x0: float, xm1: float, xp1: float) -> float:

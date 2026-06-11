@@ -38,6 +38,10 @@ include:
 - `m36_post_startup_invalid_rate`: invalid-output fraction after the first finite
   output.
 
+`run_configuration.metrics` records the complete locked metric profile emitted
+by the engine. `run_configuration.metric_include` records the metric subset
+requested in YAML for reporting or claim focus.
+
 ```bash
 openfreqbench schema --name benchmark-report
 openfreqbench schema --name manifest

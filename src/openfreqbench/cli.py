@@ -18,7 +18,6 @@ from .paths import PACKAGE_ROOT, PROJECT_ROOT, SOURCE_ROOT
 from .quality import run_quality_gate
 from .reports import build_report_outputs
 from .registry import (
-    CANONICAL_METRIC_IDS,
     CANONICAL_METRIC_PROFILE,
     estimator_specs,
     metric_registry,

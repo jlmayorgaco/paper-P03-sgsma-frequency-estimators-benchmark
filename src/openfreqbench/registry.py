@@ -4,6 +4,7 @@ import importlib
 from dataclasses import asdict, dataclass
 from typing import Any
 
+from ._version import __version__
 from .contracts import MetricProfile, RESERVED_METRIC_PROFILES, validate_estimator_contract, validate_metric_profile, validate_scenario_contract
 
 from pipelines.benchmark_definition import (
@@ -256,7 +257,7 @@ def assert_canonical_metric_ids(metric_ids: list[str]) -> None:
 def platform_manifest() -> dict[str, object]:
     return {
         "name": "OpenFreqBench",
-        "version": "2.0.0",
+        "version": __version__,
         "benchmark_identity": BENCHMARK_IDENTITY,
         "benchmark_scope": BENCHMARK_SCOPE,
         "authority_statement": BENCHMARK_AUTHORITY_STATEMENT,

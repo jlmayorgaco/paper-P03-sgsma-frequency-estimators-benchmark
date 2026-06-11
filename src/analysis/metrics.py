@@ -214,8 +214,10 @@ def m16_heatmap_pass(rmse: float, max_peak: float, trip_risk_s: float) -> bool:
 
 def m17_hw_class(cpu_time_us: float) -> str:
     """Clasificación de despliegue de hardware para la Tabla V."""
-    if cpu_time_us < 20.0: return "P1"
-    if cpu_time_us <= 40.0: return "P2"
+    if cpu_time_us < 20.0:
+        return "P1"
+    if cpu_time_us <= 40.0:
+        return "P2"
     return "M1"
 
 

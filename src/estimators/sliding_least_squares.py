@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-REFERENCE_KEYS = ("besson1999_nonlinear_least_squares",)
-
 from ._experimental_base import ExperimentalFrequencyEstimator
+
+REFERENCE_KEYS = ("besson1999_nonlinear_least_squares",)
 
 
 class Sliding_Least_Squares_Estimator(ExperimentalFrequencyEstimator):

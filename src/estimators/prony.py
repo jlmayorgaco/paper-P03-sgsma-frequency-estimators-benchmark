@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-REFERENCE_KEYS = ("hauer1991_prony_power_system",)
-
 import math
 
 import numpy as np
@@ -9,6 +7,8 @@ from numba import njit
 
 from .base import BaseFrequencyEstimator
 from .common import DT_DSP
+
+REFERENCE_KEYS = ("hauer1991_prony_power_system",)
 
 
 @njit(cache=True)

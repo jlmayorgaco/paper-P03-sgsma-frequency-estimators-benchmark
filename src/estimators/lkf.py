@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-REFERENCE_KEYS = ("kalman1960_linear_filtering", "pradhan2004_complex_lkf")
-
 import math
 import numpy as np
 from numba import njit
 
 from .base import BaseFrequencyEstimator
 from .common import DT_DSP
+
+REFERENCE_KEYS = ("kalman1960_linear_filtering", "pradhan2004_complex_lkf")
 
 
 # =====================================================================
@@ -115,7 +115,6 @@ def _lkf_vectorized_core(
 
         # Joseph-form covariance update
         a = 1.0 - k1
-        b = -k2
 
         p11 = a * a * pp11 + r * k1 * k1
         p12 = -a * k2 * pp11 + a * pp12 + r * k1 * k2

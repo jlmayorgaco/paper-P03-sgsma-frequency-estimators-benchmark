@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-REFERENCE_KEYS = ("schmidt1986_music",)
-
 import math
 
 import numpy as np
@@ -9,6 +7,8 @@ from numba import njit
 
 from .base import BaseFrequencyEstimator
 from .common import DT_DSP
+
+REFERENCE_KEYS = ("schmidt1986_music",)
 
 
 @njit(cache=True)

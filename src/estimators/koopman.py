@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-REFERENCE_KEYS = ("williams2015_edmd_koopman",)
-
 import math
 import numpy as np
 from numba import njit
 
 from .base import BaseFrequencyEstimator
 from .common import DT_DSP
+
+REFERENCE_KEYS = ("williams2015_edmd_koopman",)
 
 @njit(cache=True)
 def _koopman_edmd_core(buffer: np.ndarray, dt: float) -> float:
@@ -138,7 +138,7 @@ class Koopman_Estimator(BaseFrequencyEstimator):
                 if not np.isnan(val) and 40.0 < val < 80.0:
                     self.f_out = val
                     self._valid_updates += 1
-            except:
+            except Exception:
                 pass
         self._step_counter += 1
         return self.f_out
@@ -166,7 +166,7 @@ class Koopman_Estimator(BaseFrequencyEstimator):
                     if not np.isnan(val) and 40.0 < val < 80.0:
                         self.f_out = val
                         self._valid_updates += 1
-                except:
+                except Exception:
                     pass
             self._step_counter += 1
             f_est[i] = self.f_out

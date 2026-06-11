@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-REFERENCE_KEYS = ("hua1990_matrix_pencil",)
-
 from ._experimental_base import ExperimentalFrequencyEstimator
+
+REFERENCE_KEYS = ("hua1990_matrix_pencil",)
 
 
 class Matrix_Pencil_Estimator(ExperimentalFrequencyEstimator):
