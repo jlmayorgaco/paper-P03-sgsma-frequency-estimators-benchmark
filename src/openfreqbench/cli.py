@@ -278,6 +278,46 @@ def _cmd_canonical_full(args: argparse.Namespace) -> int:
     return int(code)
 
 
+def _cmd_full_mc_tuning_matrix(args: argparse.Namespace) -> int:
+    cmd = [
+        sys.executable,
+        "-m",
+        "pipelines.full_mc_tuning_matrix",
+        "--run-id",
+        args.run_id,
+        "--mc-version",
+        args.mc_version,
+        "--output-dir",
+        args.output_dir,
+        "--n-trials",
+        str(args.n_trials),
+        "--tune-runs",
+        str(args.tune_runs),
+        "--eval-runs",
+        str(args.eval_runs),
+        "--base-seed",
+        str(args.base_seed),
+        "--optuna-seed",
+        str(args.optuna_seed),
+        "--n-cost-reps",
+        str(args.n_cost_reps),
+    ]
+    for scenario in args.scenario:
+        cmd.extend(["--scenario", scenario])
+    for estimator in args.estimator:
+        cmd.extend(["--estimator", estimator])
+    for objective in args.objective:
+        cmd.extend(["--objective", objective])
+    if args.all_scenarios:
+        cmd.append("--all-scenarios")
+    if args.all_estimators:
+        cmd.append("--all-estimators")
+    cmd.append("--capture-signals" if args.capture_signals else "--no-capture-signals")
+    if args.dry_run:
+        cmd.append("--dry-run")
+    return int(subprocess.run(cmd, cwd=ROOT, check=False).returncode)
+
+
 def _cmd_quality_gate(args: argparse.Namespace) -> int:
     result = run_quality_gate(
         ROOT,
@@ -362,6 +402,27 @@ def build_parser() -> argparse.ArgumentParser:
     bench_full.add_argument("--scenario", action="append", default=[])
     bench_full.add_argument("--estimator", action="append", default=[])
     bench_full.set_defaults(handler=_cmd_canonical_full)
+    bench_tune = benchmark_sub.add_parser(
+        "tune-matrix",
+        help="Tune per scenario, estimator, and objective metric; write replay-ready artifacts.",
+    )
+    bench_tune.add_argument("--run-id", default="full-mc-objective-matrix")
+    bench_tune.add_argument("--mc-version", default="mc-v1")
+    bench_tune.add_argument("--output-dir", default=str(ROOT / "artifacts" / "full_mc_tuning_matrix"))
+    bench_tune.add_argument("--scenario", action="append", default=[])
+    bench_tune.add_argument("--all-scenarios", action="store_true")
+    bench_tune.add_argument("--estimator", action="append", default=[])
+    bench_tune.add_argument("--all-estimators", action="store_true")
+    bench_tune.add_argument("--objective", action="append", default=[])
+    bench_tune.add_argument("--n-trials", type=int, default=20)
+    bench_tune.add_argument("--tune-runs", type=int, default=2)
+    bench_tune.add_argument("--eval-runs", type=int, default=3)
+    bench_tune.add_argument("--base-seed", type=int, default=12345)
+    bench_tune.add_argument("--optuna-seed", type=int, default=42)
+    bench_tune.add_argument("--n-cost-reps", type=int, default=1)
+    bench_tune.add_argument("--capture-signals", action=argparse.BooleanOptionalAction, default=False)
+    bench_tune.add_argument("--dry-run", action="store_true")
+    bench_tune.set_defaults(handler=_cmd_full_mc_tuning_matrix)
 
     report = sub.add_parser("report", help="Build analysis tables and plots from an OpenFreqBench benchmark report.")
     report_sub = report.add_subparsers(dest="report_cmd", required=True)

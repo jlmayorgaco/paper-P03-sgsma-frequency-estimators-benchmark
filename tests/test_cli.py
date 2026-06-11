@@ -67,6 +67,30 @@ def test_archive_command_parses() -> None:
     assert args.zip is True
 
 
+def test_benchmark_tune_matrix_command_parses() -> None:
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "benchmark",
+            "tune-matrix",
+            "--scenario",
+            "IEEE_Single_SinWave",
+            "--estimator",
+            "ZCD",
+            "--objective",
+            "m1_rmse_hz",
+            "--n-trials",
+            "1",
+        ]
+    )
+    assert args.command == "benchmark"
+    assert args.benchmark_cmd == "tune-matrix"
+    assert args.scenario == ["IEEE_Single_SinWave"]
+    assert args.estimator == ["ZCD"]
+    assert args.objective == ["m1_rmse_hz"]
+    assert args.n_trials == 1
+
+
 def test_schema_command_parses() -> None:
     parser = build_parser()
     args = parser.parse_args(["schema", "--name", "benchmark-report"])

@@ -54,6 +54,23 @@ openfreqbench init --template montecarlo --output montecarlo.yaml
 openfreqbench run --config montecarlo.yaml
 ```
 
+For objective-specific tuning artifacts:
+
+```bash
+openfreqbench benchmark tune-matrix \
+  --run-id full-mc-objective-smoke \
+  --scenario IEEE_Single_SinWave \
+  --estimator ZCD \
+  --objective m1_rmse_hz \
+  --objective m5_trip_risk_s \
+  --n-trials 1 \
+  --tune-runs 1 \
+  --eval-runs 1
+```
+
+The replay-ready tuned artifacts are written under
+`artifacts/full_mc_tuning_matrix/<run_id>/selected_replay/<objective>/`.
+
 For paper replay use:
 
 ```bash

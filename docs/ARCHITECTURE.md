@@ -17,6 +17,10 @@ historical layouts remain in older branches.
 | `openfreqbench.reproducibility` | git, dependency, source, and checkpoint hashes |
 | `analysis`, `estimators`, `scenarios`, `pipelines`, `plotting` | audited benchmark core |
 
+The two publication-facing pipelines are documented in `docs/PIPELINES.md`:
+the Full MC tuning matrix for scenario-estimator-objective tuning artifacts,
+and ATLAS for stress-variable maps and readiness reports.
+
 ## Locked metric profile
 
 The active metric profile is `canonical-single-phase-v1`. YAML files can select
