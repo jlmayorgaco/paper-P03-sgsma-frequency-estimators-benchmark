@@ -1,0 +1,16 @@
+# OpenFreqBench locked dependencies for reproducibility
+# Generated from pyproject.toml minimum versions
+# Install: pip install -r requirements-lock.txt
+
+numpy>=2.0,<3.0
+scipy>=1.11,<2.0
+pandas>=2.2,<3.0
+matplotlib>=3.8,<4.0
+optuna>=4.0,<5.0
+numba>=0.60,<1.0
+tqdm>=4.66,<5.0
+scikit-learn>=1.5,<2.0
+PyYAML>=6.0,<7.0
+pytest>=8.0,<9.0
+ruff>=0.8,<1.0
+build>=1.0,<2.0

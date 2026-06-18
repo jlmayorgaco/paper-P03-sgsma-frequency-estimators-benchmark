@@ -10,7 +10,7 @@ from .common import DT_DSP
 REFERENCE_KEYS = ("grandke1983_ipdft",)
 
 # =====================================================================
-# Numba JIT-compiled core logic (Ruta Rápida)
+# Numba JIT-compiled core logic (Fast Path)
 # =====================================================================
 @njit(cache=True)
 def _ipdft_direct_vectorized(
@@ -31,9 +31,9 @@ def _ipdft_direct_vectorized(
     last_f: float,
 ) -> tuple[np.ndarray, int, int, int, float]:
     """
-    Núcleo del IPDFT optimizado.
-    Procesa muestra a muestra sin diezmado (downsampling), actualizando la ventana 
-    circular y recalculando la frecuencia mediante interpolación parabólica.
+    Optimized IPDFT core.
+    Processes sample-by-sample without downsampling, updating the circular
+    window and recomputing the frequency via parabolic interpolation.
     """
     n_samples = len(v_array)
     f_hat_array = np.empty(n_samples, dtype=np.float64)
@@ -73,14 +73,14 @@ def _ipdft_direct_vectorized(
             sp_k   = math.hypot(m2_re, m2_im)
             sp_kp1 = math.hypot(m3_re, m3_im)
 
-            # 3. Interpolación Parabólica Magnitud (Quinn/MacLeod modificado)
+            # 3. Parabolic Magnitude Interpolation (modified Quinn/MacLeod)
             denom_mag = sp_km1 + 2.0 * sp_k + sp_kp1
             if denom_mag >= 1e-10:
                 # Calculamos el desplazamiento
                 delta = 2.0 * (sp_kp1 - sp_km1) / denom_mag
                 
-                # Mantenemos un clamp holgado (±3.0 bines) para que la fórmula 
-                # matemática no colapse antes de llegar al Sanity Check.
+                # Loose clamp (±3.0 bins) to prevent the mathematical formula
+                # from collapsing before the sanity check.
                 if delta > delta_limit_bins:
                     delta = delta_limit_bins
                     clamp_count += 1
@@ -90,8 +90,8 @@ def _ipdft_direct_vectorized(
                 
                 f_candidate = (k_nom + delta) * res
                 
-                # Filtro de Cordura Eléctrica (Sanity Check)
-                # Restringido explícitamente de 40 Hz a 90 Hz.
+                # Electrical Sanity Filter
+                # Explicitly restricted to 40-90 Hz.
                 if f_min_hz <= f_candidate <= f_max_hz:
                     if smooth_alpha > 0.0:
                         last_f = (1.0 - smooth_alpha) * last_f + smooth_alpha * f_candidate
@@ -111,8 +111,8 @@ def _ipdft_direct_vectorized(
 class IPDFT_Estimator(BaseFrequencyEstimator):
     """
     Interpolated Discrete Fourier Transform (IPDFT) Frequency Estimator.
-    Matemáticamente idéntico a TunableIpDFT, corregido para evitar aliasing y 
-    seguir fallas severas en el rango seguro de 40-90 Hz.
+    Mathematically identical to TunableIpDFT, corrected to prevent aliasing and
+    track severe faults in the safe 40-90 Hz range.
     """
     name = "IPDFT"
 

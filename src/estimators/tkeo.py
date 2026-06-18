@@ -11,7 +11,7 @@ REFERENCE_KEYS = ("maragos1993_energy_separation",)
 
 @njit(cache=True)
 def _psi(x0: float, xm1: float, xp1: float) -> float:
-    """Operador de Energía de Teager-Kaiser: Psi(x) = x(n)^2 - x(n-1)x(n+1)"""
+    """Teager-Kaiser Energy Operator: Psi(x) = x(n)^2 - x(n-1)x(n+1)"""
     return x0**2 - xm1 * xp1
 
 @njit(cache=True)
@@ -30,8 +30,8 @@ def _tkeo_vectorized_core(
     derivative_noise_factor: float,
 ) -> tuple[np.ndarray, float, float, bool, np.ndarray, np.ndarray, int]:
     """
-    Núcleo del estimador TKEO utilizando un algoritmo DES más robusto.
-    Requiere evaluar la energía tanto de la señal (x) como de su derivada aproximada (y).
+    TKEO estimator core using a more robust DES algorithm.
+    Requires evaluating the energy of both the signal (x) and its approximated derivative (y).
     """
     n = len(v_array)
     f_est = np.empty(n, dtype=np.float64)
@@ -114,8 +114,8 @@ def _tkeo_vectorized_core(
 class TKEO_Estimator(BaseFrequencyEstimator):
     """
     Teager-Kaiser Energy Operator (TKEO).
-    Estimador de latencia sub-ciclo y costo O(1).
-    Actualizado para usar un algoritmo de separación de energía (DES) más estable.
+    Sub-cycle latency estimator with O(1) cost.
+    Updated to use a more stable Energy Separation Algorithm (DES).
     """
     name = "TKEO"
 

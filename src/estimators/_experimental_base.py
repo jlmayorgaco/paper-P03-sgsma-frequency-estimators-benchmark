@@ -6,6 +6,12 @@ import numpy as np
 class ExperimentalFrequencyEstimator:
     """Small compatibility base for experimental estimators.
 
+    WARNING: These estimators use a simplified zero-crossing core regardless
+    of what their REFERENCE_KEYS claim. They are placeholders pending full
+    implementation of the algorithms described in their cited papers. Do not
+    use experimental estimators for publication claims. Only the 18 canonical
+    (active) estimators under src/estimators/ are fully implemented.
+
     These estimators expose a simple `step` and `step_vectorized` API so they can
     be promoted to active registry after dedicated validation/tuning.
     """

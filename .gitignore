@@ -40,3 +40,10 @@ slides_final/*.fls
 slides_final/*.fdb_latexmk
 slides_final/*.synctex.gz
 slides_final/*.vrb
+
+# macOS metadata
+.DS_Store
+**/.DS_Store
+
+# JOSS submission artifacts
+paper/paper.pdf

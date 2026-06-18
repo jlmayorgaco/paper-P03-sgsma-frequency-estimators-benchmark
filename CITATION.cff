@@ -5,6 +5,7 @@ version: "2.0.0"
 authors:
   - family-names: "Lugo"
     given-names: "Juan"
+    orcid: "https://orcid.org/0000-0002-0774-217"
 license: "MIT"
 repository-code: "https://github.com/jlmayorgaco/paper-P03-sgsma-frequency-estimators-benchmark"
 keywords:

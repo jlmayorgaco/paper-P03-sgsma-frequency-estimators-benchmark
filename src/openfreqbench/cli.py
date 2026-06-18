@@ -26,6 +26,8 @@ from .registry import (
 )
 from .runner import run_benchmark_config
 from .schemas import get_schema, schema_names, validate_payload
+from .tuning_trace_plots import build_tuning_trace_plots
+from ._version import __version__
 
 ROOT = PROJECT_ROOT
 PACKAGE_TEMPLATE_DIR = PACKAGE_ROOT / "templates"
@@ -109,11 +111,11 @@ def _cmd_init(args: argparse.Namespace) -> int:
                 for path in template_dir.glob("*.yaml")
             }
         )
-        print(f"[ERROR] Unknown template {template!r}. Known: {known}")
+        print(f"[ERROR] Unknown template {template!r}. Use 'openfreqbench init --help' to see available templates. Known: {known}")
         return 2
     dest = Path(args.output)
     if dest.exists() and not args.force:
-        print(f"[ERROR] Refusing to overwrite existing file: {dest}")
+        print(f"[ERROR] Refusing to overwrite existing file: {dest}. Use --force to overwrite.")
         return 2
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
@@ -203,6 +205,24 @@ def _cmd_report_build(args: argparse.Namespace) -> int:
     result = build_report_outputs(
         input_json=Path(args.input_json),
         output_dir=Path(args.output_dir) if args.output_dir else None,
+    )
+    _print_json(result)
+    return 0
+
+
+def _cmd_tuning_trace_plots(args: argparse.Namespace) -> int:
+    result = build_tuning_trace_plots(
+        Path(args.run_root),
+        output_dir=Path(args.output_dir) if args.output_dir else None,
+        objectives=args.objective or None,
+        scenarios=args.scenario or None,
+        estimators=args.estimator or None,
+        window_start_s=float(args.window_start_s),
+        window_s=None if args.window_s is None else float(args.window_s),
+        min_error_mhz=float(args.min_error_mhz),
+        max_error_mhz=None if args.max_error_mhz is None else float(args.max_error_mhz),
+        formats=args.format or ("png", "pdf", "svg"),
+        dpi=int(args.dpi),
     )
     _print_json(result)
     return 0
@@ -333,6 +353,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="openfreqbench",
         description="OpenFreqBench 2.0.0: reproducible frequency-estimator benchmarks from YAML.",
     )
+    parser.add_argument("--version", action="version", version=f"openfreqbench {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
     doctor = sub.add_parser("doctor", help="Check local runtime and platform registry.")
@@ -458,6 +479,22 @@ def build_parser() -> argparse.ArgumentParser:
     plots_build.add_argument("--input-json", required=True)
     plots_build.add_argument("--output-dir", default=None)
     plots_build.set_defaults(handler=_cmd_report_build)
+    plots_tuning = plots_sub.add_parser(
+        "tuning-traces",
+        help="Generate IEEE-style mHz diagnostic traces from a full_mc_tuning_matrix run root.",
+    )
+    plots_tuning.add_argument("--run-root", required=True)
+    plots_tuning.add_argument("--output-dir", default=None)
+    plots_tuning.add_argument("--objective", action="append", default=[])
+    plots_tuning.add_argument("--scenario", action="append", default=[])
+    plots_tuning.add_argument("--estimator", action="append", default=[])
+    plots_tuning.add_argument("--window-start-s", type=float, default=0.0)
+    plots_tuning.add_argument("--window-s", type=float, default=0.2)
+    plots_tuning.add_argument("--min-error-mhz", type=float, default=10.0)
+    plots_tuning.add_argument("--max-error-mhz", type=float, default=50.0)
+    plots_tuning.add_argument("--format", action="append", choices=["png", "pdf", "svg"], default=None)
+    plots_tuning.add_argument("--dpi", type=int, default=600)
+    plots_tuning.set_defaults(handler=_cmd_tuning_trace_plots)
 
     quality = sub.add_parser("quality-gate", help="Run package, science, and reproducibility readiness checks.")
     quality.add_argument("--skip-tests", action="store_true", help="Skip pytest during the quality gate.")

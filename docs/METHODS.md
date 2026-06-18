@@ -53,20 +53,61 @@ under a common interface.
 Metric formulas are platform-owned and implemented in `analysis.metrics`.
 Researchers can select metric ids in YAML, but cannot define formulas in YAML.
 
-Core metrics:
+### Block 1: Classical Accuracy (IEC/IEEE Baseline)
 
-- `m1_rmse_hz`: sqrt(mean((f_hat - f_true)^2))
-- `m2_mae_hz`: mean(abs(f_hat - f_true))
-- `m3_max_peak_hz`: max(abs(f_hat - f_true))
-- `m5_trip_risk_s`: cumulative time where abs(error) exceeds relay deadband
-- `m7_pcb_hz`: mean(abs(error)) + 3 std(abs(error))
-- `m9_rfe_max_hz_s`: robust high-percentile RoCoF error magnitude
-- `m10_rfe_rms_hz_s`: RMS RoCoF error
-- `m13_cpu_time_us`: repeated process-time CPU cost per sample
-- `m14_struct_latency_ms`: declared structural latency in milliseconds
-- `m18` to `m23`: standardized runtime and memory proxy metrics
-- `m36_post_startup_invalid_rate`: invalid-output fraction after the first finite
-  estimator output
+- `m1_rmse_hz`: sqrt(mean((f_hat - f_true)^2)) — Root Mean Square Error [Hz]
+- `m2_mae_hz`: mean(abs(f_hat - f_true)) — Mean Absolute Error [Hz]
+- `m3_max_peak_hz`: max(abs(f_hat - f_true)) — Maximum peak error [Hz]
+- `m4_std_error_hz`: std(abs(f_hat - f_true)) — Standard deviation of absolute error [Hz]
+- `m34_p95_error_hz`: 95th percentile of absolute error [Hz]
+- `m35_p99_error_hz`: 99th percentile of absolute error [Hz]
+
+### Block 2: Protection Risk
+
+- `m5_trip_risk_s`: cumulative time where abs(error) > 0.5 Hz [s]
+- `m6_max_contig_trip_s`: longest continuous excursion above 0.5 Hz [s]
+- `m7_pcb_hz`: mean(abs(error)) + 3 * std(abs(error)) — Probabilistic Compliance Bound [Hz]
+- `m8_settling_time_s`: time from window start until error stays within 0.2 Hz [s]
+
+### Block 3: RoCoF and IBR-Centric Metrics
+
+- `m9_rfe_max_hz_s`: 99.5th percentile of RoCoF error magnitude [Hz/s]
+- `m10_rfe_rms_hz_s`: RMS RoCoF error [Hz/s]
+- `m11_rnaf_db`: RoCoF Noise Amplification Factor [dB]. 10*log10(var(RFE)/var(noise))
+- `m12_isi_pu`: Interharmonic Susceptibility Index [pu]. Spectral leakage amplitude at target interharmonic frequency
+
+### Block 4: Hardware Viability and Latency
+
+- `m13_cpu_time_us`: (exec_time_s / n_samples) * 1e6 — CPU time per sample [us]
+- `m14_struct_latency_ms`: (structural_samples / fs_dsp) * 1000 — Declared algorithmic latency [ms]
+- `m15_pcb_compliant`: True if PCB <= 0.05 Hz — IEEE 60255 compliance check
+
+### Block 5: Paper-Specific (Figures and Tables)
+
+- `m16_heatmap_pass`: True if RMSE < 0.05 AND max_peak < 0.5 AND trip_risk < 0.1
+- `m17_hw_class`: Deployment classification (P1: < 20 us, P2: <= 40 us, M1: > 40 us)
+
+### Validity and Diagnostic Metrics
+
+- `m18_valid_run`: True if no post-startup invalid outputs and all metrics finite
+- `m19_invalid_output_count`: Number of NaN/Inf outputs from estimator
+- `m20_total_samples_processed`: Total samples fed to estimator
+- `m21_startup_valid_samples`: Samples before first finite output
+- `m22_invalid_output_rate`: invalid_output_count / total_samples_processed
+- `m23_memory_usage_bytes`: Estimated memory footprint [bytes]
+- `m36_post_startup_invalid_rate`: Invalid-output fraction after first finite output
+
+### Event-Specific Metrics (m24-m30)
+
+Computed only when scenario declares an event_time_s:
+
+- `m24_pre_event_rmse_hz`: RMSE in 100 ms window before event [Hz]
+- `m25_post_1cy_rmse_hz`: RMSE in 1 cycle (~16.7 ms) after event [Hz]
+- `m26_post_3cy_rmse_hz`: RMSE in 3 cycles (~50 ms) after event [Hz]
+- `m27_post_100ms_rmse_hz`: RMSE in 100 ms window after event [Hz]
+- `m28_post_event_peak_hz`: Max peak error in 100 ms after event [Hz]
+- `m29_late_event_rmse_hz`: RMSE in [150ms, 500ms] window after event [Hz]
+- `m30_event_settling_time_s`: Time until error stays within threshold after event [s]
 
 The baseline warm-up/evaluation trim is handled in `analysis.metrics` and is
 part of the profile. Changing it requires a new metric profile.
