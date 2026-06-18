@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openfreqbench.org/schemas/benchmark-report-v1.json",
+  "title": "OpenFreqBench benchmark_report.json",
+  "type": "object",
+  "required": [
+    "metadata",
+    "run_configuration",
+    "reproducibility",
+    "raw_run_records",
+    "aggregated_metrics",
+    "artifacts"
+  ],
+  "properties": {
+    "metadata": { "type": "object" },
+    "run_configuration": { "type": "object" },
+    "reproducibility": { "type": "object" },
+    "raw_run_records": { "type": "array" },
+    "aggregated_metrics": { "type": "array" },
+    "artifacts": { "type": "object" }
+  }
+}

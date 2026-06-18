@@ -1,0 +1,22 @@
+run:
+  id: custom-estimator-smoke
+  mode: single
+  output_dir: artifacts/openfreqbench
+  n_runs: 1
+  base_seed: 12345
+  max_workers: 1
+  capture_signals: true
+
+benchmark:
+  parameter_policy: default
+  scenarios:
+    - IEEE_Single_SinWave
+  custom_estimators:
+    - name: MyEstimator
+      path: examples/custom_estimators/my_estimator.py
+      class: MyEstimator
+      params:
+        f0_hz: 60.0
+
+metrics:
+  profile: canonical-single-phase-v1

@@ -7,6 +7,8 @@ from numba import njit
 from .base import BaseFrequencyEstimator
 from .common import DT_DSP
 
+REFERENCE_KEYS = ("kalman1960_linear_filtering", "dash1999_extended_complex_kalman")
+
 
 @njit(cache=True)
 def _ekf_vectorized_core(

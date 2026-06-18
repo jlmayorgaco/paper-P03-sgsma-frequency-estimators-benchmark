@@ -8,17 +8,17 @@ from numba import njit
 from .base import BaseFrequencyEstimator
 from .common import DT_DSP
 
+REFERENCE_KEYS = ("hauer1991_prony_power_system",)
+
 
 @njit(cache=True)
-def _prony_svd_core(
+def _prony_ls_core(
     buffer: np.ndarray,
-    H: np.ndarray,
     dt: float,
-    L: int,
     order: int,
 ) -> tuple[float, float]:
     """
-    Deterministic Prony core.
+    Deterministic least-squares Prony core.
 
     Numerical failures are surfaced as NaN instead of being replaced by the
     previous output. This prevents silent failure masking in benchmark outputs.
@@ -27,34 +27,32 @@ def _prony_svd_core(
     if N < 2 * order:
         return np.nan, 0.0
 
-    cols = N - L + 1
-
-    for i in range(L):
-        H[i, :] = buffer[i : i + cols]
-
-    if np.isnan(H).any() or np.isinf(H).any():
+    n_rows = N - order
+    if n_rows < order:
         return np.nan, 0.0
 
-    U, s, _Vh = np.linalg.svd(H, full_matrices=False)
-    if len(s) == 0 or s[0] <= 0.0:
+    A = np.empty((n_rows, order), dtype=np.float64)
+    b = np.empty(n_rows, dtype=np.float64)
+    for row in range(n_rows):
+        k = row + order
+        b[row] = -buffer[k]
+        for col in range(order):
+            A[row, col] = buffer[k - col - 1]
+
+    if np.isnan(A).any() or np.isinf(A).any():
         return np.nan, 0.0
 
-    threshold = 1e-6 * s[0]
-    p_eff = 0
-    for i in range(len(s)):
-        if s[i] > threshold:
-            p_eff += 1
+    coeffs, _, _, _ = np.linalg.lstsq(A, b, rcond=1e-8)
+    if len(coeffs) != order or np.isnan(coeffs).any() or np.isinf(coeffs).any():
+        return np.nan, 0.0
 
-    p_use = min(order, p_eff)
-    if p_use < 2:
-        p_use = 2
+    companion = np.zeros((order, order), dtype=np.float64)
+    for col in range(order):
+        companion[0, col] = -coeffs[col]
+    for row in range(1, order):
+        companion[row, row - 1] = 1.0
 
-    U_trunc = U[:, :p_use]
-    U1 = np.ascontiguousarray(U_trunc[:-1, :])
-    U2 = np.ascontiguousarray(U_trunc[1:, :])
-
-    Z_mat, _, _, _ = np.linalg.lstsq(U1, U2, rcond=1e-6)
-    roots = np.linalg.eigvals(Z_mat.astype(np.complex128))
+    roots = np.linalg.eigvals(companion.astype(np.complex128))
 
     best_amp = -1.0
     best_f = np.nan
@@ -82,11 +80,9 @@ def _prony_sliding_vectorized(
     v_array: np.ndarray,
     dt: float,
     window_size: int,
-    L: int,
     order: int,
     f_out: float,
     buffer: np.ndarray,
-    H_buffer: np.ndarray,
     samples_seen: int,
     stride: int,
 ) -> tuple[np.ndarray, float, np.ndarray, int]:
@@ -101,7 +97,7 @@ def _prony_sliding_vectorized(
         samples_seen += 1
 
         if samples_seen >= window_size and samples_seen % stride == 0:
-            best_f, _best_amp = _prony_svd_core(buffer, H_buffer, dt, L, order)
+            best_f, _best_amp = _prony_ls_core(buffer, dt, order)
             f_out = best_f if np.isfinite(best_f) else np.nan
 
         f_est[i] = f_out
@@ -136,7 +132,6 @@ class Prony_Estimator(BaseFrequencyEstimator):
     def reset(self) -> None:
         self.f_out = np.nan
         self.buffer = np.zeros(self.window_size, dtype=np.float64)
-        self.H_buffer = np.zeros((self.L, self.window_size - self.L + 1), dtype=np.float64)
         self.samples_seen = 0
 
     @classmethod
@@ -157,7 +152,7 @@ class Prony_Estimator(BaseFrequencyEstimator):
         )
 
     def structural_latency_samples(self) -> int:
-        return self.window_size
+        return int(math.ceil(self.window_size / self.execution_stride) * self.execution_stride)
 
     def step(self, z: float) -> float:
         return float(self.step_vectorized(np.array([z], dtype=np.float64))[0])
@@ -176,11 +171,9 @@ class Prony_Estimator(BaseFrequencyEstimator):
             v_array=v_array,
             dt=self.dt,
             window_size=self.window_size,
-            L=self.L,
             order=self.order,
             f_out=self.f_out,
             buffer=self.buffer,
-            H_buffer=self.H_buffer,
             samples_seen=self.samples_seen,
             stride=self.execution_stride,
         )

@@ -19,6 +19,8 @@ from .common import DT_DSP
 from .ipdft import IPDFT_Estimator
 from .zcd import ZCDEstimator
 
+REFERENCE_KEYS = ("cho2014_gru", "raissi2019_pinn")
+
 
 torch.set_num_threads(1)
 
@@ -311,6 +313,7 @@ class PIDRE_Model(nn.Module):
 
 class PI_GRU_Estimator(BaseFrequencyEstimator):
     name = "PI-GRU"
+    PREFER_VECTORIZED_ENGINE = True
 
     def __init__(
         self,

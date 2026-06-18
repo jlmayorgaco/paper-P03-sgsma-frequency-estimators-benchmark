@@ -1,0 +1,60 @@
+run:
+  id: phase2-paper-grade-preview
+  mode: matrix
+  output_dir: ../artifacts/openfreqbench
+  n_runs: 3
+  base_seed: 20260609
+  max_workers: 1
+  capture_signals: false
+
+benchmark:
+  parameter_policy: default
+  scenarios:
+    - IEEE_Single_SinWave
+    - IEEE_Freq_Step
+    - IEEE_Freq_Ramp_1Hzs
+    - IEEE_Freq_Ramp_10Hzs
+    - IEEE_Mag_Step_5pct
+    - IEEE_Mag_Step_25pct
+    - IEEE_Phase_Jump_20
+    - IEEE_Phase_Jump_60
+    - IEEE_Modulation_AM
+    - IEEE_Modulation_FM
+    - IEEE_OOB_Interference
+    - IBR_Harmonics_Medium
+    - IBR_Multi_Event
+    - NERC_Phase_Jump_60
+  estimators:
+    - name: ZCD
+    - name: IPDFT
+    - name: TFT
+    - name: RLS
+    - name: PLL
+    - name: SOGI-PLL
+    - name: SOGI-FLL
+    - name: Type-3 SOGI-PLL
+    - name: LKF
+    - name: LKF2
+    - name: EKF
+    - name: UKF
+    - name: RA-EKF
+    - name: TKEO
+    - name: Prony
+    - name: ESPRIT
+    - name: Koopman (RK-DPMU)
+
+metrics:
+  profile: canonical-single-phase-v1
+  include:
+    - m1_rmse_hz
+    - m2_mae_hz
+    - m3_max_peak_hz
+    - m5_trip_risk_s
+    - m7_pcb_hz
+    - m13_cpu_time_us
+    - m14_struct_latency_ms
+    - m21_startup_valid_samples
+    - m22_invalid_output_rate
+    - m36_post_startup_invalid_rate
+    - m34_p95_error_hz
+    - m35_p99_error_hz

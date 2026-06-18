@@ -1,0 +1,440 @@
+from __future__ import annotations
+
+import json
+import shutil
+from pathlib import Path
+
+import pandas as pd
+
+from pipelines import atlas_sweep
+
+
+def test_atlas_builds_three_sweep_families(monkeypatch) -> None:
+    monkeypatch.setenv("ATLAS_MAG_LEVELS_PCT", "5")
+    monkeypatch.setenv("ATLAS_ROCOF_LEVELS_HZ_S", "0.5")
+    monkeypatch.setenv("ATLAS_FREQSTEP_LEVELS_HZ", "0.1")
+    scenarios = atlas_sweep.build_atlas_scenarios(["magnitude_step", "rocof", "frequency_step"])
+
+    assert len(scenarios) == 6
+    assert {item.sweep_key for item in scenarios} == {"magnitude_step", "rocof", "frequency_step"}
+    assert {item.direction for item in scenarios} == {"pos", "neg"}
+    assert all(item.scenario_name.startswith("Atlas_") for item in scenarios)
+
+
+def test_atlas_parser_accepts_oracle_policy() -> None:
+    parser = atlas_sweep.build_parser()
+    args = parser.parse_args(["--sweeps", "rocof", "--policy", "oracle", "--n-runs", "2"])
+
+    assert args.sweeps == "rocof"
+    assert args.policy == "oracle"
+    assert args.n_runs == 2
+
+
+def test_atlas_paper_required_alias_expands_to_required_sweeps() -> None:
+    assert atlas_sweep._expand_sweep_keys(["paper_required"]) == list(atlas_sweep.REQUIRED_ATLAS_SWEEPS)
+
+
+def test_atlas_accepts_phase_modulation_aliases(monkeypatch) -> None:
+    monkeypatch.setenv("ATLAS_PHASE_JUMP_LEVELS_DEG", "20")
+    monkeypatch.setenv("ATLAS_FM_MOD_FREQ_LEVELS_HZ", "2")
+
+    scenarios = atlas_sweep.build_atlas_scenarios(["phase_jump", "modlation_fm_sweep"])
+
+    assert {item.sweep_key for item in scenarios} == {"phase_jump_sweep", "modulation_fm_sweep"}
+
+
+def test_atlas_phase_jump_dense_range_keeps_zero_once(monkeypatch) -> None:
+    monkeypatch.setenv("ATLAS_PHASE_JUMP_LEVELS_DEG", "0:3:1")
+    monkeypatch.setenv("ATLAS_PHASE_JUMP_DIRECTIONS", "pos,neg")
+
+    scenarios = atlas_sweep.build_atlas_scenarios(["phase_jump_sweep"])
+
+    assert len(scenarios) == 7
+    assert [item.abs_value for item in scenarios if item.abs_value == 0.0] == [0.0]
+    assert {item.abs_value for item in scenarios} == {0.0, 1.0, 2.0, 3.0}
+    assert {item.direction for item in scenarios if item.abs_value > 0.0} == {"pos", "neg"}
+
+
+def test_atlas_builds_p0_nondirectional_sweeps(monkeypatch) -> None:
+    monkeypatch.setenv("ATLAS_HARMONICS_THD_LEVELS_PCT", "5")
+    monkeypatch.setenv("ATLAS_INTERHARMONIC_LEVELS_PCT", "2")
+    monkeypatch.setenv("ATLAS_NOISE_SIGMA_LEVELS_PU", "0.001")
+
+    scenarios = atlas_sweep.build_atlas_scenarios(["harmonics", "interharmonics", "noise_snr"])
+
+    assert len(scenarios) == 3
+    assert {item.sweep_key for item in scenarios} == {"harmonics", "interharmonics", "noise_snr"}
+    assert {item.direction for item in scenarios} == {"level"}
+    assert all(item.scenario_name.startswith("Atlas_") for item in scenarios)
+
+
+def test_atlas_builds_phase_and_modulation_sweeps(monkeypatch) -> None:
+    monkeypatch.setenv("ATLAS_PHASE_JUMP_LEVELS_DEG", "20")
+    monkeypatch.setenv("ATLAS_AM_MOD_FREQ_LEVELS_HZ", "2")
+    monkeypatch.setenv("ATLAS_FM_MOD_FREQ_LEVELS_HZ", "2")
+
+    scenarios = atlas_sweep.build_atlas_scenarios(
+        ["phase_jump_sweep", "modulation_am_sweep", "modulation_fm_sweep"]
+    )
+
+    assert len(scenarios) == 4
+    assert {item.sweep_key for item in scenarios} == {
+        "phase_jump_sweep",
+        "modulation_am_sweep",
+        "modulation_fm_sweep",
+    }
+    assert {item.direction for item in scenarios if item.sweep_key == "phase_jump_sweep"} == {"pos", "neg"}
+    assert {item.direction for item in scenarios if item.sweep_key != "phase_jump_sweep"} == {"level"}
+    phase = [item for item in scenarios if item.sweep_key == "phase_jump_sweep" and item.direction == "pos"][0]
+    am = [item for item in scenarios if item.sweep_key == "modulation_am_sweep"][0]
+    fm = [item for item in scenarios if item.sweep_key == "modulation_fm_sweep"][0]
+    assert phase.params["abs_phase_jump_deg"] == 20.0
+    assert phase.scenario_cls.get_default_params()["phase_jump_rad"] > 0.0
+    assert am.scenario_cls.get_default_params()["kx"] == 0.10
+    assert am.scenario_cls.get_default_params()["fm_hz"] == 2.0
+    assert fm.scenario_cls.get_default_params()["fm_hz"] == 2.0
+    assert fm.scenario_cls.get_default_params()["ka"] == 0.10
+
+
+def test_atlas_p0_scenarios_isolate_primary_disturbance(monkeypatch) -> None:
+    monkeypatch.setenv("ATLAS_HARMONICS_THD_LEVELS_PCT", "5")
+    monkeypatch.setenv("ATLAS_INTERHARMONIC_LEVELS_PCT", "2")
+    monkeypatch.setenv("ATLAS_NOISE_SIGMA_LEVELS_PU", "0.001")
+    monkeypatch.setenv("ATLAS_PHASE_JUMP_LEVELS_DEG", "20")
+    monkeypatch.setenv("ATLAS_AM_MOD_FREQ_LEVELS_HZ", "2")
+    monkeypatch.setenv("ATLAS_FM_MOD_FREQ_LEVELS_HZ", "2")
+
+    scenarios = {item.sweep_key: item for item in atlas_sweep.build_atlas_scenarios(["p0"])}
+    harmonics = scenarios["harmonics"].scenario_cls.get_default_params()
+    interharmonics = scenarios["interharmonics"].scenario_cls.get_default_params()
+    noise = scenarios["noise_snr"].scenario_cls.get_default_params()
+    phase = scenarios["phase_jump_sweep"].scenario_cls.get_default_params()
+    am = scenarios["modulation_am_sweep"].scenario_cls.get_default_params()
+    fm = scenarios["modulation_fm_sweep"].scenario_cls.get_default_params()
+
+    assert harmonics["freq_step_hz"] == 0.0
+    assert harmonics["ih325_pct"] == 0.0
+    assert harmonics["ih85_pct"] == 0.0
+    assert harmonics["impulse_prob"] == 0.0
+    assert harmonics["white_noise_sigma"] == 0.0
+    assert "phase_rad" in scenarios["harmonics"].scenario_cls.get_monte_carlo_space()
+
+    assert interharmonics["rocof_hz_s"] == 0.0
+    assert interharmonics["h5_pct"] == 0.0
+    assert interharmonics["ih75_pct"] == 0.02
+    assert interharmonics["white_noise_sigma"] == 0.0
+    assert "phase_rad" in scenarios["interharmonics"].scenario_cls.get_monte_carlo_space()
+
+    assert noise["freq_hz"] == 60.0
+    assert noise["noise_sigma"] == 0.001
+
+    assert phase["freq_hz"] == 60.0
+    assert "phase_rad" in scenarios["phase_jump_sweep"].scenario_cls.get_monte_carlo_space()
+    assert am["freq_nom_hz"] == 60.0
+    assert am["kx"] == 0.10
+    assert am["fm_hz"] == 2.0
+    assert fm["freq_nom_hz"] == 60.0
+    assert fm["fm_hz"] == 2.0
+    assert fm["ka"] == 0.10
+
+
+def test_atlas_extended_noise_sweeps_get_frequency_bounds(monkeypatch) -> None:
+    monkeypatch.setenv("ATLAS_NOISE_NONGAUSSIAN_SIGMA_LEVELS_PU", "0.001")
+
+    scenarios = atlas_sweep.build_atlas_scenarios(["noise_nongaussian"])
+    bounds = atlas_sweep._frequency_bounds_for_sweep(scenarios)
+
+    assert bounds == (50.0, 70.0)
+
+
+def test_atlas_aggregate_summary_filters_nonfinite_values() -> None:
+    summary = pd.DataFrame({"m1_rmse_hz": [0.1, float("inf"), float("nan"), 0.3]})
+
+    result = atlas_sweep._aggregate_summary(summary)
+
+    assert result["m1_rmse_hz_n"] == 2
+    assert result["m1_rmse_hz_invalid_n"] == 2
+    assert result["m1_rmse_hz_mean"] == 0.2
+
+
+def test_atlas_readiness_marks_preview_as_diagnostic() -> None:
+    df = pd.DataFrame(
+        [
+            {
+                "sweep_key": "harmonics",
+                "estimator": "EKF",
+                "policy": "default",
+                "n_mc_runs": 1,
+                "direction": "level",
+                "thd_percent": 5.0,
+            }
+        ]
+    )
+
+    report = atlas_sweep.build_atlas_readiness_report(df, {"policy": "default", "n_cost_reps": 1})
+
+    assert report["status"] == "diagnostic"
+    assert report["paper_claims_allowed"] is False
+    assert {issue["code"] for issue in report["issues"]} >= {
+        "missing_required_sweeps",
+        "missing_canonical_estimators",
+        "insufficient_monte_carlo_runs",
+        "missing_claim_metric_counts",
+        "policy_not_paper_ready",
+    }
+
+
+def test_atlas_small_multiples_plot_writes_all_estimator_artifacts() -> None:
+    rows = []
+    for estimator in ["PLL", "EKF", "PI-GRU"]:
+        for direction in ["pos", "neg"]:
+            for level in [10.0, 20.0]:
+                rows.append(
+                    {
+                        "sweep_key": "phase_jump_sweep",
+                        "estimator": estimator,
+                        "family": atlas_sweep.ESTIMATOR_FAMILIES[estimator],
+                        "direction": direction,
+                        "abs_phase_jump_deg": level,
+                        "policy": "default",
+                        "m1_rmse_hz_mean": 0.01 + level / 1000.0,
+                    }
+                )
+    df = pd.DataFrame(rows)
+
+    root = Path("output") / "test_artifacts" / "atlas_small_multiples"
+    try:
+        shutil.rmtree(root, ignore_errors=True)
+        root.mkdir(parents=True)
+        paths = atlas_sweep.save_rmse_all_estimators_plot(df, root)
+
+        assert root.joinpath(atlas_sweep.RMSE_ALL_ESTIMATORS_PDF_NAME).exists()
+        assert root.joinpath(atlas_sweep.RMSE_ALL_ESTIMATORS_PNG_NAME).exists()
+        assert root.joinpath("phase_jump_sweep_all_estimators_rmse.pdf").exists()
+        assert root.joinpath("phase_jump_sweep_all_estimators_rmse.png").exists()
+        assert len(paths) == 4
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_atlas_family_plot_writes_single_sweep_aliases() -> None:
+    rows = []
+    for estimator in ["PLL", "EKF", "PI-GRU"]:
+        for direction in ["pos", "neg"]:
+            for level in [0.0, 1.0, 2.0]:
+                if level == 0.0 and direction == "neg":
+                    continue
+                rows.append(
+                    {
+                        "sweep_key": "phase_jump_sweep",
+                        "estimator": estimator,
+                        "family": atlas_sweep.ESTIMATOR_FAMILIES[estimator],
+                        "direction": direction,
+                        "abs_phase_jump_deg": level,
+                        "policy": "default",
+                        "m1_rmse_hz_mean": 0.01 + level / 1000.0,
+                    }
+                )
+    df = pd.DataFrame(rows)
+
+    root = Path("output") / "test_artifacts" / "atlas_family_plot"
+    try:
+        shutil.rmtree(root, ignore_errors=True)
+        root.mkdir(parents=True)
+        paths, color_map = atlas_sweep.save_rmse_family_plot(df, root)
+
+        assert root.joinpath(atlas_sweep.RMSE_FAMILY_PDF_NAME).exists()
+        assert root.joinpath(atlas_sweep.RMSE_FAMILY_PNG_NAME).exists()
+        assert root.joinpath("phase_jump_sweep_rmse_deterioration_by_family.pdf").exists()
+        assert root.joinpath("phase_jump_sweep_rmse_deterioration_by_family.png").exists()
+        assert len(paths) == 4
+        assert set(color_map) == {"EKF", "PI-GRU", "PLL"}
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_atlas_hypothesis_results_tolerate_nonfinite_rmse() -> None:
+    rows = [
+        {
+            "sweep_key": "phase_jump_sweep",
+            "estimator": "EKF",
+            "family": atlas_sweep.ESTIMATOR_FAMILIES["EKF"],
+            "direction": "pos",
+            "abs_phase_jump_deg": float(level),
+            "policy": "default",
+            "n_mc_runs": 1,
+            "m1_rmse_hz_mean": value,
+        }
+        for level, value in [(1, 0.01), (5, 0.02), (10, float("inf")), (15, 0.03), (20, 0.04)]
+    ]
+    df = pd.DataFrame(rows)
+
+    root = Path("output") / "test_artifacts" / "atlas_hypothesis"
+    try:
+        shutil.rmtree(root, ignore_errors=True)
+        root.mkdir(parents=True)
+        path = atlas_sweep.save_hypothesis_results(df, root)
+        result = pd.read_csv(path)
+
+        assert len(result) == 1
+        assert result.loc[0, "classification"] in {
+            "flat",
+            "monotone_deterioration",
+            "nonmonotone_or_noise_limited",
+            "too_few_finite_points",
+            "nonfinite_or_unstable",
+            "flat_good",
+            "flat_bad",
+        }
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_atlas_readiness_accepts_full_fixed_policy_paper_grade() -> None:
+    rows = []
+    canonical_estimators = atlas_sweep._csv(atlas_sweep.CANONICAL_ESTIMATORS)
+    for sweep_key in atlas_sweep.REQUIRED_ATLAS_SWEEPS:
+        spec = atlas_sweep.SWEEP_SPECS[sweep_key]
+        directions = ["pos", "neg"] if spec.directional else ["level"]
+        for level in [1.0, 2.0, 3.0, 4.0]:
+            for direction in directions:
+                for estimator in canonical_estimators:
+                    rows.append(
+                        {
+                            "sweep_key": sweep_key,
+                            "estimator": estimator,
+                            "policy": "fixed_policy",
+                            "n_mc_runs": atlas_sweep.PAPER_GRADE_MIN_RUNS,
+                            "direction": direction,
+                            spec.x_col: level,
+                            **{
+                                f"{metric}_n": atlas_sweep.PAPER_GRADE_MIN_RUNS
+                                for metric in atlas_sweep.PAPER_CLAIM_METRICS
+                            },
+                        }
+                    )
+    df = pd.DataFrame(rows)
+
+    report = atlas_sweep.build_atlas_readiness_report(df, {"policy": "fixed_policy", "n_cost_reps": 3})
+
+    assert report["status"] == "paper_grade"
+    assert report["paper_claims_allowed"] is True
+    assert report["journal_claims_allowed"] is False
+    assert not [issue for issue in report["issues"] if issue["severity"] == "blocker"]
+
+
+def test_atlas_readiness_blocks_low_finite_metric_coverage() -> None:
+    rows = []
+    canonical_estimators = atlas_sweep._csv(atlas_sweep.CANONICAL_ESTIMATORS)
+    for sweep_key in atlas_sweep.REQUIRED_ATLAS_SWEEPS:
+        spec = atlas_sweep.SWEEP_SPECS[sweep_key]
+        directions = ["pos", "neg"] if spec.directional else ["level"]
+        for level in [1.0, 2.0, 3.0, 4.0]:
+            for direction in directions:
+                for estimator in canonical_estimators:
+                    row = {
+                        "sweep_key": sweep_key,
+                        "estimator": estimator,
+                        "policy": "fixed_policy",
+                        "n_mc_runs": atlas_sweep.PAPER_GRADE_MIN_RUNS,
+                        "direction": direction,
+                        spec.x_col: level,
+                        **{
+                            f"{metric}_n": atlas_sweep.PAPER_GRADE_MIN_RUNS
+                            for metric in atlas_sweep.PAPER_CLAIM_METRICS
+                        },
+                    }
+                    rows.append(row)
+    rows[0]["m1_rmse_hz_n"] = 7
+    df = pd.DataFrame(rows)
+
+    report = atlas_sweep.build_atlas_readiness_report(df, {"policy": "fixed_policy", "n_cost_reps": 3})
+
+    assert report["status"] == "diagnostic"
+    assert report["paper_claims_allowed"] is False
+    assert "insufficient_valid_metric_runs" in {issue["code"] for issue in report["issues"]}
+
+
+def test_atlas_resume_rejects_truncated_summary() -> None:
+    root = Path("output") / "test_artifacts" / "atlas_resume_guard"
+    try:
+        shutil.rmtree(root, ignore_errors=True)
+        root.mkdir(parents=True)
+        spec_path = root / "run_spec.json"
+        summary_path = root / "summary.csv"
+        expected = {"scenario": "s", "estimator": "e", "n_mc_runs": 3}
+        spec_path.write_text(json.dumps(expected), encoding="utf-8")
+        summary_path.write_text("run_idx,m1_rmse_hz\n0,0.1\n1,0.2\n", encoding="utf-8")
+
+        assert atlas_sweep._can_reuse(spec_path, summary_path, expected) is False
+
+        summary_path.write_text("run_idx,m1_rmse_hz\n0,0.1\n1,0.2\n2,0.3\n", encoding="utf-8")
+        assert atlas_sweep._can_reuse(spec_path, summary_path, expected) is True
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_atlas_readiness_blocks_missing_direction_per_estimator_level() -> None:
+    rows = []
+    canonical_estimators = atlas_sweep._csv(atlas_sweep.CANONICAL_ESTIMATORS)
+    for sweep_key in atlas_sweep.REQUIRED_ATLAS_SWEEPS:
+        spec = atlas_sweep.SWEEP_SPECS[sweep_key]
+        directions = ["pos", "neg"] if spec.directional else ["level"]
+        for level in [1.0, 2.0, 3.0, 4.0]:
+            for direction in directions:
+                for estimator in canonical_estimators:
+                    if sweep_key == "phase_jump_sweep" and estimator == "EKF" and level == 1.0 and direction == "neg":
+                        continue
+                    rows.append(
+                        {
+                            "sweep_key": sweep_key,
+                            "estimator": estimator,
+                            "policy": "fixed_policy",
+                            "n_mc_runs": atlas_sweep.PAPER_GRADE_MIN_RUNS,
+                            "direction": direction,
+                            spec.x_col: level,
+                            **{
+                                f"{metric}_n": atlas_sweep.PAPER_GRADE_MIN_RUNS
+                                for metric in atlas_sweep.PAPER_CLAIM_METRICS
+                            },
+                        }
+                    )
+    df = pd.DataFrame(rows)
+
+    report = atlas_sweep.build_atlas_readiness_report(df, {"policy": "fixed_policy", "n_cost_reps": 3})
+
+    assert report["status"] == "diagnostic"
+    assert report["paper_claims_allowed"] is False
+    assert "incomplete_estimator_level_matrix" in {issue["code"] for issue in report["issues"]}
+
+
+def test_atlas_critical_thresholds_use_worst_direction() -> None:
+    root = Path("output") / "test_artifacts" / "atlas_threshold_guard"
+    try:
+        shutil.rmtree(root, ignore_errors=True)
+        root.mkdir(parents=True)
+        df = pd.DataFrame(
+            [
+                {
+                    "sweep_key": "phase_jump_sweep",
+                    "estimator": "EKF",
+                    "family": atlas_sweep.ESTIMATOR_FAMILIES["EKF"],
+                    "direction": direction,
+                    "abs_phase_jump_deg": level,
+                    "m1_rmse_hz_mean": rmse,
+                }
+                for level, direction, rmse in [
+                    (10.0, "pos", 0.01),
+                    (10.0, "neg", 0.20),
+                    (20.0, "pos", 0.01),
+                    (20.0, "neg", 0.01),
+                ]
+            ]
+        )
+
+        path = atlas_sweep.save_critical_thresholds(df, root)
+        out = pd.read_csv(path)
+
+        assert float(out.loc[0, "critical_level"]) == 10.0
+    finally:
+        shutil.rmtree(root, ignore_errors=True)

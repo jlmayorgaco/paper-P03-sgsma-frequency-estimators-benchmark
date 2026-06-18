@@ -3,11 +3,11 @@ from pathlib import Path
 import numpy as np
 
 import matplotlib
-# FORZAR BACKEND SIN VENTANA (Evita el error de _tkinter en Windows)
+# FORCE HEADLESS BACKEND (prevents _tkinter error on Windows)
 matplotlib.use('Agg') 
 import matplotlib.pyplot as plt
 
-# Rutas
+# Paths
 ROOT = Path(__file__).resolve().parents[3]
 SRC = ROOT / "src"
 if str(SRC) not in sys.path:

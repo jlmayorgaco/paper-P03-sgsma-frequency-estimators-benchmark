@@ -140,7 +140,7 @@ class IEEEFreqRampScenario(Scenario):
             v = v + rng.normal(0.0, noise_sigma, size=t.shape)
 
         meta = {
-            "description": f"IEEE 1547 Frequency Ramp (+{rocof_hz_s} Hz/s)",
+            "description": f"IEEE 1547 Frequency Ramp ({rocof_hz_s:+g} Hz/s)",
             "standard": "IEC 60255-118-1 frequency ramp test / IEEE 1547 Cat III",
             "parameters": {
                 "duration_s": duration_s,
@@ -154,7 +154,7 @@ class IEEEFreqRampScenario(Scenario):
                 "seed": seed,
             },
             "noise_sigma": noise_sigma,
-            "dynamics": f"Piecewise: {freq_nom_hz} Hz -> +{rocof_hz_s} Hz/s ramp -> hold at {freq_cap_hz} Hz.",
+            "dynamics": f"Piecewise: {freq_nom_hz} Hz -> {rocof_hz_s:+g} Hz/s ramp -> hold at {freq_cap_hz} Hz.",
             "purpose": "Evaluate stochastic estimation lag and structural tracking latency under low-inertia RoCoF events.",
             "monte_carlo_space": cls.MONTE_CARLO_SPACE,
             "fs_physics_hz": FS_PHYSICS,

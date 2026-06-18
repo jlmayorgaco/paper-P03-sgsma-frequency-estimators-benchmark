@@ -37,6 +37,7 @@ class IBRHarmonicsSmallScenario(Scenario):
         "freq_step_hz":       0.3,    # Small step — hard to detect above harmonic noise
         "t_event_s":          1.0,
         "amp_pu":             1.0,
+        "phase_rad":          0.0,
         # Harmonics (% of fundamental)
         "h5_pct":             0.020,
         "h7_pct":             0.015,
@@ -72,6 +73,7 @@ class IBRHarmonicsSmallScenario(Scenario):
         freq_step_hz:      float = 0.3,
         t_event_s:         float = 1.0,
         amp_pu:            float = 1.0,
+        phase_rad:         float = 0.0,
         h5_pct:            float = 0.020,
         h7_pct:            float = 0.015,
         h11_pct:           float = 0.005,
@@ -93,9 +95,9 @@ class IBRHarmonicsSmallScenario(Scenario):
 
         # ── 2. Phase (analytically continuous at step) ───────────────────
         phi = np.zeros_like(t, dtype=float)
-        phi[pre_mask] = 2.0 * math.pi * f_pre * t[pre_mask]
+        phi[pre_mask] = 2.0 * math.pi * f_pre * t[pre_mask] + phase_rad
         if np.any(post_mask):
-            phi_at_event = 2.0 * math.pi * f_pre * t_event_s
+            phi_at_event = 2.0 * math.pi * f_pre * t_event_s + phase_rad
             t_post = t[post_mask] - t_event_s
             phi[post_mask] = phi_at_event + 2.0 * math.pi * f_post * t_post
 
@@ -122,6 +124,7 @@ class IBRHarmonicsSmallScenario(Scenario):
                 "freq_nom_hz":  freq_nom_hz,
                 "freq_step_hz": freq_step_hz,
                 "t_event_s":    t_event_s,
+                "phase_rad":    phase_rad,
                 "amp_pu":       amp_pu,
                 "h5_pct":       h5_pct,
                 "h7_pct":       h7_pct,

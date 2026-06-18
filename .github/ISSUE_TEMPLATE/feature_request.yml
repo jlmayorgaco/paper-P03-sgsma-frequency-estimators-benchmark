@@ -1,42 +1,33 @@
 name: Feature request
-description: Propose an enhancement to benchmark pipelines, analysis, or plotting.
+description: Propose a new estimator, scenario, metric profile, report, or workflow.
 title: "[Feature]: "
-labels: ["enhancement"]
+labels:
+  - enhancement
 body:
-  - type: textarea
-    id: problem
-    attributes:
-      label: Problem statement
-      description: What limitation are you facing?
-    validations:
-      required: true
-  - type: textarea
-    id: proposal
-    attributes:
-      label: Proposed solution
-    validations:
-      required: true
   - type: dropdown
-    id: area
+    id: kind
     attributes:
-      label: Primary area
+      label: Contribution type
       options:
-        - CLI / Execution modes
-        - Benchmark pipeline
-        - Plotting / Visualization
-        - Statistical analysis / Reports
-        - Docs / Developer UX
+        - Estimator
+        - Scenario
+        - Report or plot
+        - Documentation
+        - Metric profile proposal
+        - Release or packaging workflow
     validations:
       required: true
   - type: textarea
-    id: acceptance
+    id: motivation
     attributes:
-      label: Acceptance criteria
-      description: Write concrete pass/fail checks (commands, outputs, files).
+      label: Motivation
+      description: What research or user workflow does this enable?
     validations:
       required: true
   - type: textarea
-    id: impact
+    id: contract
     attributes:
-      label: Scientific/engineering impact
-      description: Reproducibility, accuracy, latency, maintainability, etc.
+      label: Contract impact
+      description: Note any effects on metrics, schemas, reproducibility, or public APIs.
+    validations:
+      required: true

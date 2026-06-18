@@ -1,43 +1,13 @@
 ﻿from __future__ import annotations
 
 # =====================================================================
-# T-000 SAMPLE-RATE AUDIT (2026-04-12)
+# Sample-rate contract
 # =====================================================================
-# FINDING: sc.v reaches step_vectorized() at FS_PHYSICS = 1,000,000 Hz.
-#
-# Evidence (diagnostic run):
-#   generate(): N=100001, dt=1.00e-06, fs=1,000,000
-#   run()     : N=100001, dt=1.00e-06, fs=1,000,000
-#
-# Signal flow:
-#   Scenario.generate() -> 1 MHz  (t step = 1e-6 s)
-#   Scenario.run()      -> 1 MHz  (no decimation - just calls generate())
-#   _run_estimator(sc.v)-> 1 MHz  (no decimation here either)
-#   est.step_vectorized(v) receives 1 MHz samples
-#
-# Estimator internal time base:
-#   All estimators import DT_DSP = 1/FS_DSP = 1e-4 s (10 kHz)
-#   and use it as self.dt in state-transition matrices.
-#
-# MISMATCH CONFIRMED:
-#   Estimators receive 1 MHz samples but compute with a 10 kHz dt.
-#   This causes a factor-100 error in the time base used for physics
-#   (frequency extraction from phase, Kalman prediction steps, etc.).
-#
-# Additional finding:
-#   calculate_all_metrics() is called with hardcoded fs_dsp=10000.0
-#   (line ~159) even though the actual signal length corresponds to 1 MHz.
-#   Metric windows (e.g. 150 ms = 1500 samples at 10 kHz) are therefore
-#   computed on 150,000 samples instead - the evaluation window is correct
-#   in time but the sample count is 100x larger than intended.
-#
-# Exception - smoke tests DO correctly decimate:
-#   test_dedicated_smoke_no_mc_test.py:127-138 checks dt_real < 1e-5
-#   and decimates by factor 100 before calling step_vectorized().
-#   Smoke-test results are therefore valid; MonteCarloEngine is NOT.
-#
-# Fix responsibility: T-100 will implement Option C (decimate in
-# Scenario.run()) so that run() always returns 10 kHz output.
+# Scenario.generate() may build high-rate physics signals, but Scenario.run()
+# is the public benchmark interface and must return DSP-rate samples
+# (dt = 1e-4 s, fs = 10 kHz). run_once() asserts that contract before any
+# estimator or metric is evaluated. If this assertion fails, the benchmark
+# result is invalid and the scenario decimation path must be fixed first.
 # =====================================================================
 
 import os
@@ -136,6 +106,16 @@ class MonteCarloEngine:
             params[key] = self.sample_from_space(rng, spec)
 
         params["seed"] = self.base_seed + run_idx
+        override_fn = getattr(self.scenario_cls, "apply_run_index_overrides", None)
+        if callable(override_fn):
+            overridden = override_fn(
+                params=dict(params),
+                run_idx=int(run_idx),
+                n_runs=int(self.n_runs),
+                base_seed=int(self.base_seed),
+            )
+            if overridden is not None:
+                params = dict(overridden)
         return params
 
     def _run_estimator(self, v: np.ndarray, t: np.ndarray | None = None, run_idx: int = 0) -> dict[str, Any]:
@@ -156,8 +136,13 @@ class MonteCarloEngine:
 
         has_step = hasattr(est, "step")
         has_step_vectorized = hasattr(est, "step_vectorized")
+        prefer_vectorized = bool(
+            getattr(est, "PREFER_VECTORIZED_ENGINE", False)
+            or getattr(est, "prefer_vectorized_engine", False)
+        )
 
-        if self.enforce_standardized_step and has_step:
+        engine_mode = "standardized_step"
+        if self.enforce_standardized_step and has_step and not prefer_vectorized:
             f_hat = np.empty(len(v), dtype=float)
             step_func = est.step
             for k in range(len(v)):
@@ -165,6 +150,7 @@ class MonteCarloEngine:
                 f_hat[k] = float(step_func(float(v[k]), t_k, mem))
         else:
             if has_step_vectorized:
+                engine_mode = "vectorized"
                 f_hat = est.step_vectorized(v)
             elif has_step:
                 f_hat = np.empty(len(v), dtype=float)
@@ -187,6 +173,7 @@ class MonteCarloEngine:
             "f_hat": np.asarray(f_hat, dtype=float),
             "struct_samples": struct_samples,
             "runtime_metrics": runtime_metrics,
+            "engine_mode": engine_mode,
         }
 
     def _measure_exec_time(self, v: np.ndarray, t: np.ndarray | None = None) -> float:
@@ -280,7 +267,18 @@ class MonteCarloEngine:
                 signal_dict["f_hat_hz"] = f_hat
 
             struct_samples = est_out.get("struct_samples", 0)
-            noise_sigma = params.get("noise_sigma", 0.0)
+            noise_sigma = params.get("noise_sigma")
+            if noise_sigma is None:
+                noise_sigma = params.get("white_noise_sigma", 0.0)
+            if noise_sigma is None:
+                noise_sigma = 0.0
+            event_time_s = params.get(
+                "t_step_s",
+                params.get("t_start_s", params.get("t_event_s", params.get("t_jump_s"))),
+            )
+            if getattr(self.scenario_cls, "DISABLE_EVENT_METRICS", False):
+                event_time_s = None
+            interharmonic_hz = 75.0 if float(params.get("ih75_pct", 0.0) or 0.0) > 0.0 else 32.5
 
             # -------------------------------------------------------------
             # New metrics architecture (integration with metrics.py)
@@ -292,8 +290,35 @@ class MonteCarloEngine:
                 exec_time_s=exec_time_s,
                 structural_samples=struct_samples,
                 noise_sigma=noise_sigma,
-                interharmonic_hz=32.5
+                interharmonic_hz=interharmonic_hz,
+                event_time_s=event_time_s,
             )
+            est_params_for_bounds = dict(self.estimator_params or {})
+            row["engine_step_mode"] = str(est_out.get("engine_mode", "unknown"))
+            freq_min = est_params_for_bounds.get("f_min_hz", est_params_for_bounds.get("freq_min_hz"))
+            freq_max = est_params_for_bounds.get("f_max_hz", est_params_for_bounds.get("freq_max_hz"))
+            if freq_min is not None or freq_max is not None:
+                tol = float(os.getenv("BENCHMARK_FREQ_BOUND_HIT_TOL_HZ", "0.02"))
+                finite_hat = np.asarray(f_hat, dtype=float)
+                finite_hat = finite_hat[np.isfinite(finite_hat)]
+                if len(finite_hat):
+                    lower_hits = np.zeros(len(finite_hat), dtype=bool)
+                    upper_hits = np.zeros(len(finite_hat), dtype=bool)
+                    if freq_min is not None:
+                        lower_hits = np.abs(finite_hat - float(freq_min)) <= tol
+                    if freq_max is not None:
+                        upper_hits = np.abs(finite_hat - float(freq_max)) <= tol
+                    advanced_metrics["m31_freq_bound_hit_rate"] = float(np.mean(lower_hits | upper_hits))
+                    advanced_metrics["m32_freq_lower_bound_hit_rate"] = float(np.mean(lower_hits))
+                    advanced_metrics["m33_freq_upper_bound_hit_rate"] = float(np.mean(upper_hits))
+                else:
+                    advanced_metrics["m31_freq_bound_hit_rate"] = 1.0
+                    advanced_metrics["m32_freq_lower_bound_hit_rate"] = 1.0 if freq_min is not None else 0.0
+                    advanced_metrics["m33_freq_upper_bound_hit_rate"] = 1.0 if freq_max is not None else 0.0
+            else:
+                advanced_metrics["m31_freq_bound_hit_rate"] = 0.0
+                advanced_metrics["m32_freq_lower_bound_hit_rate"] = 0.0
+                advanced_metrics["m33_freq_upper_bound_hit_rate"] = 0.0
             
             # Agregamos M1 a M17 a la fila de resultados
             row.update(advanced_metrics)
@@ -304,6 +329,7 @@ class MonteCarloEngine:
             row["m21_startup_valid_samples"] = int(rt.get("startup_valid_samples", 0))
             row["m22_invalid_output_rate"] = round(float(rt.get("invalid_output_rate", 0.0)), 6)
             row["m23_memory_key_count"] = int(rt.get("memory_key_count", 0))
+            row["m36_post_startup_invalid_rate"] = round(float(rt.get("post_startup_invalid_rate", 0.0)), 6)
 
         if signal_dict is not None:
             signal_df = pd.DataFrame(signal_dict)
@@ -319,15 +345,29 @@ class MonteCarloEngine:
         summary_rows = []
         signal_dfs = []
 
-        with ProcessPoolExecutor(max_workers=num_workers) as executor:
-            futures = [executor.submit(self.run_once, i) for i in range(self.n_runs)]
-            for future in tqdm(as_completed(futures), total=self.n_runs, desc="Monte Carlo Progress"):
-                row, signal_df = future.result() 
+        if num_workers == 1:
+            for i in tqdm(range(self.n_runs), total=self.n_runs, desc="Monte Carlo Progress"):
+                row, signal_df = self.run_once(i)
                 summary_rows.append(row)
                 signal_dfs.append(signal_df)
+        else:
+            with ProcessPoolExecutor(max_workers=num_workers) as executor:
+                futures = [executor.submit(self.run_once, i) for i in range(self.n_runs)]
+                for future in tqdm(as_completed(futures), total=self.n_runs, desc="Monte Carlo Progress"):
+                    row, signal_df = future.result()
+                    summary_rows.append(row)
+                    signal_dfs.append(signal_df)
 
         summary_df = pd.DataFrame(summary_rows).sort_values(by="run_idx").reset_index(drop=True)
-        signals_df = pd.concat(signal_dfs, ignore_index=True).sort_values(by=["run_idx", "t_s"]).reset_index(drop=True)
+        nonempty_signal_dfs = [df for df in signal_dfs if not df.empty]
+        if nonempty_signal_dfs:
+            signals_df = (
+                pd.concat(nonempty_signal_dfs, ignore_index=True)
+                .sort_values(by=["run_idx", "t_s"])
+                .reset_index(drop=True)
+            )
+        else:
+            signals_df = pd.DataFrame()
 
         estimator_name = None
         if self.estimator_cls is not None:
@@ -359,6 +399,3 @@ class MonteCarloEngine:
         result.signals_df.to_csv(signals_path, index=False)
 
         return summary_path, signals_path
-
-
-

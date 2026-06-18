@@ -1,16 +1,18 @@
 {
-  "title": "OpenFreqBench: Dynamic Frequency Estimators Benchmark",
-  "description": "Reproducible benchmark platform for dynamic frequency estimators in low-inertia power systems.",
+  "title": "OpenFreqBench: Open Frequency Estimator Benchmark Platform",
+  "description": "Open source benchmark platform for reproducible single-phase grid frequency estimator evaluation.",
   "upload_type": "software",
   "license": "MIT",
   "creators": [
     {
-      "name": "Lugo, Juan"
+      "name": "Lugo, Juan",
+      "orcid": "0000-0002-0774-217"
     }
   ],
   "keywords": [
     "frequency-estimation",
     "power-systems",
+    "pmu",
     "benchmark",
     "monte-carlo",
     "openfreqbench"

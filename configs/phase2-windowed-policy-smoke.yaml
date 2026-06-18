@@ -1,0 +1,30 @@
+run:
+  id: phase2-windowed-policy-smoke
+  mode: matrix
+  output_dir: ../artifacts/openfreqbench
+  n_runs: 2
+  base_seed: 20260609
+  max_workers: 1
+  capture_signals: false
+
+benchmark:
+  parameter_policy: default
+  scenarios:
+    - IEEE_Single_SinWave
+    - IBR_Multi_Event
+  estimators:
+    - name: Prony
+    - name: ESPRIT
+    - name: Koopman (RK-DPMU)
+
+metrics:
+  profile: canonical-single-phase-v1
+  include:
+    - m1_rmse_hz
+    - m2_mae_hz
+    - m3_max_peak_hz
+    - m13_cpu_time_us
+    - m14_struct_latency_ms
+    - m21_startup_valid_samples
+    - m22_invalid_output_rate
+    - m36_post_startup_invalid_rate

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from ._experimental_base import ExperimentalFrequencyEstimator
 
+REFERENCE_KEYS = ("julier2004_unscented_filtering", "vandermerwe2001_srukf")
+
 
 class SR_UKF_Estimator(ExperimentalFrequencyEstimator):
     name = "SR-UKF"

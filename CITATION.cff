@@ -1,11 +1,15 @@
 cff-version: 1.2.0
-title: "SGSMA Frequency Estimators Benchmark"
-message: "If you use this software, please cite it using the metadata below."
-type: software
+message: "If you use OpenFreqBench, please cite the software and the associated SGSMA benchmark paper."
+title: "OpenFreqBench: Open Frequency Estimator Benchmark Platform"
+version: "2.0.0"
 authors:
   - family-names: "Lugo"
     given-names: "Juan"
-repository-code: "https://github.com/jlmayorgaco/paper-P03-sgsma-frequency-estimators-benchmark"
+    orcid: "https://orcid.org/0000-0002-0774-217"
 license: "MIT"
-version: "0.1.0"
-date-released: "2026-04-25"
+repository-code: "https://github.com/jlmayorgaco/paper-P03-sgsma-frequency-estimators-benchmark"
+keywords:
+  - "frequency estimation"
+  - "power systems"
+  - "PMU"
+  - "benchmark"

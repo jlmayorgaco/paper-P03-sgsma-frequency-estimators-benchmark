@@ -7,6 +7,8 @@ from numba import njit
 from .base import BaseFrequencyEstimator
 from .common import DT_DSP
 
+REFERENCE_KEYS = ("dash1999_extended_complex_kalman", "panigrahi2009_robust_extended_kalman")
+
 
 @njit(cache=True)
 def _ra_ekf_plus_core(
@@ -19,6 +21,7 @@ def _ra_ekf_plus_core(
     q_rocof: float,
     r_meas: float,
     sigma_v: float,
+    derivative_noise_scale: float,
     gamma: float,
     deriv_lpf_alpha: float,
     rho_rocof: float,
@@ -27,6 +30,9 @@ def _ra_ekf_plus_core(
     amp_min: float,
     amp_max: float,
     rocof_limit_hz_s: float,
+    derivative_step_reject: bool,
+    dv_step_factor: float,
+    dv_step_scale: float,
     x_theta_init: float,
     x_freq_init_hz: float,
     x_amp_init: float,
@@ -64,9 +70,11 @@ def _ra_ekf_plus_core(
     a_max = amp_max
     rocof_max = two_pi * rocof_limit_hz_s
 
-    # derivative channel is noisier than raw voltage
-    r_dv = max(4.0 * r_meas, 0.25 * sigma_v * sigma_v, 1e-8)
-    sigma_d = max(sigma_v, 1e-4)
+    # The finite-difference derivative channel has different units and much
+    # higher noise/lag than the raw voltage measurement.  Keep its uncertainty
+    # separate from sigma_v so tuning cannot accidentally over-weight it.
+    sigma_d = max(sigma_v * max(derivative_noise_scale, 1.0), 1e-4)
+    r_dv = max(4.0 * r_meas, sigma_d * sigma_d, 1e-8)
 
     I4 = np.eye(4, dtype=np.float64)
 
@@ -83,8 +91,11 @@ def _ra_ekf_plus_core(
         # 0. Causal derivative pseudo-measurement
         # -------------------------------------------------------------
         raw_dv = (z - prev_z) / dt
+        dv_expected = w_nom * max(max(abs(z), abs(prev_z)), max(abs(x[2]), 1.0))
+        step_like = derivative_step_reject and (abs(raw_dv) > dv_step_factor * dv_expected)
         prev_z = z
-        dv_filt = (1.0 - deriv_lpf_alpha) * dv_filt + deriv_lpf_alpha * raw_dv
+        if not step_like:
+            dv_filt = (1.0 - deriv_lpf_alpha) * dv_filt + deriv_lpf_alpha * raw_dv
 
         # -------------------------------------------------------------
         # 1. Predict
@@ -191,6 +202,8 @@ def _ra_ekf_plus_core(
 
         R00 = r_meas
         R11 = r_dv
+        if step_like:
+            R11 *= max(dv_step_scale, 1.0)
         S00 += R00
         S11 += R11
 
@@ -390,6 +403,7 @@ class RAEKF_Estimator(BaseFrequencyEstimator):
         q_rocof: float = 5e-3,
         r_meas: float = 1e-4,
         sigma_v: float = 0.05,
+        derivative_noise_scale: float = 200.0,
         gamma: float = 8.0,
         dt: float = DT_DSP,
         deriv_lpf_alpha: float = 0.08,
@@ -399,6 +413,9 @@ class RAEKF_Estimator(BaseFrequencyEstimator):
         amp_min: float = 0.01,
         amp_max: float = 20.0,
         rocof_limit_hz_s: float = 20.0,
+        derivative_step_reject: bool = True,
+        dv_step_factor: float = 4.0,
+        dv_step_scale: float = 100.0,
         x_theta_init: float = 0.0,
         x_freq_init_hz: float | None = None,
         x_amp_init: float = 1.0,
@@ -419,6 +436,7 @@ class RAEKF_Estimator(BaseFrequencyEstimator):
 
         self.r_meas = float(r_meas)
         self.sigma_v = float(sigma_v)
+        self.derivative_noise_scale = float(derivative_noise_scale)
         self.gamma = float(gamma)
 
         self.deriv_lpf_alpha = float(deriv_lpf_alpha)
@@ -432,6 +450,9 @@ class RAEKF_Estimator(BaseFrequencyEstimator):
         if self.amp_max < self.amp_min:
             self.amp_min, self.amp_max = self.amp_max, self.amp_min
         self.rocof_limit_hz_s = float(rocof_limit_hz_s)
+        self.derivative_step_reject = bool(derivative_step_reject)
+        self.dv_step_factor = float(dv_step_factor)
+        self.dv_step_scale = float(dv_step_scale)
         self.x_theta_init = float(x_theta_init)
         self.x_freq_init_hz = float(self.nominal_f if x_freq_init_hz is None else x_freq_init_hz)
         self.x_amp_init = float(x_amp_init)
@@ -475,6 +496,7 @@ class RAEKF_Estimator(BaseFrequencyEstimator):
             "q_rocof": 5e-3,
             "r_meas": 1e-4,
             "sigma_v": 0.05,
+            "derivative_noise_scale": 200.0,
             "gamma": 8.0,
             "deriv_lpf_alpha": 0.08,
             "tau_rocof": 0.15,
@@ -483,6 +505,9 @@ class RAEKF_Estimator(BaseFrequencyEstimator):
             "amp_min": 0.01,
             "amp_max": 20.0,
             "rocof_limit_hz_s": 20.0,
+            "derivative_step_reject": True,
+            "dv_step_factor": 4.0,
+            "dv_step_scale": 100.0,
             "x_theta_init": 0.0,
             "x_freq_init_hz": 60.0,
             "x_amp_init": 1.0,
@@ -500,6 +525,7 @@ class RAEKF_Estimator(BaseFrequencyEstimator):
             f"q_rocof={params.get('q_rocof', 5e-3):.1e}, "
             f"r_meas={params.get('r_meas', 1e-4):.1e}, "
             f"sigma_v={params.get('sigma_v', 0.05):.3f}, "
+            f"deriv_noise_scale={params.get('derivative_noise_scale', 200.0):.1f}, "
             f"gamma={params.get('gamma', 8.0):.1f}, "
             f"amp_max={params.get('amp_max', 20.0):g}pu"
         )
@@ -530,6 +556,7 @@ class RAEKF_Estimator(BaseFrequencyEstimator):
             q_rocof=self.q_rocof,
             r_meas=self.r_meas,
             sigma_v=self.sigma_v,
+            derivative_noise_scale=self.derivative_noise_scale,
             gamma=self.gamma,
             deriv_lpf_alpha=self.deriv_lpf_alpha,
             rho_rocof=rho_rocof,
@@ -538,6 +565,9 @@ class RAEKF_Estimator(BaseFrequencyEstimator):
             amp_min=self.amp_min,
             amp_max=self.amp_max,
             rocof_limit_hz_s=self.rocof_limit_hz_s,
+            derivative_step_reject=self.derivative_step_reject,
+            dv_step_factor=self.dv_step_factor,
+            dv_step_scale=self.dv_step_scale,
             x_theta_init=self.x_theta_init,
             x_freq_init_hz=self.x_freq_init_hz,
             x_amp_init=self.x_amp_init,

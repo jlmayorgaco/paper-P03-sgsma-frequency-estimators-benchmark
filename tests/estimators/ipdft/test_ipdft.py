@@ -10,13 +10,14 @@ if str(SRC) not in sys.path:
 
 from estimators.ipdft import IPDFT_Estimator
 
+
 def test_ipdft_nominal_tracking():
     """Valida el seguimiento exacto en la frecuencia nominal (50 Hz)."""
     fs_phys = 1_000_000.0  # 1 MHz física
     t = np.arange(0, 0.1, 1/fs_phys)
     v = np.sin(2 * np.pi * 50.0 * t) 
     
-    estimator = IPDFT_Estimator(nominal_f=50.0, cycles=2.0, decim=100)
+    estimator = IPDFT_Estimator(nominal_f=50.0, cycles=2.0, decim=100, dt=1 / fs_phys)
     f_est = estimator.step_vectorized(v)
     
     f_clean = f_est[t > 0.05]
@@ -31,7 +32,7 @@ def test_ipdft_off_nominal_interpolation():
     f_target = 52.5
     v = np.sin(2 * np.pi * f_target * t)
     
-    estimator = IPDFT_Estimator(nominal_f=50.0, cycles=2.0, decim=100)
+    estimator = IPDFT_Estimator(nominal_f=50.0, cycles=2.0, decim=100, dt=1 / fs_phys)
     f_est = estimator.step_vectorized(v)
     
     f_clean = f_est[t > 0.05]
@@ -43,7 +44,7 @@ def test_ipdft_structural_latency():
     t = np.arange(0, 0.1, 1/fs_phys)
     v = np.sin(2 * np.pi * 50.0 * t) 
     
-    estimator = IPDFT_Estimator(nominal_f=50.0, cycles=2.0, decim=100)
+    estimator = IPDFT_Estimator(nominal_f=50.0, cycles=2.0, decim=100, dt=1 / fs_phys)
     latency_samples = estimator.structural_latency_samples()
     
     expected_sz = int(round((10000.0 / 50.0) * 2.0))

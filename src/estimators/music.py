@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import math
+
 import numpy as np
 from numba import njit
 
 from .base import BaseFrequencyEstimator
 from .common import DT_DSP
+
+REFERENCE_KEYS = ("schmidt1986_music",)
 
 
 @njit(cache=True)
@@ -16,20 +19,17 @@ def _music_eval_spectrum(
     step: float,
     dt: float,
 ) -> tuple[float, float]:
-    """
-    Evalúa el pseudo-espectro de MUSIC en una región localizada.
-    Busca minimizar el denominador: a(f)^H * Un * Un^H * a(f)
+    """Evaluate the MUSIC pseudo-spectrum around a local frequency band."""
+    if span <= 0.0 or step <= 0.0:
+        return np.nan, np.inf
 
-    Devuelve (NaN, inf) si no encuentra ningún mínimo finito en el barrido,
-    en lugar de devolver silenciosamente f_center como hacía antes.
-    """
-    best_f = np.nan        # FIX: ya no regalamos f_center como "válido"
+    best_f = np.nan
     min_val = 1e18
     found_valid = False
 
     two_pi_dt = 2.0 * math.pi * dt
     L = Un.shape[0]
-    K = Un.shape[1]  # Dimensión del subespacio de ruido
+    K = Un.shape[1]
 
     f_start = f_center - span
     f_end = f_center + span + (step * 0.5)
@@ -38,26 +38,21 @@ def _music_eval_spectrum(
         omega = f * two_pi_dt
         val = 0.0
 
-        # Proyección del steering vector a(f) sobre cada vector del subespacio de ruido
         for col in range(K):
             dot_real = 0.0
             dot_imag = 0.0
             for row in range(L):
-                # a(f) = [1, e^(jw), e^(j2w)...]^T
-                # a(f)^H = [1, e^(-jw), e^(-j2w)...]
                 c = math.cos(omega * row)
                 s = -math.sin(omega * row)
 
                 u_r = Un[row, col].real
                 u_i = Un[row, col].imag
 
-                # Multiplicación compleja
                 dot_real += c * u_r - s * u_i
                 dot_imag += c * u_i + s * u_r
 
             val += dot_real * dot_real + dot_imag * dot_imag
 
-        # FIX: solo aceptamos mínimos finitos; NaN/inf no desplazan best_f
         if math.isfinite(val) and val < min_val:
             min_val = val
             best_f = f
@@ -70,20 +65,27 @@ def _music_eval_spectrum(
 
 
 @njit(cache=True)
-def _music_core(buffer: np.ndarray, dt: float, f_nom: float) -> float:
-    """
-    Núcleo del estimador Spectral MUSIC.
-
-    Devuelve NaN si:
-    - el subespacio de ruido resulta degenerado (K < 1)
-    - cualquier etapa de búsqueda espectral falla en encontrar un mínimo válido
-    """
+def _music_core(
+    buffer: np.ndarray,
+    dt: float,
+    f_nom: float,
+    signal_order: int,
+    search_span_hz: float,
+    coarse_step_hz: float,
+    fine_span_hz: float,
+    fine_step_hz: float,
+    ultra_span_hz: float,
+    ultra_step_hz: float,
+) -> float:
+    """Core localized MUSIC estimator."""
     N = len(buffer)
 
-    # Dither para prevenir matrices singulares en señales perfectas
-    buf_work = buffer + 1e-9 * np.random.standard_normal(N)
+    # Deterministic dither prevents singular perfect-sine cases without
+    # introducing run-to-run randomness.
+    buf_work = buffer.copy()
+    for k in range(N):
+        buf_work[k] += 1e-12 * (k + 1)
 
-    # 1. Matriz de Hankel
     L = N // 2
     M = N - L + 1
     H = np.zeros((L, M), dtype=np.float64)
@@ -91,29 +93,23 @@ def _music_core(buffer: np.ndarray, dt: float, f_nom: float) -> float:
         for j in range(M):
             H[i, j] = buf_work[i + j]
 
-    # 2. SVD para separar subespacios
-    U, S, Vh = np.linalg.svd(H)
+    U, _, _ = np.linalg.svd(H)
 
-    # FIX: necesitamos al menos 3 columnas en U para descartar las 2 de señal
-    if U.shape[1] < 3:
+    order = max(1, int(signal_order))
+    if U.shape[1] <= order:
         return np.nan
 
-    # Subespacio de Ruido (Un): Descartamos las 2 componentes principales (señal)
-    Un = U[:, 2:].astype(np.complex128)
+    Un = U[:, order:].astype(np.complex128)
 
-    # 3. Búsqueda Espectral en 3 Etapas (Coarse -> Fine -> Ultra-fine)
-    # Etapa 1: Búsqueda gruesa (40 a 80 Hz, pasos de 1 Hz)
-    f1, _ = _music_eval_spectrum(Un, 60.0, 20.0, 1.0, dt)
+    f1, _ = _music_eval_spectrum(Un, f_nom, search_span_hz, coarse_step_hz, dt)
     if math.isnan(f1):
         return np.nan
 
-    # Etapa 2: Búsqueda fina (+/- 1 Hz, pasos de 0.05 Hz)
-    f2, _ = _music_eval_spectrum(Un, f1, 1.0, 0.05, dt)
+    f2, _ = _music_eval_spectrum(Un, f1, fine_span_hz, fine_step_hz, dt)
     if math.isnan(f2):
         return np.nan
 
-    # Etapa 3: Búsqueda ultra-fina (+/- 0.05 Hz, pasos de 0.001 Hz)
-    f_final, _ = _music_eval_spectrum(Un, f2, 0.05, 0.001, dt)
+    f_final, _ = _music_eval_spectrum(Un, f2, ultra_span_hz, ultra_step_hz, dt)
     if math.isnan(f_final):
         return np.nan
 
@@ -121,10 +117,7 @@ def _music_core(buffer: np.ndarray, dt: float, f_nom: float) -> float:
 
 
 class MUSIC_Estimator(BaseFrequencyEstimator):
-    """
-    Estimador M.U.S.I.C. (Multiple Signal Classification).
-    Super-resolución basada en la ortogonalidad del Subespacio de Ruido.
-    """
+    """MUSIC spectral estimator using a local three-stage frequency search."""
 
     name = "MUSIC"
 
@@ -132,75 +125,103 @@ class MUSIC_Estimator(BaseFrequencyEstimator):
         self,
         nominal_f: float = 60.0,
         n_cycles: float = 1.0,
+        signal_order: int = 2,
+        update_decimation: int = 40,
+        search_span_hz: float = 20.0,
+        coarse_step_hz: float = 1.0,
+        fine_span_hz: float = 1.0,
+        fine_step_hz: float = 0.05,
+        ultra_span_hz: float = 0.05,
+        ultra_step_hz: float = 0.01,
         dt: float = DT_DSP,
     ) -> None:
         self.nominal_f = float(nominal_f)
         self.dt = float(dt)
-        self.N = int(round((1.0 / self.nominal_f) / self.dt * n_cycles))
+        self.n_cycles = float(n_cycles)
+        self.signal_order = int(signal_order)
+        self.update_decimation = max(1, int(update_decimation))
+        self.search_span_hz = float(search_span_hz)
+        self.coarse_step_hz = float(coarse_step_hz)
+        self.fine_span_hz = float(fine_span_hz)
+        self.fine_step_hz = float(fine_step_hz)
+        self.ultra_span_hz = float(ultra_span_hz)
+        self.ultra_step_hz = float(ultra_step_hz)
+        self.N = max(8, int(round((1.0 / self.nominal_f) / self.dt * self.n_cycles)))
         self.reset()
 
     def reset(self) -> None:
         self.buffer = np.zeros(self.N, dtype=np.float64)
-
-        # FIX: Evitar "aprobar" el test regalando la frecuencia nominal
         self.f_out = np.nan
-
-        # Métricas de diagnóstico
         self._valid_updates = 0
         self._total_calls = 0
+        self._sample_index = 0
 
     @classmethod
-    def default_params(cls) -> dict[str, float]:
-        return {"nominal_f": 60.0, "n_cycles": 1.0}
+    def default_params(cls) -> dict[str, float | int]:
+        return {
+            "nominal_f": 60.0,
+            "n_cycles": 1.0,
+            "signal_order": 2,
+            "update_decimation": 40,
+            "search_span_hz": 20.0,
+            "coarse_step_hz": 1.0,
+            "fine_span_hz": 1.0,
+            "fine_step_hz": 0.05,
+            "ultra_span_hz": 0.05,
+            "ultra_step_hz": 0.01,
+        }
 
     @staticmethod
-    def describe_params(params: dict[str, float]) -> str:
+    def describe_params(params: dict[str, float | int]) -> str:
         return (
             f"MUSIC f_nom={params.get('nominal_f', 60.0)}Hz, "
-            f"Nc={params.get('n_cycles', 1.0)}"
+            f"Nc={params.get('n_cycles', 1.0)}, "
+            f"order={params.get('signal_order', 2)}, "
+            f"decim={params.get('update_decimation', 40)}"
         )
 
     def structural_latency_samples(self) -> int:
-        return self.N // 2
+        return self.N // 2 + max(0, self.update_decimation - 1)
 
-    def step(self, z: float) -> float:
+    def _process_sample(self, z: float) -> float:
         self.buffer[:-1] = self.buffer[1:]
         self.buffer[-1] = z
 
-        if np.abs(z) > 1e-4:
+        should_update = (
+            self._sample_index % self.update_decimation == 0
+            and abs(z) > 1e-4
+        )
+        if should_update:
             self._total_calls += 1
             try:
-                val = _music_core(self.buffer, self.dt, self.nominal_f)
+                val = _music_core(
+                    self.buffer,
+                    self.dt,
+                    self.nominal_f,
+                    self.signal_order,
+                    self.search_span_hz,
+                    self.coarse_step_hz,
+                    self.fine_span_hz,
+                    self.fine_step_hz,
+                    self.ultra_span_hz,
+                    self.ultra_step_hz,
+                )
                 if not np.isnan(val) and 40.0 < val < 80.0:
                     self.f_out = val
                     self._valid_updates += 1
             except Exception:
                 pass
 
+        self._sample_index += 1
         return self.f_out
 
+    def step(self, z: float, t: float | None = None, mem: object | None = None) -> float:
+        return self._process_sample(float(z))
+
     def step_vectorized(self, v_array: np.ndarray) -> np.ndarray:
-        n = len(v_array)
-        f_est = np.empty(n, dtype=np.float64)
-
-        for i in range(n):
-            z = v_array[i]
-            self.buffer[:-1] = self.buffer[1:]
-            self.buffer[-1] = z
-
-            # Ejecutar evaluación pesada cada 10 muestras (Decimación = 1ms a 10kHz)
-            if i % 10 == 0 and np.abs(z) > 1e-4:
-                self._total_calls += 1
-                try:
-                    val = _music_core(self.buffer, self.dt, self.nominal_f)
-                    if not np.isnan(val) and 40.0 < val < 80.0:
-                        self.f_out = val
-                        self._valid_updates += 1
-                except Exception:
-                    pass
-
-            f_est[i] = self.f_out
-
+        f_est = np.empty(len(v_array), dtype=np.float64)
+        for i in range(len(v_array)):
+            f_est[i] = self._process_sample(float(v_array[i]))
         return f_est
 
     def estimate(self, t: np.ndarray, v: np.ndarray) -> np.ndarray:

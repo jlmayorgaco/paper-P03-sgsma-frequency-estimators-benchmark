@@ -8,6 +8,8 @@ from numba import njit
 from .base import BaseFrequencyEstimator
 from .common import DT_DSP
 
+REFERENCE_KEYS = ("roy1989_esprit",)
+
 
 @njit(cache=True)
 def _esprit_core(buffer: np.ndarray, H: np.ndarray, dt: float) -> float:
@@ -132,7 +134,7 @@ class ESPRIT_Estimator(BaseFrequencyEstimator):
         return f"ESPRIT f_nom={params.get('nominal_f', 60.0)}Hz"
 
     def structural_latency_samples(self) -> int:
-        return self.N // 2
+        return int(math.ceil(self.N / self.execution_stride) * self.execution_stride)
 
     def step(self, z: float) -> float:
         return float(self.step_vectorized(np.array([z], dtype=np.float64))[0])

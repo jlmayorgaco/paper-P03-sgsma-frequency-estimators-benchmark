@@ -2,9 +2,16 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 ROOT = Path(__file__).resolve().parents[3]
 SRC = ROOT / "src"
+DATA_FILE = SRC / "scenarios" / "data" / "chamorro_data.csv"
+
+pytestmark = pytest.mark.skipif(
+    not DATA_FILE.exists(),
+    reason="Chamorro playback CSV is an optional external dataset.",
+)
 
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))

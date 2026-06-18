@@ -1,5 +1,6 @@
-"""OpenFreqBench public CLI package."""
+"""OpenFreqBench public package."""
 
-__all__ = ["__version__"]
+from ._version import __version__
+from .registry import CANONICAL_METRIC_PROFILE
 
-__version__ = "1.0.0"
+__all__ = ["CANONICAL_METRIC_PROFILE", "__version__"]

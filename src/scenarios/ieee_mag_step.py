@@ -14,7 +14,7 @@ class IEEEMagStepScenario(Scenario):
     IEEE 60255-118-1 Amplitude Step Scenario (Scenario A in the paper).
     
     Intended for:
-    - Verifying AM-FM cross-coupling rejection.
+    - Verifying magnitude-step cross-sensitivity rejection.
     - Baseline dynamic response to voltage sags/swells.
     - No harmonics or impulsive noise (pure baseline test).
     """

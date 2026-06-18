@@ -44,6 +44,7 @@ class IBRHarmonicsMediumScenario(Scenario):
         "rocof_duration_s":   0.4,
         "t_event_s":          0.8,
         "amp_pu":             1.0,
+        "phase_rad":          0.0,
         # Harmonics
         "h3_pct":             0.020,
         "h5_pct":             0.050,
@@ -95,6 +96,7 @@ class IBRHarmonicsMediumScenario(Scenario):
         rocof_duration_s:  float = 0.4,
         t_event_s:         float = 0.8,
         amp_pu:            float = 1.0,
+        phase_rad:         float = 0.0,
         h3_pct:            float = 0.020,
         h5_pct:            float = 0.050,
         h7_pct:            float = 0.030,
@@ -126,8 +128,8 @@ class IBRHarmonicsMediumScenario(Scenario):
 
         # ── 2. Phase (continuous across all regions) ─────────────────────
         phi = np.zeros_like(t, dtype=float)
-        phi[pre_mask] = 2.0 * math.pi * freq_nom_hz * t[pre_mask]
-        phi_at_event  = 2.0 * math.pi * freq_nom_hz * t_event_s
+        phi[pre_mask] = 2.0 * math.pi * freq_nom_hz * t[pre_mask] + phase_rad
+        phi_at_event  = 2.0 * math.pi * freq_nom_hz * t_event_s + phase_rad
 
         if np.any(ramp_mask):
             t_r = t[ramp_mask] - t_event_s
@@ -183,6 +185,7 @@ class IBRHarmonicsMediumScenario(Scenario):
                 "rocof_hz_s":       rocof_hz_s,
                 "rocof_duration_s": rocof_duration_s,
                 "t_event_s":        t_event_s,
+                "phase_rad":        phase_rad,
                 "thd_pct":          round(thd * 100, 2),
             },
             "monte_carlo_space": cls.MONTE_CARLO_SPACE,

@@ -7,6 +7,8 @@ from numba import njit
 from .base import BaseFrequencyEstimator
 from .common import DT_DSP
 
+REFERENCE_KEYS = ("kalman1960_linear_filtering", "pradhan2004_complex_lkf")
+
 
 # =====================================================================
 # Numba JIT-compiled core logic
@@ -21,6 +23,9 @@ def _lkf_vectorized_core(
     rho: float,
     lag_samples: int,
     smooth_alpha: float,
+    normalize_input: bool,
+    amp_lpf_alpha: float,
+    amp_floor: float,
     x1: float,
     x2: float,
     p11: float,
@@ -32,6 +37,7 @@ def _lkf_vectorized_core(
     hist_idx: int,
     hist_count: int,
     f_out: float,
+    amp_sq: float,
 ):
     """
     Linear Kalman Filter core for narrowband sinusoidal tracking.
@@ -66,6 +72,10 @@ def _lkf_vectorized_core(
 
     for i in range(n):
         z = v_array[i]
+        if normalize_input:
+            amp_sq = (1.0 - amp_lpf_alpha) * amp_sq + amp_lpf_alpha * z * z
+            amp_hat = math.sqrt(max(2.0 * amp_sq, amp_floor * amp_floor))
+            z = z / amp_hat
 
         # -------------------------------------------------------------
         # 1) Predict
@@ -105,7 +115,6 @@ def _lkf_vectorized_core(
 
         # Joseph-form covariance update
         a = 1.0 - k1
-        b = -k2
 
         p11 = a * a * pp11 + r * k1 * k1
         p12 = -a * k2 * pp11 + a * pp12 + r * k1 * k2
@@ -177,6 +186,7 @@ def _lkf_vectorized_core(
         hist_idx,
         hist_count,
         f_out,
+        amp_sq,
     )
 
 
@@ -211,11 +221,14 @@ class LKF_Estimator(BaseFrequencyEstimator):
     def __init__(
         self,
         nominal_f: float = 60.0,
-        q: float = 1e-5,
-        r: float = 1e-3,
+        q: float = 3e-8,
+        r: float = 1e-2,
         rho: float = 1.0,
-        output_smoothing: float = 0.02,
+        output_smoothing: float = 0.005,
         phase_lag_samples: int = 0,
+        normalize_input: bool = True,
+        amp_lpf_alpha: float = 0.05,
+        amp_floor: float = 0.05,
         p_x1: float = 10.0,
         p_x2: float = 10.0,
         dt: float = DT_DSP,
@@ -226,6 +239,9 @@ class LKF_Estimator(BaseFrequencyEstimator):
         self.rho = float(rho)
         self.output_smoothing = float(output_smoothing)
         self.phase_lag_samples = int(phase_lag_samples)
+        self.normalize_input = bool(normalize_input)
+        self.amp_lpf_alpha = float(amp_lpf_alpha)
+        self.amp_floor = float(amp_floor)
         self.p_x1 = float(p_x1)
         self.p_x2 = float(p_x2)
         self.dt = float(dt)
@@ -263,17 +279,21 @@ class LKF_Estimator(BaseFrequencyEstimator):
         self.p22 = max(self.p_x2, 1e-15)
 
         self.f_out = self.nominal_f
+        self.amp_sq = 0.5
         self._configure_buffers()
 
     @classmethod
     def default_params(cls) -> dict[str, float | int]:
         return {
             "nominal_f": 60.0,
-            "q": 1e-5,
-            "r": 1e-3,
+            "q": 3e-8,
+            "r": 1e-2,
             "rho": 1.0,
-            "output_smoothing": 0.02,
+            "output_smoothing": 0.005,
             "phase_lag_samples": 0,
+            "normalize_input": True,
+            "amp_lpf_alpha": 0.05,
+            "amp_floor": 0.05,
             "p_x1": 10.0,
             "p_x2": 10.0,
         }
@@ -317,6 +337,7 @@ class LKF_Estimator(BaseFrequencyEstimator):
             self._hist_idx,
             self._hist_count,
             self.f_out,
+            self.amp_sq,
         ) = _lkf_vectorized_core(
             v_array=v_array,
             dt=self.dt,
@@ -326,6 +347,9 @@ class LKF_Estimator(BaseFrequencyEstimator):
             rho=self.rho,
             lag_samples=self._lag_samples,
             smooth_alpha=self.output_smoothing,
+            normalize_input=self.normalize_input,
+            amp_lpf_alpha=self.amp_lpf_alpha,
+            amp_floor=self.amp_floor,
             x1=self.x1,
             x2=self.x2,
             p11=self.p11,
@@ -337,6 +361,7 @@ class LKF_Estimator(BaseFrequencyEstimator):
             hist_idx=self._hist_idx,
             hist_count=self._hist_count,
             f_out=self.f_out,
+            amp_sq=self.amp_sq,
         )
 
         return f_est

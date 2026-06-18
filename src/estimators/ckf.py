@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from ._experimental_base import ExperimentalFrequencyEstimator
 
+REFERENCE_KEYS = ("arasaratnam2009_cubature_kalman",)
+
 
 class CKF_Estimator(ExperimentalFrequencyEstimator):
     name = "CKF"

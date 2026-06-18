@@ -123,6 +123,7 @@ class BaseFrequencyEstimator(ABC):
             self._rt_initialized = True
             self._rt_step_count = 0
             self._rt_invalid_count = 0
+            self._rt_invalid_after_first_count = 0
             self._rt_first_valid_step = None
             self._rt_step_times_us = []
 
@@ -155,6 +156,8 @@ class BaseFrequencyEstimator(ABC):
         self._rt_step_times_us.append(float(elapsed_us))
         if not (y == y and abs(y) != float("inf")):
             self._rt_invalid_count += 1
+            if self._rt_first_valid_step is not None:
+                self._rt_invalid_after_first_count += 1
         elif self._rt_first_valid_step is None:
             self._rt_first_valid_step = self._rt_step_count
 
@@ -177,6 +180,13 @@ class BaseFrequencyEstimator(ABC):
             else 0.0
         )
         startup_valid = int(self._rt_first_valid_step or 0)
+        if self._rt_first_valid_step is None:
+            post_startup_invalid_rate = (
+                1.0 if self._rt_step_count > 0 and self._rt_invalid_count > 0 else 0.0
+            )
+        else:
+            post_startup_steps = max(1, self._rt_step_count - int(self._rt_first_valid_step) + 1)
+            post_startup_invalid_rate = float(self._rt_invalid_after_first_count) / float(post_startup_steps)
         mem_stats = (memory.summary() if memory is not None else MemoryStore().summary())
 
         return {
@@ -185,6 +195,7 @@ class BaseFrequencyEstimator(ABC):
             "runtime_jitter_us": jitter_us,
             "startup_valid_samples": startup_valid,
             "invalid_output_rate": invalid_rate,
+            "post_startup_invalid_rate": post_startup_invalid_rate,
             "memory_peak_bytes": int(mem_stats["peak_bytes"]),
             "memory_mean_bytes": float(mem_stats["mean_bytes"]),
             "memory_current_bytes": int(mem_stats["current_bytes"]),

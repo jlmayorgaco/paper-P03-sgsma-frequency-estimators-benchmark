@@ -51,6 +51,7 @@ class IBRHarmonicsLargeScenario(Scenario):
         "freq_step_hz":       0.8,    # Load rejection
         "t_event_s":          1.0,
         "amp_pu":             1.0,
+        "phase_rad":          0.0,
         # Harmonics
         "h2_pct":             0.020,
         "h3_pct":             0.040,
@@ -107,6 +108,7 @@ class IBRHarmonicsLargeScenario(Scenario):
         freq_step_hz:      float = 0.8,
         t_event_s:         float = 1.0,
         amp_pu:            float = 1.0,
+        phase_rad:         float = 0.0,
         h2_pct:            float = 0.020,
         h3_pct:            float = 0.040,
         h5_pct:            float = 0.080,
@@ -138,9 +140,9 @@ class IBRHarmonicsLargeScenario(Scenario):
 
         # ── 2. Phase (continuous at step) ────────────────────────────────
         phi = np.zeros_like(t, dtype=float)
-        phi[pre_mask] = 2.0 * math.pi * f_pre * t[pre_mask]
+        phi[pre_mask] = 2.0 * math.pi * f_pre * t[pre_mask] + phase_rad
         if np.any(post_mask):
-            phi_at_event = 2.0 * math.pi * f_pre * t_event_s
+            phi_at_event = 2.0 * math.pi * f_pre * t_event_s + phase_rad
             t_post = t[post_mask] - t_event_s
             phi[post_mask] = phi_at_event + 2.0 * math.pi * f_post * t_post
 
@@ -192,6 +194,7 @@ class IBRHarmonicsLargeScenario(Scenario):
                 "freq_post_hz": f_post,
                 "freq_step_hz": freq_step_hz,
                 "t_event_s":    t_event_s,
+                "phase_rad":    phase_rad,
                 "thd_pct":      round(thd * 100, 2),
                 "f_sub_hz":     f_sub,
             },

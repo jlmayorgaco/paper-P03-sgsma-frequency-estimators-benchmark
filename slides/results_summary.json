@@ -1,0 +1,204 @@
+{
+  "dynamic_top": [
+    {
+      "estimator": "ESPRIT",
+      "family": "Window-based",
+      "geom_rmse_hz": 0.034673841000943575,
+      "median_rmse_hz": 0.03140602077980525,
+      "worst_rmse_hz": 0.3546879753632,
+      "geom_rfe_rms_hz_s": 24.741340387222543,
+      "median_rfe_rms_hz_s": 15.575648575306943,
+      "median_cpu_us": 88.54166666666667,
+      "median_latency_ms": 8.3,
+      "max_trip_risk_s": 0.0963
+    },
+    {
+      "estimator": "Koopman (RK-DPMU)",
+      "family": "Data-driven",
+      "geom_rmse_hz": 0.0398552170433493,
+      "median_rmse_hz": 0.0411762766472199,
+      "worst_rmse_hz": 0.4323831745939061,
+      "geom_rfe_rms_hz_s": 19.045826921068358,
+      "median_rfe_rms_hz_s": 13.038126951994371,
+      "median_cpu_us": 156.25,
+      "median_latency_ms": 12.5,
+      "max_trip_risk_s": 0.3916
+    },
+    {
+      "estimator": "TFT",
+      "family": "Window-based",
+      "geom_rmse_hz": 0.053619181922669866,
+      "median_rmse_hz": 0.050938394535721604,
+      "worst_rmse_hz": 2.952251481033039,
+      "geom_rfe_rms_hz_s": 8.842342176787476,
+      "median_rfe_rms_hz_s": 7.554225399770309,
+      "median_cpu_us": 9.375,
+      "median_latency_ms": 16.6,
+      "max_trip_risk_s": 0.8941
+    },
+    {
+      "estimator": "IPDFT",
+      "family": "Window-based",
+      "geom_rmse_hz": 0.05442590580573347,
+      "median_rmse_hz": 0.05460769401608385,
+      "worst_rmse_hz": 0.5899471507387932,
+      "geom_rfe_rms_hz_s": 24.082945235821175,
+      "median_rfe_rms_hz_s": 26.294932490805998,
+      "median_cpu_us": 9.375,
+      "median_latency_ms": 33.300000000000004,
+      "max_trip_risk_s": 0.4378
+    },
+    {
+      "estimator": "SOGI-FLL",
+      "family": "Loop-based",
+      "geom_rmse_hz": 0.062609040422417,
+      "median_rmse_hz": 0.06856086920968925,
+      "worst_rmse_hz": 0.8440688629799562,
+      "geom_rfe_rms_hz_s": 12.017113082715415,
+      "median_rfe_rms_hz_s": 7.8819441985674805,
+      "median_cpu_us": 8.333333333333334,
+      "median_latency_ms": 0.0,
+      "max_trip_risk_s": 0.4154
+    },
+    {
+      "estimator": "ZCD",
+      "family": "Loop-based",
+      "geom_rmse_hz": 0.06319161592543153,
+      "median_rmse_hz": 0.05269417993887435,
+      "worst_rmse_hz": 0.6498673007949368,
+      "geom_rfe_rms_hz_s": 46.41277144132246,
+      "median_rfe_rms_hz_s": 34.99784490095982,
+      "median_cpu_us": 5.208333333333333,
+      "median_latency_ms": 16.7,
+      "max_trip_risk_s": 0.3942
+    },
+    {
+      "estimator": "SOGI-PLL",
+      "family": "Loop-based",
+      "geom_rmse_hz": 0.06544255107323504,
+      "median_rmse_hz": 0.04387419920240695,
+      "worst_rmse_hz": 0.4574399511785539,
+      "geom_rfe_rms_hz_s": 37.426518217026164,
+      "median_rfe_rms_hz_s": 23.128671139758982,
+      "median_cpu_us": 9.114583333333334,
+      "median_latency_ms": 0.0,
+      "max_trip_risk_s": 0.0395
+    },
+    {
+      "estimator": "UKF",
+      "family": "Model-based",
+      "geom_rmse_hz": 0.08919717981683653,
+      "median_rmse_hz": 0.1179542510183644,
+      "worst_rmse_hz": 1.5092953342660196,
+      "geom_rfe_rms_hz_s": 6.864363599196587,
+      "median_rfe_rms_hz_s": 5.67805553057509,
+      "median_cpu_us": 11.458333333333334,
+      "median_latency_ms": 0.0,
+      "max_trip_risk_s": 0.4651
+    }
+  ],
+  "dynamic_rfe_top": [
+    {
+      "estimator": "UKF",
+      "family": "Model-based",
+      "geom_rmse_hz": 0.08919717981683653,
+      "median_rmse_hz": 0.1179542510183644,
+      "worst_rmse_hz": 1.5092953342660196,
+      "geom_rfe_rms_hz_s": 6.864363599196587,
+      "median_rfe_rms_hz_s": 5.67805553057509,
+      "median_cpu_us": 11.458333333333334,
+      "median_latency_ms": 0.0,
+      "max_trip_risk_s": 0.4651
+    },
+    {
+      "estimator": "EKF",
+      "family": "Model-based",
+      "geom_rmse_hz": 0.38402479126248,
+      "median_rmse_hz": 0.4956792188703696,
+      "worst_rmse_hz": 8.869474986154138,
+      "geom_rfe_rms_hz_s": 7.406325364097293,
+      "median_rfe_rms_hz_s": 7.881604167333652,
+      "median_cpu_us": 9.375,
+      "median_latency_ms": 0.0,
+      "max_trip_risk_s": 1.0042
+    },
+    {
+      "estimator": "TFT",
+      "family": "Window-based",
+      "geom_rmse_hz": 0.053619181922669866,
+      "median_rmse_hz": 0.050938394535721604,
+      "worst_rmse_hz": 2.952251481033039,
+      "geom_rfe_rms_hz_s": 8.842342176787476,
+      "median_rfe_rms_hz_s": 7.554225399770309,
+      "median_cpu_us": 9.375,
+      "median_latency_ms": 16.6,
+      "max_trip_risk_s": 0.8941
+    },
+    {
+      "estimator": "SOGI-FLL",
+      "family": "Loop-based",
+      "geom_rmse_hz": 0.062609040422417,
+      "median_rmse_hz": 0.06856086920968925,
+      "worst_rmse_hz": 0.8440688629799562,
+      "geom_rfe_rms_hz_s": 12.017113082715415,
+      "median_rfe_rms_hz_s": 7.8819441985674805,
+      "median_cpu_us": 8.333333333333334,
+      "median_latency_ms": 0.0,
+      "max_trip_risk_s": 0.4154
+    },
+    {
+      "estimator": "RA-EKF",
+      "family": "Model-based",
+      "geom_rmse_hz": 0.09703537290682936,
+      "median_rmse_hz": 0.10185996447050025,
+      "worst_rmse_hz": 1.27233991281279,
+      "geom_rfe_rms_hz_s": 14.032573510448207,
+      "median_rfe_rms_hz_s": 8.12886229555235,
+      "median_cpu_us": 13.020833333333334,
+      "median_latency_ms": 0.0,
+      "max_trip_risk_s": 0.443
+    },
+    {
+      "estimator": "Koopman (RK-DPMU)",
+      "family": "Data-driven",
+      "geom_rmse_hz": 0.0398552170433493,
+      "median_rmse_hz": 0.0411762766472199,
+      "worst_rmse_hz": 0.4323831745939061,
+      "geom_rfe_rms_hz_s": 19.045826921068358,
+      "median_rfe_rms_hz_s": 13.038126951994371,
+      "median_cpu_us": 156.25,
+      "median_latency_ms": 12.5,
+      "max_trip_risk_s": 0.3916
+    },
+    {
+      "estimator": "IPDFT",
+      "family": "Window-based",
+      "geom_rmse_hz": 0.05442590580573347,
+      "median_rmse_hz": 0.05460769401608385,
+      "worst_rmse_hz": 0.5899471507387932,
+      "geom_rfe_rms_hz_s": 24.082945235821175,
+      "median_rfe_rms_hz_s": 26.294932490805998,
+      "median_cpu_us": 9.375,
+      "median_latency_ms": 33.300000000000004,
+      "max_trip_risk_s": 0.4378
+    },
+    {
+      "estimator": "ESPRIT",
+      "family": "Window-based",
+      "geom_rmse_hz": 0.034673841000943575,
+      "median_rmse_hz": 0.03140602077980525,
+      "worst_rmse_hz": 0.3546879753632,
+      "geom_rfe_rms_hz_s": 24.741340387222543,
+      "median_rfe_rms_hz_s": 15.575648575306943,
+      "median_cpu_us": 88.54166666666667,
+      "median_latency_ms": 8.3,
+      "max_trip_risk_s": 0.0963
+    }
+  ],
+  "sources": {
+    "rocof": "artifacts\\freq_ramp_rocof_mvp2_all18_representative",
+    "frequency_step": "artifacts\\frequency_step_mvp2_all18_representative",
+    "harmonics": "artifacts\\atlas-harmonics-fast14-preview-v2",
+    "readiness": "artifacts\\atlas-papergrade-missing-v1"
+  }
+}

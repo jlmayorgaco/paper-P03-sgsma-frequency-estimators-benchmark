@@ -7,6 +7,8 @@ from numba import njit
 from .base import BaseFrequencyEstimator
 from .common import DT_DSP
 
+REFERENCE_KEYS = ("platasgarza2010_tft",)
+
 
 @njit(cache=True)
 def _tft_vectorized_core(

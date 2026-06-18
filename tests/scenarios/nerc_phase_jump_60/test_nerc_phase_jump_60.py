@@ -100,12 +100,18 @@ def test_nerc_phase_jump_60_frequency_is_constant():
 
 
 def test_nerc_phase_jump_60_amplitude_with_harmonics():
-    sc = NERCPhaseJump60Scenario.run(amplitude=1.0, noise_sigma=0.0)
+    sc = NERCPhaseJump60Scenario.run(
+        amplitude=1.0,
+        phase_jump_rad=0.0,
+        noise_sigma=0.0,
+        seed=123,
+    )
     
-    # La amplitud máxima ya no es 1.0. Es 1.0 + 0.04 (5to) + 0.02 (7mo) + 0.005 (inter) = 1.065
-    assert np.max(sc.v) <= 1.07
-    assert np.max(sc.v) > 1.0  # Aseguramos que los armónicos sumen a los picos
-    assert np.min(sc.v) >= -1.07
+    # Harmonic phases are random, so they do not always align with the fundamental peak.
+    # The hard contract is bounded injected content plus a visible departure from a pure sine.
+    pure = np.sin(2.0 * np.pi * F_NOM * sc.t)
+    assert np.max(np.abs(sc.v)) <= 1.07
+    assert np.max(np.abs(sc.v - pure)) > 0.04
 
 
 def test_nerc_phase_jump_60_no_nan():

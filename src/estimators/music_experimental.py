@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from ._experimental_base import ExperimentalFrequencyEstimator
 
+REFERENCE_KEYS = ("schmidt1986_music",)
+
 
 class MUSIC_Experimental_Estimator(ExperimentalFrequencyEstimator):
     name = "MUSIC"

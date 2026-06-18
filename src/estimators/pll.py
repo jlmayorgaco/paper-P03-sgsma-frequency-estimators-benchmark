@@ -7,6 +7,8 @@ from numba import njit
 from .base import BaseFrequencyEstimator
 from .common import DT_DSP
 
+REFERENCE_KEYS = ("kaura1997_pll_distorted",)
+
 
 @njit(cache=True)
 def _wrap_pi(x: float) -> float:
@@ -197,10 +199,12 @@ class PLL_Estimator(BaseFrequencyEstimator):
 
     def structural_latency_samples(self) -> int:
         """
-        T-104: PLL settling time defines the transient window.
-        Return 2x settle_time in samples so metric windows exclude the transient.
+        Recursive PLL dynamics are not a fixed window delay.
+
+        The shared benchmark warm-up removes cold-start effects; a tunable
+        settling-time parameter must not change the metric exclusion window.
         """
-        return int(round(2.0 * self.settle_time / self.dt))
+        return 0
 
     def step(self, z: float) -> float:
         v_array = np.array([z], dtype=np.float64)

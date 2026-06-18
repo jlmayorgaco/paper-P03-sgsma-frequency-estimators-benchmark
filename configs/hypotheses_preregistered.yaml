@@ -1,0 +1,50 @@
+hypotheses:
+  - id: H_Q1_IBR_ROBUSTNESS
+    title: IBR events increase RMSE relative to nominal IEEE operation
+    metric: m1_rmse_hz
+    group_a: scenario:IBR_Multi_Event
+    group_b: scenario:IEEE_Single_SinWave
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+
+  - id: H_Q2_LATENCY_TRADEOFF
+    title: Model-based estimators differ from loop-based estimators in structural latency
+    metric: m14_struct_latency_ms
+    group_a: family:Model-based
+    group_b: family:Loop-based
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+
+  - id: H_Q3_CPU_COST
+    title: Data-driven estimators differ from classical window-based estimators in CPU cost
+    metric: m13_cpu_time_us
+    group_a: family:Data-driven
+    group_b: family:Window-based
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+
+  - id: H_Q4_ROCOF_ERROR
+    title: Loop-based and model-based estimators differ under RoCoF error metrics
+    metric: m10_rfe_rms_hz_s
+    group_a: family:Loop-based
+    group_b: family:Model-based
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered
+
+  - id: H_Q5_PROTECTION_RISK
+    title: Estimator families differ in accumulated trip-risk time
+    metric: m5_trip_risk_s
+    group_a: family:Model-based
+    group_b: family:Window-based
+    test: mw
+    alpha: 0.05
+    correction: holm
+    mode: preregistered

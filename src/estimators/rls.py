@@ -7,6 +7,8 @@ from numba import njit
 from .base import BaseFrequencyEstimator
 from .common import DT_DSP
 
+REFERENCE_KEYS = ("carlsson1994_rls_notch",)
+
 
 @njit(cache=True)
 def _clamp(x: float, lo: float, hi: float) -> float:
@@ -99,8 +101,20 @@ def _rls_ar2_vectorized_core(
     y_km2: float,
     err_pow: float,
     f_out: float,
+    amp_sq: float,
     smooth_alpha: float,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, float, float, float, float]:
+    normalize_input: bool,
+    amp_lpf_alpha: float,
+    amp_floor: float,
+    robust_update: bool,
+    innovation_clip: float,
+    transient_reject: bool,
+    transient_clip: float,
+    transient_hold_samples: int,
+    transient_hold_count: int,
+    f_min_hz: float,
+    f_max_hz: float,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, float, float, float, float, float, int]:
     """
     RLS / VFF-RLS core for AR(2) sinusoidal tracking.
 
@@ -120,6 +134,10 @@ def _rls_ar2_vectorized_core(
 
     for i in range(n):
         y_k = v_array[i]
+        if normalize_input:
+            amp_sq = (1.0 - amp_lpf_alpha) * amp_sq + amp_lpf_alpha * y_k * y_k
+            amp_hat = math.sqrt(max(2.0 * amp_sq, amp_floor * amp_floor))
+            y_k = y_k / amp_hat
 
         # 1) Regressor phi = [y(k-1), y(k-2)]^T
         phi0 = y_km1
@@ -129,60 +147,84 @@ def _rls_ar2_vectorized_core(
         y_pred = theta[0] * phi0 + theta[1] * phi1
         e_k = y_k - y_pred
 
+        phi_energy = phi0 * phi0 + phi1 * phi1
+        e_update = e_k
+        do_update = True
+        if transient_reject and phi_energy > 1e-10:
+            e_norm = abs(e_k) / math.sqrt(phi_energy + 1e-10)
+            if transient_hold_count > 0:
+                do_update = False
+                transient_hold_count -= 1
+            elif transient_clip > 0.0 and e_norm > transient_clip:
+                do_update = False
+                transient_hold_count = max(0, transient_hold_samples - 1)
+
+        if robust_update and innovation_clip > 0.0 and phi_energy > 1e-10:
+            e_lim = innovation_clip * math.sqrt(phi_energy + 1e-10)
+            if e_update > e_lim:
+                e_update = e_lim
+            elif e_update < -e_lim:
+                e_update = -e_lim
+
         # 3) Forgetting factor: fixed or variable
         if is_vff:
-            phi_energy = phi0 * phi0 + phi1 * phi1
-
-            if phi_energy < 1e-10:
+            if not do_update:
+                # A rejected amplitude transient should not train the VFF memory.
+                # Let the innovation power decay and keep maximum memory.
+                err_pow = (1.0 - vff_beta) * err_pow
+                lam = lambda_max
+            elif phi_energy < 1e-10:
                 lam = lambda_max
             else:
-                e_norm_sq = (e_k * e_k) / (1e-10 + phi_energy)
+                e_norm_sq = (e_update * e_update) / (1e-10 + phi_energy)
                 err_pow = (1.0 - vff_beta) * err_pow + vff_beta * e_norm_sq
                 lam = 1.0 - alpha_vff * err_pow
                 lam = _clamp(lam, lambda_min, lambda_max)
         else:
             lam = lambda_fixed
 
-        # 4) RLS Kalman gain
-        P_phi0 = P[0, 0] * phi0 + P[0, 1] * phi1
-        P_phi1 = P[1, 0] * phi0 + P[1, 1] * phi1
+        if do_update:
+            # 4) RLS Kalman gain
+            P_phi0 = P[0, 0] * phi0 + P[0, 1] * phi1
+            P_phi1 = P[1, 0] * phi0 + P[1, 1] * phi1
 
-        den = lam + phi0 * P_phi0 + phi1 * P_phi1
-        if den < 1e-12:
-            den = 1e-12
+            den = lam + phi0 * P_phi0 + phi1 * P_phi1
+            if den < 1e-12:
+                den = 1e-12
 
-        K0 = P_phi0 / den
-        K1 = P_phi1 / den
+            K0 = P_phi0 / den
+            K1 = P_phi1 / den
 
-        # 5) Parameter update
-        theta[0] += K0 * e_k
-        theta[1] += K1 * e_k
+            # 5) Parameter update
+            theta[0] += K0 * e_update
+            theta[1] += K1 * e_update
 
-        theta[0], theta[1] = _project_ar2_to_oscillator(
-            theta[0],
-            theta[1],
-            pole_radius_min,
-            pole_radius_max,
-        )
+            theta[0], theta[1] = _project_ar2_to_oscillator(
+                theta[0],
+                theta[1],
+                pole_radius_min,
+                pole_radius_max,
+            )
 
-        # 6) Covariance update
-        P00 = (P[0, 0] - K0 * P_phi0) / lam
-        P01 = (P[0, 1] - K0 * P_phi1) / lam
-        P10 = (P[1, 0] - K1 * P_phi0) / lam
-        P11 = (P[1, 1] - K1 * P_phi1) / lam
+            # 6) Covariance update
+            P00 = (P[0, 0] - K0 * P_phi0) / lam
+            P01 = (P[0, 1] - K0 * P_phi1) / lam
+            P10 = (P[1, 0] - K1 * P_phi0) / lam
+            P11 = (P[1, 1] - K1 * P_phi1) / lam
 
-        P[0, 0] = P00
-        P[0, 1] = 0.5 * (P01 + P10)
-        P[1, 0] = P[0, 1]
-        P[1, 1] = P11
+            P[0, 0] = P00
+            P[0, 1] = 0.5 * (P01 + P10)
+            P[1, 0] = P[0, 1]
+            P[1, 1] = P11
 
-        if P[0, 0] < 1e-12:
-            P[0, 0] = 1e-12
-        if P[1, 1] < 1e-12:
-            P[1, 1] = 1e-12
+            if P[0, 0] < 1e-12:
+                P[0, 0] = 1e-12
+            if P[1, 1] < 1e-12:
+                P[1, 1] = 1e-12
 
         # 7) Frequency extraction
         f_raw = _extract_frequency_from_ar2(theta[0], theta[1], dt)
+        f_raw = _clamp(f_raw, f_min_hz, f_max_hz)
 
         # 8) Output smoothing
         if smooth_alpha > 0.0:
@@ -196,7 +238,7 @@ def _rls_ar2_vectorized_core(
         y_km2 = y_km1
         y_km1 = y_k
 
-    return f_est, theta, P, y_km1, y_km2, err_pow, f_out
+    return f_est, theta, P, y_km1, y_km2, err_pow, f_out, amp_sq, transient_hold_count
 
 
 class RLS_Estimator(BaseFrequencyEstimator):
@@ -230,6 +272,16 @@ class RLS_Estimator(BaseFrequencyEstimator):
         pole_radius_min: float = 0.95,
         pole_radius_max: float = 1.0,
         p0: float = 0.01,
+        normalize_input: bool = False,
+        amp_lpf_alpha: float = 0.08,
+        amp_floor: float = 0.05,
+        robust_update: bool = False,
+        innovation_clip: float = 3.0,
+        transient_reject: bool = False,
+        transient_clip: float = 3.0,
+        transient_hold_samples: int = 4,
+        f_min_hz: float = 40.0,
+        f_max_hz: float = 80.0,
         dt: float = DT_DSP,
     ) -> None:
         self.nominal_f = float(nominal_f)
@@ -243,6 +295,18 @@ class RLS_Estimator(BaseFrequencyEstimator):
         self.pole_radius_min = float(pole_radius_min)
         self.pole_radius_max = float(pole_radius_max)
         self.p0 = float(p0)
+        self.normalize_input = bool(normalize_input)
+        self.amp_lpf_alpha = float(amp_lpf_alpha)
+        self.amp_floor = float(amp_floor)
+        self.robust_update = bool(robust_update)
+        self.innovation_clip = float(innovation_clip)
+        self.transient_reject = bool(transient_reject)
+        self.transient_clip = float(transient_clip)
+        self.transient_hold_samples = int(transient_hold_samples)
+        self.f_min_hz = float(f_min_hz)
+        self.f_max_hz = float(f_max_hz)
+        if self.f_max_hz < self.f_min_hz:
+            self.f_min_hz, self.f_max_hz = self.f_max_hz, self.f_min_hz
         self.dt = float(dt)
 
         self._validate_params()
@@ -289,6 +353,23 @@ class RLS_Estimator(BaseFrequencyEstimator):
 
         if not np.isfinite(self.p0) or self.p0 <= 0.0:
             raise ValueError("p0 must be a finite value > 0.")
+        if (
+            not np.isfinite(self.amp_lpf_alpha)
+            or not (0.0 < self.amp_lpf_alpha <= 1.0)
+        ):
+            raise ValueError("amp_lpf_alpha must be in (0, 1].")
+        if not np.isfinite(self.amp_floor) or self.amp_floor <= 0.0:
+            raise ValueError("amp_floor must be a finite value > 0.")
+        if not np.isfinite(self.innovation_clip) or self.innovation_clip < 0.0:
+            raise ValueError("innovation_clip must be finite and >= 0.")
+        if not np.isfinite(self.transient_clip) or self.transient_clip < 0.0:
+            raise ValueError("transient_clip must be finite and >= 0.")
+        if self.transient_hold_samples < 0:
+            raise ValueError("transient_hold_samples must be >= 0.")
+        if not np.isfinite(self.f_min_hz) or self.f_min_hz <= 0.0:
+            raise ValueError("f_min_hz must be a finite positive value.")
+        if not np.isfinite(self.f_max_hz) or self.f_max_hz <= 0.0:
+            raise ValueError("f_max_hz must be a finite positive value.")
 
     def reset(self) -> None:
         a1_init = 2.0 * math.cos(self.w_nom * self.dt)
@@ -301,6 +382,8 @@ class RLS_Estimator(BaseFrequencyEstimator):
         self.y_km2 = 0.0
         self.err_pow = 0.0
         self.f_out = self.nominal_f
+        self.amp_sq = 0.5
+        self.transient_hold_count = 0
 
     @classmethod
     def default_params(cls) -> dict[str, float]:
@@ -315,7 +398,17 @@ class RLS_Estimator(BaseFrequencyEstimator):
             "output_smoothing": 0.03,
             "pole_radius_min": 0.95,
             "pole_radius_max": 1.0,
-            "p0": 0.01, # FIX: Default conservador sincronizado
+            "p0": 0.01,
+            "normalize_input": False,
+            "amp_lpf_alpha": 0.08,
+            "amp_floor": 0.05,
+            "robust_update": False,
+            "innovation_clip": 3.0,
+            "transient_reject": False,
+            "transient_clip": 3.0,
+            "transient_hold_samples": 4,
+            "f_min_hz": 40.0,
+            "f_max_hz": 80.0,
         }
 
     @staticmethod
@@ -325,12 +418,14 @@ class RLS_Estimator(BaseFrequencyEstimator):
                 f"RLS (VFF), "
                 f"f_nom={params.get('nominal_f', 60.0)}Hz, "
                 f"lambda_min={params.get('lambda_min', 0.90)}, "
-                f"lambda_max={params.get('lambda_max', 0.9995)}"
+                f"lambda_max={params.get('lambda_max', 0.9995)}, "
+                f"normalized={params.get('normalize_input', True)}"
             )
         return (
             f"RLS (fixed λ), "
             f"f_nom={params.get('nominal_f', 60.0)}Hz, "
-            f"lambda={params.get('lambda_fixed', 0.995)}"
+            f"lambda={params.get('lambda_fixed', 0.995)}, "
+            f"normalized={params.get('normalize_input', True)}"
         )
 
     def structural_latency_samples(self) -> int:
@@ -357,6 +452,8 @@ class RLS_Estimator(BaseFrequencyEstimator):
             self.y_km2,
             self.err_pow,
             self.f_out,
+            self.amp_sq,
+            self.transient_hold_count,
         ) = _rls_ar2_vectorized_core(
             v_array=v_array,
             dt=self.dt,
@@ -374,7 +471,19 @@ class RLS_Estimator(BaseFrequencyEstimator):
             y_km2=self.y_km2,
             err_pow=self.err_pow,
             f_out=self.f_out,
+            amp_sq=self.amp_sq,
             smooth_alpha=self.output_smoothing,
+            normalize_input=self.normalize_input,
+            amp_lpf_alpha=self.amp_lpf_alpha,
+            amp_floor=self.amp_floor,
+            robust_update=self.robust_update,
+            innovation_clip=self.innovation_clip,
+            transient_reject=self.transient_reject,
+            transient_clip=self.transient_clip,
+            transient_hold_samples=self.transient_hold_samples,
+            transient_hold_count=self.transient_hold_count,
+            f_min_hz=self.f_min_hz,
+            f_max_hz=self.f_max_hz,
         )
         return f_est
 

@@ -7,6 +7,8 @@ from numba import njit
 from .base import BaseFrequencyEstimator
 from .common import DT_DSP
 
+REFERENCE_KEYS = ("williams2015_edmd_koopman",)
+
 @njit(cache=True)
 def _koopman_edmd_core(buffer: np.ndarray, dt: float) -> float:
     """
@@ -75,12 +77,20 @@ class Koopman_Estimator(BaseFrequencyEstimator):
     """
     name = "Koopman (RK-DPMU)"
 
-    def __init__(self, nominal_f: float = 60.0, n_cycles: float = 1.5, dt: float = DT_DSP) -> None:
+    def __init__(
+        self,
+        nominal_f: float = 60.0,
+        n_cycles: float = 1.5,
+        dt: float = DT_DSP,
+        execution_stride: int = 10,
+    ) -> None:
         self.nominal_f = float(nominal_f)
+        self.n_cycles = float(n_cycles)
         self.dt = float(dt)
+        self.execution_stride = max(1, int(execution_stride))
         # Koopman requiere un poco más de datos que ESPRIT para construir 
         # el mapeo Y = K*X robustamente. 1.5 ciclos es el punto dulce.
-        self.N = int(round((1.0 / self.nominal_f) / self.dt * n_cycles))
+        self.N = int(round((1.0 / self.nominal_f) / self.dt * self.n_cycles))
         self.reset()
 
     def reset(self) -> None:
@@ -91,41 +101,50 @@ class Koopman_Estimator(BaseFrequencyEstimator):
         # Métricas de diagnóstico
         self._valid_updates = 0
         self._total_calls = 0
-        # T-101: decimation counter — both step() and step_vectorized() compute
-        # the Koopman core only when _step_counter % 10 == 0, so both paths are
-        # the single source of truth for the every-10-samples policy.
+        self.samples_seen = 0
+        # T-101: both paths use samples_seen and execution_stride, so scalar
+        # and vectorized decimation decisions stay identical.
         self._step_counter = 0
 
     @classmethod
     def default_params(cls) -> dict[str, float]:
-        return {"nominal_f": 60.0}
+        return {
+            "nominal_f": 60.0,
+            "n_cycles": 1.5,
+            "execution_stride": 10.0,
+        }
 
     @staticmethod
     def describe_params(params: dict[str, float]) -> str:
         return f"Koopman f_nom={params.get('nominal_f', 60.0)}Hz"
 
     def structural_latency_samples(self) -> int:
-        return self.N // 2
+        return int(math.ceil(self.N / self.execution_stride) * self.execution_stride)
 
     def step(self, z: float) -> float:
-        # T-101: mirrors the every-10-samples decimation of step_vectorized()
+        # T-101: mirrors the stride policy of step_vectorized().
         self.buffer[:-1] = self.buffer[1:]
         self.buffer[-1] = z
+        self.samples_seen += 1
 
-        if self._step_counter % 10 == 0 and np.abs(z) > 1e-3:
+        if (
+            self.samples_seen >= self.N
+            and self.samples_seen % self.execution_stride == 0
+            and np.abs(z) > 1e-3
+        ):
             self._total_calls += 1
             try:
                 val = _koopman_edmd_core(self.buffer, self.dt)
                 if not np.isnan(val) and 40.0 < val < 80.0:
                     self.f_out = val
                     self._valid_updates += 1
-            except:
+            except Exception:
                 pass
         self._step_counter += 1
         return self.f_out
 
     def step_vectorized(self, v_array: np.ndarray) -> np.ndarray:
-        # T-101: uses self._step_counter (same as step()) for the every-10-samples policy.
+        # T-101: uses the same sample counter as step() for the stride policy.
         n = len(v_array)
         f_est = np.empty(n, dtype=np.float64)
 
@@ -133,16 +152,21 @@ class Koopman_Estimator(BaseFrequencyEstimator):
             z = v_array[i]
             self.buffer[:-1] = self.buffer[1:]
             self.buffer[-1] = z
+            self.samples_seen += 1
 
             # Decimación del cálculo pesado (cada 10 muestras = 1ms)
-            if self._step_counter % 10 == 0 and np.abs(z) > 1e-3:
+            if (
+                self.samples_seen >= self.N
+                and self.samples_seen % self.execution_stride == 0
+                and np.abs(z) > 1e-3
+            ):
                 self._total_calls += 1
                 try:
                     val = _koopman_edmd_core(self.buffer, self.dt)
                     if not np.isnan(val) and 40.0 < val < 80.0:
                         self.f_out = val
                         self._valid_updates += 1
-                except:
+                except Exception:
                     pass
             self._step_counter += 1
             f_est[i] = self.f_out

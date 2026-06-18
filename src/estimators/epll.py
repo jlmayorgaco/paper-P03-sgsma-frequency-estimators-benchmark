@@ -7,6 +7,8 @@ from numba import njit
 from .base import BaseFrequencyEstimator
 from .common import DT_DSP
 
+REFERENCE_KEYS = ("karimi2004_epll_sync",)
+
 
 @njit(cache=True)
 def _wrap_pi(x: float) -> float:

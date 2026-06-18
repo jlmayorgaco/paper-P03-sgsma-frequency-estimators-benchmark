@@ -21,13 +21,7 @@ def test_lkf_nominal_pure_sine():
     t = np.arange(0, 1.0, 1 / fs)
     v = np.sin(2 * np.pi * 50.0 * t)
 
-    estimator = LKF_Estimator(
-        nominal_f=50.0,
-        q=1e-5,
-        r=1e-3,
-        rho=1.0,
-        output_smoothing=0.02,
-    )
+    estimator = LKF_Estimator(nominal_f=50.0)
     f_est = estimator.estimate(t, v)
 
     f_clean = f_est[t > 0.2]
@@ -51,10 +45,9 @@ def test_lkf_step_tracking():
 
     estimator = LKF_Estimator(
         nominal_f=50.0,
-        q=5e-5,
-        r=1e-3,
-        rho=1.0,
-        output_smoothing=0.02,
+        q=3e-8,
+        r=1e-2,
+        output_smoothing=0.005,
     )
     f_est = estimator.estimate(t, v)
 
@@ -76,13 +69,7 @@ def test_lkf_robustness_to_noise():
     noise = rng.normal(0, 0.05, size=len(t))
     v_noisy = v + noise
 
-    estimator = LKF_Estimator(
-        nominal_f=50.0,
-        q=1e-5,
-        r=5e-3,
-        rho=1.0,
-        output_smoothing=0.03,
-    )
+    estimator = LKF_Estimator(nominal_f=50.0)
     f_est = estimator.estimate(t, v_noisy)
 
     f_clean = f_est[t > 0.2]
