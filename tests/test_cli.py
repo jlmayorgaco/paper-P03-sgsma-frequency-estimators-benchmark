@@ -44,6 +44,27 @@ def test_report_build_parses() -> None:
     assert args.input_json == "benchmark_report.json"
 
 
+def test_plots_tuning_traces_parses() -> None:
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "plots",
+            "tuning-traces",
+            "--run-root",
+            "artifacts/full_mc_tuning_matrix/pilot",
+            "--objective",
+            "m1_rmse_hz",
+            "--format",
+            "png",
+        ]
+    )
+    assert args.command == "plots"
+    assert args.plots_cmd == "tuning-traces"
+    assert args.run_root == "artifacts/full_mc_tuning_matrix/pilot"
+    assert args.objective == ["m1_rmse_hz"]
+    assert args.format == ["png"]
+
+
 def test_quality_gate_parses() -> None:
     parser = build_parser()
     args = parser.parse_args(["quality-gate", "--skip-tests", "--release"])
